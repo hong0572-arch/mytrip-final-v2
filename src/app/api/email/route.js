@@ -2,82 +2,64 @@ import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
 export async function POST(req) {
-    try {
-        const body = await req.json();
-        const { contact, destination, planData } = body;
+  try {
+    const body = await req.json();
+    // userInfo 데이터와 AI 결과(aiResult)를 받습니다.
+    const { destination, startDate, endDate, people, budget, contact, requests, tourType, aiResult } = body;
 
-        // 안전장치
-        const safePlanData = planData || "";
+    // 1. 전송자 설정 (Gmail SMTP)
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER, // .env.local에 설정한 이메일
+        pass: process.env.EMAIL_PASS, // .env.local에 설정한 앱 비밀번호
+      },
+    });
 
-        if (!contact) {
-            return NextResponse.json({ error: '이메일 주소가 없습니다.' }, { status: 400 });
-        }
-
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
-        });
-
-        let cleanHtml = safePlanData.replace(/```html/g, '').replace(/```/g, '');
-
-        const mailOptions = {
-            from: `"My Trip .Pro" <${process.env.EMAIL_USER}>`,
-            to: contact,
-            subject: `✈️ [전문가 리포트] ${destination} 여행 견적 의뢰서`, // 제목도 전문가스럽게 변경
-            html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${destination} 여행 견적서</title>
-        </head>
-        <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;">
+    // 2. 이메일 내용 작성 (HTML 형식)
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: 'iwingzpro@gmail.com', // ⭐️ 받는 사람 (사장님 이메일)
+      subject: `[전문가 점검 요청] ${destination} 여행 계획 (${contact})`,
+      html: `
+        <div style="font-family: 'Pretendard', Arial, sans-serif; padding: 30px; border: 1px solid #eee; border-radius: 15px; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+          <h2 style="color: #FF5A5F; margin-bottom: 20px; text-align: center;">✈️ 전문가 점검 요청 도착!</h2>
           
-          <table width="100%" border="0" cellspacing="0" cellpadding="0">
-            <tr>
-              <td align="center" style="padding: 20px;">
-                <table width="600" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                  
-                  <tr>
-                    <td style="background-color: #000000; padding: 30px; text-align: center;">
-                      <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold; letter-spacing: -1px;">My Trip .Pro</h1>
-                      <p style="color: #cccccc; margin: 5px 0 0 0; font-size: 12px; text-transform: uppercase;">Premium AI Concierge</p>
-                    </td>
-                  </tr>
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+            <h3 style="margin-top: 0; color: #333;">📍 고객 기본 정보</h3>
+            <ul style="list-style: none; padding-left: 0; color: #555; line-height: 1.8;">
+              <li><strong>📞 연락처:</strong> ${contact}</li>
+              <li><strong>🌍 여행지:</strong> ${destination}</li>
+              <li><strong>📅 일정:</strong> ${startDate} ~ ${endDate}</li>
+              <li><strong>👥 인원/타입:</strong> ${people}명 (${tourType})</li>
+              <li><strong>💰 예산:</strong> 인당 ${budget}만원</li>
+              <li style="margin-top: 10px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
+                <strong>💬 추가 요청사항:</strong><br/>${requests || "없음"}
+              </li>
+            </ul>
+          </div>
 
-                  <tr>
-                    <td style="padding: 40px 30px; color: #333333; line-height: 1.6;">
-                      ${cleanHtml ? cleanHtml : '<p style="text-align:center;">내용이 없습니다.</p>'}
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td style="background-color: #f9f9f9; padding: 20px; text-align: center; border-top: 1px solid #eeeeee;">
-                      <p style="margin: 0; font-size: 11px; color: #999;">
-                        본 메일은 고객 요청에 의해 자동 발송된 견적서입니다.
-                      </p>
-                    </td>
-                  </tr>
-
-                </table>
-              </td>
-            </tr>
-          </table>
-
-        </body>
-        </html>
+          <hr style="border: 0; border-top: 2px dashed #eee; margin: 30px 0;" />
+          
+          <h3 style="color: #333;">🤖 AI가 제안한 상세 일정표</h3>
+          <div style="background: #fafafa; padding: 20px; border-radius: 12px; color: #333; line-height: 1.6; border: 1px solid #eee;">
+            ${aiResult}
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; color: #999; font-size: 12px;">
+            <p>본 메일은 MyTrip.Pro에서 발송되었습니다.</p>
+          </div>
+        </div>
       `,
-        };
+    };
 
-        await transporter.sendMail(mailOptions);
-        return NextResponse.json({ success: true });
+    // 3. 발송!
+    await transporter.sendMail(mailOptions);
 
-    } catch (error) {
-        console.error('Email Send Error:', error);
-        return NextResponse.json({ error: '메일 전송 실패' }, { status: 500 });
-    }
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("이메일 전송 실패:", error);
+    // 에러 상세 내용을 반환하여 디버깅을 돕습니다.
+    return NextResponse.json({ error: '전송 실패', details: error.message }, { status: 500 });
+  }
 }

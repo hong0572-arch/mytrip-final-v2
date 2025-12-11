@@ -8,126 +8,84 @@ const openai = new OpenAI({
 export async function POST(req) {
   try {
     const body = await req.json();
-    let { destination, departure, days, budget, themes, hotelType } = body;
+    // ✅ requests(요청사항) 추가
+    let { destination, startDate, endDate, people, budget, themes, hotelType, tourType, requests } = body;
 
-    if (!hotelType || hotelType === '상관없음') {
-      hotelType = '위치 좋고 깔끔한 3~4성급 시티호텔';
+    let daysText = "일정 미정";
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const diffTime = Math.abs(end - start);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      daysText = `${diffDays - 1}박 ${diffDays}일`;
     }
 
-    const themeString = Array.isArray(themes) ? themes.join(', ') : themes;
+    const safePeople = people || 2;
+    const safeHotel = hotelType || "호텔";
+    const safeTourType = tourType || "자유여행";
+    const totalBudget = budget * safePeople;
+    const safeRequests = requests || "없음";
 
-    // AI에게 내리는 강력한 지침 (게으름 방지)
     const systemPrompt = `
-      당신은 꼼꼼한 완벽주의자 여행 플래너입니다.
-      
-      [🚨 절대 규칙: 일정 완주]
-      1. 사용자가 요청한 **여행 기간(${days}) 전체**를 빠짐없이 작성하세요.
-      2. 2박 3일이면 **Day 1, Day 2, Day 3**가 모두 나와야 합니다.
-      3. 절대 중간에 "이후 일정은 비슷합니다"라거나 생략하지 마세요.
-      4. 응답이 길어져도 괜찮으니 **끝까지** 쓰세요.
+      당신은 '감성 여행 슈퍼앱'의 AI 엔진입니다. 
+      사용자에게 보여질 **모바일 앱 화면(View) HTML**을 생성하세요.
 
-      [🎨 디자인 지침: 인포그래픽 스타일]
-      - 결과물은 **HTML 코드만** 출력하세요.
-      - **구분선(<hr>)**과 **박스 스타일**을 적극 활용해 가독성을 높이세요.
-      - 이모지(✈️, 🏨, 🍽️)를 풍부하게 사용하세요.
+      [🎨 디자인 컨셉: Emotional Coral]
+      1. 메인 컬러: 코랄 핑크(#FF5A5F).
+      2. UI: 흰색 둥근 카드, 부드러운 그림자.
+      3. 필수: 장소명 옆에 <a href='https://www.google.com/maps/search/?api=1&query=장소명' target='_blank'>📍</a> 링크 삽입.
 
-      [응답 형식 (HTML)]
-      <div style="font-family: 'Pretendard', sans-serif; color: #333; line-height: 1.6;">
+      [🚨 작성 규칙]
+      1. **❌ 제목/헤더 금지:** 앱 상단에 표시되므로 본문만 작성.
+      2. **✅ 고객 요청 반영:** 사용자의 **추가 요청사항("${safeRequests}")**을 꼼꼼히 반영하여 일정이나 꿀팁에 적으세요.
+      3. **통합 타임라인:** 맛집/쇼핑을 일정 중간에 자연스럽게 배치.
+      4. **완주 필수:** ${daysText} 전체 일정 작성.
+
+      [📱 HTML 구조]
+      <div style="font-family: 'Pretendard', sans-serif;">
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+           </div>
+
+        <div style="background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid #eee;">
+           <h3 style="color: #333; margin: 0 0 10px 0;">🏨 ${safeHotel} 추천</h3>
+           </div>
         
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin-bottom: 30px; text-align: center;">
-            <h1 style="margin: 0; font-size: 2.2rem;">✈️ ${destination} 프리미엄 리포트</h1>
-            <p style="margin-top: 10px; opacity: 0.9; font-size: 1.1rem;">${departure} 출발 | ${days} 일정</p>
-            <div style="margin-top: 15px;">
-                <span style="background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem;">#${themeString}</span>
-            </div>
+        <div style="background: #FFF5F6; padding: 15px; border-radius: 15px; margin-bottom: 20px;">
+           <strong style="color: #FF5A5F;">💡 맞춤 여행 Tip</strong>
+           <p style="font-size: 13px; color: #555; margin-top:5px;">고객님의 요청("${safeRequests}")을 반영하여... (AI의 답변)</p>
         </div>
 
-        <div style="border: 2px solid #e9ecef; border-radius: 15px; padding: 25px; margin-bottom: 30px;">
-            <h3 style="margin-top: 0; text-align: center; border-bottom: 2px dashed #dee2e6; padding-bottom: 15px; margin-bottom: 20px;">🏨 추천 숙소 (거점별 2곳)</h3>
-            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                <div style="flex: 1; background: #e7f5ff; padding: 15px; border-radius: 10px; min-width: 250px;">
-                    <strong style="color: #1c7ed6; font-size: 1.1rem;">🅰️ 옵션 1</strong>
-                    <p style="font-size: 0.95rem; margin-top: 5px;">(호텔명/특징)</p>
-                    <p style="font-weight: bold;">1박 약 (금액)원</p>
-                </div>
-                <div style="flex: 1; background: #fff5f5; padding: 15px; border-radius: 10px; min-width: 250px;">
-                    <strong style="color: #fa5252; font-size: 1.1rem;">🅱️ 옵션 2</strong>
-                    <p style="font-size: 0.95rem; margin-top: 5px;">(호텔명/특징)</p>
-                    <p style="font-weight: bold;">1박 약 (금액)원</p>
-                </div>
-            </div>
+        <details open style="background: white; border-radius: 20px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+           <summary style="font-weight: 800; color: #FF5A5F; cursor: pointer; list-style: none; font-size: 18px;">Day 1 🔽</summary>
+           <div style="margin-top: 15px; padding-left: 10px; border-left: 2px solid #FFEDEE;">
+              </div>
+        </details>
+        <div style="text-align: center; margin-top: 30px; margin-bottom: 50px; color: #888; font-size: 12px;">
+           예상 총 경비: <strong style="color: #FF5A5F; font-size: 18px;">약 ${totalBudget}만원</strong>
         </div>
-
-        <h2 style="text-align: center; margin-bottom: 20px;">🗓️ Day-by-Day 완벽 플랜</h2>
-        
-        <div style="margin-bottom: 30px; border: 1px solid #dee2e6; border-radius: 12px; overflow: hidden;">
-            <div style="background-color: #343a40; color: white; padding: 10px 20px; font-weight: bold;">
-                Day N: (테마 제목)
-            </div>
-            <div style="padding: 20px;">
-                <ul style="list-style: none; padding: 0; margin: 0;">
-                    <li style="margin-bottom: 15px; border-bottom: 1px solid #f1f3f5; padding-bottom: 10px;">
-                        <span style="display: inline-block; width: 60px; font-weight: bold; color: #868e96;">오전</span>
-                        <strong style="color: #fa5252;">[일정]</strong> (내용)
-                    </li>
-                    <li style="margin-bottom: 15px; border-bottom: 1px solid #f1f3f5; padding-bottom: 10px;">
-                        <span style="display: inline-block; width: 60px; font-weight: bold; color: #868e96;">점심</span>
-                        <strong style="color: #228be6;">[맛집]</strong> (식당명 2곳)
-                    </li>
-                    <li style="margin-bottom: 15px; border-bottom: 1px solid #f1f3f5; padding-bottom: 10px;">
-                        <span style="display: inline-block; width: 60px; font-weight: bold; color: #868e96;">오후</span>
-                        <strong style="color: #fab005;">[관광]</strong> (내용)
-                    </li>
-                    <li>
-                        <span style="display: inline-block; width: 60px; font-weight: bold; color: #868e96;">저녁</span>
-                        <strong style="color: #7950f2;">[식사]</strong> (식당명 2곳)
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <div style="background-color: #fff9db; padding: 25px; border-radius: 15px; margin-top: 40px; border: 1px solid #ffe066;">
-            <h3 style="margin-top: 0; text-align: center; color: #e67700;">💰 예상 견적 요약 (1인 기준)</h3>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 15px; background: white;">
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 10px;">✈️ 항공/교통</td>
-                    <td style="padding: 10px; text-align: right; font-weight: bold;">(금액)원</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 10px;">🏨 숙박</td>
-                    <td style="padding: 10px; text-align: right; font-weight: bold;">(금액)원</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 10px;">🍽️ 식비/기타</td>
-                    <td style="padding: 10px; text-align: right; font-weight: bold;">(금액)원</td>
-                </tr>
-                <tr style="background-color: #fff3bf;">
-                    <td style="padding: 15px; font-weight: bold; font-size: 1.1rem;">총 합계</td>
-                    <td style="padding: 15px; text-align: right; font-weight: bold; font-size: 1.1rem; color: #d9480f;">(총액)원</td>
-                </tr>
-            </table>
-        </div>
-
       </div>
     `;
 
-    const userPrompt = `여행지: ${destination}, 기간: ${days}, 예산: ${budget}만원`;
+    const userPrompt = `여행지: ${destination}, 기간: ${daysText}, 투어형태: ${safeTourType}, 인원: ${safePeople}명, 숙소: ${safeHotel}, 추가요청: ${safeRequests}`;
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
       temperature: 0.7,
-      // 중요: 답변이 잘리지 않도록 토큰 수를 넉넉하게 잡았습니다.
-      max_tokens: 15000,
+      max_tokens: 10000,
     });
 
-    return NextResponse.json({ result: completion.choices[0].message.content });
+    let cleanHtml = completion.choices[0].message.content
+      .replace(/```html/g, '')
+      .replace(/```/g, '');
+
+    return NextResponse.json({ result: cleanHtml });
 
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: '서버 에러가 발생했습니다.' }, { status: 500 });
+    console.error("API Error:", error);
+    return NextResponse.json({ error: 'AI 응답 중 오류 발생' }, { status: 500 });
   }
 }

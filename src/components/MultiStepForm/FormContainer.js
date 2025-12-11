@@ -5,18 +5,29 @@ import { useForm, FormProvider } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
 
 import Step1Basic from "./Step1Basic";
-import Step2StayFlight from "./Step2StayFlight";
-import Step3Theme from "./Step3Theme";
-import Step4Transport from "./Step4Transport";
-import ProgressBar from "./ProgressBar";
+import Step2StayFlight from "./Step2StayFlight"; // 만약 파일이 없다면 이 줄은 지워야 할 수도 있습니다.
+import Step3Theme from "./Step3Theme";           // 만약 파일이 없다면 이 줄은 지워야 할 수도 있습니다.
+import Step4Transport from "./Step4Transport";   // 만약 파일이 없다면 이 줄은 지워야 할 수도 있습니다.
+import ProgressBar from "./ProgressBar";         // 만약 파일이 없다면 이 줄은 지워야 할 수도 있습니다.
 import AIResult from "../AIResult";
+
+// 초기 데이터 정의 (이게 없어서 에러가 날 뻔했습니다!)
+const INITIAL_DATA = {
+    destination: "",
+    startDate: "",
+    endDate: "",
+    budget: 0,
+    themes: [],
+    hotelType: "상관없음",
+};
 
 export default function FormContainer() {
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showResult, setShowResult] = useState(false);
 
-    const methods = useForm < TravelFormData > ({
+    // 1. <TravelFormData> 삭제 (JS 문법으로 변경)
+    const methods = useForm({
         defaultValues: INITIAL_DATA,
         mode: "onChange",
     });
@@ -32,21 +43,39 @@ export default function FormContainer() {
         setStep((prev) => Math.max(prev - 1, 1));
     };
 
-    const onSubmit = async (data: TravelFormData) => {
+    // 2. (data: TravelFormData) -> (data) 로 변경 (타입 제거)
+    const onSubmit = async (data) => {
         setIsSubmitting(true);
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        setIsSubmitting(false);
-        setShowResult(true);
-        console.log("Form Data:", data);
+
+        // 실제 AI 요청을 보내는 부분 (이전 코드와 연결)
+        try {
+            const response = await fetch("/api/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            });
+
+            const resultData = await response.json();
+            // 여기서 결과 처리를 해야 하지만, 일단 로그만 찍습니다.
+            console.log("AI Result:", resultData);
+
+        } catch (error) {
+            console.error(error);
+            alert("오류가 발생했습니다.");
+        } finally {
+            setIsSubmitting(false);
+            setShowResult(true);
+        }
     };
 
+    // 결과 화면 보여주기
     if (showResult) {
         return <AIResult data={methods.getValues()} />;
     }
 
     return (
         <div className="mx-auto max-w-2xl rounded-2xl bg-white p-6 shadow-xl md:p-10">
+            {/* ProgressBar 컴포넌트가 없다면 이 줄을 지우세요 */}
             <ProgressBar currentStep={step} totalSteps={4} />
 
             <FormProvider {...methods}>
@@ -59,6 +88,7 @@ export default function FormContainer() {
                             exit={{ x: -20, opacity: 0 }}
                             transition={{ duration: 0.3 }}
                         >
+                            {/* 각 단계별 컴포넌트가 실제로 존재하는지 확인해주세요! */}
                             {step === 1 && <Step1Basic />}
                             {step === 2 && <Step2StayFlight />}
                             {step === 3 && <Step3Theme />}
@@ -89,7 +119,7 @@ export default function FormContainer() {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="ml-auto rounded-lg bg-gradient-brand px-8 py-3 font-semibold text-white shadow-lg transition-transform hover:scale-105 disabled:opacity-70"
+                                className="ml-auto rounded-lg bg-blue-600 px-8 py-3 font-semibold text-white shadow-lg transition-transform hover:scale-105 disabled:opacity-70"
                             >
                                 {isSubmitting ? "AI 분석 중..." : "견적 요청하기"}
                             </button>
