@@ -23,7 +23,6 @@ export default function Home() {
   const [result, setResult] = useState(null);
   const [bgImage, setBgImage] = useState("");
 
-  // ✅ 연락처(contact), 요청사항(requests) 추가
   const [formData, setFormData] = useState({
     destination: "",
     startDate: "",
@@ -55,7 +54,6 @@ export default function Home() {
   };
 
   const generatePlan = async () => {
-    // 필수값 체크 (연락처도 필수로 받을지 선택 가능, 여기선 필수로 둠)
     if (!formData.destination || !formData.startDate || !formData.endDate || !formData.contact) {
       alert("여행지, 날짜, 연락처를 모두 입력해주세요!");
       return;
@@ -78,7 +76,6 @@ export default function Home() {
     }
   };
 
-  // 결과 화면으로 데이터 전송
   if (result) return <AIResult data={result} userInfo={formData} bgImage={bgImage} />;
 
   return (
@@ -198,25 +195,26 @@ export default function Home() {
               </div>
             </div>
 
-            {/* ✅ 7. 고객 정보 & 요청사항 (신규) */}
+            {/* 7. 고객 정보 & 요청사항 */}
             <div className="space-y-4 pt-4 border-t border-gray-100">
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 focus-within:ring-2 focus-within:ring-[#FF5A5F]">
                 <label className="flex items-center gap-2 text-sm font-bold text-gray-600 mb-2">
                   <Phone size={18} className="text-[#FF5A5F]" /> 연락처 (필수)
                 </label>
-                <input type="text" name="contact" value={formData.contact} onChange={handleInputChange} placeholder="010-1234-5678, 이메일 또는 카톡/인스타ID" className="w-full bg-transparent outline-none text-base font-medium text-gray-800 placeholder-gray-400" />
+                <input type="text" name="contact" value={formData.contact} onChange={handleInputChange} placeholder="010-1234-5678 또는 이메일" className="w-full bg-transparent outline-none text-base font-medium text-gray-800 placeholder-gray-400" />
               </div>
 
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 focus-within:ring-2 focus-within:ring-[#FF5A5F]">
                 <label className="flex items-center gap-2 text-sm font-bold text-gray-600 mb-2">
                   <MessageSquare size={18} className="text-[#FF5A5F]" /> 추가 요청사항
                 </label>
+                {/* ✅ 높이 수정됨: min-h-[120px] */}
                 <textarea
                   name="requests"
                   value={formData.requests}
                   onChange={handleInputChange}
                   placeholder="예: 부모님과 함께 가요, 휠체어 대여 필요해요, 해산물은 못 먹어요."
-                  className="w-full bg-transparent outline-none text-base font-medium text-gray-800 placeholder-gray-400 min-h-[80px] resize-none"
+                  className="w-full bg-transparent outline-none text-base font-medium text-gray-800 placeholder-gray-400 min-h-[120px] resize-none"
                 />
               </div>
             </div>
@@ -225,7 +223,7 @@ export default function Home() {
 
           <div className="mt-10">
             <button onClick={generatePlan} disabled={loading} className="w-full bg-[#FF5A5F] text-white py-4 rounded-2xl font-bold text-xl shadow-xl shadow-rose-200 hover:bg-[#FF4046] active:scale-95 transition-all flex items-center justify-center gap-2">
-              {loading ? <><Sparkles className="animate-spin" /> 맞춤 견적 짜는 중...</> : "나만의 맞춤 플랜 확인하기"}
+              {loading ? <><Sparkles className="animate-spin" /> 맞춤 견적 짜는 중...</> : "무료로 여행 계획 받기"}
             </button>
           </div>
         </div>
