@@ -1,12 +1,12 @@
+import { GoogleAnalytics } from '@next/third-parties/google'; // 👈 이거 추가됨
 import "./globals.css";
 
-// ✅ 메타데이터 설정 (검색엔진 & SNS 공유용)
 export const metadata = {
-  metadataBase: new URL('https://mytrip2.pro'), // 사장님 도메인
+  metadataBase: new URL('https://mytrip2.pro'),
   title: "My Trip Pro - AI 맞춤 여행 가이드",
   description: "어디로 떠날지 고민되시나요? AI가 3초 만에 당신만을 위한 숙소, 맛집, 여행 일정을 완벽하게 계획해 드립니다.",
   icons: {
-    icon: "/logo.png", // 파비콘 (브라우저 탭 아이콘)
+    icon: "/logo.png",
   },
   openGraph: {
     title: "설레는 여행의 시작, My Trip Pro",
@@ -15,10 +15,9 @@ export const metadata = {
     siteName: "My Trip Pro",
     images: [
       {
-        // 👇 가장 확실한 방법: 도메인이 포함된 '전체 주소'를 입력합니다.
-        url: "https://mytrip2.pro/og-final.jpg",
+        url: "https://mytrip2.pro/thumb-v2.png",
         width: 1200,
-        height: 634,
+        height: 630,
         alt: "My Trip Pro Preview",
       },
     ],
@@ -29,8 +28,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "My Trip Pro - AI 여행 플래너",
     description: "복잡한 여행 계획, 이제 AI에게 맡기세요.",
-    // 👇 트위터용 이미지도 전체 주소로 설정
-    images: ["https://mytrip2.pro/og-final.jpg"],
+    images: ["https://mytrip2.pro/thumb-v2.png"],
   },
 };
 
@@ -39,6 +37,8 @@ export default function RootLayout({ children }) {
     <html lang="ko">
       <body className="antialiased bg-gray-50 text-gray-900">
         {children}
+        {/* 👇 여기에 사장님의 G-코드를 넣어주세요! */}
+        <GoogleAnalytics gaId="G-DC122J4LJL" />
       </body>
     </html>
   );
