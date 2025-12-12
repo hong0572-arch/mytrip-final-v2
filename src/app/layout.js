@@ -1,8 +1,7 @@
 import Script from "next/script";
-import { Analytics } from '@vercel/analytics/next';
 import "./globals.css";
 
-// ✅ 메타데이터 설정
+// ✅ 메타데이터 (SEO & OG 썸네일)
 export const metadata = {
   metadataBase: new URL('https://mytrip2.pro'),
   title: "My Trip Pro - AI 맞춤 여행 가이드",
@@ -17,7 +16,8 @@ export const metadata = {
     siteName: "My Trip Pro",
     images: [
       {
-        url: "/og-final.jpg", // public 폴더의 파일명과 정확히 일치해야 합니다 (.jpg / .png 확인)
+        // ⚠️ public 폴더에 있는 파일명과 똑같아야 합니다!
+        url: "https://mytrip2.pro/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "My Trip Pro Preview",
@@ -26,24 +26,23 @@ export const metadata = {
     locale: "ko_KR",
     type: "website",
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "My Trip Pro - AI 여행 플래너",
-    description: "복잡한 여행 계획, 이제 AI에게 맡기세요.",
-    images: ["/og-final.jpg"], // 여기도 동일한 이미지 연결
-  },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="ko">
       <body className="antialiased bg-gray-50 text-gray-900">
-        {/* ✅ Google Analytics (GA4) */}
+
+        {/* ✅ Google Analytics (가장 안전한 수동 설치 방식) */}
+        {/* ID가 없으면 그냥 두셔도 에러는 안 납니다. */}
         <Script
           strategy="afterInteractive"
           src={`https://www.googletagmanager.com/gtag/js?id=G-DC122J4LJL`}
         />
-        <Script id="google-analytics" strategy="afterInteractive">
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+        >
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
@@ -53,9 +52,6 @@ export default function RootLayout({ children }) {
         </Script>
 
         {children}
-
-        {/* ✅ Vercel Analytics */}
-        <Analytics />
       </body>
     </html>
   );
