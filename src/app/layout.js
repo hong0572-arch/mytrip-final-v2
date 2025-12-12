@@ -30,7 +30,7 @@ export const metadata = {
     title: "My Trip Pro - AI 여행 플래너",
     description: "복잡한 여행 계획, 이제 AI에게 맡기세요.",
     // 👇 트위터용 이미지도 전체 주소로 설정
-    images: ["https://mytrip2.pro/og-image.png"],
+    images: ["https://mytrip2.pro/og-final.png"],
   },
 };
 
