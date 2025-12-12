@@ -9,7 +9,7 @@ const notoSansKr = Noto_Sans_KR({
 });
 
 export const metadata: Metadata = {
-  title: "My Trip .Pro - Premium Travel for You",
+  title: "MyTrip.Pro - Premium Travel for You",
   description: "AI-powered premium travel planning for women.",
 };
 

@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search, MapPin, Calendar, Wallet, Home as HomeIcon, Heart, User, Sparkles, Users, BedDouble, Compass, Phone, MessageSquare } from "lucide-react";
+import { Search, MapPin, Calendar, Wallet, Home as HomeIcon, Heart, User, Sparkles, Users, BedDouble, Compass } from "lucide-react";
 import AIResult from "../components/AIResult";
 
-// 📸 배경 이미지 URL
 const backgroundImages = [
   "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1498855926480-d98e83099315?q=80&w=2070&auto=format&fit=crop",
@@ -32,8 +31,6 @@ export default function Home() {
     hotelType: "호텔",
     tourType: "자유여행",
     themes: [],
-    contact: "",
-    requests: "",
   });
 
   useEffect(() => {
@@ -54,8 +51,8 @@ export default function Home() {
   };
 
   const generatePlan = async () => {
-    if (!formData.destination || !formData.startDate || !formData.endDate || !formData.contact) {
-      alert("여행지, 날짜, 연락처를 모두 입력해주세요!");
+    if (!formData.destination || !formData.startDate || !formData.endDate) {
+      alert("여행지와 날짜를 모두 입력해주세요!");
       return;
     }
     setLoading(true);
@@ -76,13 +73,14 @@ export default function Home() {
     }
   };
 
-  if (result) return <AIResult data={result} userInfo={formData} bgImage={bgImage} />;
+  // ✅ userInfo={formData} 추가! (이게 핵심)
+  if (result) return <AIResult data={result} userInfo={formData} />;
 
   return (
     <div className="h-screen w-full flex justify-center items-center bg-gray-100 sm:p-8 font-sans relative overflow-hidden">
 
       {bgImage && (
-        <img src={bgImage} alt="Travel Background" className="absolute inset-0 w-full h-full object-cover z-0" />
+        <img src={bgImage} alt="nd" className="absolute inset-0 w-full h-full object-cover z-0" />
       )}
 
       <motion.div
@@ -90,6 +88,7 @@ export default function Home() {
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-[420px] max-h-[90vh] bg-white/95 backdrop-blur-sm sm:rounded-[40px] sm:shadow-[0_20px_40px_rgba(0,0,0,0.3)] sm:border-8 sm:border-white/50 overflow-hidden relative flex flex-col z-10"
       >
+
         <div className="bg-transparent px-6 pt-8 pb-2 flex justify-between items-center sticky top-0 z-10 shrink-0"></div>
 
         <div className="flex-1 overflow-y-auto scrollbar-hide px-6 pt-2 pb-32">
@@ -100,14 +99,13 @@ export default function Home() {
 
           <div className="mb-8">
             <h1 className="text-3xl font-extrabold text-gray-900 leading-tight">
-              나만의 여행,<br />
-              <span className="text-[#FF5A5F]">어떻게 준비할까요?</span>
+              어떤 스타일로<br />
+              <span className="text-[#FF5A5F]">떠나시나요?</span>
             </h1>
           </div>
 
           <div className="space-y-6">
 
-            {/* 1. 여행지 */}
             <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 focus-within:ring-2 focus-within:ring-[#FF5A5F]">
               <label className="flex items-center gap-2 text-sm font-bold text-gray-600 mb-2">
                 <MapPin size={18} className="text-[#FF5A5F]" /> 여행지
@@ -115,7 +113,6 @@ export default function Home() {
               <input type="text" name="destination" value={formData.destination} onChange={handleInputChange} placeholder="예: 파리, 제주도" className="w-full bg-transparent outline-none text-lg font-bold text-gray-800" />
             </div>
 
-            {/* 2. 날짜 */}
             <div className="flex gap-3">
               <div className="flex-1 bg-gray-50 p-4 rounded-2xl border border-gray-100">
                 <label className="block text-xs font-bold text-gray-500 mb-1">가는 날</label>
@@ -127,7 +124,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* 3. 투어 형태 */}
             <div>
               <label className="flex items-center gap-2 text-sm font-bold text-gray-600 mb-3">
                 <Compass size={18} className="text-[#FF5A5F]" /> 투어 형태
@@ -156,7 +152,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* 4. 인원 */}
             <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex justify-between items-center">
               <label className="flex items-center gap-2 text-sm font-bold text-gray-600">
                 <Users size={18} className="text-[#FF5A5F]" /> 인원
@@ -168,7 +163,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* 5. 예산 */}
             <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
               <label className="flex justify-between text-sm font-bold text-gray-600 mb-4">
                 <div className="flex items-center gap-2"><Wallet size={18} className="text-[#FF5A5F]" /> 인당 예산</div>
@@ -177,7 +171,6 @@ export default function Home() {
               <input type="range" name="budget" min="10" max="500" step="10" value={formData.budget} onChange={handleInputChange} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#FF5A5F]" />
             </div>
 
-            {/* 6. 숙소 취향 */}
             <div>
               <label className="flex items-center gap-2 text-sm font-bold text-gray-600 mb-3">
                 <BedDouble size={18} className="text-[#FF5A5F]" /> 선호 숙소
@@ -195,27 +188,21 @@ export default function Home() {
               </div>
             </div>
 
-            {/* 7. 고객 정보 & 요청사항 */}
-            <div className="space-y-4 pt-4 border-t border-gray-100">
-              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 focus-within:ring-2 focus-within:ring-[#FF5A5F]">
-                <label className="flex items-center gap-2 text-sm font-bold text-gray-600 mb-2">
-                  <Phone size={18} className="text-[#FF5A5F]" /> 연락처 (필수)
-                </label>
-                <input type="text" name="contact" value={formData.contact} onChange={handleInputChange} placeholder="010-1234-5678 또는 이메일" className="w-full bg-transparent outline-none text-base font-medium text-gray-800 placeholder-gray-400" />
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 focus-within:ring-2 focus-within:ring-[#FF5A5F]">
-                <label className="flex items-center gap-2 text-sm font-bold text-gray-600 mb-2">
-                  <MessageSquare size={18} className="text-[#FF5A5F]" /> 추가 요청사항
-                </label>
-                {/* ✅ 높이 수정됨: min-h-[120px] */}
-                <textarea
-                  name="requests"
-                  value={formData.requests}
-                  onChange={handleInputChange}
-                  placeholder="예: 부모님과 함께 가요, 휠체어 대여 필요해요, 해산물은 못 먹어요."
-                  className="w-full bg-transparent outline-none text-base font-medium text-gray-800 placeholder-gray-400 min-h-[120px] resize-none"
-                />
+            <div>
+              <label className="block text-sm font-bold text-gray-600 mb-3">여행 테마</label>
+              <div className="flex flex-wrap gap-2">
+                {['힐링', '맛집탐방', '쇼핑', '인생샷', '액티비티'].map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => {
+                      const newThemes = formData.themes.includes(tag) ? formData.themes.filter(t => t !== tag) : [...formData.themes, tag];
+                      setFormData({ ...formData, themes: newThemes });
+                    }}
+                    className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${formData.themes.includes(tag) ? 'bg-[#FF5A5F] text-white shadow-md' : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                  >
+                    {tag}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -223,10 +210,18 @@ export default function Home() {
 
           <div className="mt-10">
             <button onClick={generatePlan} disabled={loading} className="w-full bg-[#FF5A5F] text-white py-4 rounded-2xl font-bold text-xl shadow-xl shadow-rose-200 hover:bg-[#FF4046] active:scale-95 transition-all flex items-center justify-center gap-2">
-              {loading ? <><Sparkles className="animate-spin" /> 맞춤 견적 짜는 중...</> : "무료로 여행 계획 받기"}
+              {loading ? <><Sparkles className="animate-spin" /> 여행 계획 짜는 중...</> : "여행 시작하기"}
             </button>
           </div>
         </div>
+
+        {loading && (
+          <div className="absolute inset-0 bg-white/95 z-50 flex flex-col items-center justify-center p-8 text-center">
+            <motion.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 1.5 }} className="mb-6"><span className="text-6xl">🧳</span></motion.div>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">여행 전문가 연결 중</h3>
+            <p className="text-gray-500 text-sm">선택하신 스타일대로<br />최적의 코스를 설계합니다.</p>
+          </div>
+        )}
 
         <div className="bg-white border-t border-gray-100 px-8 py-4 flex justify-between items-center sticky bottom-0 z-20 shrink-0 pb-8">
           <HomeIcon size={26} className="text-[#FF5A5F]" />
