@@ -16,9 +16,9 @@ export const metadata = {
     images: [
       {
         // 👇 가장 확실한 방법: 도메인이 포함된 '전체 주소'를 입력합니다.
-        url: "https://mytrip2.pro/og-final.png",
+        url: "https://mytrip2.pro/og-final.jpg",
         width: 1200,
-        height: 630,
+        height: 634,
         alt: "My Trip Pro Preview",
       },
     ],
@@ -30,7 +30,7 @@ export const metadata = {
     title: "My Trip Pro - AI 여행 플래너",
     description: "복잡한 여행 계획, 이제 AI에게 맡기세요.",
     // 👇 트위터용 이미지도 전체 주소로 설정
-    images: ["https://mytrip2.pro/og-final.png"],
+    images: ["https://mytrip2.pro/og-final.jpg"],
   },
 };
 
