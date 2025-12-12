@@ -1,5 +1,5 @@
 import Script from "next/script";
-import { Analytics } from '@vercel/analytics/react';
+import { Analytics } from '@vercel/analytics/next';
 import "./globals.css";
 
 // ✅ 메타데이터 설정
