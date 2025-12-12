@@ -16,7 +16,7 @@ export const metadata = {
     images: [
       {
         // 👇 가장 확실한 방법: 도메인이 포함된 '전체 주소'를 입력합니다.
-        url: "https://mytrip2.pro/og-image.png",
+        url: "https://mytrip2.pro/og-final.png",
         width: 1200,
         height: 630,
         alt: "My Trip Pro Preview",
