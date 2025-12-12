@@ -1,5 +1,18 @@
 import Script from "next/script";
 import "./globals.css";
+import { Analytics } from '@vercel/analytics/react'; // 이거 하나 추가
+// ...
+export default function RootLayout({ children }) {
+  return (
+    <html lang="ko">
+      <body>
+        {children}
+        <Analytics /> {/* 이거 한 줄 추가 */}
+      </body>
+    </html>
+  );
+}
+
 
 export const metadata = {
   metadataBase: new URL('https://mytrip2.pro'),
