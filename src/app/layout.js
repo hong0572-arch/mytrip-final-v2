@@ -1,4 +1,5 @@
 import "./globals.css";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 // 1. OG 태그 (수동 설정과 동일한 효과)
 // Next.js App Router에서는 이 방식이 '수동'의 정석입니다.
