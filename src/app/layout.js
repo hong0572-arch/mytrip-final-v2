@@ -21,19 +21,21 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-  // ✅ 사장님 ID (여기서 수정 가능)
   const GA_ID = "G-DC122J4LJL";
 
   return (
     <html lang="ko">
-      <head>
-        {/* 1. 구글 스크립트 로드 (HTML 표준 방식) */}
+      {/* head 태그는 Next.js에게 맡기고 비워둡니다 */}
+      <head />
+
+      <body className="antialiased bg-gray-50 text-gray-900">
+
+        {/* ✅ 전략 수정: Body 태그 시작하자마자 스크립트 박아넣기 */}
+        {/* 이러면 소스 보기에서 무조건 보입니다. */}
         <script
           async
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-        ></script>
-
-        {/* 2. 구글 설정 코드 (HTML 강제 주입) */}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -44,8 +46,7 @@ export default function RootLayout({ children }) {
             `,
           }}
         />
-      </head>
-      <body className="antialiased bg-gray-50 text-gray-900">
+
         {children}
       </body>
     </html>
