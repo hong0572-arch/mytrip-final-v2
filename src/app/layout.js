@@ -1,36 +1,36 @@
 import "./globals.css";
+// 방금 만든 부품 가져오기
+import GoogleAnalytics from "../components/GoogleAnalytics";
 
 export const metadata = {
   metadataBase: new URL('https://mytrip2.pro'),
-  title: "My Trip Pro",
-  description: "여행 가이드",
+  title: "My Trip Pro - AI 맞춤 여행 가이드",
+  description: "어디로 떠날지 고민되시나요? AI가 3초 만에 여행 계획을 짜드립니다.",
   icons: { icon: "/logo.png" },
+  openGraph: {
+    title: "설레는 여행의 시작, My Trip Pro",
+    description: "AI가 짜주는 나만의 맞춤 여행 계획표!",
+    url: "https://mytrip2.pro",
+    siteName: "My Trip Pro",
+    images: [{
+      url: "https://mytrip2.pro/og-final.jpg",
+      width: 1200,
+      height: 630,
+    }],
+    locale: "ko_KR",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="ko">
-      <head>
-        {/* 1. 구글 스크립트 (HTML 표준 방식) */}
-        <script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=G-DC122J4LJL"
-        ></script>
-
-        {/* 2. 설정 코드 (HTML 강제 주입) */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-DC122J4LJL');
-            `,
-          }}
-        />
-      </head>
       <body className="antialiased bg-gray-50 text-gray-900">
         {children}
+
+        {/* ✅ 여기에 부품 조립! (매우 깔끔) */}
+        <GoogleAnalytics />
+
       </body>
     </html>
   );
