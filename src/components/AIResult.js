@@ -2,30 +2,67 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Download, ChevronLeft, Share2, Heart, MapPin, Mail, MessageCircle, CheckCircle, Loader2 } from "lucide-react";
+import { Download, ChevronLeft, Share2, Heart, MapPin, Mail, MessageCircle, CheckCircle, Loader2, Copy } from "lucide-react";
 
 export default function AIResult({ data, userInfo, bgImage }) {
 
     const [isSending, setIsSending] = useState(false);
     const [isSent, setIsSent] = useState(false);
 
+    // ✅ 1. 복사용 텍스트 생성 함수 (HTML -> 보기 좋은 텍스트로 변환)
+    const generateClipboardText = () => {
+        // HTML 태그 제거 및 줄바꿈 처리
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = data.replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n\n");
+        const cleanBody = tempDiv.innerText;
+
+        return `
+✈️ [My Trip Pro] AI 맞춤 여행 계획
+
+📍 여행지: ${userInfo?.destination}
+📅 일정: ${userInfo?.startDate} ~ ${userInfo?.endDate}
+👥 인원: ${userInfo?.people}명
+💰 예산: ${userInfo?.budget}만원
+🏨 숙소: ${userInfo?.hotelType}
+✨ 테마: ${userInfo?.themes?.join(", ")}
+
+📞 연락처: ${userInfo?.contact || "미입력"}
+📝 요청사항: ${userInfo?.request || "없음"}
+
+--------------------------------
+[상세 일정]
+${cleanBody}
+--------------------------------
+AI가 설계한 여행 계획입니다.
+전문가님, 이대로 견적 및 예약 가능할까요?
+`;
+    };
+
     const handleDownload = () => {
         window.print();
     };
 
+    // ✅ 2. 공유하기 버튼 (친구에게 텍스트 보내기)
     const handleShare = async () => {
+        const shareText = generateClipboardText();
+
         if (navigator.share) {
             try {
                 await navigator.share({
                     title: `${userInfo?.destination} 여행 계획`,
-                    text: 'AI가 만들어준 멋진 여행 계획을 확인해보세요!',
-                    url: window.location.href,
+                    text: shareText,
                 });
             } catch (error) {
                 console.log('공유 실패:', error);
             }
         } else {
-            alert("링크가 복사되었습니다!");
+            // PC 등 공유하기 기능 없으면 클립보드 복사
+            try {
+                await navigator.clipboard.writeText(shareText);
+                alert("여행 계획이 복사되었습니다! 원하시는 곳에 붙여넣기(Ctrl+V) 하세요.");
+            } catch (err) {
+                alert("복사에 실패했습니다.");
+            }
         }
     };
 
@@ -40,7 +77,6 @@ export default function AIResult({ data, userInfo, bgImage }) {
             const response = await fetch('/api/email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // userInfo 전체와 AI 결과 HTML(data)을 함께 전송
                 body: JSON.stringify({
                     ...userInfo,
                     aiResult: data
@@ -63,7 +99,17 @@ export default function AIResult({ data, userInfo, bgImage }) {
         }
     };
 
-    const handleKakaoChat = () => {
+    // ✅ 3. 카카오톡 상담 버튼 (복사 후 채팅방 열기)
+    const handleKakaoChat = async () => {
+        const text = generateClipboardText();
+        try {
+            await navigator.clipboard.writeText(text);
+            alert("📋 여행 계획이 복사되었습니다!\n\n상담 채팅방이 열리면 입력창에\n'붙여넣기'를 해주세요.");
+        } catch (err) {
+            console.error("복사 실패", err);
+            alert("자동 복사에 실패했습니다. 채팅방에서 상담해주세요.");
+        }
+        // 사장님 카톡 링크
         window.open('http://pf.kakao.com/_xcJhrn/chat', '_blank');
     };
 
@@ -91,12 +137,13 @@ export default function AIResult({ data, userInfo, bgImage }) {
                         className="w-full h-full object-cover"
                         onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070"; }}
                     />
-                    <div className="absolute inset-0 bg-linearto-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 
                     {/* 상단 네비게이션 */}
                     <div className="absolute top-0 left-0 right-0 p-6 pt-8 flex justify-between items-center text-white z-10">
                         <ChevronLeft className="w-8 h-8 cursor-pointer drop-shadow-md hover:scale-110 transition-transform" onClick={() => window.location.reload()} />
                         <div className="flex gap-4">
+                            {/* 공유 버튼 클릭 시 텍스트 공유 실행 */}
                             <Share2 className="w-6 h-6 cursor-pointer drop-shadow-md hover:scale-110 transition-transform" onClick={handleShare} />
                             <Heart className="w-6 h-6 cursor-pointer drop-shadow-md hover:scale-110 transition-transform" />
                         </div>
@@ -116,10 +163,8 @@ export default function AIResult({ data, userInfo, bgImage }) {
                             {userInfo?.destination || "여행지"}<br />
                             <span className="text-rose-200">여행 가이드</span>
                         </h1>
-                        {/* 기존에 있던 위치에서 삭제됨 */}
                     </div>
 
-                    {/* ✅ 오른쪽 하단 (B 영역): 투어 타입 및 인원 정보 이동됨 */}
                     <div className="absolute bottom-0 right-0 p-6 text-white z-10 text-right">
                         <div className="flex items-center justify-end gap-1 text-sm text-gray-100 opacity-90 drop-shadow-md font-medium bg-black/20 px-3 py-1.5 rounded-full backdrop-blur-[2px]">
                             <MapPin size={14} /> {userInfo?.tourType || "자유여행"} · {userInfo?.people || 2}명
@@ -153,11 +198,11 @@ export default function AIResult({ data, userInfo, bgImage }) {
                                 ) : isSent ? (
                                     <><CheckCircle size={20} /> 점검 요청 완료!</>
                                 ) : (
-                                    <><Mail size={20} /> 전문가에게 점검 받기 (자동 전송)</>
+                                    <><Mail size={20} /> 전문가에게 점검 받기 (이메일)</>
                                 )}
                             </button>
 
-                            {/* 2. 카카오톡 상담 */}
+                            {/* 2. 카카오톡 상담 (복사 기능 추가됨) */}
                             <button
                                 onClick={handleKakaoChat}
                                 className="w-full bg-[#FAE100] text-[#371D1E] py-4 rounded-2xl font-bold text-lg shadow-sm flex items-center justify-center gap-2 active:scale-95 transition-transform hover:bg-[#FCE620]"
@@ -165,6 +210,9 @@ export default function AIResult({ data, userInfo, bgImage }) {
                                 <MessageCircle size={20} />
                                 카카오톡으로 상담하기
                             </button>
+                            <p className="text-xs text-center text-gray-400 -mt-1 pb-2">
+                                * 클릭 시 여행 계획이 자동으로 복사됩니다.
+                            </p>
 
                             {/* 3. PDF 저장 */}
                             <button
