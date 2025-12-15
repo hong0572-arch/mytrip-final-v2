@@ -4,20 +4,17 @@ export async function POST(req) {
   try {
     const { destination, startDate, endDate, people, budget, hotelType, tourType, themes, contact, request } = await req.json();
 
-    // ✅ 구글 API 키 확인
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return Response.json({ error: "API Key 설정 오류 (GEMINI_API_KEY 확인 필요)" }, { status: 500 });
-    }
+    if (!apiKey) return Response.json({ error: "API Key Error" }, { status: 500 });
 
     const genAI = new GoogleGenerativeAI(apiKey);
 
-    // ✅ 사장님이 선택하신 스피드스터 모델!
-    // (혹시 2.5 버전이 아직 지역 제한이 있다면 'gemini-1.5-flash'로 바꾸면 됩니다)
+    // ✅ [수정 완료] 사장님 지시대로 설정했습니다!
+    // 1. 모델: gemini-2.5-flash-lite (속도 최강)
+    // 2. 온도: 0.3 (전문성, 일관성, 규칙 준수)
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash-lite",
       generationConfig: {
-        // 온도를 낮춰서 빠르고 정확하게
         temperature: 0.3,
         maxOutputTokens: 4000,
       }
@@ -26,41 +23,36 @@ export async function POST(req) {
     // 날짜 계산
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const diffDays = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
 
-    // 일정 방식
     const scheduleFormat = diffDays >= 11
-      ? "장기 여행이므로 '주 단위(Week 1, Week 2...)'로 요약. 세부 일정보다 핵심 테마와 이동 경로 위주."
-      : "여행 기간에 맞춰 '일자별(Day 1, Day 2...)' 상세 스케줄 작성 (오전/오후/저녁).";
+      ? "장기 여행이므로 '주 단위(Week 1, Week 2...)'로 요약하여 작성하세요."
+      : "여행 기간에 맞춰 '일자별(Day 1, Day 2...)' 상세 스케줄을 작성하세요.";
 
-    // ✅ 프롬프트 합치기 (Gemini는 시스템/유저 메시지를 합쳐서 주는 게 성능이 좋습니다)
-    const finalPrompt = `
+    // ✅ 디자인 깨짐 방지: "HTML 절대 금지 & 마크다운 전용" 명령
+    const prompt = `
     당신은 20년 경력의 VIP 전담 여행 컨설턴트입니다. 
-    빠르고 정확하게 최고의 여행 계획을 설계하세요.
-    문체는 정중하고 신뢰감 있게(~입니다/합니다) 작성하세요.
+    
+    [🚨 절대 규칙 - 디자인을 위해 필수]
+    1. **절대 HTML 태그(<h3>, <b>, <span> 등)를 사용하지 마세요.**
+    2. 무조건 **순수 마크다운(Markdown)** 문법만 사용하세요.
+       - 제목: ### (O), <h3> (X)
+       - 강조: **단어** (O), <b>단어</b> (X)
+       - 리스트: - 항목 (O), <ul><li> (X)
+    3. 구분선이 필요하면 '---'를 사용하세요.
 
-    [작성 규칙]
-    1. **일정 포맷:** ${scheduleFormat}
-    2. **예산 분석:** 항공/숙박/식비/교통비/예비비 비중(%)과 금액 제안.
-    3. **전문가 Tip:** 날씨, 환전, 주의사항 등 실질적인 조언 포함.
-    4. **가독성:** <h3>, <b>, <ul> 태그 사용 (마크다운 금지).
-
-    [고객 요청 정보]
-    - 여행지: ${destination}
-    - 일정: ${startDate} ~ ${endDate} (총 ${diffDays}일)
+    [여행 정보]
+    - 여행지: ${destination} (${diffDays}일)
     - 인원: ${people}명
-    - 예산: ${budget}만원
-    - 숙소: ${hotelType}
-    - 스타일: ${tourType}
+    - 예산: ${budget}만원 (구체적인 항목별 배분 제안 포함)
+    - 스타일: ${tourType}, 숙소: ${hotelType}
     - 테마: ${themes.join(', ')}
-    - 추가 요청: ${request || "없음"}
-
-    위 조건을 바탕으로 고객이 감동할 만한 여행 계획서를 작성해주세요.
+    - 일정 포맷: ${scheduleFormat}
+    
+    위 정보를 바탕으로 읽기 편하고 전문적인 여행 계획서를 작성해주세요.
     `;
 
-    // 요청 보내기
-    const result = await model.generateContent(finalPrompt);
+    const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
 
@@ -68,6 +60,6 @@ export async function POST(req) {
 
   } catch (error) {
     console.error("Gemini Error:", error);
-    return Response.json({ error: `AI 요청 실패: ${error.message}` }, { status: 500 });
+    return Response.json({ error: `AI Error: ${error.message}` }, { status: 500 });
   }
 }
