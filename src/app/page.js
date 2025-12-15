@@ -40,8 +40,41 @@ export default function Home() {
     setBgImage(randomImage);
   }, []);
 
+  // ✅ [수정됨] 30일 제한 및 날짜 검증 로직 추가
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    // 종료일 선택 시 검증
+    if (name === "endDate" && formData.startDate) {
+      const start = new Date(formData.startDate);
+      const end = new Date(value);
+      const diffTime = Math.abs(end - start);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays > 30) {
+        alert("최적의 AI 설계를 위해 여행 기간은 최대 30일까지만 가능합니다.");
+        return; // 입력 막음
+      }
+      if (end < start) {
+        alert("종료일은 시작일보다 빠를 수 없습니다.");
+        return;
+      }
+    }
+
+    // 시작일 변경 시 종료일과의 간격 재검증
+    if (name === "startDate" && formData.endDate) {
+      const start = new Date(value);
+      const end = new Date(formData.endDate);
+      const diffTime = Math.abs(end - start);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays > 30 || end < start) {
+        // 기간이 안 맞으면 종료일 초기화
+        setFormData({ ...formData, [name]: value, endDate: "" });
+        return;
+      }
+    }
+
     setFormData({ ...formData, [name]: value });
   };
 
@@ -249,7 +282,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-white/95 z-50 flex flex-col items-center justify-center p-8 text-center">
             <motion.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 1.5 }} className="mb-6"><span className="text-6xl">🧳</span></motion.div>
             <h3 className="text-2xl font-bold text-gray-800 mb-2">여행 전문가 연결 중</h3>
-            <p className="text-gray-500 text-sm">선택하신 스타일대로<br />최적의 코스를 설계합니다.</p>
+            <p className="text-gray-500 text-sm">20년차 베테랑 가이드가<br />최적의 플랜을 설계합니다.</p>
           </div>
         )}
 
