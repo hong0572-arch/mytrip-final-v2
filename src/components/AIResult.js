@@ -8,7 +8,7 @@ import { Download, ChevronLeft, Share2, MapPin, MessageCircle, Mail, Loader2 } f
 
 export default function AIResult({ data, userInfo, bgImage }) {
 
-    // 메일 전송 중인지 확인하는 상태 (로딩바 표시용)
+    // 메일 전송 상태 (로딩바)
     const [isSending, setIsSending] = useState(false);
 
     // ✅ 복사용 텍스트 생성
@@ -23,11 +23,11 @@ export default function AIResult({ data, userInfo, bgImage }) {
 ${data}`;
     };
 
-    // ✅ [핵심 기능] 버튼 누르면 서버(API)로 전송 요청
+    // ✅ [통합 1] 서버 API로 이메일 전송 (Nodemailer 연동)
     const handleExpertReview = async () => {
         if (!confirm("전문가에게 상세 견적을 요청하시겠습니까?")) return;
 
-        setIsSending(true); // 로딩 시작
+        setIsSending(true);
         try {
             const response = await fetch("/api/email", {
                 method: "POST",
@@ -43,7 +43,7 @@ ${data}`;
             });
 
             if (response.ok) {
-                alert("✅ 견적 요청이 발송되었습니다!\n메일함을 확인해주세요.");
+                alert("✅ 견적 요청이 발송되었습니다!\niwingzpro@gmail.com 메일함을 확인해주세요.");
             } else {
                 alert("❌ 전송 실패: 잠시 후 다시 시도해주세요.");
             }
@@ -51,7 +51,7 @@ ${data}`;
             console.error(error);
             alert("서버 오류가 발생했습니다.");
         } finally {
-            setIsSending(false); // 로딩 끝
+            setIsSending(false);
         }
     };
 
@@ -71,7 +71,7 @@ ${data}`;
         window.open('http://pf.kakao.com/_xcJhrn/chat', '_blank');
     };
 
-    // 이미지 설정 (Unsplash 실제 사진 사용)
+    // ✅ [통합 2] 이미지 소스 (Unsplash 실제 사진)
     const searchKeyword = userInfo?.destination ? encodeURIComponent(userInfo.destination) : 'luxury travel';
     const headerImageSrc = `https://source.unsplash.com/featured/?${searchKeyword},travel,scenery`;
 
@@ -95,25 +95,26 @@ ${data}`;
                     </div>
                 </div>
 
-                {/* 본문 영역 */}
+                {/* ✅ [통합 3] 본문 디자인 (마크다운 적용) */}
                 <div className="flex-1 overflow-y-auto bg-white -mt-6 rounded-t-[30px] relative z-10 px-6 pt-8 pb-20">
                     <article className="prose prose-sm prose-slate max-w-none">
                         <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
                             h1: ({ node, ...props }) => <h1 className="text-2xl font-bold text-gray-900 mt-6 mb-4 border-b pb-2 border-gray-100" {...props} />,
                             h2: ({ node, ...props }) => <h2 className="text-xl font-bold text-[#FF5A5F] mt-8 mb-3 flex items-center gap-2" {...props} />,
+                            h3: ({ node, ...props }) => <h3 className="text-lg font-bold text-gray-800 mt-6 mb-2 bg-gray-50 p-3 rounded-xl border-l-4 border-[#FF5A5F]" {...props} />,
                             strong: ({ node, ...props }) => <strong className="text-[#FF5A5F] font-extrabold" {...props} />,
                             ul: ({ node, ...props }) => <ul className="list-none space-y-3 my-4 pl-1" {...props} />,
                             li: ({ node, children, ...props }) => (<li className="flex gap-3 text-gray-600 text-[15px] leading-relaxed" {...props}><span className="text-[#FF5A5F] mt-1.5 shrink-0">•</span><span>{children}</span></li>),
+                            hr: ({ node, ...props }) => <hr className="my-8 border-gray-200" {...props} />
                         }}>{data}</ReactMarkdown>
                     </article>
 
-                    {/* ✅ 하단 버튼 영역 */}
+                    {/* 하단 버튼 영역 */}
                     <div className="mt-10 flex flex-col gap-3">
                         <button onClick={handleKakaoChat} className="w-full bg-[#FAE100] text-[#371D1E] py-4 rounded-xl font-bold text-lg shadow-sm flex items-center justify-center gap-2 hover:bg-[#FCE620]">
                             <MessageCircle size={20} /> 카카오톡 상담하기
                         </button>
                         <div className="flex gap-3">
-                            {/* 여기가 핵심입니다. 로딩 중일 때 버튼 비활성화 기능 포함 */}
                             <button
                                 onClick={handleExpertReview}
                                 disabled={isSending}
