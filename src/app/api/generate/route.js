@@ -2,18 +2,26 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
-    try {
-        const { destination, startDate, endDate, people, budget, hotelType, tourType, themes, contact, request } = await req.json();
+  try {
+    const { destination, startDate, endDate, people, budget, hotelType, tourType, themes, contact, request } = await req.json();
 
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        const diffTime = Math.abs(end - start);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-        const prompt = `
+    // [수정 사항] Google Generative AI 모델 설정 강제 고정
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash-lite",
+      generationConfig: {
+        temperature: 0.3,
+        maxOutputTokens: 4000,
+      }
+    });
+
+    const prompt = `
     당신은 20년 경력의 VIP 전담 여행 컨설턴트입니다. 
     
     	[필수 포함 내용]
@@ -60,13 +68,13 @@ export async function POST(req) {
     - 추가 요청: ${request || "없음"}
     `;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
 
-        return NextResponse.json({ result: text });
-    } catch (error) {
-        console.error(error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    return NextResponse.json({ result: text });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
