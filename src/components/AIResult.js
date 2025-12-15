@@ -171,10 +171,14 @@ ${cleanMarkdown}`;
         window.open('http://pf.kakao.com/_xcJhrn/chat', '_blank');
     };
 
-    // ✅ [통합 2] 이미지 소스 (Pollinations AI 사용)
-    // Unsplash Source가 불안정하므로 AI 이미지 생성 API를 사용하여 확실한 이미지를 제공
-    const searchKeyword = userInfo?.destination ? encodeURIComponent(userInfo.destination) : 'luxury travel';
-    const headerImageSrc = `https://image.pollinations.ai/prompt/${searchKeyword}%20beautiful%20travel%20scenery%20landmark%20photography?width=1200&height=600&nologo=true&seed=${Math.floor(Math.random() * 1000)}`;
+    // ✅ [통합 2] 이미지 소스 (Unsplash Source 복구)
+    // 고객 요청: Unsplash에서 여행지에 맞는 이미지 가져오기
+    // AI가 제안한 영문 키워드를 사용하여 정확도 향상
+    const searchKeyword = mapData?.image_keyword
+        ? encodeURIComponent(mapData.image_keyword)
+        : (userInfo?.destination ? encodeURIComponent(userInfo.destination) : 'luxury travel');
+
+    const headerImageSrc = `https://source.unsplash.com/featured/?${searchKeyword},travel,scenery`;
 
     return (
         <div className="min-h-screen w-full flex justify-center bg-gray-100 sm:p-8 font-sans relative">
