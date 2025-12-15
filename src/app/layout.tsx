@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const notoSansKr = Noto_Sans_KR({
@@ -24,6 +25,7 @@ export default function RootLayout({
         className={`${notoSansKr.variable} antialiased bg-background text-foreground font-sans`}
       >
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );
