@@ -86,10 +86,41 @@ export default function Home() {
   };
 
   const generatePlan = async () => {
+    // 1. 필수 입력 검증 (여행지, 날짜, 연락처)
     if (!formData.destination || !formData.startDate || !formData.endDate) {
       alert("여행지와 날짜를 모두 입력해주세요!");
       return;
     }
+    if (!formData.contact || formData.contact.trim() === "") {
+      alert("연락처를 입력해주세요! (카톡/인스타ID 또는 이메일)");
+      return;
+    }
+
+    // 2. 연락처 유효성 검증 (간단한 포맷 체크)
+    const contact = formData.contact.trim();
+    // 이메일 형식 체크 (@ 포함 시)
+    if (contact.includes("@")) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(contact)) {
+        alert("올바른 이메일 형식이 아닙니다.");
+        return;
+      }
+    }
+    // 전화번호 형식 체크 (숫자로 시작 시)
+    else if (/^\d/.test(contact)) {
+      // 숫자, 하이픈, 공백 제외하고 10~11자리인지 체크
+      const onlyNums = contact.replace(/[^\d]/g, "");
+      if (onlyNums.length < 9 || onlyNums.length > 13) {
+        alert("올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)");
+        return;
+      }
+    }
+    // 그 외(카톡/인스타 ID)는 길이 체크만
+    else if (contact.length < 2) {
+      alert("연락처를 정확히 입력해주세요.");
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await fetch("/api/generate", {
