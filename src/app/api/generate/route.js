@@ -49,15 +49,29 @@ export async function POST(req) {
 
     [🚨 절대 규칙 2 - 데이터 포맷 (중요)]
     **응답의 맨 마지막**에, 여행 경로를 지도에 표시하기 위한 **JSON 데이터 블록**을 반드시 추가하세요.
-    형식은 다음과 같아야 하며, 절대 마크다운 코드블록(\`\`\`)으로 감싸지 말고 **순수 텍스트**로 붙이세요.
-    
-    ---MAP_DATA_START---
-    [
-      { "day": 1, "locations": [ {"name": "장소명", "lat": 35.xxx, "lng": 139.xxx}, ... ] },
-      ...
-    ]
-    ---MAP_DATA_END---
+    [맨 마지막에 JSON 데이터 추가]
+    모든 마크다운 출력이 끝난 후, 반드시 아래 형식의 JSON 데이터를 **코드 블럭 없이** pure text로 추가해주세요.
+    (AI 이미지 생성을 위한 영문 키워드를 포함해야 합니다.)
 
+    ---MAP_DATA_START---
+    {
+      "image_keyword": "Best photogenic spot in ${destination} landscape, travel photography, 8k", 
+      "markers": [
+        { "lat": 35.6895, "lng": 139.6917, "title": "도쿄 타워", "day": 1 },
+        ...
+      ],
+      "polylines": [
+        { "day": 1, "path": [[35.6, 139.6], [35.7, 139.7]] },
+        ...
+      ]
+    }
+    ---MAP_DATA_END---
+    
+    * image_keyword 설명: 여행지의 가장 대표적이고 아름다운 풍경을 생성할 수 있는 **영문 검색어** (예: "Eiffel Tower Paris sunny day", "Santorini Greece blue dome")
+    * markers 설명: 일정에 언급된 모든 장소의 좌표
+    * polylines 설명: 일자별 이동 경로
+    * 주의: JSON 데이터 외에는 어떤 텍스트도 start/end 마커 사이에 넣지 마세요.
+    
     [여행 정보]
     - 여행지: ${destination} (${diffDays}일)
     - 인원: ${people}명
