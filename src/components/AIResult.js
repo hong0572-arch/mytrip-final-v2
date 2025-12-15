@@ -27,48 +27,41 @@ ${data}
     };
 
     const handleShare = async () => {
+        // ... (공유 기능 기존 동일)
         const shareText = generateClipboardText();
         if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: `${userInfo?.destination} 여행 계획`,
-                    text: shareText,
-                });
-            } catch (error) { console.log('공유 실패:', error); }
+            try { await navigator.share({ title: `${userInfo?.destination} 여행 계획`, text: shareText }); }
+            catch (error) { console.log('공유 실패:', error); }
         } else {
-            try {
-                await navigator.clipboard.writeText(shareText);
-                alert("여행 계획이 복사되었습니다!");
-            } catch (err) { alert("복사 실패"); }
+            try { await navigator.clipboard.writeText(shareText); alert("여행 계획이 복사되었습니다!"); }
+            catch (err) { alert("복사 실패"); }
         }
     };
 
     const handleKakaoChat = async () => {
+        // ... (카톡 기능 기존 동일)
         const text = generateClipboardText();
-        try {
-            await navigator.clipboard.writeText(text);
-            alert("📋 여행 계획이 복사되었습니다!\n카카오톡 채팅방에 '붙여넣기' 해주세요.");
-        } catch (err) { console.error(err); }
+        try { await navigator.clipboard.writeText(text); alert("📋 여행 계획이 복사되었습니다!\n카카오톡 채팅방에 '붙여넣기' 해주세요."); }
+        catch (err) { console.error(err); }
         window.open('http://pf.kakao.com/_xcJhrn/chat', '_blank');
     };
 
-    // ✅ [복구] 전문가에게 이메일 문의하기 기능
-    const handleExpertReview = async () => {
-        const subject = `[여행문의] ${userInfo?.destination} 여행 견적 요청`;
-        const body = generateClipboardText();
+    // ✅ [수정 1] 이미지 소스 변경 (AI 생성 -> Unsplash 실제 사진 검색)
+    // destination이 있으면 그것으로, 없으면 'luxury travel'로 검색
+    const searchKeyword = userInfo?.destination ? encodeURIComponent(userInfo.destination) : 'luxury travel';
+    // source.unsplash.com은 키워드에 맞는 실제 고퀄리티 사진을 제공합니다.
+    const headerImageSrc = `https://source.unsplash.com/featured/?${searchKeyword},travel,scenery`;
 
-        // 모바일에서는 mailto 링크로 이메일 앱 호출
-        const mailtoLink = `mailto:support@mytrip.pro?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        window.location.href = mailtoLink;
-    };
 
-    // 이미지 검색어 설정
-    const imageKeyword = userInfo?.destination ? encodeURIComponent(userInfo.destination + " travel scenery") : "travel";
-    const headerImageSrc = `https://image.pollinations.ai/prompt/${imageKeyword}?width=800&height=600&nologo=true`;
+    // ✅ [수정 2] 이메일 링크 미리 생성 (버튼 클릭 이벤트 대신 a 태그 사용)
+    const mailSubject = encodeURIComponent(`[여행문의] ${userInfo?.destination} 여행 견적 요청`);
+    const mailBody = encodeURIComponent(generateClipboardText());
+    const mailtoLink = `mailto:support@mytrip.pro?subject=${mailSubject}&body=${mailBody}`;
+
 
     return (
         <div className="min-h-screen w-full flex justify-center bg-gray-100 sm:p-8 font-sans relative">
-
+            {/* 배경 이미지는 유지 */}
             {bgImage && (
                 <img src={bgImage} alt="Travel Background" className="absolute inset-0 w-full h-full object-cover z-0 opacity-50" />
             )}
@@ -84,10 +77,12 @@ ${data}
                         src={headerImageSrc}
                         alt="Destination"
                         className="w-full h-full object-cover"
+                        // 로딩 실패시 기본 이미지
                         onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=800"; }}
                     />
                     <div className="absolute inset-0 bg-linearto-t from-black/80 via-transparent to-transparent" />
 
+                    {/* 상단 네비게이션 (기존 동일) */}
                     <div className="absolute top-0 left-0 right-0 p-6 pt-8 flex justify-between text-white z-20">
                         <div className="bg-black/20 backdrop-blur-md p-2 rounded-full cursor-pointer hover:bg-black/30 transition" onClick={() => window.location.reload()}>
                             <ChevronLeft className="w-6 h-6" />
@@ -97,6 +92,7 @@ ${data}
                         </div>
                     </div>
 
+                    {/* 타이틀 텍스트 (기존 동일) */}
                     <div className="absolute bottom-6 left-6 right-6 text-white z-20">
                         <span className="bg-[#FF5A5F] px-3 py-1 rounded-full text-xs font-bold shadow-lg mb-2 inline-block">D-Day 맞춤 일정</span>
                         <h1 className="text-3xl font-extrabold shadow-black drop-shadow-md leading-tight">
@@ -110,7 +106,6 @@ ${data}
 
                 {/* 📝 본문 영역 */}
                 <div className="flex-1 overflow-y-auto bg-white -mt-6 rounded-t-[30px] relative z-10 px-6 pt-8 pb-20">
-
                     <article className="prose prose-sm prose-slate max-w-none">
                         <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
@@ -134,23 +129,23 @@ ${data}
                         </ReactMarkdown>
                     </article>
 
-                    {/* ✅ 하단 액션 버튼 (3종 세트) */}
+                    {/* ✅ 하단 액션 버튼 (수정됨) */}
                     <div className="mt-10 flex flex-col gap-3">
                         <button onClick={handleKakaoChat} className="w-full bg-[#FAE100] text-[#371D1E] py-4 rounded-xl font-bold text-lg shadow-sm flex items-center justify-center gap-2 hover:bg-[#FCE620] transition-colors">
                             <MessageCircle size={20} /> 카카오톡 상담하기
                         </button>
 
                         <div className="flex gap-3">
-                            <button onClick={handleExpertReview} className="flex-1 bg-gray-800 text-white py-4 rounded-xl font-bold text-lg shadow-sm flex items-center justify-center gap-2 hover:bg-gray-900 transition-colors">
+                            {/* ✅ [수정 2 적용] button 태그를 a 태그로 변경하여 mailto 연결 */}
+                            <a href={mailtoLink} className="flex-1 bg-gray-800 text-white py-4 rounded-xl font-bold text-lg shadow-sm flex items-center justify-center gap-2 hover:bg-gray-900 transition-colors cursor-pointer">
                                 <Mail size={20} /> 전문가 문의
-                            </button>
+                            </a>
                             <button onClick={handleDownload} className="flex-1 border border-gray-200 text-gray-600 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors">
                                 <Download size={20} /> PDF 저장
                             </button>
                         </div>
                     </div>
                 </div>
-
             </motion.div>
         </div>
     );
