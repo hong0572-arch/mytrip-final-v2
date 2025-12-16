@@ -52,7 +52,7 @@ export default function RootLayout({ children }) {
         {/* GA4 (구글 애널리틱스) */}
         <script
           async
-          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+          src={`https://www.googletagmanager.com/gtag/js?id=G-DC122J4LJL`}
         />
         <script
           dangerouslySetInnerHTML={{
@@ -60,7 +60,7 @@ export default function RootLayout({ children }) {
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', '${GA_ID}');
+              gtag('config', 'G-DC122J4LJL');
             `,
           }}
         />
@@ -75,3 +75,4 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+
