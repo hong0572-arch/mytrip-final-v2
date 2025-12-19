@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, Share2, Download, ExternalLink, BedDouble, Save, Link as LinkIcon, Check } from 'lucide-react';
+import { MessageCircle, Share2, Download, ExternalLink, BedDouble, Save, Check, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { db } from '../lib/firebase'; // 1단계에서 만든 파일 불러오기
+import { db } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // ⚠️ 구글 맵 API 키
@@ -15,9 +15,9 @@ export default function AIResult({ data }) {
     const [parsedData, setParsedData] = useState(null);
     const [error, setError] = useState(null);
 
-    // 저장 관련 상태
-    const [isSaving, setIsSaving] = useState(false);
-    const [shareUrl, setShareUrl] = useState(null); // 저장된 공유 링크
+    // 상태 관리: 어떤 버튼이 로딩 중인지 체크 ('kakao' | 'share' | null)
+    const [loadingAction, setLoadingAction] = useState(null);
+    const [shareUrl, setShareUrl] = useState(null);
 
     const mapRef = useRef(null);
     const googleMapRef = useRef(null);
@@ -129,72 +129,93 @@ export default function AIResult({ data }) {
         return () => { if (observerRef.current) observerRef.current.disconnect(); };
     }, [parsedData]);
 
-    // 4. [NEW] Firebase 저장 핸들러
-    const handleSaveTrip = async () => {
-        if (shareUrl) {
-            // 이미 저장된 경우 링크 복사
-            try {
-                await navigator.clipboard.writeText(shareUrl);
-                alert("공유 링크가 복사되었습니다!");
-            } catch (e) { alert("복사 실패"); }
-            return;
+
+    // ⚡️ [핵심] 자동 저장 및 URL 생성 함수 (재사용 가능)
+    const getOrSaveShareUrl = async () => {
+        // 1. 이미 저장된 URL이 있으면 그거 리턴
+        if (shareUrl) return shareUrl;
+
+        // 2. 이미 공유 페이지(/share/...)에 접속 중이면 현재 URL 리턴
+        if (window.location.pathname.includes('/share/')) {
+            return window.location.href;
         }
 
-        setIsSaving(true);
+        // 3. 둘 다 아니면 Firebase에 새로 저장
         try {
-            // DB의 'trips' 컬렉션에 데이터 저장
             const docRef = await addDoc(collection(db, "trips"), {
                 ...parsedData,
-                createdAt: serverTimestamp(), // 저장 시간 기록
+                createdAt: serverTimestamp(),
             });
-
-            // 공유 링크 생성 (현재 도메인 + /share/ + 문서ID)
             const generatedUrl = `${window.location.origin}/share/${docRef.id}`;
-            setShareUrl(generatedUrl);
-
-            alert("여행이 저장되었습니다! 🔗 공유 링크가 생성되었습니다.");
+            setShareUrl(generatedUrl); // 상태 업데이트
+            return generatedUrl; // 생성된 URL 반환
         } catch (e) {
-            console.error("Firebase Error:", e);
-            alert("저장 중 오류가 발생했습니다: " + e.message);
-        } finally {
-            setIsSaving(false);
+            console.error("Firebase Save Error:", e);
+            alert("일정 저장 중 오류가 발생했습니다.");
+            return null;
         }
     };
 
-    const formatTripText = () => {
+    // 텍스트 생성 함수 (URL을 인자로 받음)
+    const formatTripText = (url) => {
         if (!parsedData) return "";
         let text = `✈️ [My Trip Pro] AI 여행 일정\n\n`;
         text += `📍 제목: ${tripTitle}\n`;
         if (budgetBreakdown && budgetBreakdown.length > 0) text += `\n💰 예상 견적:\n${budgetBreakdown.join('\n')}\n`;
         else if (estimatedCost) text += `\n💰 예상 견적: ${estimatedCost}\n`;
 
-        // 중요: 저장된 링크가 있으면 그걸 우선 사용
-        const linkToShare = shareUrl || window.location.href;
-        text += `\n🔗 일정 상세 보기: ${linkToShare}`;
+        // 생성된 링크 사용
+        text += `\n🔗 일정 상세 보기: ${url}`;
         return text;
     };
 
-    const handleOpenGoogleMaps = (name, lat, lng) => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}&query_place_id=${lat},${lng}`, '_blank');
 
+    // 🔘 [수정됨] 카카오톡 상담 (자동저장 -> 복사 -> 이동)
     const handleKakaoConsult = async () => {
-        const text = formatTripText();
-        try { await navigator.clipboard.writeText(text); alert("일정이 복사되었습니다! 상담창에 붙여넣기 해주세요."); }
-        catch (e) { }
-        window.open('http://pf.kakao.com/_xcJhrn/chat', '_blank');
-    };
+        setLoadingAction('kakao'); // 로딩 시작
 
-    const handleShare = async () => {
-        const text = formatTripText();
-        const linkToShare = shareUrl || window.location.href;
-
-        // 저장되지 않았으면 저장하라고 유도할 수도 있지만, 우선 현재 상태 공유
-        if (navigator.share) {
-            try { await navigator.share({ title: tripTitle, text: text, url: linkToShare }); } catch (e) { }
-        } else {
-            try { await navigator.clipboard.writeText(text); alert("여행 내용이 복사되었습니다!"); } catch (e) { }
+        const url = await getOrSaveShareUrl(); // 저장하고 URL 받아오기
+        if (url) {
+            const text = formatTripText(url);
+            try {
+                await navigator.clipboard.writeText(text);
+                alert("여행 일정이 저장 및 복사되었습니다!\n\n상담창이 열리면 '붙여넣기' 해주세요.");
+                window.open('http://pf.kakao.com/_xcJhrn/chat', '_blank');
+            } catch (e) {
+                window.open('http://pf.kakao.com/_xcJhrn/chat', '_blank');
+            }
         }
+        setLoadingAction(null); // 로딩 끝
     };
 
+    // 🔘 [수정됨] 텍스트 공유 (자동저장 -> 공유창)
+    const handleShare = async () => {
+        setLoadingAction('share'); // 로딩 시작
+
+        const url = await getOrSaveShareUrl(); // 저장하고 URL 받아오기
+        if (url) {
+            const text = formatTripText(url);
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: tripTitle, text: text, url: url });
+                } catch (e) { console.log('공유 취소'); }
+            } else {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    alert("여행 일정 링크가 복사되었습니다!");
+                } catch (e) {
+                    alert("복사 실패");
+                }
+            }
+        }
+        setLoadingAction(null); // 로딩 끝
+    };
+
+    // 구글맵 열기
+    const handleOpenGoogleMaps = (name, lat, lng) => window.open(`http://googleusercontent.com/maps.google.com/maps?q=${encodeURIComponent(name)}&query_place_id=${lat},${lng}`, '_blank');
+
+    // PDF 다운로드
     const handleDownloadPDF = async () => {
         const element = pdfExportRef.current;
         if (!element) return;
@@ -228,7 +249,7 @@ export default function AIResult({ data }) {
                 {/* 지도 */}
                 <div className="h-[40vh] w-full bg-gray-200 relative z-0 shrink-0 group">
                     <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
-                    <div className="absolute top-0 left-0 w-full p-5 bg-linear-to-b from-black/60 to-transparent pointer-events-none z-10">
+                    <div className="absolute top-0 left-0 w-full p-5 bg-linearto-b from-black/60 to-transparent pointer-events-none z-10">
                         <h1 className="text-xl font-bold text-white drop-shadow-md">{tripTitle}</h1>
                     </div>
                 </div>
@@ -305,21 +326,27 @@ export default function AIResult({ data }) {
                             );
                         })}
 
-                        {/* 🚀 4. 하단 버튼 (저장 버튼 추가됨) */}
+                        {/* 🚀 하단 버튼 영역 (저장 버튼 제거 -> 자동 저장으로 통합) */}
                         <div className="pt-8 pb-12 px-2" data-html2canvas-ignore="true">
-                            {/* 저장 버튼: 아직 저장 안했으면 '저장하기', 했으면 '링크복사' */}
                             <button
-                                onClick={handleSaveTrip}
-                                className={`w-full py-4 rounded-xl font-bold text-lg shadow-md mb-3 flex items-center justify-center gap-2 cursor-pointer transition active:scale-98 ${shareUrl ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-[#FF5A5F] text-white hover:bg-rose-600'}`}
+                                onClick={handleKakaoConsult}
+                                disabled={loadingAction !== null}
+                                className="w-full bg-[#FAE100] text-[#371D1E] py-4 rounded-xl font-bold text-lg shadow-md mb-3 flex items-center justify-center gap-2 cursor-pointer hover:bg-[#FCE620] active:scale-98 transition disabled:opacity-70"
                             >
-                                {isSaving ? "저장 중..." : shareUrl ? <><Check size={20} /> 저장완료! 링크 복사하기</> : <><Save size={20} /> 이 여행 저장하기</>}
+                                {loadingAction === 'kakao' ? <Loader2 className="animate-spin" /> : <MessageCircle size={20} />}
+                                {loadingAction === 'kakao' ? '저장 후 이동 중...' : '카카오톡 상담하기'}
                             </button>
 
-                            <button onClick={handleKakaoConsult} className="w-full bg-[#FAE100] text-[#371D1E] py-4 rounded-xl font-bold text-lg shadow-md mb-3 flex items-center justify-center gap-2 cursor-pointer hover:bg-[#FCE620] active:scale-98 transition">
-                                <MessageCircle size={20} /> 카카오톡 상담하기
-                            </button>
                             <div className="flex gap-3">
-                                <button onClick={handleShare} className="flex-1 bg-gray-800 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer hover:bg-gray-900 active:scale-98 transition"><Share2 size={18} /> {shareUrl ? '링크공유' : '텍스트공유'}</button>
+                                <button
+                                    onClick={handleShare}
+                                    disabled={loadingAction !== null}
+                                    className="flex-1 bg-gray-800 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer hover:bg-gray-900 active:scale-98 transition disabled:opacity-70"
+                                >
+                                    {loadingAction === 'share' ? <Loader2 className="animate-spin" size={18} /> : <Share2 size={18} />}
+                                    {loadingAction === 'share' ? '생성 중...' : '일정 공유'}
+                                </button>
+
                                 <button onClick={handleDownloadPDF} className="flex-1 bg-white text-gray-700 border border-gray-200 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer hover:bg-gray-50 active:scale-98 transition"><Download size={18} /> PDF</button>
                             </div>
                         </div>
@@ -327,7 +354,7 @@ export default function AIResult({ data }) {
                 </div>
             </div>
 
-            {/* PDF용 히든 뷰 (동일 유지) */}
+            {/* PDF용 히든 뷰 (그대로 유지) */}
             <div id="pdf-content" ref={pdfExportRef} style={{ position: 'absolute', top: '-10000px', width: '210mm', minHeight: '297mm', backgroundColor: 'white', padding: '20mm', color: 'black', fontFamily: 'sans-serif' }}>
                 <h1 style={{ fontSize: '24px', fontWeight: 'bold', borderBottom: '2px solid black', paddingBottom: '10px' }}>{tripTitle}</h1>
                 <div style={{ margin: '20px 0', padding: '20px', backgroundColor: '#fff5f5', borderRadius: '10px', border: '1px solid #ffecec' }}>
