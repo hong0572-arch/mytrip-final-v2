@@ -3,19 +3,6 @@ import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import { GoogleAnalytics } from '@next/third-parties/google';
 
-export default function RootLayout({ children }) {
-  return (
-    <html lang="en, kr">
-      <body>
-        {children}
-        {/* Add this line: */}
-        <GoogleAnalytics gaId="G-DC122J4LJL" />
-      </body>
-    </html>
-  )
-}
-
-
 
 
 // ✅ [핵심] Vercel 환경 변수 연결 (없으면 기본값 사용)

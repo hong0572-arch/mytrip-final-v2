@@ -1,80 +1,103 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// ⚠️ .env.local 파일에 GEMINI_API_KEY가 설정되어 있어야 합니다.
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export async function POST(req) {
   try {
-    const { destination, startDate, endDate, people, budget, hotelType, tourType, themes, contact, request } = await req.json();
+    const body = await req.json();
+    const { destination, startDate, endDate, companion, budget, people, hotelType, tourType, themes, request } = body;
 
+    // 날짜 계산
     const start = new Date(startDate);
     const end = new Date(endDate);
     const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-    // [수정 사항] Google Generative AI 모델 설정 강제 고정
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash-lite",
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 4000,
-      }
-    });
-
+    // AI에게 보낼 프롬프트 (상세 예산 리스트 + 숙소 2개 요청)
     const prompt = `
-    당신은 20년 경력의 VIP 전담 여행 컨설턴트입니다. 
-    
-    	[필수 포함 내용]
-	1. 각 일정에 맞는 **추천 숙소** (사용자 예산 고려)
-	2. 점심/저녁 식사로 **로컬 맛집** (구체적인 식당 이름 포함)
-	3. **쇼핑 리스트** 섹션 추가 (로컬 시장 및 벼룩시장 정보 포함)
-	
-	[🚨 절대 규칙 1 - 디자인]
-	1. **절대 HTML 태그(<h3>, <b>, <span> 등)를 사용하지 마세요.**
-	2. 무조건 **순수 마크다운(Markdown)** 문법만 사용하세요.
-	3. 구분선이 필요하면 '---'를 사용하세요.
-    4. **모든 장소 이름**에는 반드시 **구글맵 검색 링크**를 걸어주세요.
-       - 형식: [장소명](https://www.google.com/maps/search/?api=1&query=장소명)
-       
-    [맨 마지막에 JSON 데이터 추가]
-    모든 마크다운 출력이 끝난 후, 반드시 아래 형식의 JSON 데이터를 **코드 블럭 없이** pure text로 추가해주세요.
-    (AI 이미지 생성을 위한 영문 키워드를 포함해야 합니다.)
+      You are a professional travel planner with 20 years of experience.
+      Plan a detailed trip to **${destination}** for **${days} days** (${startDate} ~ ${endDate}).
+      
+      [User Info]
+      - Companion: ${companion}
+      - People: ${people} person(s)
+      - Budget per person: ${budget}0,000 KRW (Total: ${budget * people}0,000 KRW)
+      - Accommodation: ${hotelType}
+      - Style: ${tourType}
+      - Interests: ${themes.join(", ")}
+      - Request: ${request || "None"}
 
-    ---MAP_DATA_START---
-    {
-      "image_keyword": "Best photogenic spot in ${destination} landscape, travel photography, 8k", 
-      "markers": [
-        { "lat": 35.6895, "lng": 139.6917, "title": "도쿄 타워", "day": 1 },
-        ...
-      ],
-      "polylines": [
-        { "day": 1, "path": [[35.6, 139.6], [35.7, 139.7]] },
-        ...
-      ]
-    }
-    ---MAP_DATA_END---
-    
-    * image_keyword 설명: 여행지의 가장 대표적이고 아름다운 풍경을 생성할 수 있는 **영문 검색어** (예: "Eiffel Tower Paris sunny day", "Santorini Greece blue dome")
-    * markers 설명: 일정에 언급된 모든 장소의 좌표
-    * polylines 설명: 일자별 이동 경로
-    * 주의: JSON 데이터 외에는 어떤 텍스트도 start/end 마커 사이에 넣지 마세요.
-    
-    [여행 정보]
-    - 여행지: ${destination} (${diffDays}일)
-    - 인원: ${people}명
-    - 예산: ${budget}만원 (구체적인 항목별 배분 제안 포함)
-    - 스타일: ${tourType}, 숙소: ${hotelType}
-    - 테마: ${themes.join(', ')}
-    - 추가 요청: ${request || "없음"}
+      [Response Format]
+      Return ONLY raw JSON. No Markdown.
+      Structure:
+      {
+        "tripTitle": "Catchy title (e.g., 'Tokyo 3-Day Free Trip with Friends')",
+        "budgetBreakdown": [
+          "항공권: 00만원 (1인당 00만원)",
+          "숙박비: 00만원 (${days - 1}박, 2인 1실 기준)",
+          "식비: 00만원 (1인당 약 0만원/일)",
+          "교통비: 00만원 (패스권 등 포함)",
+          "쇼핑 및 예비비: 00만원"
+        ],
+        "recommendedHotels": [
+          // Recommend exactly 2 hotels
+          {
+            "name": "Hotel Name",
+            "priceRange": "1박 약 00만원",
+            "description": "Reason for recommendation (location, vibe, etc.)",
+            "coordinates": { "lat": 35.1234, "lng": 139.1234 } 
+          },
+          {
+            "name": "Hotel Name 2",
+            "priceRange": "1박 약 00만원",
+            "description": "Reason for recommendation",
+            "coordinates": { "lat": 35.5678, "lng": 139.5678 } 
+          }
+        ],
+        "itinerary": [
+          {
+            "day": 1,
+            "date": "MM.DD/Day",
+            "places": [
+              {
+                "order": 1,
+                "name": "Place Name",
+                "category": "Sightseeing/Food/Shopping",
+                "description": "Short description of the activity.",
+                "coordinates": { "lat": 35.xxxx, "lng": 139.xxxx }
+              }
+            ]
+          }
+          // ... Continue for all ${days} days
+        ]
+      }
+
+      [Rules]
+      1. Language: **Korean (한국어)** only.
+      2. Coordinates: Must estimate Google Maps lat/lng for every place and hotel.
+      3. Budget: Strictly fit within total ${budget * people}0,000 KRW.
     `;
+
+    // 🚀 [사장님 지시사항 절대 준수] Gemini 2.5 Flash Lite 모델 적용
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const text = response.text();
+    let text = response.text();
 
-    return NextResponse.json({ result: text });
+    // 마크다운 제거 및 JSON 파싱
+    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    const jsonResult = JSON.parse(text);
+
+    return NextResponse.json({ result: jsonResult });
+
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("AI Generation Error:", error);
+    return NextResponse.json(
+      { error: "여행 일정을 생성하는 도중 오류가 발생했습니다." },
+      { status: 500 }
+    );
   }
 }
