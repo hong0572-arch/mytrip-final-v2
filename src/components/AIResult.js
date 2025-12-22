@@ -3,12 +3,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, Share2, Download, ExternalLink, BedDouble, Loader2, Sun, Lightbulb, RotateCcw, Pencil, Check, Trash2, Plus, ArrowUp, ArrowDown, MapPin } from 'lucide-react';
 import { db } from '../lib/firebase';
-import { collection, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore'; // updateDoc, doc 추가됨
+import { collection, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyDcAUKNWbwORzW7sT-9hcRs6GSrUS_TKAU';
 const DAY_COLORS = ['#FF4B4B', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
 
-// 🟢 tripId prop 추가 (관리자 수정용)
 export default function AIResult({ data, userInfo, tripId }) {
     // 🏗️ State 관리
     const [tripPlan, setTripPlan] = useState(null);
@@ -37,7 +36,6 @@ export default function AIResult({ data, userInfo, tripId }) {
                 const cleanData = data.replace(/```json/g, '').replace(/```/g, '').trim();
                 initialData = JSON.parse(cleanData);
             }
-            // 💰 예산 항목이 없으면 빈 배열로 초기화 (수정 시 에러 방지)
             if (!initialData.budgetBreakdown) initialData.budgetBreakdown = [];
             setTripPlan(initialData);
         } catch (e) {
@@ -46,7 +44,7 @@ export default function AIResult({ data, userInfo, tripId }) {
         }
     }, [data]);
 
-    // 2. 구글 맵 렌더링 (업로드하신 파일의 로직 그대로 유지)
+    // 2. 구글 맵 렌더링
     useEffect(() => {
         if (!tripPlan || !tripPlan.itinerary) return;
 
@@ -124,10 +122,9 @@ export default function AIResult({ data, userInfo, tripId }) {
         }
     }, [tripPlan]);
 
-    // 🔄 스크롤 시 지도 자동 이동 (업로드하신 파일의 로직 그대로 유지)
+    // 🔄 스크롤 시 지도 자동 이동
     useEffect(() => {
         if (!tripPlan || !scrollContainerRef.current) return;
-
         if (observerRef.current) observerRef.current.disconnect();
 
         const callback = (entries) => {
@@ -158,13 +155,12 @@ export default function AIResult({ data, userInfo, tripId }) {
         return () => { if (observerRef.current) observerRef.current.disconnect(); };
     }, [tripPlan]);
 
-
-    // 💰 [추가됨] 예산 수정 핸들러들
+    // 💰 예산 수정 핸들러
     const handleBudgetChange = (index, value) => {
         const newPlan = { ...tripPlan };
         newPlan.budgetBreakdown[index] = value;
         setTripPlan(newPlan);
-        if (!tripId) setShareUrl(null); // 수정 시 링크 초기화 (재저장 유도)
+        if (!tripId) setShareUrl(null);
     };
 
     const handleAddBudget = () => {
@@ -182,8 +178,7 @@ export default function AIResult({ data, userInfo, tripId }) {
         if (!tripId) setShareUrl(null);
     };
 
-
-    // 기존 장소 수정 핸들러들
+    // 장소 수정 핸들러
     const handleEditChange = (dayIndex, placeIndex, field, value) => {
         const newPlan = { ...tripPlan };
         newPlan.itinerary[dayIndex].places[placeIndex][field] = value;
@@ -225,7 +220,7 @@ export default function AIResult({ data, userInfo, tripId }) {
         if (!tripId) setShareUrl(null);
     };
 
-    // 💾 [수정됨] 저장 로직 (업데이트 기능 통합)
+    // 💾 [수정완료] 저장 로직 (에러 수정됨)
     const getOrSaveShareUrl = async () => {
         if (shareUrl && !isEditMode) return shareUrl;
         if (window.location.pathname.includes('/share/') && !isEditMode) return window.location.href;
@@ -234,20 +229,18 @@ export default function AIResult({ data, userInfo, tripId }) {
             const saveData = {
                 ...tripPlan,
                 contactInfo: userInfo?.contact || "정보 없음",
-                // createdAt은 수정 시에는 건드리지 않음
-                isEdited: isEditMode || tripPlan.isEdited
+                // ⚠️ 여기가 핵심 수정입니다! (undefined 에러 방지)
+                isEdited: Boolean(isEditMode || tripPlan.isEdited)
             };
 
             let generatedUrl;
 
-            // 1. 관리자 모드 등에서 넘어온 기존 ID가 있으면 -> 업데이트 (덮어쓰기)
             if (tripId) {
                 const docRef = doc(db, "trips", tripId);
                 await updateDoc(docRef, { ...saveData, updatedAt: serverTimestamp() });
                 generatedUrl = `${window.location.origin}/share/${tripId}`;
                 alert("수정된 내용이 저장되었습니다!");
             }
-            // 2. ID가 없으면 -> 신규 생성
             else {
                 saveData.createdAt = serverTimestamp();
                 const docRef = await addDoc(collection(db, "trips"), saveData);
@@ -257,8 +250,9 @@ export default function AIResult({ data, userInfo, tripId }) {
             setShareUrl(generatedUrl);
             return generatedUrl;
         } catch (e) {
-            console.error("Save Error:", e);
-            alert("저장 중 오류가 발생했습니다.");
+            console.error("Save Error Details:", e);
+            // 에러 원인을 더 자세히 알림
+            alert("저장 중 오류가 발생했습니다. (잠시 후 다시 시도해주세요)");
             return null;
         }
     };
@@ -355,12 +349,11 @@ export default function AIResult({ data, userInfo, tripId }) {
 
                     <div ref={scrollContainerRef} className="overflow-y-auto flex-1 px-5 pb-10 bg-white custom-scrollbar scroll-smooth">
 
-                        {/* 💰 예산 (수정 가능하게 UI 변경됨) */}
+                        {/* 💰 예산 (수정 가능) */}
                         <div className="mb-6 mt-6">
                             <h3 className="text-[#FF5A5F] font-bold text-base mb-2 px-1">예산 배분 제안</h3>
                             <div className="bg-white p-4 rounded-2xl border border-rose-100 shadow-sm space-y-2">
                                 {isEditMode ? (
-                                    // ✏️ 편집 모드: 입력창 + 삭제 버튼 + 추가 버튼
                                     <div className="space-y-2">
                                         {tripPlan.budgetBreakdown?.map((item, idx) => (
                                             <div key={idx} className="flex gap-2 items-center">
@@ -380,7 +373,6 @@ export default function AIResult({ data, userInfo, tripId }) {
                                         </button>
                                     </div>
                                 ) : (
-                                    // 👀 뷰어 모드: 기존 텍스트
                                     (budgetBreakdown?.length > 0) ? (
                                         budgetBreakdown.map((item, idx) => (
                                             <div key={idx} className="flex items-start gap-2 text-sm">
@@ -439,13 +431,11 @@ export default function AIResult({ data, userInfo, tripId }) {
 
                                                 <div
                                                     className={`place-card bg-white p-3 rounded-xl border transition ${isEditMode ? 'border-indigo-200 shadow-inner' : 'border-gray-100 hover:border-gray-300 shadow-sm'}`}
-                                                    // 📌 data 속성 중요: 스크롤 감지용 (절대 삭제 금지)
                                                     data-lat={place.coordinates?.lat}
                                                     data-lng={place.coordinates?.lng}
                                                 >
 
                                                     {isEditMode ? (
-                                                        // ✏️ 편집 모드
                                                         <div className="space-y-2">
                                                             <div className="flex gap-2">
                                                                 <input
@@ -471,7 +461,6 @@ export default function AIResult({ data, userInfo, tripId }) {
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        // 👀 뷰어 모드
                                                         <div onClick={() => { googleMapRef.current?.panTo(place.coordinates); googleMapRef.current?.setZoom(17); }}>
                                                             <div className="flex justify-between items-start">
                                                                 <h3 className="text-base font-bold text-gray-900">{place.name}</h3>
