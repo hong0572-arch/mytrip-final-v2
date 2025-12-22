@@ -2,15 +2,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, Share2, Download, ExternalLink, BedDouble, Loader2, Sun, Lightbulb, RotateCcw, Pencil, Check, Trash2, Plus, ArrowUp, ArrowDown, MapPin } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import { db } from '../lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore'; // updateDoc, doc 추가됨
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyDcAUKNWbwORzW7sT-9hcRs6GSrUS_TKAU';
 const DAY_COLORS = ['#FF4B4B', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
 
-export default function AIResult({ data, userInfo }) {
+// 🟢 tripId prop 추가 (관리자 수정용)
+export default function AIResult({ data, userInfo, tripId }) {
     // 🏗️ State 관리
     const [tripPlan, setTripPlan] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -27,8 +26,7 @@ export default function AIResult({ data, userInfo }) {
     const markersRef = useRef([]);
     const polylineRef = useRef([]);
     const scrollContainerRef = useRef(null);
-    const observerRef = useRef(null); // 스크롤 감지용 ref 복구
-    const pdfExportRef = useRef(null);
+    const observerRef = useRef(null);
 
     // 1. 초기 데이터 파싱
     useEffect(() => {
@@ -39,6 +37,8 @@ export default function AIResult({ data, userInfo }) {
                 const cleanData = data.replace(/```json/g, '').replace(/```/g, '').trim();
                 initialData = JSON.parse(cleanData);
             }
+            // 💰 예산 항목이 없으면 빈 배열로 초기화 (수정 시 에러 방지)
+            if (!initialData.budgetBreakdown) initialData.budgetBreakdown = [];
             setTripPlan(initialData);
         } catch (e) {
             console.error("JSON Error:", e);
@@ -46,7 +46,7 @@ export default function AIResult({ data, userInfo }) {
         }
     }, [data]);
 
-    // 2. 구글 맵 렌더링
+    // 2. 구글 맵 렌더링 (업로드하신 파일의 로직 그대로 유지)
     useEffect(() => {
         if (!tripPlan || !tripPlan.itinerary) return;
 
@@ -64,7 +64,6 @@ export default function AIResult({ data, userInfo }) {
 
             const map = googleMapRef.current;
 
-            // 기존 마커/선 제거
             markersRef.current.forEach(m => m.setMap(null));
             polylineRef.current.forEach(p => p.setMap(null));
             markersRef.current = [];
@@ -72,7 +71,6 @@ export default function AIResult({ data, userInfo }) {
 
             const bounds = new google.maps.LatLngBounds();
 
-            // 일정 마커
             tripPlan.itinerary.forEach((dayItem, index) => {
                 const dayColor = DAY_COLORS[index % DAY_COLORS.length];
                 const path = [];
@@ -98,7 +96,6 @@ export default function AIResult({ data, userInfo }) {
                 }
             });
 
-            // 숙소 마커
             tripPlan.recommendedHotels?.forEach((hotel) => {
                 if (hotel.coordinates?.lat && hotel.coordinates?.lng) {
                     bounds.extend(hotel.coordinates);
@@ -127,11 +124,10 @@ export default function AIResult({ data, userInfo }) {
         }
     }, [tripPlan]);
 
-    // 🔄 [복구됨] 스크롤 시 지도 자동 이동 (IntersectionObserver)
+    // 🔄 스크롤 시 지도 자동 이동 (업로드하신 파일의 로직 그대로 유지)
     useEffect(() => {
         if (!tripPlan || !scrollContainerRef.current) return;
 
-        // 기존 관찰자 해제
         if (observerRef.current) observerRef.current.disconnect();
 
         const callback = (entries) => {
@@ -142,37 +138,57 @@ export default function AIResult({ data, userInfo }) {
 
                     if (googleMapRef.current && !isNaN(lat) && !isNaN(lng)) {
                         googleMapRef.current.panTo({ lat, lng });
-                        // 너무 줌인되면 답답하므로 적당한 레벨 유지 (15~16)
                         if (googleMapRef.current.getZoom() < 14) googleMapRef.current.setZoom(15);
                     }
                 }
             });
         };
 
-        // 화면 중앙(rootMargin)에 왔을 때 감지
         observerRef.current = new IntersectionObserver(callback, {
             root: scrollContainerRef.current,
-            threshold: 0.6, // 60% 이상 보일 때 작동
+            threshold: 0.6,
             rootMargin: '-20% 0px -20% 0px'
         });
 
-        // 모든 장소 카드 관찰 시작
-        // setTimeout을 줘서 렌더링 후 잡도록 함
         setTimeout(() => {
             const cards = document.querySelectorAll('.place-card');
             cards.forEach((card) => observerRef.current.observe(card));
         }, 500);
 
         return () => { if (observerRef.current) observerRef.current.disconnect(); };
-    }, [tripPlan]); // tripPlan이 바뀌면(수정 시) 다시 세팅
+    }, [tripPlan]);
 
 
-    // 편집 핸들러들
+    // 💰 [추가됨] 예산 수정 핸들러들
+    const handleBudgetChange = (index, value) => {
+        const newPlan = { ...tripPlan };
+        newPlan.budgetBreakdown[index] = value;
+        setTripPlan(newPlan);
+        if (!tripId) setShareUrl(null); // 수정 시 링크 초기화 (재저장 유도)
+    };
+
+    const handleAddBudget = () => {
+        const newPlan = { ...tripPlan };
+        if (!newPlan.budgetBreakdown) newPlan.budgetBreakdown = [];
+        newPlan.budgetBreakdown.push("새 항목: 0원");
+        setTripPlan(newPlan);
+        if (!tripId) setShareUrl(null);
+    };
+
+    const handleDeleteBudget = (index) => {
+        const newPlan = { ...tripPlan };
+        newPlan.budgetBreakdown.splice(index, 1);
+        setTripPlan(newPlan);
+        if (!tripId) setShareUrl(null);
+    };
+
+
+    // 기존 장소 수정 핸들러들
     const handleEditChange = (dayIndex, placeIndex, field, value) => {
         const newPlan = { ...tripPlan };
         newPlan.itinerary[dayIndex].places[placeIndex][field] = value;
         setTripPlan(newPlan);
-        setShareUrl(null);
+        if (!tripId) setShareUrl(null);
     };
 
     const handleDeletePlace = (dayIndex, placeIndex) => {
@@ -181,7 +197,7 @@ export default function AIResult({ data, userInfo }) {
         newPlan.itinerary[dayIndex].places.splice(placeIndex, 1);
         newPlan.itinerary[dayIndex].places.forEach((p, i) => p.order = i + 1);
         setTripPlan(newPlan);
-        setShareUrl(null);
+        if (!tripId) setShareUrl(null);
     };
 
     const handleAddPlace = (dayIndex) => {
@@ -195,7 +211,7 @@ export default function AIResult({ data, userInfo }) {
             coordinates: { lat: 35.6895, lng: 139.6917 }
         });
         setTripPlan(newPlan);
-        setShareUrl(null);
+        if (!tripId) setShareUrl(null);
     };
 
     const handleMovePlace = (dayIndex, placeIndex, direction) => {
@@ -206,22 +222,38 @@ export default function AIResult({ data, userInfo }) {
         [places[placeIndex], places[targetIndex]] = [places[targetIndex], places[placeIndex]];
         places.forEach((p, i) => p.order = i + 1);
         setTripPlan(newPlan);
-        setShareUrl(null);
+        if (!tripId) setShareUrl(null);
     };
 
+    // 💾 [수정됨] 저장 로직 (업데이트 기능 통합)
     const getOrSaveShareUrl = async () => {
-        if (shareUrl) return shareUrl;
+        if (shareUrl && !isEditMode) return shareUrl;
         if (window.location.pathname.includes('/share/') && !isEditMode) return window.location.href;
 
         try {
             const saveData = {
                 ...tripPlan,
                 contactInfo: userInfo?.contact || "정보 없음",
-                createdAt: serverTimestamp(),
-                isEdited: isEditMode
+                // createdAt은 수정 시에는 건드리지 않음
+                isEdited: isEditMode || tripPlan.isEdited
             };
-            const docRef = await addDoc(collection(db, "trips"), saveData);
-            const generatedUrl = `${window.location.origin}/share/${docRef.id}`;
+
+            let generatedUrl;
+
+            // 1. 관리자 모드 등에서 넘어온 기존 ID가 있으면 -> 업데이트 (덮어쓰기)
+            if (tripId) {
+                const docRef = doc(db, "trips", tripId);
+                await updateDoc(docRef, { ...saveData, updatedAt: serverTimestamp() });
+                generatedUrl = `${window.location.origin}/share/${tripId}`;
+                alert("수정된 내용이 저장되었습니다!");
+            }
+            // 2. ID가 없으면 -> 신규 생성
+            else {
+                saveData.createdAt = serverTimestamp();
+                const docRef = await addDoc(collection(db, "trips"), saveData);
+                generatedUrl = `${window.location.origin}/share/${docRef.id}`;
+            }
+
             setShareUrl(generatedUrl);
             return generatedUrl;
         } catch (e) {
@@ -263,10 +295,7 @@ export default function AIResult({ data, userInfo }) {
 
     const handleReset = () => { if (confirm("초기 화면으로 돌아갑니다.")) window.location.reload(); };
 
-    // 🔧 [수정됨] 길찾기: 좌표 대신 '장소 이름'으로 검색
     const handleOpenGoogleMaps = (name) => {
-        // 이름으로 검색 (좌표보다 훨씬 정확하고 정보가 많음)
-        // encodeURIComponent로 한글 깨짐 방지
         const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}`;
         window.open(url, '_blank');
     };
@@ -326,22 +355,43 @@ export default function AIResult({ data, userInfo }) {
 
                     <div ref={scrollContainerRef} className="overflow-y-auto flex-1 px-5 pb-10 bg-white custom-scrollbar scroll-smooth">
 
-                        {/* 💰 예산 */}
-                        {((budgetBreakdown && budgetBreakdown.length > 0) || estimatedCost) && (
-                            <div className="mb-6 mt-6">
-                                <h3 className="text-[#FF5A5F] font-bold text-base mb-2 px-1">예산 배분 제안</h3>
-                                <div className="bg-white p-4 rounded-2xl border border-rose-100 shadow-sm space-y-2">
-                                    {budgetBreakdown?.length > 0 ? (
+                        {/* 💰 예산 (수정 가능하게 UI 변경됨) */}
+                        <div className="mb-6 mt-6">
+                            <h3 className="text-[#FF5A5F] font-bold text-base mb-2 px-1">예산 배분 제안</h3>
+                            <div className="bg-white p-4 rounded-2xl border border-rose-100 shadow-sm space-y-2">
+                                {isEditMode ? (
+                                    // ✏️ 편집 모드: 입력창 + 삭제 버튼 + 추가 버튼
+                                    <div className="space-y-2">
+                                        {tripPlan.budgetBreakdown?.map((item, idx) => (
+                                            <div key={idx} className="flex gap-2 items-center">
+                                                <input
+                                                    type="text"
+                                                    value={item}
+                                                    onChange={(e) => handleBudgetChange(idx, e.target.value)}
+                                                    className="flex-1 text-sm p-2 border border-rose-200 rounded-lg outline-none focus:border-[#FF5A5F] bg-rose-50/30"
+                                                />
+                                                <button onClick={() => handleDeleteBudget(idx)} className="p-2 text-rose-400 hover:text-rose-600 bg-rose-50 rounded-lg">
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <button onClick={handleAddBudget} className="w-full py-2 text-xs font-bold text-rose-500 border border-dashed border-rose-300 rounded-lg hover:bg-rose-50 flex items-center justify-center gap-1">
+                                            <Plus size={12} /> 예산 항목 추가
+                                        </button>
+                                    </div>
+                                ) : (
+                                    // 👀 뷰어 모드: 기존 텍스트
+                                    (budgetBreakdown?.length > 0) ? (
                                         budgetBreakdown.map((item, idx) => (
                                             <div key={idx} className="flex items-start gap-2 text-sm">
                                                 <div className="min-w-[4px] h-[4px] bg-[#FF5A5F] rounded-full mt-2"></div>
                                                 <p className="text-gray-700">{item}</p>
                                             </div>
                                         ))
-                                    ) : (<p className="text-gray-700 text-sm">{estimatedCost}</p>)}
-                                </div>
+                                    ) : (<p className="text-gray-700 text-sm">{estimatedCost || "예산 정보 없음"}</p>)
+                                )}
                             </div>
-                        )}
+                        </div>
 
                         {/* 🏨 숙소 */}
                         {hotels.length > 0 && (
@@ -389,7 +439,7 @@ export default function AIResult({ data, userInfo }) {
 
                                                 <div
                                                     className={`place-card bg-white p-3 rounded-xl border transition ${isEditMode ? 'border-indigo-200 shadow-inner' : 'border-gray-100 hover:border-gray-300 shadow-sm'}`}
-                                                    // 📌 여기에 data 속성을 다시 넣어줘야 스크롤 감지가 작동합니다!
+                                                    // 📌 data 속성 중요: 스크롤 감지용 (절대 삭제 금지)
                                                     data-lat={place.coordinates?.lat}
                                                     data-lng={place.coordinates?.lng}
                                                 >
@@ -428,7 +478,6 @@ export default function AIResult({ data, userInfo }) {
                                                                 <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{place.category}</span>
                                                             </div>
                                                             <p className="text-sm text-gray-600 mt-1">{place.description}</p>
-                                                            {/* 🔥 길찾기 버튼: 이름으로 검색 */}
                                                             <button className="mt-2 flex items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded-lg transition shadow-sm" style={{ backgroundColor: `${dayColor}15`, color: dayColor }} onClick={(e) => { e.stopPropagation(); handleOpenGoogleMaps(place.name); }}>
                                                                 <ExternalLink size={10} /> 길찾기
                                                             </button>

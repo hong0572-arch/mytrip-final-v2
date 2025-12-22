@@ -3,168 +3,281 @@
 import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, query, orderBy, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { Trash2, ExternalLink, RefreshCcw, Lock } from 'lucide-react';
+import { Trash2, Plus, Search, MapPin, Calendar, Users, Crown, Sparkles, Lock, ArrowLeft, Check } from 'lucide-react';
+import AIResult from '../../components/AIResult';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
+// --- 옵션 데이터 ---
+const companionOptions = [
+    { id: '혼자', label: '나홀로' },
+    { id: '연인', label: '연인' },
+    { id: '친구', label: '친구' },
+    { id: '가족', label: '가족' },
+    { id: '비즈니스', label: '출장' },
+];
 
 export default function AdminPage() {
+    // --- 상태 관리 ---
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [password, setPassword] = useState('');
     const [trips, setTrips] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
-    // 🔐 로그인 처리
+    // 뷰 모드: welcome, create, edit, generated_preview
+    const [selectedTripId, setSelectedTripId] = useState(null);
+    const [viewMode, setViewMode] = useState('welcome');
+
+    // 생성 폼 상태
+    const [createLoading, setCreateLoading] = useState(false);
+    const [dateRange, setDateRange] = useState([null, null]);
+    const [startDate, endDate] = dateRange;
+    const [isLuxury, setIsLuxury] = useState(false);
+    const [formData, setFormData] = useState({
+        destination: "", startDate: "", endDate: "", companion: "연인",
+        people: 2, budget: 100, contact: "",
+    });
+
+    // --- 1. 로그인 & 데이터 불러오기 ---
     const handleLogin = (e) => {
         e.preventDefault();
-        if (password === 'hong0572!') { // 사장님이 정하신 비밀번호
+        if (password === 'hong0572!') {
             setIsLoggedIn(true);
             fetchTrips();
-        } else {
-            alert('비밀번호가 틀렸습니다!');
-        }
+        } else { alert('비밀번호가 틀렸습니다!'); }
     };
 
-    // 📡 데이터 가져오기 (Firebase)
     const fetchTrips = async () => {
         setLoading(true);
         try {
-            // 최신순 정렬
             const q = query(collection(db, "trips"), orderBy("createdAt", "desc"));
             const querySnapshot = await getDocs(q);
-            const list = querySnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
+            const list = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setTrips(list);
-        } catch (error) {
-            console.error("Error fetching trips:", error);
-            alert("데이터를 불러오는데 실패했습니다.");
-        } finally {
-            setLoading(false);
-        }
+        } catch (error) { console.error("Error:", error); }
+        finally { setLoading(false); }
     };
 
-    // 🗑️ 삭제 처리
-    const handleDelete = async (id) => {
-        if (!confirm('정말 이 데이터를 삭제하시겠습니까?')) return;
+    const handleDelete = async (e, id) => {
+        e.stopPropagation();
+        if (!confirm('정말 삭제하시겠습니까?')) return;
         try {
             await deleteDoc(doc(db, "trips", id));
-            // 화면에서도 바로 지우기
             setTrips(prev => prev.filter(trip => trip.id !== id));
-            alert('삭제되었습니다.');
-        } catch (error) {
-            console.error("Delete error:", error);
-            alert('삭제 중 오류가 발생했습니다.');
+            if (selectedTripId === id) {
+                setSelectedTripId(null);
+                setViewMode('welcome');
+            }
+        } catch (error) { alert('삭제 실패'); }
+    };
+
+    // --- 2. 생성 로직 (AI Only) ---
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+    };
+    const handleDateChange = (update) => {
+        setDateRange(update);
+        const [start, end] = update;
+        if (start && end) {
+            const diffDays = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24));
+            if (diffDays > 30) { alert("최대 30일까지만 가능합니다."); setDateRange([start, null]); return; }
+            const format = (d) => d.toISOString().split('T')[0];
+            setFormData(prev => ({ ...prev, startDate: format(start), endDate: format(end) }));
+        } else {
+            setFormData(prev => ({ ...prev, startDate: start ? start.toISOString().split('T')[0] : "", endDate: "" }));
         }
     };
 
-    // 날짜 포맷팅 함수
-    const formatDate = (timestamp) => {
-        if (!timestamp) return '-';
-        // Firebase Timestamp를 JS Date로 변환
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-        return date.toLocaleString('ko-KR', {
-            month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-        });
+    const generatePlanAI = async () => {
+        if (!formData.destination || !formData.startDate || !formData.endDate || !formData.contact) {
+            alert("필수 항목(여행지, 날짜, 연락처)을 모두 입력해주세요."); return;
+        }
+        setCreateLoading(true);
+        try {
+            const response = await fetch("/api/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...formData, isLuxury }),
+            });
+            const data = await response.json();
+            if (data.result) {
+                setFormData(prev => ({ ...prev, resultData: data.result }));
+                setViewMode('generated_preview');
+            } else { alert("생성 실패: " + data.error); }
+        } catch (error) { console.error(error); alert("서버 오류"); }
+        finally { setCreateLoading(false); }
     };
 
-    // --- 1. 로그인 전 화면 ---
-    if (!isLoggedIn) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-                <form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm">
-                    <div className="flex justify-center mb-6">
-                        <div className="bg-rose-100 p-3 rounded-full">
-                            <Lock className="text-[#FF5A5F]" size={24} />
-                        </div>
-                    </div>
-                    <h2 className="text-xl font-bold text-center mb-6 text-gray-800">관리자 접속</h2>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="비밀번호 입력"
-                        className="w-full p-3 border border-gray-300 rounded-xl mb-4 focus:outline-none focus:border-[#FF5A5F]"
-                        autoFocus
-                    />
-                    <button type="submit" className="w-full bg-[#FF5A5F] text-white py-3 rounded-xl font-bold hover:bg-[#FF3D43] transition">
-                        접속하기
-                    </button>
-                </form>
-            </div>
-        );
-    }
 
-    // --- 2. 관리자 대시보드 화면 ---
+    // --- 3. 렌더링 ---
+    const filteredTrips = trips.filter(t =>
+        t.tripTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.contactInfo?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const getSelectedTripData = () => trips.find(t => t.id === selectedTripId);
+
+    // 로그인 화면
+    if (!isLoggedIn) return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl shadow-xl w-80 text-center">
+                <div className="bg-rose-100 p-3 rounded-full inline-block mb-4"><Lock className="text-[#FF5A5F]" size={24} /></div>
+                <h2 className="text-xl font-bold mb-4">관리자 로그인</h2>
+                <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 border rounded-xl mb-4" placeholder="비밀번호" autoFocus />
+                <button className="w-full bg-[#FF5A5F] text-white py-3 rounded-xl font-bold">접속하기</button>
+            </form>
+        </div>
+    );
+
     return (
-        <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
-            <div className="max-w-6xl mx-auto">
+        <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
 
-                {/* 헤더 */}
-                <div className="flex justify-between items-center mb-8">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">👑 고객 여행 관리</h1>
-                        <p className="text-sm text-gray-500 mt-1">총 <span className="text-[#FF5A5F] font-bold">{trips.length}</span>건의 일정이 생성되었습니다.</p>
-                    </div>
-                    <button onClick={fetchTrips} className="flex items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 font-medium text-sm">
-                        <RefreshCcw size={16} className={loading ? "animate-spin" : ""} /> 새로고침
+            {/* 🟢 왼쪽: 리스트 사이드바 */}
+            <div className="w-full sm:w-[350px] flex flex-col border-r border-gray-200 bg-white shrink-0 h-full">
+                <div className="p-5 border-b border-gray-100 bg-white z-10">
+                    <h1 className="text-xl font-extrabold text-gray-900 mb-4 flex items-center gap-2">
+                        ✈️ 여행 관리자 <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{trips.length}</span>
+                    </h1>
+                    <button
+                        onClick={() => { setViewMode('create'); setSelectedTripId(null); }}
+                        className="w-full py-3 bg-[#FF5A5F] hover:bg-[#FF3D43] text-white rounded-xl font-bold flex items-center justify-center gap-2 transition shadow-sm mb-3"
+                    >
+                        <Plus size={18} /> 새 일정 만들기 (AI)
                     </button>
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="제목 또는 연락처 검색..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:border-rose-300 transition"
+                        />
+                    </div>
                 </div>
 
-                {/* 테이블 (카드형 리스트) */}
-                <div className="grid gap-4">
-                    {trips.length === 0 ? (
-                        <div className="text-center py-20 text-gray-400 bg-white rounded-2xl border border-gray-200">
-                            아직 저장된 데이터가 없습니다.
-                        </div>
-                    ) : (
-                        trips.map((trip) => (
-                            <div key={trip.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-rose-200 transition">
-
-                                {/* 왼쪽 정보 */}
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-md">
-                                            {formatDate(trip.createdAt)}
-                                        </span>
-                                        {trip.isEdited && (
-                                            <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-1 rounded-md">
-                                                수정됨✏️
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <h3 className="text-lg font-bold text-gray-900 mb-1">
-                                        {trip.tripTitle || "제목 없음"}
-                                    </h3>
-
-                                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                                        <span className="font-bold text-[#FF5A5F]">📞 {trip.contactInfo}</span>
-                                        <span className="text-gray-300">|</span>
-                                        <span>{trip.destination || "여행지 미상"}</span>
-                                    </div>
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                    {loading ? <div className="text-center py-10 text-gray-400">로딩 중...</div> :
+                        filteredTrips.map(trip => (
+                            <div
+                                key={trip.id}
+                                onClick={() => { setSelectedTripId(trip.id); setViewMode('edit'); }}
+                                className={`p-4 rounded-xl border cursor-pointer transition-all hover:shadow-md group relative
+                        ${selectedTripId === trip.id ? 'bg-rose-50 border-rose-300 ring-1 ring-rose-300' : 'bg-white border-gray-100 hover:border-rose-200'}`}
+                            >
+                                <div className="flex justify-between items-start mb-1">
+                                    <h3 className="font-bold text-gray-800 text-sm line-clamp-1 pr-6">{trip.tripTitle || '제목 없음'}</h3>
+                                    <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                                        {trip.createdAt?.toDate ? trip.createdAt.toDate().toLocaleDateString() : '-'}
+                                    </span>
                                 </div>
-
-                                {/* 오른쪽 버튼들 */}
-                                <div className="flex items-center gap-3 shrink-0">
-                                    <a
-                                        href={`/share/${trip.id}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="flex items-center gap-1 text-sm font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-xl hover:bg-blue-100 transition"
-                                    >
-                                        <ExternalLink size={14} /> 일정 보기
-                                    </a>
-                                    <button
-                                        onClick={() => handleDelete(trip.id)}
-                                        className="flex items-center gap-1 text-sm font-bold text-red-500 bg-red-50 px-3 py-2 rounded-xl hover:bg-red-100 transition"
-                                    >
-                                        <Trash2 size={14} /> 삭제
-                                    </button>
+                                <p className="text-xs text-gray-500 mb-2 truncate">📞 {trip.contactInfo}</p>
+                                <div className="flex items-center gap-2">
+                                    {trip.isEdited && <span className="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-bold">수정됨</span>}
+                                    <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{trip.destination}</span>
                                 </div>
-
+                                <button
+                                    onClick={(e) => handleDelete(e, trip.id)}
+                                    className="absolute top-4 right-3 text-gray-300 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
                             </div>
-                        ))
-                    )}
+                        ))}
                 </div>
+            </div>
+
+            {/* 🟢 오른쪽: 메인 작업 영역 */}
+            <div className="flex-1 bg-gray-50 h-full overflow-hidden relative">
+
+                {/* A. 대기 화면 */}
+                {viewMode === 'welcome' && (
+                    <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                        <Sparkles size={64} className="mb-4 text-gray-200" />
+                        <p className="text-lg font-medium">왼쪽에서 일정을 선택하거나</p>
+                        <p className="text-sm">새 일정을 만들어보세요.</p>
+                    </div>
+                )}
+
+                {/* B. 새 일정 만들기 폼 */}
+                {viewMode === 'create' && (
+                    <div className="h-full overflow-y-auto p-8 max-w-3xl mx-auto">
+                        <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-8">
+                            <h2 className="text-2xl font-extrabold text-gray-900 mb-6 flex items-center gap-2">
+                                <Plus className="text-[#FF5A5F]" /> 새 여행 일정 생성 (AI)
+                            </h2>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label className="text-sm font-bold text-gray-600 mb-2 block"><MapPin size={14} className="inline text-[#FF5A5F]" /> 여행지</label>
+                                    <input type="text" name="destination" value={formData.destination} onChange={handleInputChange} placeholder="예: 도쿄, 제주도" className="w-full p-3 border rounded-xl font-bold outline-none focus:border-rose-400" />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-bold text-gray-600 mb-2 block"><Calendar size={14} className="inline text-[#FF5A5F]" /> 날짜 선택</label>
+                                    <DatePicker selectsRange startDate={startDate} endDate={endDate} onChange={handleDateChange} className="w-full p-3 border rounded-xl font-bold outline-none focus:border-rose-400 cursor-pointer" placeholderText="기간 선택" dateFormat="yyyy.MM.dd" />
+                                </div>
+                            </div>
+
+                            <div className="mb-6">
+                                <label className="text-sm font-bold text-gray-600 mb-2 block">동행자</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {companionOptions.map(opt => (
+                                        <button key={opt.id} onClick={() => setFormData({ ...formData, companion: opt.id })} className={`px-4 py-2 rounded-lg text-sm font-bold border ${formData.companion === opt.id ? 'bg-[#FF5A5F] text-white border-[#FF5A5F]' : 'bg-gray-50 text-gray-500'}`}>{opt.label}</button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 👑 럭셔리 토글 */}
+                            <button onClick={() => setIsLuxury(!isLuxury)} className={`w-full py-3 rounded-xl font-bold text-sm mb-6 border flex items-center justify-center gap-2 ${isLuxury ? 'bg-amber-500 text-white' : 'bg-gray-50 text-gray-500'}`}>
+                                <Crown size={16} /> {isLuxury ? '초호화 럭셔리 모드 ON' : '초호화 럭셔리 모드 OFF'}
+                            </button>
+
+                            <div className="mb-8">
+                                <label className="text-sm font-bold text-gray-600 mb-2 block">고객 연락처 (DB 저장용)</label>
+                                <input type="text" name="contact" value={formData.contact} onChange={handleInputChange} placeholder="예: 010-1234-5678" className="w-full p-3 border rounded-xl font-bold outline-none focus:border-rose-400" />
+                            </div>
+
+                            {/* 🤖 AI 생성 버튼 */}
+                            <button onClick={generatePlanAI} disabled={createLoading} className="w-full py-4 bg-gray-900 text-white rounded-xl font-bold text-lg hover:bg-black transition shadow-lg flex items-center justify-center gap-2">
+                                {createLoading ? '일정 생성 중...' : <><Sparkles size={20} /> AI로 일정 생성하기</>}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* C. 생성된 일정 미리보기 (저장 전) */}
+                {viewMode === 'generated_preview' && formData.resultData && (
+                    <div className="h-full w-full">
+                        <div className="h-full flex flex-col">
+                            <div className="p-4 bg-white border-b flex justify-between items-center shrink-0">
+                                <h2 className="font-bold text-green-600 flex items-center gap-2"><Check size={18} /> 생성 완료! 하단 [공유] 버튼을 눌러 저장하세요.</h2>
+                                <button onClick={() => { setViewMode('create'); setFormData(prev => ({ ...prev, resultData: null })) }} className="text-sm text-gray-500 hover:text-black">닫기</button>
+                            </div>
+                            <div className="flex-1 overflow-hidden">
+                                <AIResult data={formData.resultData} userInfo={formData} tripId={null} />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* D. 기존 일정 수정 */}
+                {viewMode === 'edit' && selectedTripId && (
+                    <div className="h-full w-full flex flex-col">
+                        <div className="h-12 bg-white border-b flex items-center justify-between px-6 shrink-0 z-20">
+                            <span className="text-xs font-bold text-gray-400">수정 모드: {getSelectedTripData()?.tripTitle}</span>
+                            <a href={`/share/${selectedTripId}`} target="_blank" className="text-xs font-bold text-blue-500 hover:underline flex items-center gap-1"><ArrowLeft size={10} /> 고객용 화면 보기</a>
+                        </div>
+                        <div className="flex-1 overflow-hidden relative">
+                            <AIResult
+                                data={getSelectedTripData()}
+                                userInfo={{ contact: getSelectedTripData()?.contactInfo }}
+                                tripId={selectedTripId}
+                            />
+                        </div>
+                    </div>
+                )}
 
             </div>
         </div>
