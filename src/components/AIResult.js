@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, Share2, Download, ExternalLink, BedDouble, Loader2, Sun, Lightbulb, RotateCcw, Pencil, Check, Trash2, Plus, ArrowUp, ArrowDown, MapPin } from 'lucide-react';
+// 1. Search 아이콘 추가됨
+import { MessageCircle, Share2, Download, ExternalLink, BedDouble, Loader2, Sun, Lightbulb, RotateCcw, Pencil, Check, Trash2, Plus, ArrowUp, ArrowDown, MapPin, Search } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { collection, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
 
@@ -112,7 +113,8 @@ export default function AIResult({ data, userInfo, tripId }) {
 
         if (!window.google) {
             const script = document.createElement("script");
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}`;
+            // 2. 중요: &libraries=places 추가됨 (위치 검색을 위해 필수)
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
             script.async = true;
             script.defer = true;
             script.onload = loadMap;
@@ -155,6 +157,40 @@ export default function AIResult({ data, userInfo, tripId }) {
         return () => { if (observerRef.current) observerRef.current.disconnect(); };
     }, [tripPlan]);
 
+    // 3. [신규 기능] 위치 자동 보정 함수 (Google Places API 사용)
+    const handleUpdateLocation = (dayIndex, placeIndex, queryName) => {
+        if (!window.google || !googleMapRef.current) {
+            alert("지도가 로딩되지 않았습니다.");
+            return;
+        }
+        if (!queryName || queryName.trim() === "") {
+            alert("장소 이름을 입력해주세요.");
+            return;
+        }
+
+        const service = new google.maps.places.PlacesService(googleMapRef.current);
+        service.findPlaceFromQuery({
+            query: queryName,
+            fields: ['name', 'geometry']
+        }, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results && results[0]) {
+                const location = results[0].geometry.location;
+                const newCoords = { lat: location.lat(), lng: location.lng() };
+
+                const newPlan = { ...tripPlan };
+                newPlan.itinerary[dayIndex].places[placeIndex].coordinates = newCoords;
+                setTripPlan(newPlan);
+                if (!tripId) setShareUrl(null);
+
+                googleMapRef.current.panTo(newCoords);
+                googleMapRef.current.setZoom(16);
+                alert(`✅ '${results[0].name}' 위치를 찾았습니다!\n지도가 이동했습니다. [저장]을 눌러 확정하세요.`);
+            } else {
+                alert(`❌ '${queryName}'을(를) 찾을 수 없습니다.\n정확한 명칭(예: 다낭 국제공항)으로 수정한 뒤 다시 시도해주세요.`);
+            }
+        });
+    };
+
     // 💰 예산 수정 핸들러
     const handleBudgetChange = (index, value) => {
         const newPlan = { ...tripPlan };
@@ -162,7 +198,6 @@ export default function AIResult({ data, userInfo, tripId }) {
         setTripPlan(newPlan);
         if (!tripId) setShareUrl(null);
     };
-
     const handleAddBudget = () => {
         const newPlan = { ...tripPlan };
         if (!newPlan.budgetBreakdown) newPlan.budgetBreakdown = [];
@@ -170,7 +205,6 @@ export default function AIResult({ data, userInfo, tripId }) {
         setTripPlan(newPlan);
         if (!tripId) setShareUrl(null);
     };
-
     const handleDeleteBudget = (index) => {
         const newPlan = { ...tripPlan };
         newPlan.budgetBreakdown.splice(index, 1);
@@ -185,7 +219,6 @@ export default function AIResult({ data, userInfo, tripId }) {
         setTripPlan(newPlan);
         if (!tripId) setShareUrl(null);
     };
-
     const handleDeletePlace = (dayIndex, placeIndex) => {
         if (!confirm("이 장소를 삭제하시겠습니까?")) return;
         const newPlan = { ...tripPlan };
@@ -194,21 +227,16 @@ export default function AIResult({ data, userInfo, tripId }) {
         setTripPlan(newPlan);
         if (!tripId) setShareUrl(null);
     };
-
     const handleAddPlace = (dayIndex) => {
         const newPlan = { ...tripPlan };
         const newOrder = newPlan.itinerary[dayIndex].places.length + 1;
         newPlan.itinerary[dayIndex].places.push({
-            order: newOrder,
-            name: "새로운 장소",
-            category: "기타",
-            description: "설명을 입력해주세요.",
+            order: newOrder, name: "새로운 장소", category: "기타", description: "설명을 입력해주세요.",
             coordinates: { lat: 35.6895, lng: 139.6917 }
         });
         setTripPlan(newPlan);
         if (!tripId) setShareUrl(null);
     };
-
     const handleMovePlace = (dayIndex, placeIndex, direction) => {
         const newPlan = { ...tripPlan };
         const places = newPlan.itinerary[dayIndex].places;
@@ -220,7 +248,7 @@ export default function AIResult({ data, userInfo, tripId }) {
         if (!tripId) setShareUrl(null);
     };
 
-    // 💾 [수정완료] 저장 로직 (에러 수정됨)
+    // 💾 저장 로직 (에러 수정 포함)
     const getOrSaveShareUrl = async () => {
         if (shareUrl && !isEditMode) return shareUrl;
         if (window.location.pathname.includes('/share/') && !isEditMode) return window.location.href;
@@ -229,30 +257,25 @@ export default function AIResult({ data, userInfo, tripId }) {
             const saveData = {
                 ...tripPlan,
                 contactInfo: userInfo?.contact || "정보 없음",
-                // ⚠️ 여기가 핵심 수정입니다! (undefined 에러 방지)
+                // ⚠️ 안전장치: Boolean으로 감싸서 undefined 에러 방지
                 isEdited: Boolean(isEditMode || tripPlan.isEdited)
             };
-
             let generatedUrl;
-
             if (tripId) {
                 const docRef = doc(db, "trips", tripId);
                 await updateDoc(docRef, { ...saveData, updatedAt: serverTimestamp() });
                 generatedUrl = `${window.location.origin}/share/${tripId}`;
                 alert("수정된 내용이 저장되었습니다!");
-            }
-            else {
+            } else {
                 saveData.createdAt = serverTimestamp();
                 const docRef = await addDoc(collection(db, "trips"), saveData);
                 generatedUrl = `${window.location.origin}/share/${docRef.id}`;
             }
-
             setShareUrl(generatedUrl);
             return generatedUrl;
         } catch (e) {
-            console.error("Save Error Details:", e);
-            // 에러 원인을 더 자세히 알림
-            alert("저장 중 오류가 발생했습니다. (잠시 후 다시 시도해주세요)");
+            console.error("Save Error:", e);
+            alert("저장 중 오류가 발생했습니다.");
             return null;
         }
     };
@@ -265,17 +288,15 @@ export default function AIResult({ data, userInfo, tripId }) {
         if (url) text += `\n🔗 일정 상세 보기: ${url}`;
         return text;
     };
-
     const handleKakaoConsult = async () => {
         setLoadingAction('kakao');
         const url = await getOrSaveShareUrl();
         if (url) {
             const text = formatTripText(url);
-            try { await navigator.clipboard.writeText(text); alert("여행 일정이 저장 및 복사되었습니다!\n상담창에 붙여넣기 해주세요."); window.open('http://pf.kakao.com/_xcJhrn/chat', '_blank'); } catch (e) { window.open('http://pf.kakao.com/_xcJhrn/chat', '_blank'); }
+            try { await navigator.clipboard.writeText(text); alert("복사되었습니다! 카톡창에 붙여넣어 주세요."); window.open('http://pf.kakao.com/_xcJhrn/chat', '_blank'); } catch (e) { window.open('http://pf.kakao.com/_xcJhrn/chat', '_blank'); }
         }
         setLoadingAction(null);
     };
-
     const handleShare = async () => {
         setLoadingAction('share');
         const url = await getOrSaveShareUrl();
@@ -286,14 +307,11 @@ export default function AIResult({ data, userInfo, tripId }) {
         }
         setLoadingAction(null);
     };
-
     const handleReset = () => { if (confirm("초기 화면으로 돌아갑니다.")) window.location.reload(); };
-
     const handleOpenGoogleMaps = (name) => {
         const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}`;
         window.open(url, '_blank');
     };
-
     const handleDragStart = () => { isDragging.current = true; document.body.style.cursor = 'row-resize'; };
     useEffect(() => {
         const handleDragMove = (e) => {
@@ -333,16 +351,10 @@ export default function AIResult({ data, userInfo, tripId }) {
                 <div className="flex-1 bg-gray-50 -mt-6 rounded-t-3xl relative z-20 shadow-[0_-10px_40px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden">
 
                     {/* 핸들 & 편집 버튼 */}
-                    <div
-                        onMouseDown={handleDragStart} onTouchStart={handleDragStart}
-                        className="w-full flex items-center justify-between px-6 pt-3 pb-2 bg-white rounded-t-3xl border-b border-gray-100 shrink-0 cursor-row-resize hover:bg-gray-50"
-                    >
+                    <div onMouseDown={handleDragStart} onTouchStart={handleDragStart} className="w-full flex items-center justify-between px-6 pt-3 pb-2 bg-white rounded-t-3xl border-b border-gray-100 shrink-0 cursor-row-resize hover:bg-gray-50">
                         <div className="w-16"></div>
                         <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); setIsEditMode(!isEditMode); }}
-                            className={`flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full border shadow-sm transition-all ${isEditMode ? 'bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-200' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
-                        >
+                        <button onClick={(e) => { e.stopPropagation(); setIsEditMode(!isEditMode); }} className={`flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full border shadow-sm transition-all ${isEditMode ? 'bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-200' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}>
                             {isEditMode ? <><Check size={14} /> 완료</> : <><Pencil size={14} /> 편집</>}
                         </button>
                     </div>
@@ -357,30 +369,14 @@ export default function AIResult({ data, userInfo, tripId }) {
                                     <div className="space-y-2">
                                         {tripPlan.budgetBreakdown?.map((item, idx) => (
                                             <div key={idx} className="flex gap-2 items-center">
-                                                <input
-                                                    type="text"
-                                                    value={item}
-                                                    onChange={(e) => handleBudgetChange(idx, e.target.value)}
-                                                    className="flex-1 text-sm p-2 border border-rose-200 rounded-lg outline-none focus:border-[#FF5A5F] bg-rose-50/30"
-                                                />
-                                                <button onClick={() => handleDeleteBudget(idx)} className="p-2 text-rose-400 hover:text-rose-600 bg-rose-50 rounded-lg">
-                                                    <Trash2 size={14} />
-                                                </button>
+                                                <input type="text" value={item} onChange={(e) => handleBudgetChange(idx, e.target.value)} className="flex-1 text-sm p-2 border border-rose-200 rounded-lg outline-none focus:border-[#FF5A5F] bg-rose-50/30" />
+                                                <button onClick={() => handleDeleteBudget(idx)} className="p-2 text-rose-400 hover:text-rose-600 bg-rose-50 rounded-lg"><Trash2 size={14} /></button>
                                             </div>
                                         ))}
-                                        <button onClick={handleAddBudget} className="w-full py-2 text-xs font-bold text-rose-500 border border-dashed border-rose-300 rounded-lg hover:bg-rose-50 flex items-center justify-center gap-1">
-                                            <Plus size={12} /> 예산 항목 추가
-                                        </button>
+                                        <button onClick={handleAddBudget} className="w-full py-2 text-xs font-bold text-rose-500 border border-dashed border-rose-300 rounded-lg hover:bg-rose-50 flex items-center justify-center gap-1"><Plus size={12} /> 예산 항목 추가</button>
                                     </div>
                                 ) : (
-                                    (budgetBreakdown?.length > 0) ? (
-                                        budgetBreakdown.map((item, idx) => (
-                                            <div key={idx} className="flex items-start gap-2 text-sm">
-                                                <div className="min-w-[4px] h-[4px] bg-[#FF5A5F] rounded-full mt-2"></div>
-                                                <p className="text-gray-700">{item}</p>
-                                            </div>
-                                        ))
-                                    ) : (<p className="text-gray-700 text-sm">{estimatedCost || "예산 정보 없음"}</p>)
+                                    (budgetBreakdown?.length > 0) ? budgetBreakdown.map((item, idx) => (<div key={idx} className="flex items-start gap-2 text-sm"><div className="min-w-[4px] h-[4px] bg-[#FF5A5F] rounded-full mt-2"></div><p className="text-gray-700">{item}</p></div>)) : (<p className="text-gray-700 text-sm">{estimatedCost || "예산 정보 없음"}</p>)
                                 )}
                             </div>
                         </div>
@@ -394,18 +390,9 @@ export default function AIResult({ data, userInfo, tripId }) {
                                         <div key={idx} className="place-card min-w-[220px] bg-white p-3 rounded-xl border border-gray-200 shadow-sm relative"
                                             data-lat={hotel.coordinates?.lat} data-lng={hotel.coordinates?.lng}
                                             onClick={() => { googleMapRef.current?.panTo(hotel.coordinates); googleMapRef.current?.setZoom(16); }}>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="bg-gray-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">추천 {idx + 1}</span>
-                                                <h4 className="font-bold text-sm truncate">{hotel.name}</h4>
-                                            </div>
-                                            <p className="text-xs text-[#FF5A5F] font-bold mb-1">{hotel.priceRange}</p>
-                                            <p className="text-[10px] text-gray-500 leading-relaxed bg-gray-50 p-1.5 rounded line-clamp-2">{hotel.description}</p>
-                                            <button
-                                                className="absolute top-3 right-3 text-gray-400 hover:text-black"
-                                                onClick={(e) => { e.stopPropagation(); googleMapRef.current?.panTo(hotel.coordinates); googleMapRef.current?.setZoom(16); }}
-                                            >
-                                                <MapPin size={14} />
-                                            </button>
+                                            <div className="flex items-center gap-2 mb-1"><span className="bg-gray-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">추천 {idx + 1}</span><h4 className="font-bold text-sm truncate">{hotel.name}</h4></div>
+                                            <p className="text-xs text-[#FF5A5F] font-bold mb-1">{hotel.priceRange}</p><p className="text-[10px] text-gray-500 leading-relaxed bg-gray-50 p-1.5 rounded line-clamp-2">{hotel.description}</p>
+                                            <button className="absolute top-3 right-3 text-gray-400 hover:text-black" onClick={(e) => { e.stopPropagation(); googleMapRef.current?.panTo(hotel.coordinates); googleMapRef.current?.setZoom(16); }}><MapPin size={14} /></button>
                                         </div>
                                     ))}
                                 </div>
@@ -425,94 +412,51 @@ export default function AIResult({ data, userInfo, tripId }) {
                                     <div className="relative pl-4 ml-3 space-y-6" style={{ borderLeft: `2px solid ${dayColor}30` }}>
                                         {dayItem.places.map((place, placeIdx) => (
                                             <div key={placeIdx} className="relative pl-6">
-                                                <div className="absolute -left-[21px] top-0 w-7 h-7 rounded-full text-white flex items-center justify-center text-xs font-bold shadow-md ring-4 ring-white z-10" style={{ backgroundColor: dayColor }}>
-                                                    {placeIdx + 1}
-                                                </div>
+                                                <div className="absolute -left-[21px] top-0 w-7 h-7 rounded-full text-white flex items-center justify-center text-xs font-bold shadow-md ring-4 ring-white z-10" style={{ backgroundColor: dayColor }}>{placeIdx + 1}</div>
 
-                                                <div
-                                                    className={`place-card bg-white p-3 rounded-xl border transition ${isEditMode ? 'border-indigo-200 shadow-inner' : 'border-gray-100 hover:border-gray-300 shadow-sm'}`}
-                                                    data-lat={place.coordinates?.lat}
-                                                    data-lng={place.coordinates?.lng}
-                                                >
+                                                <div className={`place-card bg-white p-3 rounded-xl border transition ${isEditMode ? 'border-indigo-200 shadow-inner' : 'border-gray-100 hover:border-gray-300 shadow-sm'}`} data-lat={place.coordinates?.lat} data-lng={place.coordinates?.lng}>
 
                                                     {isEditMode ? (
+                                                        // ✏️ 편집 모드 (4. 돋보기 버튼 추가됨)
                                                         <div className="space-y-2">
                                                             <div className="flex gap-2">
-                                                                <input
-                                                                    type="text"
-                                                                    value={place.name}
-                                                                    onChange={(e) => handleEditChange(dayIdx, placeIdx, 'name', e.target.value)}
-                                                                    className="flex-1 font-bold text-sm p-1 border-b border-indigo-200 outline-none focus:border-indigo-500 bg-transparent"
-                                                                    placeholder="장소명"
-                                                                />
+                                                                <input type="text" value={place.name} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'name', e.target.value)} className="flex-1 font-bold text-sm p-1 border-b border-indigo-200 outline-none focus:border-indigo-500 bg-transparent" placeholder="장소명" />
+
+                                                                {/* 📍 위치 자동 찾기 버튼 */}
+                                                                <button
+                                                                    onClick={() => handleUpdateLocation(dayIdx, placeIdx, place.name)}
+                                                                    className="p-1.5 rounded bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 hover:text-blue-700 transition"
+                                                                    title="이 장소 이름으로 지도 위치 찾기"
+                                                                >
+                                                                    <Search size={14} />
+                                                                </button>
+
                                                                 <div className="flex gap-1">
                                                                     <button onClick={() => handleMovePlace(dayIdx, placeIdx, -1)} disabled={placeIdx === 0} className="p-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-30"><ArrowUp size={12} /></button>
                                                                     <button onClick={() => handleMovePlace(dayIdx, placeIdx, 1)} disabled={placeIdx === dayItem.places.length - 1} className="p-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-30"><ArrowDown size={12} /></button>
                                                                 </div>
                                                             </div>
-                                                            <textarea
-                                                                value={place.description}
-                                                                onChange={(e) => handleEditChange(dayIdx, placeIdx, 'description', e.target.value)}
-                                                                className="w-full text-xs p-1 border border-gray-200 rounded outline-none focus:border-indigo-500 bg-gray-50 h-16 resize-none"
-                                                                placeholder="설명"
-                                                            />
+                                                            <textarea value={place.description} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'description', e.target.value)} className="w-full text-xs p-1 border border-gray-200 rounded outline-none focus:border-indigo-500 bg-gray-50 h-16 resize-none" placeholder="설명" />
                                                             <div className="flex justify-end pt-1">
                                                                 <button onClick={() => handleDeletePlace(dayIdx, placeIdx)} className="flex items-center gap-1 text-[10px] text-red-500 font-bold bg-red-50 px-2 py-1 rounded hover:bg-red-100"><Trash2 size={10} /> 삭제</button>
                                                             </div>
                                                         </div>
                                                     ) : (
                                                         <div onClick={() => { googleMapRef.current?.panTo(place.coordinates); googleMapRef.current?.setZoom(17); }}>
-                                                            <div className="flex justify-between items-start">
-                                                                <h3 className="text-base font-bold text-gray-900">{place.name}</h3>
-                                                                <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{place.category}</span>
-                                                            </div>
+                                                            <div className="flex justify-between items-start"><h3 className="text-base font-bold text-gray-900">{place.name}</h3><span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{place.category}</span></div>
                                                             <p className="text-sm text-gray-600 mt-1">{place.description}</p>
-                                                            <button className="mt-2 flex items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded-lg transition shadow-sm" style={{ backgroundColor: `${dayColor}15`, color: dayColor }} onClick={(e) => { e.stopPropagation(); handleOpenGoogleMaps(place.name); }}>
-                                                                <ExternalLink size={10} /> 길찾기
-                                                            </button>
+                                                            <button className="mt-2 flex items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded-lg transition shadow-sm" style={{ backgroundColor: `${dayColor}15`, color: dayColor }} onClick={(e) => { e.stopPropagation(); handleOpenGoogleMaps(place.name); }}><ExternalLink size={10} /> 길찾기</button>
                                                         </div>
                                                     )}
                                                 </div>
                                             </div>
                                         ))}
 
-                                        {isEditMode && (
-                                            <div className="pl-6 pt-2">
-                                                <button onClick={() => handleAddPlace(dayIdx)} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-400 text-xs font-bold flex items-center justify-center gap-1 hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50 transition"><Plus size={14} /> 장소 추가하기</button>
-                                            </div>
-                                        )}
+                                        {isEditMode && (<div className="pl-6 pt-2"><button onClick={() => handleAddPlace(dayIdx)} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-400 text-xs font-bold flex items-center justify-center gap-1 hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50 transition"><Plus size={14} /> 장소 추가하기</button></div>)}
                                     </div>
                                 </div>
                             );
                         })}
-
-                        {/* 날씨 & 꿀팁 */}
-                        <div className="mb-6">
-                            {(weather || (travelTips && travelTips.length > 0)) && (
-                                <div className="grid grid-cols-1 gap-3">
-                                    {weather && (
-                                        <div className="bg-blue-50/80 p-4 rounded-xl border border-blue-100 flex items-center gap-3">
-                                            <div className="bg-white p-2 rounded-full shadow-sm text-amber-500"><Sun size={20} /></div>
-                                            <div>
-                                                <p className="text-sm font-bold text-blue-900">여행지 날씨</p>
-                                                <p className="text-sm text-blue-700">{weather}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {travelTips?.length > 0 && (
-                                        <div className="bg-amber-50/80 p-4 rounded-xl border border-amber-100 flex items-start gap-3">
-                                            <div className="bg-white p-2 rounded-full shadow-sm text-amber-500 shrink-0"><Lightbulb size={20} /></div>
-                                            <div className="overflow-hidden">
-                                                <p className="text-sm font-bold text-amber-900 mb-1">여행 꿀팁</p>
-                                                <ul className="text-sm text-amber-800 space-y-1 list-disc list-inside">
-                                                    {travelTips.map((tip, i) => <li key={i}>{tip}</li>)}
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
 
                         {/* 하단 버튼 */}
                         <div className="pt-2 pb-12" data-html2canvas-ignore="true">
