@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-// 1. Search 아이콘 추가됨
-import { MessageCircle, Share2, Download, ExternalLink, BedDouble, Loader2, Sun, Lightbulb, RotateCcw, Pencil, Check, Trash2, Plus, ArrowUp, ArrowDown, MapPin, Search } from 'lucide-react';
+import { MessageCircle, Share2, Download, ExternalLink, BedDouble, Loader2, Sun, Lightbulb, RotateCcw, Pencil, Check, Trash2, Plus, ArrowUp, ArrowDown, MapPin, Search, Wand2 } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { collection, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
 
@@ -20,6 +19,9 @@ export default function AIResult({ data, userInfo, tripId }) {
     // 📏 지도 높이 조절
     const [mapHeight, setMapHeight] = useState(40);
     const isDragging = useRef(false);
+
+    // 자동 보정 중복 방지용 Ref
+    const hasAutoFixed = useRef(false);
 
     const mapRef = useRef(null);
     const googleMapRef = useRef(null);
@@ -45,7 +47,7 @@ export default function AIResult({ data, userInfo, tripId }) {
         }
     }, [data]);
 
-    // 2. 구글 맵 렌더링
+    // 2. 구글 맵 렌더링 & 🚀 자동 위치 보정 실행
     useEffect(() => {
         if (!tripPlan || !tripPlan.itinerary) return;
 
@@ -63,6 +65,7 @@ export default function AIResult({ data, userInfo, tripId }) {
 
             const map = googleMapRef.current;
 
+            // 기존 마커 제거
             markersRef.current.forEach(m => m.setMap(null));
             polylineRef.current.forEach(p => p.setMap(null));
             markersRef.current = [];
@@ -109,11 +112,17 @@ export default function AIResult({ data, userInfo, tripId }) {
             });
 
             if (!bounds.isEmpty()) map.fitBounds(bounds);
+
+            // 🚀 [핵심] 신규 생성이면(tripId 없음) 자동으로 위치 보정 실행
+            if (!tripId && !hasAutoFixed.current) {
+                console.log("새 일정이므로 위치 자동 보정을 시작합니다...");
+                hasAutoFixed.current = true; // 중복 실행 방지
+                performSilentAutoFix(map);
+            }
         };
 
         if (!window.google) {
             const script = document.createElement("script");
-            // 2. 중요: &libraries=places 추가됨 (위치 검색을 위해 필수)
             script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
             script.async = true;
             script.defer = true;
@@ -122,7 +131,67 @@ export default function AIResult({ data, userInfo, tripId }) {
         } else {
             loadMap();
         }
-    }, [tripPlan]);
+    }, [tripPlan]); // tripId는 제외 (tripPlan이 초기화될 때만 실행)
+
+
+    // ✨ [신규] 조용히 실행되는 자동 보정 함수 (알림창 없음)
+    const performSilentAutoFix = async (mapInstance) => {
+        if (!mapInstance || !tripPlan) return;
+
+        const service = new google.maps.places.PlacesService(mapInstance);
+        const newPlan = { ...tripPlan };
+        const region = tripPlan.destination || ""; // 여행지 이름 (예: 다낭)
+        let isUpdated = false;
+
+        const updates = [];
+
+        newPlan.itinerary.forEach((dayItem, dayIdx) => {
+            dayItem.places.forEach((place, placeIdx) => {
+                // 이미 좌표가 정확할 수도 있으니, 딜레이를 주며 검색
+                const promise = new Promise((resolve) => {
+                    setTimeout(() => {
+                        // 🔥 검색어 조합: "다낭" + "용다리"
+                        let searchQuery = place.name;
+                        if (region && !searchQuery.includes(region)) {
+                            searchQuery = `${region} ${searchQuery}`;
+                        }
+
+                        service.findPlaceFromQuery({
+                            query: searchQuery,
+                            fields: ['geometry']
+                        }, (results, status) => {
+                            if (status === google.maps.places.PlacesServiceStatus.OK && results && results[0]) {
+                                const location = results[0].geometry.location;
+                                // 기존 좌표와 다를 때만 업데이트
+                                const oldLat = newPlan.itinerary[dayIdx].places[placeIdx].coordinates.lat;
+                                const newLat = location.lat();
+
+                                // 아주 미세한 차이는 무시 (불필요한 리렌더링 방지)
+                                if (Math.abs(oldLat - newLat) > 0.0001) {
+                                    newPlan.itinerary[dayIdx].places[placeIdx].coordinates = {
+                                        lat: location.lat(),
+                                        lng: location.lng()
+                                    };
+                                    isUpdated = true;
+                                }
+                            }
+                            resolve();
+                        });
+                    }, dayIdx * 200 + placeIdx * 200); // API 과부하 방지용 딜레이
+                });
+                updates.push(promise);
+            });
+        });
+
+        await Promise.all(updates);
+
+        if (isUpdated) {
+            console.log("위치 자동 보정 완료!");
+            setTripPlan({ ...newPlan }); // 상태 업데이트 -> 지도 자동 갱신됨
+            if (!tripId) setShareUrl(null);
+        }
+    };
+
 
     // 🔄 스크롤 시 지도 자동 이동
     useEffect(() => {
@@ -157,20 +226,22 @@ export default function AIResult({ data, userInfo, tripId }) {
         return () => { if (observerRef.current) observerRef.current.disconnect(); };
     }, [tripPlan]);
 
-    // 3. [신규 기능] 위치 자동 보정 함수 (Google Places API 사용)
+
+    // 📍 [수동] 개별 위치 보정
     const handleUpdateLocation = (dayIndex, placeIndex, queryName) => {
-        if (!window.google || !googleMapRef.current) {
-            alert("지도가 로딩되지 않았습니다.");
-            return;
-        }
-        if (!queryName || queryName.trim() === "") {
-            alert("장소 이름을 입력해주세요.");
-            return;
+        if (!window.google || !googleMapRef.current) return;
+        if (!queryName) return;
+
+        // 🔥 수동 보정 때도 지역명 자동 포함
+        const region = tripPlan.destination || "";
+        let finalQuery = queryName;
+        if (region && !queryName.includes(region)) {
+            finalQuery = `${region} ${queryName}`;
         }
 
         const service = new google.maps.places.PlacesService(googleMapRef.current);
         service.findPlaceFromQuery({
-            query: queryName,
+            query: finalQuery,
             fields: ['name', 'geometry']
         }, (results, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK && results && results[0]) {
@@ -184,12 +255,29 @@ export default function AIResult({ data, userInfo, tripId }) {
 
                 googleMapRef.current.panTo(newCoords);
                 googleMapRef.current.setZoom(16);
-                alert(`✅ '${results[0].name}' 위치를 찾았습니다!\n지도가 이동했습니다. [저장]을 눌러 확정하세요.`);
+                alert(`✅ '${results[0].name}' 위치로 보정했습니다!`);
             } else {
-                alert(`❌ '${queryName}'을(를) 찾을 수 없습니다.\n정확한 명칭(예: 다낭 국제공항)으로 수정한 뒤 다시 시도해주세요.`);
+                alert(`❌ '${finalQuery}'를 찾을 수 없습니다.`);
             }
         });
     };
+
+    // ✨ [수동] 전체 위치 보정 버튼 (강제 실행용)
+    const handleAutoFixAll = async () => {
+        if (!window.google || !googleMapRef.current) {
+            alert("지도가 로딩되지 않았습니다.");
+            return;
+        }
+        if (!confirm("모든 장소의 위치를 여행지 기준으로 재설정하시겠습니까?")) return;
+
+        setLoadingAction('autoFix');
+        // 강제로 실행하므로 기존 로직 재사용
+        hasAutoFixed.current = false;
+        await performSilentAutoFix(googleMapRef.current);
+        setLoadingAction(null);
+        alert("전체 위치 보정이 완료되었습니다.");
+    };
+
 
     // 💰 예산 수정 핸들러
     const handleBudgetChange = (index, value) => {
@@ -248,7 +336,7 @@ export default function AIResult({ data, userInfo, tripId }) {
         if (!tripId) setShareUrl(null);
     };
 
-    // 💾 저장 로직 (에러 수정 포함)
+    // 💾 저장 로직
     const getOrSaveShareUrl = async () => {
         if (shareUrl && !isEditMode) return shareUrl;
         if (window.location.pathname.includes('/share/') && !isEditMode) return window.location.href;
@@ -257,7 +345,6 @@ export default function AIResult({ data, userInfo, tripId }) {
             const saveData = {
                 ...tripPlan,
                 contactInfo: userInfo?.contact || "정보 없음",
-                // ⚠️ 안전장치: Boolean으로 감싸서 undefined 에러 방지
                 isEdited: Boolean(isEditMode || tripPlan.isEdited)
             };
             let generatedUrl;
@@ -303,7 +390,7 @@ export default function AIResult({ data, userInfo, tripId }) {
         if (url) {
             const text = formatTripText(url);
             if (navigator.share) { try { await navigator.share({ title: tripPlan.tripTitle, text: text, url: url }); } catch (e) { } }
-            else { try { await navigator.clipboard.writeText(text); alert("링크가 복사되었습니다!"); } catch (e) { } }
+            else { try { await navigator.clipboard.writeText(text); alert("링크 복사 완료!"); } catch (e) { } }
         }
         setLoadingAction(null);
     };
@@ -354,14 +441,27 @@ export default function AIResult({ data, userInfo, tripId }) {
                     <div onMouseDown={handleDragStart} onTouchStart={handleDragStart} className="w-full flex items-center justify-between px-6 pt-3 pb-2 bg-white rounded-t-3xl border-b border-gray-100 shrink-0 cursor-row-resize hover:bg-gray-50">
                         <div className="w-16"></div>
                         <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
-                        <button onClick={(e) => { e.stopPropagation(); setIsEditMode(!isEditMode); }} className={`flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full border shadow-sm transition-all ${isEditMode ? 'bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-200' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}>
-                            {isEditMode ? <><Check size={14} /> 완료</> : <><Pencil size={14} /> 편집</>}
-                        </button>
+                        <div className="flex gap-2">
+                            {/* ✨ 전체 위치 보정 버튼 (편집 모드일 때만) */}
+                            {isEditMode && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleAutoFixAll(); }}
+                                    disabled={loadingAction === 'autoFix'}
+                                    className="flex items-center gap-1 text-[10px] font-bold px-3 py-1.5 rounded-full border bg-violet-50 text-violet-600 border-violet-200 hover:bg-violet-100 transition shadow-sm"
+                                >
+                                    {loadingAction === 'autoFix' ? <Loader2 className="animate-spin" size={12} /> : <Wand2 size={12} />}
+                                    전체 위치 보정
+                                </button>
+                            )}
+                            <button onClick={(e) => { e.stopPropagation(); setIsEditMode(!isEditMode); }} className={`flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full border shadow-sm transition-all ${isEditMode ? 'bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-200' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}>
+                                {isEditMode ? <><Check size={14} /> 완료</> : <><Pencil size={14} /> 편집</>}
+                            </button>
+                        </div>
                     </div>
 
                     <div ref={scrollContainerRef} className="overflow-y-auto flex-1 px-5 pb-10 bg-white custom-scrollbar scroll-smooth">
 
-                        {/* 💰 예산 (수정 가능) */}
+                        {/* 💰 예산 */}
                         <div className="mb-6 mt-6">
                             <h3 className="text-[#FF5A5F] font-bold text-base mb-2 px-1">예산 배분 제안</h3>
                             <div className="bg-white p-4 rounded-2xl border border-rose-100 shadow-sm space-y-2">
@@ -417,20 +517,11 @@ export default function AIResult({ data, userInfo, tripId }) {
                                                 <div className={`place-card bg-white p-3 rounded-xl border transition ${isEditMode ? 'border-indigo-200 shadow-inner' : 'border-gray-100 hover:border-gray-300 shadow-sm'}`} data-lat={place.coordinates?.lat} data-lng={place.coordinates?.lng}>
 
                                                     {isEditMode ? (
-                                                        // ✏️ 편집 모드 (4. 돋보기 버튼 추가됨)
                                                         <div className="space-y-2">
                                                             <div className="flex gap-2">
                                                                 <input type="text" value={place.name} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'name', e.target.value)} className="flex-1 font-bold text-sm p-1 border-b border-indigo-200 outline-none focus:border-indigo-500 bg-transparent" placeholder="장소명" />
-
-                                                                {/* 📍 위치 자동 찾기 버튼 */}
-                                                                <button
-                                                                    onClick={() => handleUpdateLocation(dayIdx, placeIdx, place.name)}
-                                                                    className="p-1.5 rounded bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 hover:text-blue-700 transition"
-                                                                    title="이 장소 이름으로 지도 위치 찾기"
-                                                                >
-                                                                    <Search size={14} />
-                                                                </button>
-
+                                                                {/* 📍 개별 보정 버튼 */}
+                                                                <button onClick={() => handleUpdateLocation(dayIdx, placeIdx, place.name)} className="p-1.5 rounded bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 hover:text-blue-700 transition" title="위치 찾기"><Search size={14} /></button>
                                                                 <div className="flex gap-1">
                                                                     <button onClick={() => handleMovePlace(dayIdx, placeIdx, -1)} disabled={placeIdx === 0} className="p-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-30"><ArrowUp size={12} /></button>
                                                                     <button onClick={() => handleMovePlace(dayIdx, placeIdx, 1)} disabled={placeIdx === dayItem.places.length - 1} className="p-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-30"><ArrowDown size={12} /></button>
