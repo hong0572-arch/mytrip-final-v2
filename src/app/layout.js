@@ -3,17 +3,23 @@ import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import { GoogleAnalytics } from '@next/third-parties/google';
 
-
-
 // ✅ [핵심] Vercel 환경 변수 연결 (없으면 기본값 사용)
 const SITE_TITLE = process.env.NEXT_PUBLIC_OG_TITLE || "My Trip Pro - AI 맞춤 여행 가이드";
 const SITE_DESC = process.env.NEXT_PUBLIC_OG_DESC || "AI가 3초 만에 당신만을 위한 여행 계획을 짜드립니다.";
 const SITE_IMAGE = process.env.NEXT_PUBLIC_OG_IMAGE || "https://mytrip2.pro/og-final.jpg";
 
 export const metadata = {
+  // 1. 실제 도메인 주소 설정
   metadataBase: new URL('https://mytrip2.pro'),
+
   title: SITE_TITLE,
   description: SITE_DESC,
+
+  // ✅ [추가됨] 구글 중복 문제 해결을 위한 표준 URL 설정
+  alternates: {
+    canonical: '/',
+  },
+
   openGraph: {
     title: SITE_TITLE,
     description: SITE_DESC,
@@ -39,7 +45,7 @@ export default function RootLayout({ children }) {
         {/* GA4 (구글 애널리틱스) */}
         <script
           async
-          src={`https://www.googletagmanager.com/gtag/js?id=G-DC122J4LJL`}
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
         />
         <script
           dangerouslySetInnerHTML={{
@@ -47,7 +53,7 @@ export default function RootLayout({ children }) {
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', 'G-DC122J4LJL');
+              gtag('config', '${GA_ID}');
             `,
           }}
         />
@@ -62,4 +68,3 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
-
