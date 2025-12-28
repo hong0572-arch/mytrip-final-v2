@@ -1,5 +1,7 @@
 "use client";
 
+import TravelQuiz from "../components/TravelQuiz"; // 👈 일단 가져오되, 위치를 조정해야 함
+import AuthButton from "../components/AuthButton";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Calendar, Wallet, User, Sparkles, Users, Compass, Heart, Baby, Briefcase, Crown } from "lucide-react";
@@ -8,6 +10,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { ko } from 'date-fns/locale';
 
+// ... (이미지 배열 등은 그대로)
 const backgroundImages = [
     "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1498855926480-d98e83099315?q=80&w=2070&auto=format&fit=crop",
@@ -62,7 +65,6 @@ export default function Home() {
     const toggleLuxuryMode = () => {
         const newMode = !isLuxury;
         setIsLuxury(newMode);
-        // 모드 변경 시 호텔 타입 등만 자동 변경 (예산은 백엔드에서 처리)
         setFormData(prev => ({
             ...prev,
             hotelType: newMode ? "5성급 스위트룸/풀빌라" : "호텔"
@@ -108,7 +110,7 @@ export default function Home() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     ...formData,
-                    isLuxury: isLuxury // 백엔드에 '초호화 모드' 여부 전달
+                    isLuxury: isLuxury
                 }),
             });
             const data = await response.json();
@@ -122,6 +124,7 @@ export default function Home() {
         }
     };
 
+    // 결과가 있으면 결과 페이지 보여주기
     if (result) return <AIResult data={result} userInfo={formData} />;
 
     return (
@@ -148,11 +151,23 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 className="w-full max-w-[440px] h-full sm:h-[92vh] bg-white/95 backdrop-blur-md sm:rounded-[35px] shadow-2xl overflow-hidden relative flex flex-col z-10"
             >
-                {/* 헤더 */}
+                {/* 헤더: 로그인 버튼 */}
+
+
+                {/* 🚨 수정 포인트: TravelQuiz 위치 이동 
+                   여기에 퀴즈가 있으면 폼 입력을 방해합니다.
+                   일단은 주석 처리하거나, 필요하다면 맨 아래로 옮겨야 합니다.
+                */}
+                {/* <div className="px-4 mt-12">
+                    <TravelQuiz />
+                </div> */}
+
                 <div className="px-6 pt-6 pb-2 shrink-0 flex justify-between items-center bg-white/50 backdrop-blur-sm z-20">
                     <img src="/logo.png" alt="Logo" className="h-8 w-auto object-contain" />
-                    <div className="px-3 py-1 bg-rose-50 text-[#FF5A5F] text-xs font-bold rounded-full border border-rose-100">
-                        AI Travel Planner
+
+
+                    <div className="absolute top-4 right-4 z-50">
+                        <AuthButton />
                     </div>
                 </div>
 
@@ -240,7 +255,6 @@ export default function Home() {
                         <div className={`p-5 rounded-3xl border relative z-0 transition-all duration-300 ${isLuxury ? "bg-amber-50 border-amber-200" : "bg-gray-50 border-gray-100"}`}>
                             <div className="flex gap-6 items-center justify-between">
 
-                                {/* 💎 초호화 모드일 땐 슬라이더 숨기고 '자동 설정' 문구 표시 */}
                                 {isLuxury ? (
                                     <div className="flex-1 flex flex-col justify-center h-[52px]">
                                         <div className="flex items-center gap-2 text-amber-600 font-bold mb-1">
@@ -257,12 +271,11 @@ export default function Home() {
                                             <span className="text-xl font-bold text-[#FF5A5F]">{formData.budget.toLocaleString()}</span>
                                             <span className="text-sm font-medium text-gray-500 mb-1">만원</span>
                                         </div>
-                                        {/* 💰 일반 예산 슬라이더 (50~1000만원) */}
                                         <input
                                             type="range" name="budget" min="50" max="1000" step="10"
+                                            style={{ zIndex: 50 }}
                                             value={formData.budget} onChange={handleInputChange}
                                             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#FF5A5F] relative z-20 touch-action-none"
-                                            style={{ zIndex: 50 }}
                                         />
                                         <div className="flex justify-between text-[10px] text-gray-400 mt-1 font-medium">
                                             <span>50만원</span>
@@ -299,11 +312,13 @@ export default function Home() {
                 </div>
 
                 {/* 하단 고정 버튼 */}
-                <div className="absolute bottom-0 left-0 w-full p-6 bg-linear-to-t from-white via-white/95 to-transparent z-30">
+                {/* 🚨 수정: bg-linear-to-t -> bg-gradient-to-t 로 변경 */}
+                <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-white via-white/95 to-transparent z-30">
                     <button
                         onClick={generatePlan}
                         disabled={loading}
-                        className={`w-full py-4 rounded-2xl font-bold text-xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-95 ${isLuxury ? "bg-gradient-to-r from-amber-500 to-amber-600 shadow-amber-200 text-white" : "bg-linear-to-r from-[#FF5A5F] to-[#FF3D43] shadow-rose-200 text-white hover:shadow-rose-400 hover:-translate-y-1"}`}
+                        /* 🚨 수정: bg-linear-to-r -> bg-gradient-to-r 로 변경 */
+                        className={`w-full py-4 rounded-2xl font-bold text-xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-95 ${isLuxury ? "bg-gradient-to-r from-amber-500 to-amber-600 shadow-amber-200 text-white" : "bg-gradient-to-r from-[#FF5A5F] to-[#FF3D43] shadow-rose-200 text-white hover:shadow-rose-400 hover:-translate-y-1"}`}
                     >
                         {loading ? <><Sparkles className="animate-spin" size={24} /> {isLuxury ? "💎 VIP 일정 생성 중..." : "플랜 생성 중..."}</> : (isLuxury ? "💎 초호화 플랜 받기" : "✨ 무료로 여행 플랜 받기")}
                     </button>
@@ -318,7 +333,7 @@ export default function Home() {
         .scrollbar-hide::-webkit-scrollbar { display: none; } 
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         .react-datepicker { border: none !important; box-shadow: 0 10px 40px rgba(0,0,0,0.1); font-family: sans-serif; border-radius: 16px !important; }
-        .react-datepicker__header { bg-white; border-bottom: 1px solid #f0f0f0; border-top-left-radius: 16px !important; border-top-right-radius: 16px !important; background-color: white !important; padding-top: 10px; }
+        .react-datepicker__header { border-bottom: 1px solid #f0f0f0; border-top-left-radius: 16px !important; border-top-right-radius: 16px !important; background-color: white !important; padding-top: 10px; }
         .react-datepicker__day--selected, .react-datepicker__day--in-range { background-color: #FF5A5F !important; border-radius: 50%; color: white !important; }
         .react-datepicker__day:hover { background-color: #f0f0f0 !important; border-radius: 50%; }
         .react-datepicker__day-name { color: #aaa; font-weight: bold; width: 36px; }

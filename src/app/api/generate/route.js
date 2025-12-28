@@ -18,10 +18,11 @@ export async function POST(req) {
       ? `**초호화 VIP 예산**: 1인당 2,000만원 ~ 5,000만원. (최고급 서비스 이용)`
       : `1인당 ${budget}0,000 원`;
 
-    // 🚀 프롬프트 업그레이드: 지역 제한 + 한국어 강제
+    // 🚀 프롬프트 업그레이드: 퀴즈 생성(Quiz Generation) 추가됨!
     const prompt = `
-      당신은 전문 여행 플래너입니다.
-      **${destination}** 여행 일정을 **${days}일간** (${startDate} ~ ${endDate}) 계획해주세요.
+      당신은 전문 여행 플래너이자 여행 가이드입니다.
+      **${destination}** 여행 일정을 **${days}일간** (${startDate} ~ ${endDate}) 계획하고, 
+      동시에 여행자들이 재미있게 풀 수 있는 **${destination} 관련 상식 퀴즈 3문제**를 출제해주세요.
       
       [여행자 정보]
       - 동행: ${companion}
@@ -41,7 +42,7 @@ export async function POST(req) {
 
       2. **지역 제한 (Geographical Restriction)**:
          - 모든 추천 장소(호텔, 식당, 관광지)는 반드시 **${destination}** 지역 내에 실제로 존재하는 곳이어야 함.
-         - ❌ 다른 국가나 도시의 동명 이인 장소를 절대 포함하지 말 것. (예: 다낭 여행인데 서울의 용다리를 추천하지 말 것)
+         - ❌ 다른 국가나 도시의 동명 이인 장소를 절대 포함하지 말 것.
          - 장소를 선정하기 전, 해당 장소가 **${destination}**에 있는지 스스로 검증할 것.
 
       3. **구체적인 장소명 (Specific Place Names)**:
@@ -51,13 +52,17 @@ export async function POST(req) {
 
       4. **좌표 (Coordinates)**:
          - 해당 장소의 정확한 위도(lat)/경도(lng)를 제공할 것.
-         - 대충 추측하지 말고 정확한 위치를 찾아서 입력할 것.
+
+      5. **퀴즈 생성 (Quiz Generation)**:
+         - **${destination}**과 관련된 재미있는 상식 퀴즈 3문제를 만들 것.
+         - 너무 쉬운 문제(예: 수도가 어디?)보다는 흥미로운 사실 위주로.
+         - 각 문제는 4지 선다형(options 4개)이어야 하며, 정답(answer)은 0~3 사이의 숫자 인덱스일 것.
 
       [응답 형식 (JSON Only)]
-      반드시 아래 JSON 형식만 반환하시오:
+      반드시 아래 JSON 형식만 반환하시오. (다른 설명 금지):
       {
-        "tripTitle": "여행 제목 (예: 다낭 3박 4일 힐링 여행)",
-        "weather": "${startDate} 무렵 ${destination}의 예상 날씨 설명.",
+        "tripTitle": "여행 제목",
+        "weather": "예상 날씨 설명",
         "travelTips": ["꿀팁 1", "꿀팁 2", "꿀팁 3"],
         "budgetBreakdown": ["항공권: 약 00만원", "숙박: 약 00만원", ...],
         "estimatedCost": "총 예상 비용",
@@ -78,10 +83,27 @@ export async function POST(req) {
                 "order": 1,
                 "name": "장소명 (영문명)", 
                 "category": "식당/관광/카페 등",
-                "description": "방문 이유 및 설명",
+                "description": "설명",
                 "coordinates": { "lat": 35.xxxx, "lng": 139.xxxx }
               }
             ]
+          }
+        ],
+        "quiz": [
+          {
+            "question": "Q1. ${destination}에 대한 설명 중 맞는 것은?",
+            "options": ["보기1", "보기2", "보기3", "보기4"],
+            "answer": 0 
+          },
+          {
+            "question": "Q2. ...",
+            "options": ["...", "...", "...", "..."],
+            "answer": 2
+          },
+          {
+            "question": "Q3. ...",
+            "options": ["...", "...", "...", "..."],
+            "answer": 1
           }
         ]
       }
