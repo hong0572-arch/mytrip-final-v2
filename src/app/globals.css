@@ -1,9 +1,22 @@
 @import "tailwindcss";
 
+/* 1. 프리텐다드 폰트 불러오기 (CDN) */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 2. 전체 적용 */
+body {
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+}
+
 :root {
   --background: #F9F9F9;
   --foreground: #171717;
-  --brand-gradient: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%); /* Placeholder for Orange-Pink-Purple */
+  --brand-gradient: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%);
+  /* Placeholder for Orange-Pink-Purple */
   /* Better gradient based on description: Orange -> Pink -> Purple */
   --brand-gradient-main: linear-gradient(to right, #FF8C42, #FF4B8B, #8B4BFF);
 }
@@ -12,7 +25,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-noto-sans-kr);
-  
+
   --color-brand-start: #FF8C42;
   --color-brand-middle: #FF4B8B;
   --color-brand-end: #8B4BFF;

@@ -2,25 +2,28 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth, db } from "../../lib/firebase"; // 경로는 프로젝트 설정에 따라 다를 수 있음 (@/lib/firebase 추천)
+import { auth, db } from "../../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, collection, getDocs, query, orderBy } from "firebase/firestore";
-import { User, Coins, Map, Calendar, LogOut, ChevronRight, BrainCircuit, X, History, Sparkles } from 'lucide-react';
+// 아이콘 추가 (Ticket, Gift, Star 등)
+import { User, Coins, Map, Calendar, LogOut, ChevronRight, BrainCircuit, X, History, Sparkles, Share2, Copy, Ticket, Gift, Trophy } from 'lucide-react';
 import TravelQuiz from '../../components/TravelQuiz';
 
 export default function MyPage() {
     const router = useRouter();
+
+    // --- 상태 관리 (기존 로직 유지) ---
     const [user, setUser] = useState(null);
     const [userData, setUserData] = useState(null);
     const [itineraries, setItineraries] = useState([]);
-    const [pointHistory, setPointHistory] = useState([]); // 🔥 진짜 기록
+    const [pointHistory, setPointHistory] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // 팝업 및 퀴즈 상태
+    // --- 팝업 & 퀴즈 상태 ---
     const [showHistory, setShowHistory] = useState(false);
     const [showQuiz, setShowQuiz] = useState(false);
-    const [aiQuizData, setAiQuizData] = useState(null); // AI가 만든 퀴즈 데이터
-    const [quizLoading, setQuizLoading] = useState(false); // 퀴즈 생성 로딩 상태
+    const [aiQuizData, setAiQuizData] = useState(null);
+    const [quizLoading, setQuizLoading] = useState(false);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -36,14 +39,12 @@ export default function MyPage() {
 
     const fetchUserData = async (currentUser) => {
         try {
-            // 1. 유저 기본 정보
             const userRef = doc(db, "users", currentUser.uid);
             const userSnap = await getDoc(userRef);
             if (userSnap.exists()) {
                 setUserData(userSnap.data());
             }
 
-            // 2. 여행 일정 가져오기 (내 여행 보관함 - 최신순 정렬)
             const q = query(
                 collection(db, "users", currentUser.uid, "itineraries"),
                 orderBy("createdAt", "desc")
@@ -55,7 +56,6 @@ export default function MyPage() {
             });
             setItineraries(list);
 
-            // 3. 🔥 포인트 기록 가져오기 (Real History - 최신순 정렬)
             const historyQ = query(
                 collection(db, "users", currentUser.uid, "point_history"),
                 orderBy("createdAt", "desc")
@@ -74,24 +74,36 @@ export default function MyPage() {
         }
     };
 
-    // 🔥 AI 퀴즈 생성 함수 (최근 여행지 기반)
+    const handleShareLink = () => {
+        if (!user) return;
+        const baseUrl = window.location.origin;
+        const link = `${baseUrl}?ref=${user.uid}`;
+
+        if (navigator.share) {
+            navigator.share({
+                title: '친구야, 여행 가자! ✈️',
+                text: 'AI가 짜주는 초개인화 여행! 지금 가입하고 1,000P 받으세요.',
+                url: link,
+            }).catch((err) => console.log('공유 취소됨', err));
+        } else {
+            navigator.clipboard.writeText(link);
+            alert("🔗 초대 링크가 복사되었습니다!\n친구에게 붙여넣기(Ctrl+V)해서 보내세요.");
+        }
+    };
+
     const handleStartQuiz = async () => {
-        // 1. 여행 일정이 없는 경우 차단
         if (itineraries.length === 0) {
             alert("아직 생성된 여행 일정이 없습니다!\n먼저 여행을 만들고 퀴즈에 도전하세요.");
             router.push('/');
             return;
         }
-
-        // 가장 최근 여행지 가져오기
         const lastTrip = itineraries[0];
         const destination = lastTrip.destination;
 
         setQuizLoading(true);
-        setShowQuiz(true); // 모달 열기
+        setShowQuiz(true);
 
         try {
-            // API 호출 (AI에게 퀴즈 생성 요청)
             const response = await fetch('/api/quiz', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -106,7 +118,7 @@ export default function MyPage() {
             }
         } catch (error) {
             console.error(error);
-            alert("퀴즈를 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.");
+            alert("퀴즈를 불러오는 중 문제가 발생했습니다.");
             setShowQuiz(false);
         } finally {
             setQuizLoading(false);
@@ -118,198 +130,269 @@ export default function MyPage() {
         router.push('/');
     };
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
+    if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div></div>;
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans">
-            <div className="max-w-4xl mx-auto space-y-6">
+        <div className="min-h-screen bg-[#F8F9FD] p-4 md:p-8 font-sans pb-24 relative">
+            {/* 배경 데코레이션 */}
+            <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-indigo-100/50 to-transparent -z-10" />
 
-                {/* 1. 상단 프로필 카드 */}
-                <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex items-center gap-4 w-full md:w-auto">
-                        {user?.photoURL ? (
-                            <img src={user.photoURL} alt="Profile" className="w-16 h-16 rounded-full border-2 border-indigo-100 shadow-sm" />
-                        ) : (
-                            <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500">
-                                <User size={32} />
+            <div className="max-w-4xl mx-auto space-y-8">
+
+                {/* 1. 상단 프로필 영역 (Glassmorphism) */}
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="flex items-center gap-5">
+                        <div className="relative">
+                            <div className="w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
+                                <div className="w-full h-full rounded-full bg-white overflow-hidden flex items-center justify-center border-2 border-white">
+                                    {user?.photoURL ? (
+                                        <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-2xl font-black text-indigo-600">{user?.displayName?.[0]}</span>
+                                    )}
+                                </div>
                             </div>
-                        )}
+                            <span className="absolute -bottom-1 -right-1 bg-white text-xs font-bold px-2 py-1 rounded-full shadow-md border border-gray-100 flex items-center gap-1">
+                                <Trophy size={12} className="text-yellow-500" /> LV.1
+                            </span>
+                        </div>
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-1">
-                                {user?.displayName}님
+                            <h2 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+                                {user?.displayName}님 <span className="text-xl">👋</span>
                             </h2>
-                            <p className="text-gray-400 text-sm">{user?.email}</p>
+                            <p className="text-gray-500 text-sm font-medium mt-1">{user?.email}</p>
                         </div>
                     </div>
 
                     <div className="flex gap-3 w-full md:w-auto">
                         <button
                             onClick={handleStartQuiz}
-                            className="flex-1 md:flex-none bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2 shadow-indigo-200 shadow-lg"
+                            className="flex-1 md:flex-none bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 hover:-translate-y-0.5 active:translate-y-0"
                         >
                             <BrainCircuit size={18} />
-                            퀴즈 풀러 가기
+                            퀴즈 도전
                         </button>
                         <button
                             onClick={handleLogout}
-                            className="flex-1 md:flex-none px-5 py-2.5 border border-gray-200 rounded-xl text-gray-500 hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium"
+                            className="flex-1 md:flex-none px-5 py-3 bg-white border border-gray-200 rounded-2xl text-gray-500 hover:bg-gray-50 hover:text-red-500 transition flex items-center justify-center gap-2 font-bold shadow-sm"
                         >
-                            <LogOut size={18} /> 로그아웃
+                            <LogOut size={18} />
                         </button>
                     </div>
                 </div>
 
-                {/* 2. 정보 카드 (포인트 & 퀴즈) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 2. 대시보드 그리드 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-                    {/* 💰 포인트 카드 (클릭 가능) */}
+                    {/* 💰 포인트 카드 (오로라 그라데이션) */}
                     <div
                         onClick={() => setShowHistory(true)}
-                        className="bg-gradient-to-br from-[#6366f1] to-[#a855f7] rounded-3xl p-8 text-white shadow-lg relative overflow-hidden cursor-pointer hover:scale-[1.02] transition-transform group"
+                        className="relative bg-gradient-to-br from-[#6366f1] via-[#8b5cf6] to-[#d946ef] rounded-[32px] p-8 text-white shadow-xl shadow-indigo-200 overflow-hidden cursor-pointer group hover:scale-[1.01] transition-all duration-300"
                     >
+                        {/* 배경 효과 */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:opacity-10 transition-opacity"></div>
+
                         <div className="relative z-10">
-                            <p className="text-indigo-100 text-sm font-medium mb-2 flex items-center gap-1">
-                                내 보유 포인트 <ChevronRight size={14} className="opacity-50 group-hover:translate-x-1 transition-transform" />
-                            </p>
-                            <h3 className="text-5xl font-extrabold flex items-baseline gap-2">
-                                {userData?.points?.toLocaleString() || 0} <span className="text-2xl font-bold opacity-80">P</span>
+                            <div className="flex justify-between items-start mb-6">
+                                <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl">
+                                    <Coins size={24} className="text-white" />
+                                </div>
+                                <span className="text-xs font-bold bg-white/20 px-3 py-1 rounded-full backdrop-blur-md border border-white/10 flex items-center gap-1 group-hover:bg-white/30 transition-colors">
+                                    내역 보기 <ChevronRight size={12} />
+                                </span>
+                            </div>
+
+                            <p className="text-indigo-100 text-sm font-medium mb-1">현재 보유 포인트</p>
+                            <h3 className="text-5xl font-black tracking-tight">
+                                {userData?.points?.toLocaleString() || 0}
                             </h3>
                         </div>
-                        <Coins className="absolute right-6 bottom-6 text-white opacity-20 rotate-12 group-hover:rotate-45 transition-transform duration-500" size={80} />
                     </div>
 
-                    {/* 🎮 퀴즈 현황 카드 */}
-                    <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm relative overflow-hidden flex flex-col justify-center">
-                        <div className="relative z-10">
-                            <p className="text-gray-400 text-sm font-medium mb-2">오늘의 퀴즈 기회</p>
-                            <h3 className="text-4xl font-bold text-gray-800 flex items-center gap-2">
-                                {userData?.quizStats?.count || 0} / 2 <span className="text-xl text-gray-400 font-medium">회 사용</span>
-                            </h3>
-                            <p className="text-xs text-indigo-500 mt-3 font-bold bg-indigo-50 inline-block px-2 py-1 rounded">
-                                * 매일 자정 초기화됩니다.
-                            </p>
+                    {/* 🎮 퀴즈 카드 (깔끔한 화이트 + 포인트 컬러) */}
+                    <div className="bg-white rounded-[32px] p-8 border border-gray-100 shadow-lg shadow-gray-100 relative overflow-hidden flex flex-col justify-between group hover:border-indigo-100 transition-colors">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600">
+                                <Sparkles size={24} />
+                            </div>
+                            <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">매일 초기화</span>
                         </div>
-                        <BrainCircuit className="absolute right-6 bottom-6 text-gray-100" size={80} />
+
+                        <div>
+                            <p className="text-gray-400 text-sm font-bold mb-1">오늘의 퀴즈 기회</p>
+                            <div className="flex items-end gap-2">
+                                <h3 className="text-4xl font-black text-gray-800">
+                                    {userData?.quizStats?.count || 0} <span className="text-gray-300 text-2xl">/</span> 2
+                                </h3>
+                                <span className="text-sm text-gray-500 font-medium mb-1.5">회</span>
+                            </div>
+                        </div>
+
+                        {/* 진행률 바 */}
+                        <div className="w-full h-2 bg-gray-100 rounded-full mt-4 overflow-hidden">
+                            <div
+                                className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
+                                style={{ width: `${((userData?.quizStats?.count || 0) / 2) * 100}%` }}
+                            ></div>
+                        </div>
                     </div>
                 </div>
 
-                {/* 3. 내 여행 보관함 */}
-                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm min-h-[400px]">
-                    <div className="p-6 border-b border-gray-50 flex justify-between items-center">
-                        <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                            <Map size={20} className="text-indigo-500" />
-                            내 여행 보관함
+                {/* 🔥 3. 친구 초대 카드 (강력한 CTA) */}
+                <div className="bg-gradient-to-r from-rose-500 via-orange-400 to-amber-500 rounded-[32px] p-1 shadow-lg shadow-orange-200">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-[28px] p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 text-white relative overflow-hidden">
+
+                        {/* 배경 장식 */}
+                        <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-yellow-300 blur-[60px] opacity-30 animate-pulse"></div>
+
+                        <div className="relative z-10 text-center md:text-left">
+                            <h3 className="text-2xl font-black flex items-center justify-center md:justify-start gap-2 mb-2">
+                                <Gift className="animate-bounce" /> 친구 초대 이벤트
+                            </h3>
+                            <p className="text-white/90 font-medium leading-relaxed">
+                                친구에게 여행의 설렘을 선물하세요!<br />
+                                가입 시 두 분 모두에게 <span className="bg-white text-rose-500 px-1.5 py-0.5 rounded font-black">1,000 P</span>를 드립니다.
+                            </p>
+                        </div>
+
+                        <button
+                            onClick={handleShareLink}
+                            className="relative z-10 w-full md:w-auto bg-white text-rose-600 px-8 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-gray-50 transition shadow-xl active:scale-95 group"
+                        >
+                            <Copy size={18} className="group-hover:rotate-12 transition-transform" />
+                            링크 복사하기
+                        </button>
+                    </div>
+                </div>
+
+                {/* 4. 내 여행 보관함 (티켓 스타일) */}
+                <div>
+                    <div className="flex justify-between items-center mb-6 px-2">
+                        <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <Ticket size={24} className="text-indigo-500" />
+                            내 여행 티켓
                         </h3>
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500 font-bold">
-                            총 {itineraries.length}개
+                        <span className="text-xs bg-white border border-gray-200 px-3 py-1 rounded-full text-gray-500 font-bold shadow-sm">
+                            {itineraries.length} Trips
                         </span>
                     </div>
 
-                    <div className="p-6">
-                        {itineraries.length === 0 ? (
-                            <div className="text-center py-20 text-gray-400 flex flex-col items-center">
-                                <div className="bg-gray-50 p-4 rounded-full mb-4">
-                                    <Map size={32} className="opacity-30" />
-                                </div>
-                                <p className="mb-4">아직 저장된 여행이 없어요.</p>
-                                <button
-                                    onClick={() => router.push('/')}
-                                    className="text-indigo-600 font-bold hover:underline"
+                    {itineraries.length === 0 ? (
+                        <div className="bg-white rounded-3xl border-2 border-dashed border-gray-200 p-12 text-center flex flex-col items-center justify-center text-gray-400 group hover:border-indigo-200 transition-colors">
+                            <Map size={48} className="mb-4 text-gray-200 group-hover:text-indigo-200 transition-colors" />
+                            <p className="font-medium mb-4">아직 떠날 여행이 없네요!</p>
+                            <button
+                                onClick={() => router.push('/')}
+                                className="text-indigo-600 font-bold hover:underline bg-indigo-50 px-4 py-2 rounded-xl"
+                            >
+                                + 첫 여행 계획하기
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            {itineraries.map((trip) => (
+                                <div
+                                    key={trip.id}
+                                    onClick={() => router.push(`/trip/${trip.id}`)}
+                                    className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-indigo-100 transition-all cursor-pointer group relative overflow-hidden"
                                 >
-                                    + 첫 여행 만들러 가기
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {itineraries.map((trip) => (
-                                    <div
-                                        key={trip.id}
-                                        onClick={() => router.push(`/trip/${trip.id}`)}
-                                        className="border border-gray-200 rounded-2xl p-5 hover:border-indigo-500 hover:shadow-md transition cursor-pointer group bg-white"
-                                    >
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div>
-                                                <h4 className="font-bold text-lg text-gray-800 group-hover:text-indigo-600 mb-1">
-                                                    {trip.destination} 여행
-                                                </h4>
-                                                <p className="text-xs text-gray-400">
-                                                    {new Date(trip.createdAt?.seconds * 1000).toLocaleDateString()} 생성
-                                                </p>
-                                            </div>
-                                            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-indigo-50 group-hover:text-indigo-600 transition">
-                                                <ChevronRight size={18} className="text-gray-400 group-hover:text-indigo-600" />
-                                            </div>
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+
+                                    <div className="flex justify-between items-start mb-6 relative z-10">
+                                        <div>
+                                            <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-1 rounded-md mb-2 inline-block">
+                                                D-{Math.floor((new Date() - new Date(trip.createdAt?.seconds * 1000)) / (1000 * 60 * 60 * 24)) * -1 > 0 ? Math.floor((new Date() - new Date(trip.createdAt?.seconds * 1000)) / (1000 * 60 * 60 * 24)) * -1 : "Day"}
+                                            </span>
+                                            <h4 className="font-black text-xl text-gray-800 group-hover:text-indigo-600 transition-colors">
+                                                {trip.destination}
+                                            </h4>
+                                            <p className="text-xs text-gray-400 mt-1 font-medium">
+                                                {new Date(trip.createdAt?.seconds * 1000).toLocaleDateString()} 생성됨
+                                            </p>
                                         </div>
-                                        <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
-                                            <Calendar size={14} />
-                                            {trip.duration || "기간 정보 없음"}
+                                        <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors shadow-sm">
+                                            <ChevronRight size={20} />
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+
+                                    <div className="flex items-center gap-3 relative z-10">
+                                        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">
+                                            <Calendar size={12} />
+                                            {trip.duration || "기간 미정"}
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">
+                                            <User size={12} />
+                                            {trip.people || 1}명
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
             </div>
 
-            {/* 🟢 [팝업 1] 진짜 포인트 히스토리 */}
+            {/* 🟢 [모달 1] 포인트 히스토리 */}
             {showHistory && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white rounded-3xl w-full max-w-md p-6 relative shadow-2xl">
-                        <button onClick={() => setShowHistory(false)} className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600"><X size={24} /></button>
+                <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-3xl w-full max-w-md p-6 relative shadow-2xl animate-slide-up sm:animate-zoom-in">
+                        <button onClick={() => setShowHistory(false)} className="absolute top-5 right-5 p-2 bg-gray-100 rounded-full text-gray-400 hover:bg-gray-200 transition"><X size={20} /></button>
 
                         <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                            <History className="text-indigo-500" /> 포인트 기록
+                            <div className="p-2 bg-indigo-100 rounded-xl text-indigo-600"><History size={20} /></div>
+                            포인트 적립/사용 내역
                         </h3>
 
-                        <div className="space-y-4 max-h-[300px] overflow-y-auto custom-scrollbar px-1">
+                        <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
                             {pointHistory.length === 0 ? (
-                                <div className="text-center text-gray-400 py-10">아직 적립 내역이 없습니다.</div>
+                                <div className="text-center text-gray-400 py-12 flex flex-col items-center">
+                                    <Sparkles size={32} className="mb-2 opacity-20" />
+                                    아직 포인트 내역이 없어요.
+                                </div>
                             ) : (
                                 pointHistory.map((item, idx) => (
-                                    <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                                    <div key={idx} className="flex justify-between items-center p-4 bg-gray-50 border border-gray-100 rounded-2xl hover:bg-indigo-50 transition-colors">
                                         <div>
-                                            <p className="font-bold text-gray-700">{item.desc || "포인트 적립"}</p>
-                                            <p className="text-xs text-gray-400">
-                                                {item.createdAt?.seconds ? new Date(item.createdAt.seconds * 1000).toLocaleDateString() : "날짜 없음"}
+                                            <p className="font-bold text-gray-800 text-sm">{item.desc || "포인트 적립"}</p>
+                                            <p className="text-xs text-gray-400 mt-0.5">
+                                                {item.createdAt?.seconds ? new Date(item.createdAt.seconds * 1000).toLocaleDateString() : "-"}
                                             </p>
                                         </div>
-                                        <span className="text-indigo-600 font-bold">+{item.amount} P</span>
+                                        <span className="text-indigo-600 font-black text-lg">+{item.amount}</span>
                                     </div>
                                 ))
                             )}
-                        </div>
-
-                        <div className="mt-6 pt-4 border-t border-gray-100 text-center">
-                            <p className="text-sm text-gray-500">총 보유 포인트: <span className="font-bold text-indigo-600">{userData?.points?.toLocaleString()} P</span></p>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* 🟢 [팝업 2] 퀴즈 모달 (AI 생성 연동) */}
+            {/* 🟢 [모달 2] 퀴즈 모달 */}
             {showQuiz && (
-                <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+                <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-fade-in">
                     <div className="relative w-full max-w-md">
                         <button
                             onClick={() => setShowQuiz(false)}
-                            className="absolute -top-12 right-0 text-white/80 hover:text-white flex items-center gap-1 font-bold"
+                            className="absolute -top-12 right-0 text-white/80 hover:text-white flex items-center gap-2 font-bold bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm"
                         >
-                            닫기 <X size={24} />
+                            닫기 <X size={20} />
                         </button>
 
-                        {/* 로딩 중일 때 표시 */}
                         {quizLoading ? (
-                            <div className="bg-white rounded-2xl p-10 text-center shadow-2xl">
-                                <Sparkles className="animate-spin mx-auto text-indigo-500 mb-4" size={48} />
-                                <h3 className="text-xl font-bold text-gray-800">AI가 퀴즈를 만들고 있어요!</h3>
-                                <p className="text-gray-500 text-sm mt-2">
-                                    {itineraries[0]?.destination ? `${itineraries[0].destination} 여행 지식 충전 중... ⚡` : "여행지 정보를 불러오는 중..."}
-                                </p>
+                            <div className="bg-white rounded-[32px] p-12 text-center shadow-2xl relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-tr from-indigo-50 to-pink-50 opacity-50" />
+                                <div className="relative z-10">
+                                    <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+                                        <Sparkles className="text-indigo-600 animate-spin-slow" size={40} />
+                                    </div>
+                                    <h3 className="text-2xl font-black text-gray-900 mb-2">AI가 퀴즈 생성 중...</h3>
+                                    <p className="text-gray-500 font-medium">
+                                        {itineraries[0]?.destination} 여행 꿀팁을 모으고 있어요! ⚡
+                                    </p>
+                                </div>
                             </div>
                         ) : (
-                            /* 로딩 끝나면 퀴즈 컴포넌트 표시 */
                             aiQuizData && <TravelQuiz aiQuizData={aiQuizData} />
                         )}
                     </div>
