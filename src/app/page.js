@@ -80,7 +80,10 @@ export default function Home() {
     const [showIntro, setShowIntro] = useState(true);
     const [activeTab, setActiveTab] = useState('create');
     const [showWelcome, setShowWelcome] = useState(false);
-    const [deferredPrompt, setDeferredPrompt] = useState(null); // ✨ PWA 설치 프롬프트 상태
+
+    // ✨ PWA 관련 상태
+    const [deferredPrompt, setDeferredPrompt] = useState(null);
+    const [isStandalone, setIsStandalone] = useState(false); // 앱 모드 여부 체크
 
     const [mySchedules, setMySchedules] = useState([]);
     const [isButtonHovered, setIsButtonHovered] = useState(false);
@@ -106,10 +109,24 @@ export default function Home() {
     useEffect(() => {
         const timer = setInterval(() => setBgIndex((prev) => (prev + 1) % backgroundImages.length), 5000);
 
-        // ✨ PWA 설치 이벤트 리스너 (브라우저가 설치 가능하다고 판단하면 이 이벤트가 발생함)
+        // ✨ [핵심] 현재 브라우저가 아니라 '앱'으로 실행 중인지 확인
+        const checkStandalone = () => {
+            const isApp = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            setIsStandalone(isApp);
+        };
+        checkStandalone(); // 시작하자마자 체크
+
+        // ✨ [핵심] 설치가 완료되면 즉시 버튼 숨기기
+        const handleAppInstalled = () => {
+            setIsStandalone(true);
+            setDeferredPrompt(null);
+        };
+        window.addEventListener('appinstalled', handleAppInstalled);
+
+        // PWA 설치 이벤트 리스너
         const handleBeforeInstallPrompt = (e) => {
             e.preventDefault();
-            setDeferredPrompt(e); // 이벤트를 저장해뒀다가 버튼 누르면 실행
+            setDeferredPrompt(e);
         };
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
@@ -156,6 +173,7 @@ export default function Home() {
         return () => {
             clearInterval(timer);
             window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            window.removeEventListener('appinstalled', handleAppInstalled);
             unsubscribe();
         };
     }, []);
@@ -166,14 +184,12 @@ export default function Home() {
     // ✨ PWA 설치 버튼 클릭 핸들러
     const handleInstallClick = async () => {
         if (deferredPrompt) {
-            // 설치 가능한 상태라면 설치 창 띄우기
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
             if (outcome === 'accepted') {
                 setDeferredPrompt(null);
             }
         } else {
-            // 설치 준비가 안 됐거나(이미 설치됨), iOS인 경우 안내
             alert("브라우저 상단/하단 메뉴(공유 버튼)에서 '홈 화면에 추가' 또는 '앱 설치'를 눌러주세요!");
         }
     };
@@ -349,17 +365,18 @@ export default function Home() {
                 <div className="px-6 pt-6 pb-2 shrink-0 flex justify-between items-center bg-white/50 backdrop-blur-sm z-20">
                     <img src="/logo.png" alt="Logo" className="h-8 w-auto object-contain" />
 
-                    {/* 🔥 상단 헤더 영역 수정됨 (PWA 버튼 추가) */}
                     {/* 🔥 상단 헤더 영역: PWA 버튼 & 로그인 */}
                     <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
 
-                        {/* ✨ 조건문 없이 항상 보이는 앱 설치 버튼 */}
-                        <button
-                            onClick={handleInstallClick}
-                            className="px-3 py-1.5 rounded-full bg-rose-500 text-white font-bold text-xs shadow-md flex items-center gap-1 hover:bg-rose-600 transition-colors animate-pulse"
-                        >
-                            <Download size={12} /> 앱 설치
-                        </button>
+                        {/* ✨ [수정됨] 앱 모드가 아닐 때만(!isStandalone) 버튼 표시 */}
+                        {!isStandalone && (
+                            <button
+                                onClick={handleInstallClick}
+                                className="px-3 py-1.5 rounded-full bg-rose-500 text-white font-bold text-xs shadow-md animate-pulse flex items-center gap-1 hover:bg-rose-600 transition-colors"
+                            >
+                                <Download size={12} /> 앱 설치
+                            </button>
+                        )}
 
                         {user ? (
                             <div className="flex items-center gap-2">
@@ -373,6 +390,7 @@ export default function Home() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto scrollbar-hide pt-2 pb-32">
+                    {/* ... (나머지 콘텐츠 동일) ... */}
                     <div className="mb-8 mt-6">
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                             <div className="flex flex-row items-center justify-center gap-2 mb-6 mt-8">
