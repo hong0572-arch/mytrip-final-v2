@@ -4,15 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, db } from "../../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, collection, getDocs, query, orderBy } from "firebase/firestore";
-// 아이콘 추가 (Ticket, Gift, Star 등)
-import { User, Coins, Map, Calendar, LogOut, ChevronRight, BrainCircuit, X, History, Sparkles, Share2, Copy, Ticket, Gift, Trophy } from 'lucide-react';
+import { doc, getDoc, collection, getDocs, query, orderBy, deleteDoc } from "firebase/firestore";
+import { User, Coins, Map, Calendar, LogOut, ChevronRight, BrainCircuit, X, History, Sparkles, Share2, Copy, Ticket, Gift, Trophy, Home, Trash2 } from 'lucide-react';
 import TravelQuiz from '../../components/TravelQuiz';
 
 export default function MyPage() {
     const router = useRouter();
 
-    // --- 상태 관리 (기존 로직 유지) ---
+    // --- 상태 관리 ---
     const [user, setUser] = useState(null);
     const [userData, setUserData] = useState(null);
     const [itineraries, setItineraries] = useState([]);
@@ -74,6 +73,22 @@ export default function MyPage() {
         }
     };
 
+    // 일정 삭제 핸들러 (기존 기능 유지)
+    const handleDeleteTrip = async (e, tripId, destination) => {
+        e.stopPropagation();
+
+        if (!confirm(`'${destination}' 여행 일정을 정말 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.`)) return;
+
+        try {
+            await deleteDoc(doc(db, "users", user.uid, "itineraries", tripId));
+            setItineraries(prev => prev.filter(item => item.id !== tripId));
+            alert("여행 일정이 삭제되었습니다.");
+        } catch (error) {
+            console.error("삭제 실패:", error);
+            alert("삭제 중 오류가 발생했습니다.");
+        }
+    };
+
     const handleShareLink = () => {
         if (!user) return;
         const baseUrl = window.location.origin;
@@ -126,6 +141,7 @@ export default function MyPage() {
     };
 
     const handleLogout = async () => {
+        if (!confirm("로그아웃 하시겠습니까?")) return;
         await auth.signOut();
         router.push('/');
     };
@@ -134,13 +150,13 @@ export default function MyPage() {
 
     return (
         <div className="min-h-screen bg-[#F8F9FD] p-4 md:p-8 font-sans pb-24 relative">
-            {/* 배경 데코레이션 */}
             <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-indigo-100/50 to-transparent -z-10" />
 
             <div className="max-w-4xl mx-auto space-y-8">
 
-                {/* 1. 상단 프로필 영역 (Glassmorphism) */}
+                {/* 1. 상단 프로필 영역 */}
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                    {/* 왼쪽: 프로필 정보 */}
                     <div className="flex items-center gap-5">
                         <div className="relative">
                             <div className="w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
@@ -164,7 +180,19 @@ export default function MyPage() {
                         </div>
                     </div>
 
+                    {/* ✨ 오른쪽: 액션 버튼 그룹 (홈, 퀴즈, 로그아웃) */}
                     <div className="flex gap-3 w-full md:w-auto">
+
+                        {/* 🏠 [이동 완료] 홈 버튼 (A 위치) */}
+                        <button
+                            onClick={() => router.push('/')}
+                            className="flex-1 md:flex-none px-5 py-3 bg-white border border-gray-200 rounded-2xl text-gray-500 hover:bg-gray-50 hover:text-indigo-600 transition flex items-center justify-center gap-2 font-bold shadow-sm"
+                        >
+                            <Home size={18} />
+                            <span className="hidden sm:inline">홈</span>
+                        </button>
+
+                        {/* 퀴즈 버튼 */}
                         <button
                             onClick={handleStartQuiz}
                             className="flex-1 md:flex-none bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 hover:-translate-y-0.5 active:translate-y-0"
@@ -172,9 +200,12 @@ export default function MyPage() {
                             <BrainCircuit size={18} />
                             퀴즈 도전
                         </button>
+
+                        {/* 로그아웃 버튼 */}
                         <button
                             onClick={handleLogout}
                             className="flex-1 md:flex-none px-5 py-3 bg-white border border-gray-200 rounded-2xl text-gray-500 hover:bg-gray-50 hover:text-red-500 transition flex items-center justify-center gap-2 font-bold shadow-sm"
+                            title="로그아웃"
                         >
                             <LogOut size={18} />
                         </button>
@@ -183,15 +214,12 @@ export default function MyPage() {
 
                 {/* 2. 대시보드 그리드 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-                    {/* 💰 포인트 카드 (오로라 그라데이션) */}
+                    {/* 포인트 카드 */}
                     <div
                         onClick={() => setShowHistory(true)}
                         className="relative bg-gradient-to-br from-[#6366f1] via-[#8b5cf6] to-[#d946ef] rounded-[32px] p-8 text-white shadow-xl shadow-indigo-200 overflow-hidden cursor-pointer group hover:scale-[1.01] transition-all duration-300"
                     >
-                        {/* 배경 효과 */}
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:opacity-10 transition-opacity"></div>
-
                         <div className="relative z-10">
                             <div className="flex justify-between items-start mb-6">
                                 <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl">
@@ -201,7 +229,6 @@ export default function MyPage() {
                                     내역 보기 <ChevronRight size={12} />
                                 </span>
                             </div>
-
                             <p className="text-indigo-100 text-sm font-medium mb-1">현재 보유 포인트</p>
                             <h3 className="text-5xl font-black tracking-tight">
                                 {userData?.points?.toLocaleString() || 0}
@@ -209,7 +236,7 @@ export default function MyPage() {
                         </div>
                     </div>
 
-                    {/* 🎮 퀴즈 카드 (깔끔한 화이트 + 포인트 컬러) */}
+                    {/* 퀴즈 카드 */}
                     <div className="bg-white rounded-[32px] p-8 border border-gray-100 shadow-lg shadow-gray-100 relative overflow-hidden flex flex-col justify-between group hover:border-indigo-100 transition-colors">
                         <div className="flex justify-between items-start mb-4">
                             <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600">
@@ -217,7 +244,6 @@ export default function MyPage() {
                             </div>
                             <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">매일 초기화</span>
                         </div>
-
                         <div>
                             <p className="text-gray-400 text-sm font-bold mb-1">오늘의 퀴즈 기회</p>
                             <div className="flex items-end gap-2">
@@ -227,8 +253,6 @@ export default function MyPage() {
                                 <span className="text-sm text-gray-500 font-medium mb-1.5">회</span>
                             </div>
                         </div>
-
-                        {/* 진행률 바 */}
                         <div className="w-full h-2 bg-gray-100 rounded-full mt-4 overflow-hidden">
                             <div
                                 className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
@@ -238,13 +262,10 @@ export default function MyPage() {
                     </div>
                 </div>
 
-                {/* 🔥 3. 친구 초대 카드 (강력한 CTA) */}
+                {/* 3. 친구 초대 카드 */}
                 <div className="bg-gradient-to-r from-rose-500 via-orange-400 to-amber-500 rounded-[32px] p-1 shadow-lg shadow-orange-200">
                     <div className="bg-white/10 backdrop-blur-sm rounded-[28px] p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 text-white relative overflow-hidden">
-
-                        {/* 배경 장식 */}
                         <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-yellow-300 blur-[60px] opacity-30 animate-pulse"></div>
-
                         <div className="relative z-10 text-center md:text-left">
                             <h3 className="text-2xl font-black flex items-center justify-center md:justify-start gap-2 mb-2">
                                 <Gift className="animate-bounce" /> 친구 초대 이벤트
@@ -254,7 +275,6 @@ export default function MyPage() {
                                 가입 시 두 분 모두에게 <span className="bg-white text-rose-500 px-1.5 py-0.5 rounded font-black">1,000 P</span>를 드립니다.
                             </p>
                         </div>
-
                         <button
                             onClick={handleShareLink}
                             className="relative z-10 w-full md:w-auto bg-white text-rose-600 px-8 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-gray-50 transition shadow-xl active:scale-95 group"
@@ -265,7 +285,7 @@ export default function MyPage() {
                     </div>
                 </div>
 
-                {/* 4. 내 여행 보관함 (티켓 스타일) */}
+                {/* 4. 내 여행 보관함 (삭제 기능 포함) */}
                 <div>
                     <div className="flex justify-between items-center mb-6 px-2">
                         <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -296,6 +316,15 @@ export default function MyPage() {
                                     onClick={() => router.push(`/trip/${trip.id}`)}
                                     className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-indigo-100 transition-all cursor-pointer group relative overflow-hidden"
                                 >
+                                    {/* ✨ 일정 삭제 버튼 */}
+                                    <button
+                                        onClick={(e) => handleDeleteTrip(e, trip.id, trip.destination)}
+                                        className="absolute top-4 right-4 z-20 p-2 bg-gray-50 rounded-full text-gray-400 hover:bg-rose-100 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
+                                        title="일정 삭제"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+
                                     <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
                                     <div className="flex justify-between items-start mb-6 relative z-10">
@@ -333,7 +362,7 @@ export default function MyPage() {
 
             </div>
 
-            {/* 🟢 [모달 1] 포인트 히스토리 */}
+            {/* 하단 모달들 (포인트, 퀴즈) */}
             {showHistory && (
                 <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
                     <div className="bg-white rounded-3xl w-full max-w-md p-6 relative shadow-2xl animate-slide-up sm:animate-zoom-in">
@@ -368,7 +397,6 @@ export default function MyPage() {
                 </div>
             )}
 
-            {/* 🟢 [모달 2] 퀴즈 모달 */}
             {showQuiz && (
                 <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-fade-in">
                     <div className="relative w-full max-w-md">
