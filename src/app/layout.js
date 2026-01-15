@@ -5,7 +5,7 @@ import "./globals.css";
 
 // ✅ [핵심] Vercel 환경 변수 연결 (없으면 기본값 사용)
 const SITE_TITLE = process.env.NEXT_PUBLIC_OG_TITLE || "Trip Maker - 내 AI 여행 가이드";
-const SITE_DESC = process.env.NEXT_PUBLIC_OG_DESC || "AI가 바로 즉시 당신만을 위한 여행 계획을 짜드립니다.";
+const SITE_DESC = process.env.NEXT_PUBLIC_OG_DESC || "일본, 중국, 동남아시아, 미국, 미주, 호주, 아프리카, 유럽 여행 코스 짜기 어렵고 귀찮다면? AI가 바로 즉시 당신만을 위한 여행 계획을 짜드립니다.";
 const SITE_IMAGE = process.env.NEXT_PUBLIC_OG_IMAGE || "https://mytrip2.pro/og-final.jpg";
 
 // ✅ [PWA 추가 1] 뷰포트 & 테마 컬러 설정 (모바일 앱 느낌)
@@ -35,6 +35,11 @@ export const metadata = {
   alternates: {
     canonical: '/',
   },
+
+  keywords: ["여행 계획", "여행 일정 짜기", "여행 코스", "AI 여행 코스", "트립메이커", "Trip Maker", "유럽 여행 코스" "아프리카 여행 코스",
+    "미주 여행 코스", "일본 여행 코스", "중국 여행 코스", "오사카 일정", "호주 여행 코스", "남미 여행 코스", "중남미 여행 코스", "여행 플래너",
+    "월드컵", "월드컵 응원", "월드컵 코스"],
+
 
   openGraph: {
     title: SITE_TITLE,
