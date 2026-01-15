@@ -4,8 +4,8 @@ import "./globals.css";
 // import { GoogleAnalytics } from '@next/third-parties/google'; // 안 쓰시면 삭제하셔도 됩니다.
 
 // ✅ [핵심] Vercel 환경 변수 연결 (없으면 기본값 사용)
-const SITE_TITLE = process.env.NEXT_PUBLIC_OG_TITLE || "My Trip Pro - AI 맞춤 여행 가이드";
-const SITE_DESC = process.env.NEXT_PUBLIC_OG_DESC || "AI가 3초 만에 당신만을 위한 여행 계획을 짜드립니다.";
+const SITE_TITLE = process.env.NEXT_PUBLIC_OG_TITLE || "Trip Maker - 내 AI 여행 가이드";
+const SITE_DESC = process.env.NEXT_PUBLIC_OG_DESC || "AI가 바로 즉시 당신만을 위한 여행 계획을 짜드립니다.";
 const SITE_IMAGE = process.env.NEXT_PUBLIC_OG_IMAGE || "https://mytrip2.pro/og-final.jpg";
 
 // ✅ [PWA 추가 1] 뷰포트 & 테마 컬러 설정 (모바일 앱 느낌)
@@ -40,7 +40,7 @@ export const metadata = {
     title: SITE_TITLE,
     description: SITE_DESC,
     url: "https://mytrip2.pro",
-    siteName: "My Trip Pro",
+    siteName: "Trip Maker",
     images: [{
       url: SITE_IMAGE,
       width: 1200,

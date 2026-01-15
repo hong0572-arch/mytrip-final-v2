@@ -1,7 +1,7 @@
 {
-    "name": "My Trip Pro",
-    "short_name": "MyTrip",
-    "description": "AI 여행 플래너 & 퀴즈",
+    "name": "Trip Maker",
+    "short_name": "Trip Maker",
+    "description": "내 여행 AI",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",

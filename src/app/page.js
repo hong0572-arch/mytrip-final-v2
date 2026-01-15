@@ -369,7 +369,7 @@ export default function Home() {
                     <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
 
                         {/* ✨ [수정됨] 앱 모드가 아닐 때만(!isStandalone) 버튼 표시 */}
-                        {!isStandalone && (
+                        {!isStandalone && deferredPrompt && (
                             <button
                                 onClick={handleInstallClick}
                                 className="px-3 py-1.5 rounded-full bg-rose-500 text-white font-bold text-xs shadow-md animate-pulse flex items-center gap-1 hover:bg-rose-600 transition-colors"
