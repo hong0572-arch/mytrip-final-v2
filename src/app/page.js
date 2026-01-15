@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
+// 스플래시 import
+import SplashScreen from "../components/SplashScreen";
+
 // 컴포넌트 import
 import DogMascot from '../components/DogMascot';
 import AIResult from "../components/AIResult";
@@ -72,6 +75,8 @@ export default function Home() {
     const router = useRouter();
 
     // --- 상태 관리 ---
+    const [showSplash, setShowSplash] = useState(true); // ✨ 스플래시 화면 상태 (기본값 true)
+
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [bgIndex, setBgIndex] = useState(0);
@@ -354,6 +359,13 @@ export default function Home() {
 
     return (
         <div className="h-screen w-full flex justify-center items-center bg-gray-900 sm:p-4 font-sans relative overflow-hidden">
+
+            {/* ✨ [여기 추가] 스플래시 화면 (showSplash가 true일 때만 표시) */}
+            <AnimatePresence>
+                {showSplash && (
+                    <SplashScreen onFinish={() => setShowSplash(false)} />
+                )}
+            </AnimatePresence>
 
             <div className="absolute inset-0 z-0">
                 <AnimatePresence mode='wait'><motion.img key={bgIndex} src={backgroundImages[bgIndex]} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1 }} className="absolute inset-0 w-full h-full object-cover" /></AnimatePresence>
