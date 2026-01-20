@@ -632,7 +632,7 @@ export default function AIResult({ data, userInfo, tripId }) {
 
                 {!tripId && (
                     <div className="absolute bottom-0 left-0 w-full bg-white border-t border-gray-100 p-4 px-6 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-30">
-                        <button onClick={handleSaveAndLogin} disabled={isSaving} className="w-full bg-gray-900 text-white py-3.5 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-black transition-all active:scale-95 shadow-lg">{isSaving ? "저장 중..." : (<><Save size={20} /> 일정 저장 & 1,000P 받기 (신규가입 혜택)</>)}</button>
+                        <button onClick={handleSaveAndLogin} disabled={isSaving} className="w-full bg-gray-900 text-white py-3.5 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-black transition-all active:scale-95 shadow-lg">{isSaving ? "저장 중..." : (<><Save size={20} /> 내 여행 일정 저장</>)}</button>
                     </div>
                 )}
             </div>

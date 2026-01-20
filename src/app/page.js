@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 import SplashScreen from "../components/SplashScreen";
 
 // 컴포넌트 import
-import DogMascot from '../components/DogMascot';
+import CatMascot from '../components/CatMascot';
 import AIResult from "../components/AIResult";
 
 // 아이콘 & 라이브러리
@@ -403,14 +403,46 @@ export default function Home() {
 
                 <div className="flex-1 overflow-y-auto scrollbar-hide pt-2 pb-32">
                     {/* ... (나머지 콘텐츠 동일) ... */}
-                    <div className="mb-8 mt-6">
-                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-                            <div className="flex flex-row items-center justify-center gap-2 mb-6 mt-8">
-                                <DogMascot width={80} />
-                                <h2 className="text-4xl font-black leading-[1.15] tracking-tight">
-                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-800 via-indigo-900 to-gray-800">'강 프로'와 함께,</span><br />
-                                    <span className="relative inline-block mt-1"><span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-[#FF5A5F] via-rose-500 to-amber-500">내 여행은 여기서!</span></span>
-                                </h2>
+                    {/* 👇 마스코트 & 타이틀 영역 (수정됨) */}
+                    <div className="mb-8 mt-6 px-6">
+                        <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ duration: 0.6, ease: "backOut" }}
+                            // ✨ 핵심: 은은한 그라데이션 배경과 부드러운 테두리 적용
+                            className="relative bg-gradient-to-br from-white to-rose-50/80 rounded-[1.5rem] p-5 border border-white shadow-lg shadow-indigo-100/50"
+                        >
+                            {/* 장식용 배경 원 (은은한 빛 효과) */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-rose-200/20 rounded-full blur-3xl -z-10" />
+                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-200/20 rounded-full blur-3xl -z-10" />
+
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+
+                                {/* 1. 마스코트 (크기 살짝 키움) */}
+                                <div className="shrink-0 relative">
+                                    <CatMascot width={105} />
+                                    {/* 고양이 뒤 후광 효과 */}
+                                    <div className="absolute inset-0 bg-white/60 blur-xl rounded-full -z-10 scale-90" />
+                                </div>
+
+                                {/* 2. 텍스트 (정렬 및 간격 조정) */}
+                                <div className="text-center sm:text-left">
+                                    <h2 className="text-3xl sm:text-4xl font-black leading-tight tracking-tight">
+                                        <span className="block text-gray-700 text-lg sm:text-xl font-bold mb-1 opacity-80">
+                                            Trip Maker,
+                                        </span>
+                                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-indigo-800 to-gray-900">
+                                            "냥 프로"와
+                                        </span>
+                                        <br />
+                                        <span className="relative inline-block mt-1">
+                                            <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-[#FF5A5F] via-rose-500 to-amber-500">
+                                                나만의 여행
+                                            </span>
+                                            <span className="absolute inset-x-0 bottom-2 h-3 bg-indigo-100 -z-10 skew-x-12 rounded-sm opacity-60" />
+                                        </span>
+                                    </h2>
+                                </div>
                             </div>
                         </motion.div>
                     </div>

@@ -33,7 +33,19 @@ export default function SplashScreen({ onFinish }) {
                     transition={{ duration: 0.6, ease: "backOut" }}
                     className="bg-black/30 p-6 rounded-full backdrop-blur-md shadow-2xl border border-white/10"
                 >
-                    <DogMascot width={100} />
+                    <motion.img
+                        // ❗ public 폴더에 cat-mascot.png 파일이 있어야 합니다!
+                        src="/cat.png"
+                        alt="Cat Mascot"
+                        className="w-32 h-32 object-contain drop-shadow-xl"
+                        // 둥둥 떠다니는 애니메이션 추가
+                        animate={{ y: [0, -10, 0] }}
+                        transition={{
+                            duration: 3,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                        }}
+                    />
                 </motion.div>
 
                 {/* 텍스트: 밝은 배경 대비 가독성을 위해 그림자 강화 */}
@@ -65,7 +77,7 @@ export default function SplashScreen({ onFinish }) {
                     className="h-full bg-gradient-to-r from-[#FF5A5F] to-rose-400"
                     initial={{ width: "0%" }}
                     animate={{ width: "100%" }}
-                    transition={{ duration: 2.0, ease: "easeInOut" }}
+                    transition={{ duration: 3.0, ease: "easeInOut" }}
                     onAnimationComplete={onFinish}
                 />
             </div>
