@@ -416,7 +416,7 @@ export default function Home() {
                             <div className="absolute top-0 right-0 w-32 h-32 bg-rose-200/20 rounded-full blur-3xl -z-10" />
                             <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-200/20 rounded-full blur-3xl -z-10" />
 
-                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+                            <div className="flex flex-row sm:flex-row items-center justify-center gap-4 sm:gap-6">
 
                                 {/* 1. 마스코트 (크기 살짝 키움) */}
                                 <div className="shrink-0 relative">
@@ -426,7 +426,7 @@ export default function Home() {
                                 </div>
 
                                 {/* 2. 텍스트 (정렬 및 간격 조정) */}
-                                <div className="text-center sm:text-left">
+                                <div className="text-left sm:text-left">
                                     <h2 className="text-3xl sm:text-4xl font-black leading-tight tracking-tight">
                                         <span className="block text-gray-700 text-lg sm:text-xl font-bold mb-1 opacity-80">
                                             Trip Maker,
