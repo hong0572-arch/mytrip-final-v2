@@ -183,6 +183,13 @@ export default function Home() {
     });
 
     useEffect(() => {
+        // ✨ [추가된 코드] 이미 스플래시를 봤는지 확인합니다.
+        const hasShownSplash = sessionStorage.getItem('hasShownSplash');
+        if (hasShownSplash) {
+            setShowSplash(false); // 봤으면 바로 끕니다.
+        }
+
+
         const timer = setInterval(() => setBgIndex((prev) => (prev + 1) % backgroundImages.length), 5000);
 
         // ✨ [핵심] 현재 브라우저가 아니라 '앱'으로 실행 중인지 확인
@@ -435,7 +442,10 @@ export default function Home() {
             {/* ✨ 스플래시 화면 (showSplash가 true일 때만 표시) */}
             <AnimatePresence>
                 {showSplash && (
-                    <SplashScreen onFinish={() => setShowSplash(false)} />
+                    <SplashScreen onFinish={() => {
+                        setShowSplash(false);
+                        sessionStorage.setItem('hasShownSplash', 'true'); // ✨ "봤음" 도장 쾅!
+                    }} />
                 )}
             </AnimatePresence>
 
@@ -508,7 +518,7 @@ export default function Home() {
                                         <span className="block text-gray-700 text-lg sm:text-xl font-bold mb-1 opacity-80">
                                             {translations[language].title_pre}
                                         </span>
-                                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-indigo-800 to-gray-900">
+                                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-800 via-indigo-800 to-gray-800">
                                             {translations[language].title_main}
                                         </span>🪄
                                         <br />
