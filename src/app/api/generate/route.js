@@ -1,76 +1,88 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+// API 키 환경변수 가져오기
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export async function POST(req) {
   try {
+    // 1. 클라이언트(page.js)에서 보낸 데이터 받기
     const body = await req.json();
-    const { destination, startDate, endDate, companion, budget, people, hotelType, tourType, themes, request, isLuxury } = body;
+    const {
+      destination, startDate, endDate, companion,
+      budget, people, hotelType, tourType,
+      themes, request, isLuxury, language // ✨ language 변수 추가됨
+    } = body;
 
     const start = new Date(startDate);
     const end = new Date(endDate);
     const diffTime = Math.abs(end - start);
     const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-    // 초호화 모드 처리
+    // ✨ 언어 설정 (기본값: 한국어)
+    const targetLang = language === 'en' ? 'English' : 'Korean';
+
+    // 초호화 모드 처리 (언어에 따라 화폐 단위 변경)
     const budgetText = isLuxury
-      ? `**초호화 VIP 예산**: 1인당 2,000만원 ~ 5,000만원. (최고급 서비스 이용)`
-      : `1인당 ${budget}0,000 원`;
+      ? (language === 'en'
+        ? `**Ultra Luxury VIP Budget**: Unlimited (Best Luxury Service)`
+        : `**초호화 VIP 예산**: 1인당 2,000만원 ~ 5,000만원 (최고급 서비스 이용)`)
+      : (language === 'en'
+        ? `Per person ${budget}0,000 KRW (Approx)`
+        : `1인당 ${budget}0,000 원`);
 
-    // 🚀 프롬프트 업그레이드: 퀴즈 생성(Quiz Generation) 추가됨!
+    // 🚀 프롬프트 구성
     const prompt = `
-      당신은 전문 여행 플래너이자 여행 가이드입니다.
-      **${destination}** 여행 일정을 **${days}일간** (${startDate} ~ ${endDate}) 계획하고, 
-      동시에 여행자들이 재미있게 풀 수 있는 **${destination} 관련 상식 퀴즈 3문제**를 출제해주세요.
+      You are a professional travel planner and guide "Nyang-Pro".
+      Plan a **${days}-day trip** to **${destination}** (${startDate} ~ ${endDate}).
+      Also, create **3 interesting quiz questions** about **${destination}**.
       
-      [여행자 정보]
-      - 동행: ${companion}
-      - 인원: ${people}명
-      - 예산: ${budgetText}
-      - 스타일: ${tourType}
-      - 관심사: ${themes.join(", ")}
-      - 추가 요청: ${request}
-      
-      ${isLuxury ? `[💎 LUXURY MODE] 예산 2,000만원 이상. 최고급 호텔, 파인다이닝, 전용 차량 등 럭셔리 옵션만 포함할 것.` : ""}
+      [Traveler Info]
+      - Companion: ${companion}
+      - People: ${people}
+      - Budget: ${budgetText}
+      - Style: ${tourType}
+      - Themes: ${themes ? themes.join(", ") : "None"}
+      - Request: ${request || "None"}
+      - VIP Mode: ${isLuxury ? "ON (Recommend ONLY best luxury spots)" : "OFF"}
 
-      [🚨 절대 준수 사항 (CRITICAL INSTRUCTIONS)]
-      1. **언어 (Language)**:
-         - **무조건 한국어로 작성할 것.**
-         - 단, 장소명은 **한국어 (현지/영어명)** 형식으로 병기할 것. 
-         - 예시: "한시장 (Han Market)", "마담란 (Madam Lan)"
+      [🚨 CRITICAL INSTRUCTIONS]
+      1. **Language**:
+         - **Write EVERYTHING in ${targetLang}.**
+         - Place names should be in **${targetLang} (Local/English Name)** format.
+         - Example (if Korean): "한시장 (Han Market)"
+         - Example (if English): "Han Market (Chợ Hàn)"
 
-      2. **지역 제한 (Geographical Restriction)**:
-         - 모든 추천 장소(호텔, 식당, 관광지)는 반드시 **${destination}** 지역 내에 실제로 존재하는 곳이어야 함.
-         - ❌ 다른 국가나 도시의 동명 이인 장소를 절대 포함하지 말 것.
-         - 장소를 선정하기 전, 해당 장소가 **${destination}**에 있는지 스스로 검증할 것.
+      2. **Geographical Restriction**:
+         - All recommendations MUST be real places inside **${destination}**.
+         - Do NOT hallucinate places from other cities. Verify location before recommending.
 
-      3. **구체적인 장소명 (Specific Place Names)**:
-         - ❌ "쇼핑", "점심 식사", "마사지", "호텔 체크인" 같은 추상적인 표현 금지.
-         - ✅ 구글 지도에서 검색 가능한 **실제 상호명**을 사용할 것.
-         - 예시: "롯데마트 다낭점 (Lotte Mart Danang)", "콩카페 1호점 (Cong Caphe)"
+      3. **Specific Place Names**:
+         - ❌ NO abstract terms like "Shopping", "Lunch", "Massage".
+         - ✅ USE real specific names searchable on Google Maps.
+         - Example: "Lotte Mart Danang", "Cong Caphe Branch 1"
 
-      4. **좌표 (Coordinates)**:
-         - 해당 장소의 정확한 위도(lat)/경도(lng)를 제공할 것.
+      4. **Coordinates**:
+         - Provide accurate latitude/longitude for maps.
 
-      5. **퀴즈 생성 (Quiz Generation)**:
-         - **${destination}**과 관련된 재미있는 상식 퀴즈 3문제를 만들 것.
-         - 너무 쉬운 문제(예: 수도가 어디?)보다는 흥미로운 사실 위주로.
-         - 각 문제는 4지 선다형(options 4개)이어야 하며, 정답(answer)은 0~3 사이의 숫자 인덱스일 것.
+      5. **Quiz Generation**:
+         - Create 3 fun trivia questions about **${destination}**.
+         - Format: 4 options, answer index (0-3).
+         - Write questions/options in **${targetLang}**.
 
-      [응답 형식 (JSON Only)]
-      반드시 아래 JSON 형식만 반환하시오. (다른 설명 금지):
+      [Output Format (JSON Only)]
+      Return ONLY the following JSON. Do NOT include markdown code blocks.
       {
-        "tripTitle": "여행 제목",
-        "weather": "예상 날씨 설명",
-        "travelTips": ["꿀팁 1", "꿀팁 2", "꿀팁 3"],
-        "budgetBreakdown": ["항공권: 약 00만원", "숙박: 약 00만원", ...],
-        "estimatedCost": "총 예상 비용",
+        "tripTitle": "Creative Trip Title (in ${targetLang})",
+        "weather": "Weather forecast (in ${targetLang})",
+        "travelTips": ["Tip 1", "Tip 2", "Tip 3"],
+        "budgetBreakdown": ["Flights: ...", "Accommodation: ...", ...],
+        "estimatedCost": "Total Estimated Cost",
         "recommendedHotels": [
           {
-            "name": "호텔 이름 (영문명)",
-            "priceRange": "1박 가격대",
-            "description": "호텔 설명",
+            "name": "Hotel Name",
+            "priceRange": "Price per night",
+            "description": "Short description",
             "coordinates": { "lat": 35.xxxx, "lng": 139.xxxx } 
           }
         ],
@@ -81,9 +93,9 @@ export async function POST(req) {
             "places": [
               {
                 "order": 1,
-                "name": "장소명 (영문명)", 
-                "category": "식당/관광/카페 등",
-                "description": "설명",
+                "name": "Place Name", 
+                "category": "Restaurant/Spot/Cafe",
+                "description": "Description",
                 "coordinates": { "lat": 35.xxxx, "lng": 139.xxxx }
               }
             ]
@@ -91,36 +103,34 @@ export async function POST(req) {
         ],
         "quiz": [
           {
-            "question": "Q1. ${destination}에 대한 설명 중 맞는 것은?",
-            "options": ["보기1", "보기2", "보기3", "보기4"],
+            "question": "Q1. Question in ${targetLang}?",
+            "options": ["Opt1", "Opt2", "Opt3", "Opt4"],
             "answer": 0 
           },
-          {
-            "question": "Q2. ...",
-            "options": ["...", "...", "...", "..."],
-            "answer": 2
-          },
-          {
-            "question": "Q3. ...",
-            "options": ["...", "...", "...", "..."],
-            "answer": 1
-          }
+          ... (Total 3 questions)
         ]
       }
     `;
 
+    // 모델 설정 (Gemini 1.5 Flash 사용 권장 - 속도/비용 최적화)
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+
+    // AI 생성 요청
     const result = await model.generateContent(prompt);
     const response = await result.response;
     let text = response.text();
 
+    // JSON 파싱 (마크다운 제거)
     text = text.replace(/```json/g, "").replace(/```/g, "").trim();
     const jsonResult = JSON.parse(text);
 
     return NextResponse.json({ result: jsonResult });
 
   } catch (error) {
-    console.error("Error:", error);
-    return NextResponse.json({ error: "Failed to generate plan." }, { status: 500 });
+    console.error("AI Generation Error:", error);
+    return NextResponse.json(
+      { error: "Failed to generate plan." },
+      { status: 500 }
+    );
   }
 }

@@ -20,7 +20,7 @@ import jsPDF from 'jspdf';
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 const DAY_COLORS = ['#FF4B4B', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
 
-export default function AIResult({ data, userInfo, tripId }) {
+export default function AIResult({ data, userInfo, tripId, onReset }) {
     const router = useRouter();
 
     // 🏗️ State 관리
@@ -609,7 +609,7 @@ export default function AIResult({ data, userInfo, tripId }) {
 
                                 {/* 🔥 [추가된 하단 버튼 3종] */}
                                 <div className="pt-2 pb-12" data-html2canvas-ignore="true">
-                                    <button onClick={handleReset} className="w-full bg-white border border-gray-300 text-gray-700 py-3.5 rounded-xl font-bold text-base shadow-sm mb-3 flex items-center justify-center gap-2 cursor-pointer hover:bg-gray-50 active:scale-98 transition"><RotateCcw size={18} /> 조건 변경 / 견적 다시 받기</button>
+                                    <button onClick={onReset} className="w-full bg-white border border-gray-300 text-gray-700 py-3.5 rounded-xl font-bold text-base shadow-sm mb-3 flex items-center justify-center gap-2 cursor-pointer hover:bg-gray-50 active:scale-98 transition"><RefreshCw size={18} /> 조건 변경 / 견적 다시 받기</button>
                                     <button onClick={handleKakaoConsult} disabled={loadingAction !== null} className="w-full bg-[#FAE100] text-[#371D1E] py-3.5 rounded-xl font-bold text-lg shadow-md mb-3 flex items-center justify-center gap-2 cursor-pointer hover:bg-[#FCE620] active:scale-98 transition disabled:opacity-70">{loadingAction === 'kakao' ? <Loader2 className="animate-spin" /> : <MessageCircle size={20} />}{loadingAction === 'kakao' ? (isEditMode ? '수정된 일정 저장 중...' : '저장 후 이동 중...') : '카카오톡 상담하기'}</button>
                                     <div className="flex gap-3">
                                         <button onClick={handleShare} disabled={loadingAction !== null} className="flex-1 bg-gray-800 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer hover:bg-gray-900 active:scale-98 transition disabled:opacity-70">{loadingAction === 'share' ? <Loader2 className="animate-spin" size={16} /> : <Share2 size={16} />}{loadingAction === 'share' ? '생성 중...' : '일정 공유'}</button>

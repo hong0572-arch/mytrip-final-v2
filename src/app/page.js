@@ -13,7 +13,12 @@ import AIResult from "../components/AIResult";
 
 // 아이콘 & 라이브러리
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Calendar, Wallet, User, Sparkles, Users, Compass, Heart, Baby, Briefcase, Crown, Download, X, LogIn, Search, Mic, MessageSquare, ExternalLink, Bell, BellRing, RefreshCw, TrendingDown, Plane, CheckCircle, ArrowRight, Clock, ChevronRight, ArrowLeftRight, Trash2 } from "lucide-react";
+import {
+    MapPin, Calendar, Wallet, User, Sparkles, Users, Compass, Heart, Baby, Briefcase,
+    Crown, Download, X, LogIn, Search, Mic, MessageSquare, ExternalLink, Bell, BellRing,
+    RefreshCw, TrendingDown, Plane, CheckCircle, ArrowRight, Clock, ChevronRight,
+    ArrowLeftRight, Trash2, Globe // 🌍 Globe 아이콘 추가됨
+} from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { ko } from 'date-fns/locale';
@@ -71,11 +76,77 @@ const CITY_TO_IATA = {
     "밴쿠버": "YVR", "토론토": "YYZ"
 };
 
+// 🏆 관리자 추천 여행지 데이터
+const RECOMMENDED_TRIPS = [
+    { id: 1, city: "오사카", title: "🍜 식도락 힐링 여행", img: "https://images.unsplash.com/photo-1590559899731-a382839e5549?q=80&w=600&auto=format&fit=crop", desc: "먹다가 망한다는 오사카!" },
+    { id: 2, city: "다낭", title: "🏖️ 가족과 함께 휴양", img: "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=600&auto=format&fit=crop", desc: "경기도 다낭시로 초대합니다" },
+    { id: 3, city: "파리", title: "🗼 낭만의 도시 산책", img: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=600&auto=format&fit=crop", desc: "에펠탑 보며 와인 한잔" },
+    { id: 4, city: "제주", title: "🍊 사계절 아름다운 섬", img: "https://images.unsplash.com/photo-1542395765-7622fbe65c82?q=80&w=600&auto=format&fit=crop", desc: "한국의 하와이로 떠나요" },
+];
+
+// 🌍 다국어 번역 데이터 (추가됨)
+const translations = {
+    ko: {
+        title_pre: "Trip Maker,",
+        title_main: '"냥 프로"',
+        title_sub: "나만의 여행",
+        tab_schedule: "🗓️ 나만의 여행",
+        tab_flight: "실시간 항공권",
+        tab_myflight: "✈️ 내 일정 항공권",
+        tab_choices: "냥프로의 강력 추천!",
+        label_where: "어디로 가세요?",
+        label_when: "언제 떠나세요?",
+        placeholder_dest: "국가 또는 도시 (음성 가능)",
+        placeholder_date: "날짜 선택 (최대 30일)",
+        label_companion: "동행자",
+        label_budget: "1인 예산",
+        label_people: "인원",
+        label_contact: "연락처 (필수)",
+        placeholder_contact: "카톡ID 또는 이메일",
+        label_request: "추가 요청사항",
+        placeholder_request: "예: 부모님이 계셔서 걷는 건 줄여주세요.",
+        btn_generate: "✨ 나만의 여행 만들기!",
+        btn_luxury_off: "👑 럭셔리 여행 체험하기",
+        btn_luxury_on: "💎 VIP 플랜 생성",
+        msg_loading: "AI가 당신의 여행을 만들고 있어요...",
+        msg_listening: "듣고 있어요...",
+    },
+    en: {
+        title_pre: "Trip Maker,",
+        title_main: "Meow AI",
+        title_sub: "My Own Trip",
+        tab_schedule: "🗓️ My Trip",
+        tab_flight: "Real-time Flights",
+        tab_myflight: "✈️ Flights of my trips",
+        tab_choices: "Meow Pro's Choices!",
+        label_where: "Where to go?",
+        label_when: "When do you leave?",
+        placeholder_dest: "City or Country (Voice)",
+        placeholder_date: "Select dates (Max 30 days)",
+        label_companion: "Companion",
+        label_budget: "Budget (per person)",
+        label_people: "Travelers",
+        label_contact: "Contact (Required)",
+        placeholder_contact: "Email or Messenger ID",
+        label_request: "Special Requests",
+        placeholder_request: "ex: Less walking for parents.",
+        btn_generate: "✨ Make My Trip!",
+        btn_luxury_off: "👑 Try Luxury Mode",
+        btn_luxury_on: "💎 Create VIP Plan",
+        msg_loading: "AI is creating your trip...",
+        msg_listening: "Listening...",
+    }
+};
+
+
 export default function Home() {
     const router = useRouter();
 
     // --- 상태 관리 ---
     const [showSplash, setShowSplash] = useState(true); // ✨ 스플래시 화면 상태 (기본값 true)
+
+    // 🌍 언어 설정 상태 (기본값 'ko')
+    const [language, setLanguage] = useState('ko');
 
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
@@ -220,7 +291,7 @@ export default function Home() {
             return;
         }
         const recognition = new window.webkitSpeechRecognition();
-        recognition.lang = 'ko-KR';
+        recognition.lang = language === 'en' ? 'en-US' : 'ko-KR'; // 🌍 언어에 따라 음성인식 언어도 변경
         recognition.onstart = () => setListeningField(targetField);
         recognition.onend = () => setListeningField(null);
         recognition.onresult = (event) => {
@@ -326,7 +397,7 @@ export default function Home() {
             const response = await fetch("/api/generate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...formData, isLuxury }),
+                body: JSON.stringify({ ...formData, isLuxury, language }), // 🌍 language 상태 추가 전송
             });
             const data = await response.json();
             if (data.result) {
@@ -355,12 +426,13 @@ export default function Home() {
         finally { setLoading(false); }
     };
 
-    if (result) return <AIResult data={result} userInfo={formData} />;
+    // 🌍 결과 화면에도 언어 정보 전달
+    if (result) return <AIResult data={result} userInfo={formData} language={language} onReset={() => setResult(null)} />;
 
     return (
         <div className="h-screen w-full flex justify-center items-center bg-gray-900 sm:p-4 font-sans relative overflow-hidden">
 
-            {/* ✨ [여기 추가] 스플래시 화면 (showSplash가 true일 때만 표시) */}
+            {/* ✨ 스플래시 화면 (showSplash가 true일 때만 표시) */}
             <AnimatePresence>
                 {showSplash && (
                     <SplashScreen onFinish={() => setShowSplash(false)} />
@@ -377,10 +449,21 @@ export default function Home() {
                 <div className="px-6 pt-6 pb-2 shrink-0 flex justify-between items-center bg-white/50 backdrop-blur-sm z-20">
                     <img src="/logo.png" alt="Logo" className="h-8 w-auto object-contain" />
 
-                    {/* 🔥 상단 헤더 영역: PWA 버튼 & 로그인 */}
+                    {/* 🔥 상단 헤더 영역: PWA 버튼 & 로그인 & 언어변경 */}
                     <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
 
-                        {/* ✨ [수정됨] 앱 모드가 아닐 때만(!isStandalone) 버튼 표시 */}
+                        {/* 🌍 언어 변경 버튼 (추가됨) */}
+                        <button
+                            onClick={() => setLanguage(prev => prev === 'ko' ? 'en' : 'ko')}
+                            className="w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm shadow-sm flex items-center justify-center text-gray-700 hover:bg-gray-100 transition-all"
+                        >
+                            <Globe size={20} className={language === 'en' ? "text-indigo-600" : "text-gray-400"} />
+                            <span className="absolute -bottom-4 text-[10px] font-bold text-gray-500">
+                                {language === 'ko' ? 'KR' : 'EN'}
+                            </span>
+                        </button>
+
+                        {/* ✨ 앱 모드가 아닐 때만(!isStandalone) 버튼 표시 */}
                         {!isStandalone && deferredPrompt && (
                             <button
                                 onClick={handleInstallClick}
@@ -402,42 +485,36 @@ export default function Home() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto scrollbar-hide pt-2 pb-32">
-                    {/* ... (나머지 콘텐츠 동일) ... */}
-                    {/* 👇 마스코트 & 타이틀 영역 (수정됨) */}
+                    {/* 👇 마스코트 & 타이틀 영역 (수정됨: 가로 배치 & 다국어) */}
                     <div className="mb-8 mt-6 px-6">
                         <motion.div
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             transition={{ duration: 0.6, ease: "backOut" }}
-                            // ✨ 핵심: 은은한 그라데이션 배경과 부드러운 테두리 적용
                             className="relative bg-gradient-to-br from-white to-rose-50/80 rounded-[1.5rem] p-5 border border-white shadow-lg shadow-indigo-100/50"
                         >
-                            {/* 장식용 배경 원 (은은한 빛 효과) */}
                             <div className="absolute top-0 right-0 w-32 h-32 bg-rose-200/20 rounded-full blur-3xl -z-10" />
                             <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-200/20 rounded-full blur-3xl -z-10" />
 
-                            <div className="flex flex-row sm:flex-row items-center justify-center gap-4 sm:gap-6">
+                            <div className="flex flex-row items-center justify-center gap-4">
 
-                                {/* 1. 마스코트 (크기 살짝 키움) */}
                                 <div className="shrink-0 relative">
-                                    <CatMascot width={105} />
-                                    {/* 고양이 뒤 후광 효과 */}
+                                    <CatMascot width={90} />
                                     <div className="absolute inset-0 bg-white/60 blur-xl rounded-full -z-10 scale-90" />
                                 </div>
 
-                                {/* 2. 텍스트 (정렬 및 간격 조정) */}
-                                <div className="text-left sm:text-left">
+                                <div className="text-left">
                                     <h2 className="text-3xl sm:text-4xl font-black leading-tight tracking-tight">
                                         <span className="block text-gray-700 text-lg sm:text-xl font-bold mb-1 opacity-80">
-                                            Trip Maker,
+                                            {translations[language].title_pre}
                                         </span>
                                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-indigo-800 to-gray-900">
-                                            "냥 프로"와
-                                        </span>
+                                            {translations[language].title_main}
+                                        </span>🪄
                                         <br />
                                         <span className="relative inline-block mt-1">
                                             <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-[#FF5A5F] via-rose-500 to-amber-500">
-                                                나만의 여행
+                                                {translations[language].title_sub}
                                             </span>
                                             <span className="absolute inset-x-0 bottom-2 h-3 bg-indigo-100 -z-10 skew-x-12 rounded-sm opacity-60" />
                                         </span>
@@ -448,29 +525,61 @@ export default function Home() {
                     </div>
 
                     <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm px-6 border-b border-gray-100 flex mb-6">
-                        <button onClick={() => setActiveTab('create')} className={`flex-1 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'create' ? 'border-rose-500 text-gray-900' : 'border-transparent text-gray-400'}`}>🗓️ 나만의 일정</button>
-                        <button onClick={() => setActiveTab('flights')} className={`flex-1 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'flights' ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-400'}`}>✈️ 실시간 항공권</button>
+                        <button onClick={() => setActiveTab('create')} className={`flex-1 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'create' ? 'border-rose-500 text-gray-900' : 'border-transparent text-gray-400'}`}>{translations[language].tab_schedule}</button>
+                        <button onClick={() => setActiveTab('flights')} className={`flex-1 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'flights' ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-400'}`}>{translations[language].tab_myflight}</button>
                     </div>
 
                     <div className="px-6 pb-10">
                         {activeTab === 'create' && (
                             <div className="space-y-6 animate-fadeIn">
-                                <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100"><div className="flex items-center justify-between mb-2"><label className="flex items-center gap-2 text-sm font-bold text-gray-500"><MapPin size={16} className="text-[#FF5A5F]" /> 어디로 가세요?</label><button onClick={() => handleVoiceInput('destination')} className={`p-2 rounded-full transition-all ${listeningField === 'destination' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100 text-gray-400'}`}><Mic size={16} /></button></div><input type="text" name="destination" value={formData.destination} onChange={handleInputChange} placeholder={listeningField === 'destination' ? "듣고 있어요..." : "국가 또는 도시 (음성 가능)"} className="w-full text-xl font-bold text-gray-800 placeholder-gray-300 outline-none bg-transparent mb-4" /><div className="flex flex-wrap gap-2 pt-2 border-t border-gray-50">{themeTags.map(tag => (<button key={tag} onClick={() => addThemeTag(tag)} className="px-2 py-1 bg-gray-50 rounded-lg text-xs text-gray-500 hover:bg-rose-50 hover:text-rose-500 transition-colors">{tag}</button>))}</div></div>
-                                <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100"><label className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Calendar size={16} className="text-[#FF5A5F]" /> 언제 떠나세요?</label><DatePicker selectsRange={true} startDate={startDate} endDate={endDate} onChange={handleDateChange} minDate={new Date()} locale={ko} dateFormat="yyyy.MM.dd" placeholderText="날짜 선택 (최대 30일)" className="w-full text-lg font-bold text-gray-800 bg-transparent outline-none cursor-pointer placeholder-gray-300" wrapperClassName="w-full" /></div>
-                                <div><label className="text-sm font-bold text-gray-600 mb-3 block px-1">동행자</label><div className="grid grid-cols-5 gap-2">{companionOptions.map((opt) => (<button key={opt.id} onClick={() => setFormData({ ...formData, companion: opt.id })} className={`flex flex-col items-center justify-center py-3 rounded-2xl transition-all gap-1 ${formData.companion === opt.id ? 'bg-[#FF5A5F] text-white shadow-md scale-105 font-bold' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}>{opt.icon} <span className="text-[10px]">{opt.label}</span></button>))}</div></div>
-                                <div className={`p-5 rounded-3xl border relative transition-all ${isLuxury ? "bg-amber-50 border-amber-200" : "bg-white border-gray-100 shadow-sm"}`}><div className="flex gap-4 items-center justify-between">{isLuxury ? (<div className="flex-1"><div className="flex items-center gap-2 text-amber-600 font-bold mb-1"><Sparkles size={16} /> VIP 예산</div><p className="text-xs text-gray-500">무제한 (AI 최적화)</p></div>) : (<div className="flex-1"><label className="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1"><Wallet size={12} /> 1인 예산</label><div className="flex items-end gap-1 mb-2"><span className="text-xl font-bold text-[#FF5A5F]">{formData.budget.toLocaleString()}</span><span className="text-sm text-gray-400">만원</span></div><input type="range" name="budget" min="50" max="1000" step="10" value={formData.budget} onChange={handleInputChange} className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#FF5A5F]" /></div>)}<div className="w-[1px] h-10 bg-gray-100"></div><div className="flex flex-col items-center"><label className="text-xs font-bold text-gray-500 mb-1">인원</label><div className="flex items-center gap-2"><button onClick={() => updatePeople(-1)} className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 font-bold hover:bg-gray-200">-</button><span className="font-bold text-gray-800 w-4 text-center">{formData.people}</span><button onClick={() => updatePeople(1)} className="w-8 h-8 rounded-full bg-[#FF5A5F] text-white font-bold hover:bg-rose-600">+</button></div></div></div></div>
-                                <div><div className="grid grid-cols-3 gap-2 mb-3">{tourOptions.map((option) => (<button key={option.id} onClick={() => setFormData({ ...formData, tourType: option.id })} className={`py-3 px-2 rounded-2xl border transition-all flex flex-col items-center text-center ${formData.tourType === option.id ? 'bg-white border-[#FF5A5F] text-[#FF5A5F] shadow-md ring-1 ring-[#FF5A5F]' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200'}`}><span className="font-bold text-sm mb-1">{option.label}</span><span className="text-[10px] opacity-70 break-keep">{option.desc}</span></button>))}</div><button onClick={toggleLuxuryMode} className={`w-full py-3 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 border ${isLuxury ? "bg-amber-500 text-white border-amber-500 shadow-amber-200" : "bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-100"}`}>{isLuxury ? <><Crown size={16} fill="white" /> 럭셔리 모드 ON</> : <><Crown size={16} /> 럭셔리 여행 체험하기</>}</button></div>
-                                <div className="bg-white p-4 rounded-2xl border border-gray-200"><label className="text-xs font-bold text-gray-400 mb-1 block">연락처 (필수)</label><input type="text" name="contact" value={formData.contact} onChange={handleInputChange} placeholder="카톡ID 또는 이메일" className="w-full text-sm font-medium outline-none text-gray-800" /></div>
-                                <div className="bg-white p-4 rounded-2xl border border-gray-200"><div className="flex items-center justify-between mb-2"><label className="text-xs font-bold text-gray-400 flex items-center gap-1"><MessageSquare size={12} /> 추가 요청사항</label><button onClick={() => handleVoiceInput('request')} className={`p-1.5 rounded-full transition-all ${listeningField === 'request' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100 text-gray-400'}`}><Mic size={14} /></button></div><textarea name="request" value={formData.request} onChange={handleInputChange} placeholder={listeningField === 'request' ? "말씀해 주세요..." : "예: 부모님이 계셔서 걷는 건 줄여주세요."} className="w-full text-sm font-medium outline-none text-gray-800 resize-none h-20 bg-transparent" /></div>
+                                <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100"><div className="flex items-center justify-between mb-2"><label className="flex items-center gap-2 text-sm font-bold text-gray-500"><MapPin size={16} className="text-[#FF5A5F]" /> {translations[language].label_where}</label><button onClick={() => handleVoiceInput('destination')} className={`p-2 rounded-full transition-all ${listeningField === 'destination' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100 text-gray-400'}`}><Mic size={16} /></button></div><input type="text" name="destination" value={formData.destination} onChange={handleInputChange} placeholder={listeningField === 'destination' ? translations[language].msg_listening : translations[language].placeholder_dest} className="w-full text-xl font-bold text-gray-800 placeholder-gray-300 outline-none bg-transparent mb-4" /><div className="flex flex-wrap gap-2 pt-2 border-t border-gray-50">{themeTags.map(tag => (<button key={tag} onClick={() => addThemeTag(tag)} className="px-2 py-1 bg-gray-50 rounded-lg text-xs text-gray-500 hover:bg-rose-50 hover:text-rose-500 transition-colors">{tag}</button>))}</div></div>
+                                <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100"><label className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Calendar size={16} className="text-[#FF5A5F]" /> {translations[language].label_when}</label><DatePicker selectsRange={true} startDate={startDate} endDate={endDate} onChange={handleDateChange} minDate={new Date()} locale={ko} dateFormat="yyyy.MM.dd" placeholderText={translations[language].placeholder_date} className="w-full text-lg font-bold text-gray-800 bg-transparent outline-none cursor-pointer placeholder-gray-300" wrapperClassName="w-full" /></div>
+                                <div><label className="text-sm font-bold text-gray-600 mb-3 block px-1">{translations[language].label_companion}</label><div className="grid grid-cols-5 gap-2">{companionOptions.map((opt) => (<button key={opt.id} onClick={() => setFormData({ ...formData, companion: opt.id })} className={`flex flex-col items-center justify-center py-3 rounded-2xl transition-all gap-1 ${formData.companion === opt.id ? 'bg-[#FF5A5F] text-white shadow-md scale-105 font-bold' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}>{opt.icon} <span className="text-[10px]">{language === 'en' ? opt.id : opt.label}</span></button>))}</div></div>
+                                <div className={`p-5 rounded-3xl border relative transition-all ${isLuxury ? "bg-amber-50 border-amber-200" : "bg-white border-gray-100 shadow-sm"}`}><div className="flex gap-4 items-center justify-between">{isLuxury ? (<div className="flex-1"><div className="flex items-center gap-2 text-amber-600 font-bold mb-1"><Sparkles size={16} /> VIP 예산</div><p className="text-xs text-gray-500">무제한 (AI 최적화)</p></div>) : (<div className="flex-1"><label className="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1"><Wallet size={12} /> {translations[language].label_budget}</label><div className="flex items-end gap-1 mb-2"><span className="text-xl font-bold text-[#FF5A5F]">{formData.budget.toLocaleString()}</span><span className="text-sm text-gray-400">{language === 'en' ? '0,000 KRW' : '만원'}</span></div><input type="range" name="budget" min="50" max="1000" step="10" value={formData.budget} onChange={handleInputChange} className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#FF5A5F]" /></div>)}<div className="w-[1px] h-10 bg-gray-100"></div><div className="flex flex-col items-center"><label className="text-xs font-bold text-gray-500 mb-1">{translations[language].label_people}</label><div className="flex items-center gap-2"><button onClick={() => updatePeople(-1)} className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 font-bold hover:bg-gray-200">-</button><span className="font-bold text-gray-800 w-4 text-center">{formData.people}</span><button onClick={() => updatePeople(1)} className="w-8 h-8 rounded-full bg-[#FF5A5F] text-white font-bold hover:bg-rose-600">+</button></div></div></div></div>
+                                <div><div className="grid grid-cols-3 gap-2 mb-3">{tourOptions.map((option) => (<button key={option.id} onClick={() => setFormData({ ...formData, tourType: option.id })} className={`py-3 px-2 rounded-2xl border transition-all flex flex-col items-center text-center ${formData.tourType === option.id ? 'bg-white border-[#FF5A5F] text-[#FF5A5F] shadow-md ring-1 ring-[#FF5A5F]' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200'}`}><span className="font-bold text-sm mb-1">{option.label}</span><span className="text-[10px] opacity-70 break-keep">{option.desc}</span></button>))}</div><button onClick={toggleLuxuryMode} className={`w-full py-3 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 border ${isLuxury ? "bg-amber-500 text-white border-amber-500 shadow-amber-200" : "bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-100"}`}>{isLuxury ? <><Crown size={16} fill="white" /> {translations[language].btn_luxury_on}</> : <><Crown size={16} /> {translations[language].btn_luxury_off}</>}</button></div>
+                                <div className="bg-white p-4 rounded-2xl border border-gray-200"><label className="text-xs font-bold text-gray-400 mb-1 block">{translations[language].label_contact}</label><input type="text" name="contact" value={formData.contact} onChange={handleInputChange} placeholder={translations[language].placeholder_contact} className="w-full text-sm font-medium outline-none text-gray-800" /></div>
+                                <div className="bg-white p-4 rounded-2xl border border-gray-200"><div className="flex items-center justify-between mb-2"><label className="text-xs font-bold text-gray-400 flex items-center gap-1"><MessageSquare size={12} /> {translations[language].label_request}</label><button onClick={() => handleVoiceInput('request')} className={`p-1.5 rounded-full transition-all ${listeningField === 'request' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100 text-gray-400'}`}><Mic size={14} /></button></div><textarea name="request" value={formData.request} onChange={handleInputChange} placeholder={listeningField === 'request' ? translations[language].msg_listening : translations[language].placeholder_request} className="w-full text-sm font-medium outline-none text-gray-800 resize-none h-20 bg-transparent" /></div>
                             </div>
                         )}
 
                         {activeTab === 'flights' && (
                             <div className="space-y-6 animate-fadeIn">
+
+                                {/* ✨ [추가됨] 관리자 추천 여행지 섹션 */}
+                                <div>
+                                    <h3 className="font-bold text-gray-800 text-lg mb-3 px-1 flex items-center gap-2">
+                                        <Sparkles size={18} className="text-amber-500" />
+                                        <span>{translations[language].tab_choices}</span>
+                                    </h3>
+                                    <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x">
+                                        {RECOMMENDED_TRIPS.map((trip) => (
+                                            <motion.div
+                                                key={trip.id}
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={() => {
+                                                    // 클릭 시 '나만의 일정' 탭으로 이동하고 도시 자동 입력!
+                                                    setFormData(prev => ({ ...prev, destination: trip.city }));
+                                                    setActiveTab('create');
+                                                    alert(`'${trip.city}' 여행 계획을 시작합니다!`);
+                                                }}
+                                                className="min-w-[160px] h-[200px] rounded-2xl relative overflow-hidden shadow-md snap-center cursor-pointer group"
+                                            >
+                                                <img src={trip.img} alt={trip.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                                                <div className="absolute bottom-3 left-3 right-3">
+                                                    <span className="text-[10px] font-bold text-amber-400 mb-1 block">{trip.city}</span>
+                                                    <h4 className="text-white font-bold text-sm leading-tight mb-1">{trip.title}</h4>
+                                                    <p className="text-[10px] text-gray-300 line-clamp-1">{trip.desc}</p>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </div>
+
                                 <div className="bg-indigo-50 p-5 rounded-3xl border border-indigo-100">
                                     <div className="flex justify-between items-center mb-4">
                                         <h3 className="font-bold text-indigo-900 text-lg flex items-center gap-2">
-                                            <Plane className="text-indigo-600" size={20} /> 내 일정 항공권
+                                            <Plane className="text-indigo-600" size={20} /> {translations[language].tab_flight}
                                         </h3>
                                     </div>
 
@@ -607,11 +716,11 @@ export default function Home() {
                             className={`w-full py-4 rounded-2xl font-bold text-xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-95 ${isLuxury ? "bg-gradient-to-r from-amber-500 to-amber-600 shadow-amber-200 text-white" : "bg-gradient-to-r from-[#FF5A5F] to-[#FF3D43] shadow-rose-200 text-white hover:shadow-rose-400 hover:-translate-y-1"}`}
                         >
                             {loading ? (
-                                <><Sparkles className="animate-spin" size={24} /> AI가 당신의 여행을 만드는 중이에요...</>
+                                <><Sparkles className="animate-spin" size={24} /> {translations[language].msg_loading}</>
                             ) : isLuxury ? (
-                                "💎 VIP 플랜 생성"
+                                translations[language].btn_luxury_on
                             ) : (
-                                isButtonHovered ? "✨ 나만의 여행 만들기!" : "✨ Make My own Trip!"
+                                isButtonHovered ? translations[language].btn_generate : translations[language].btn_generate
                             )}
                         </button>
                     </div>
@@ -619,11 +728,24 @@ export default function Home() {
 
             </motion.div>
             <style jsx global>{`
-                .scrollbar-hide::-webkit-scrollbar { display: none; }
-                .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-                .react-datepicker { border: none !important; border-radius: 16px !important; font-family: sans-serif; }
-                .react-datepicker__header { background-color: white !important; border-bottom: none; }
-                .react-datepicker__day--selected, .react-datepicker__day--in-range { background-color: #FF5A5F !important; border-radius: 50%; color: white !important; }
+              /* ✨ 기존 style 태그 안에 아래 내용을 추가하세요 */
+
+              /* 얇고 둥근 스크롤바 디자인 */
+               .custom-scrollbar::-webkit-scrollbar {
+               height: 8px; /* 가로 스크롤바 두께 */
+               }
+               .custom-scrollbar::-webkit-scrollbar-track {
+               background: transparent; /* 배경 투명 */
+               }
+               .custom-scrollbar::-webkit-scrollbar-thumb {
+               background-color: #e2e8f0; /* 연한 회색 (slate-200) */
+               border-radius: 10px;       /* 둥근 모서리 */
+               border: 2px solid transparent;
+               background-clip: content-box;
+               }
+               .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+               background-color: #cbd5e1; /* 마우스 올리면 진해짐 (slate-300) */
+}
             `}</style>
         </div>
     );
