@@ -11,7 +11,7 @@ export async function POST(req) {
     const {
       destination, startDate, endDate, companion,
       budget, people, hotelType, tourType,
-      themes, request, isLuxury, language // ✨ language 변수 추가됨
+      themes, request, isLuxury, language // ✨ language 변수
     } = body;
 
     const start = new Date(startDate);
@@ -19,10 +19,10 @@ export async function POST(req) {
     const diffTime = Math.abs(end - start);
     const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-    // ✨ 언어 설정 (기본값: 한국어)
+    // ✨ 언어 설정
     const targetLang = language === 'en' ? 'English' : 'Korean';
 
-    // 초호화 모드 처리 (언어에 따라 화폐 단위 변경)
+    // 초호화 모드 처리
     const budgetText = isLuxury
       ? (language === 'en'
         ? `**Ultra Luxury VIP Budget**: Unlimited (Best Luxury Service)`
@@ -31,7 +31,7 @@ export async function POST(req) {
         ? `Per person ${budget}0,000 KRW (Approx)`
         : `1인당 ${budget}0,000 원`);
 
-    // 🚀 프롬프트 구성
+    // 🚀 프롬프트 수정: 빌드 에러 방지를 위해 내부 백틱(\`) 앞에 역슬래시(\) 추가
     const prompt = `
       You are a professional travel planner and guide "Nyang-Pro".
       Plan a **${days}-day trip** to **${destination}** (${startDate} ~ ${endDate}).
@@ -47,27 +47,24 @@ export async function POST(req) {
       - VIP Mode: ${isLuxury ? "ON (Recommend ONLY best luxury spots)" : "OFF"}
 
       [🚨 CRITICAL INSTRUCTIONS]
-      1. **Language**:
-         - **Write EVERYTHING in ${targetLang}.**
-         - Place names should be in **${targetLang} (Local/English Name)** format.
-         - Example (if Korean): "한시장 (Han Market)"
-         - Example (if English): "Han Market (Chợ Hàn)"
+      1. **Language & Naming Rule (VERY IMPORTANT)**:
+         - **DESCRIPTIONS, TITLE, QUIZ**: Write in **${targetLang}**.
+         - **PLACE NAMES (\`name\` field)**: MUST be in **English or Local Language** (e.g., "Senso-ji", "Eiffel Tower", "Universal Studios Japan"). 
+         - **DO NOT** use Korean for the 'name' field to ensure map accuracy.
 
-      2. **Geographical Restriction**:
-         - All recommendations MUST be real places inside **${destination}**.
-         - Do NOT hallucinate places from other cities. Verify location before recommending.
+      2. **Distance & Grouping (Strict Limits)**:
+         - **Daily Limit**: Total travel distance per day must be **under 100km**.
+         - **Proximity**: Distance between spots on the same day must be **under 30km**.
+         - **Optimization**: Group activities by **Neighborhood/Area** (e.g., Day 1: North Area, Day 2: Central Area).
+         - **NO TELEPORTING**: Do not verify locations that are far apart.
 
-      3. **Specific Place Names**:
-         - ❌ NO abstract terms like "Shopping", "Lunch", "Massage".
-         - ✅ USE real specific names searchable on Google Maps.
-         - Example: "Lotte Mart Danang", "Cong Caphe Branch 1"
+      3. **Map Data**:
+         - **STOP generating GPS coordinates (lat/long).**
+         - Instead, provide the **specific search query** for Google Maps.
+         - Provide a short **Address** or Area name in English/Local.
 
-      4. **Coordinates**:
-         - Provide accurate latitude/longitude for maps.
-
-      5. **Quiz Generation**:
+      4. **Quiz Generation**:
          - Create 3 fun trivia questions about **${destination}**.
-         - Format: 4 options, answer index (0-3).
          - Write questions/options in **${targetLang}**.
 
       [Output Format (JSON Only)]
@@ -80,10 +77,11 @@ export async function POST(req) {
         "estimatedCost": "Total Estimated Cost",
         "recommendedHotels": [
           {
-            "name": "Hotel Name",
+            "name": "Hotel Name (English/Local)",
             "priceRange": "Price per night",
-            "description": "Short description",
-            "coordinates": { "lat": 35.xxxx, "lng": 139.xxxx } 
+            "description": "Short description (in ${targetLang})",
+            "address": "Short Address or Area (English/Local)",
+            "googleSearchQuery": "Hotel Name + City"
           }
         ],
         "itinerary": [
@@ -93,10 +91,11 @@ export async function POST(req) {
             "places": [
               {
                 "order": 1,
-                "name": "Place Name", 
+                "name": "Place Name (English/Local ONLY)", 
                 "category": "Restaurant/Spot/Cafe",
-                "description": "Description",
-                "coordinates": { "lat": 35.xxxx, "lng": 139.xxxx }
+                "description": "Description (in ${targetLang})",
+                "address": "Short Address (English/Local)",
+                "googleSearchQuery": "Place Name + City"
               }
             ]
           }
@@ -112,7 +111,7 @@ export async function POST(req) {
       }
     `;
 
-    // 모델 설정 (Gemini 1.5 Flash 사용 권장 - 속도/비용 최적화)
+    // 모델 설정 (gemini-2.5-flash-lite)
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     // AI 생성 요청

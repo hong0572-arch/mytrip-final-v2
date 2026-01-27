@@ -57,7 +57,7 @@ export default function SplashScreen({ onFinish }) {
                         // ✨ drop-shadow-xl 로 변경하여 그림자 강화
                         className="text-4xl font-black tracking-tighter drop-shadow-xl"
                     >
-                        TripMaker<span className="text-[#FF5A5F]">.Pro</span>
+                        Trip Maker
                     </motion.h1>
                     <motion.p
                         initial={{ opacity: 0 }}
