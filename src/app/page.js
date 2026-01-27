@@ -81,7 +81,7 @@ const RECOMMENDED_TRIPS = [
     { id: 1, city: "오사카", title: "🍜 식도락 힐링 여행", img: "https://images.unsplash.com/photo-1590559899731-a382839e5549?q=80&w=600&auto=format&fit=crop", desc: "먹다가 망한다는 오사카!" },
     { id: 2, city: "다낭", title: "🏖️ 가족과 함께 휴양", img: "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=600&auto=format&fit=crop", desc: "경기도 다낭시로 초대합니다" },
     { id: 3, city: "파리", title: "🗼 낭만의 도시 산책", img: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=600&auto=format&fit=crop", desc: "에펠탑 보며 와인 한잔" },
-    { id: 4, city: "제주", title: "🍊 사계절 아름다운 섬", img: "https://images.unsplash.com/photo-1542395765-7622fbe65c82?q=80&w=600&auto=format&fit=crop", desc: "한국의 하와이로 떠나요" },
+
 ];
 
 // 🌍 다국어 번역 데이터 (추가됨)
@@ -457,7 +457,7 @@ export default function Home() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[440px] h-full sm:h-[95vh] bg-white/95 backdrop-blur-md sm:rounded-[35px] shadow-2xl overflow-hidden relative flex flex-col z-10">
 
                 <div className="px-6 pt-6 pb-2 shrink-0 flex justify-between items-center bg-white/50 backdrop-blur-sm z-20">
-                    <img src="/logo.png" alt="Logo" className="h-8 w-auto object-contain" />
+                    <img src="/logo1.png" alt="Logo" className="h-8 w-auto object-contain" />
 
                     {/* 🔥 상단 헤더 영역: PWA 버튼 & 로그인 & 언어변경 */}
                     <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
