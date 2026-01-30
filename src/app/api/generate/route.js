@@ -11,7 +11,7 @@ export async function POST(req) {
     const {
       destination, startDate, endDate, companion,
       budget, people, hotelType, tourType,
-      themes, request, isLuxury, language // ✨ language 변수
+      themes, request, isLuxury, language
     } = body;
 
     const start = new Date(startDate);
@@ -19,7 +19,7 @@ export async function POST(req) {
     const diffTime = Math.abs(end - start);
     const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-    // ✨ 언어 설정
+    // 언어 설정
     const targetLang = language === 'en' ? 'English' : 'Korean';
 
     // 초호화 모드 처리
@@ -31,9 +31,9 @@ export async function POST(req) {
         ? `Per person ${budget}0,000 KRW (Approx)`
         : `1인당 ${budget}0,000 원`);
 
-    // 🚀 프롬프트 수정: 빌드 에러 방지를 위해 내부 백틱(\`) 앞에 역슬래시(\) 추가
+    // 🚀 프롬프트 수정: 사용자 요청(Start/End City, Shopping)을 강력하게 반영하도록 지시
     const prompt = `
-      You are a professional travel planner and guide "Nyang-Pro".
+      You are a professional travel planner "Nyang-Pro".
       Plan a **${days}-day trip** to **${destination}** (${startDate} ~ ${endDate}).
       Also, create **3 interesting quiz questions** about **${destination}**.
       
@@ -43,29 +43,36 @@ export async function POST(req) {
       - Budget: ${budgetText}
       - Style: ${tourType}
       - Themes: ${themes ? themes.join(", ") : "None"}
-      - Request: ${request || "None"}
-      - VIP Mode: ${isLuxury ? "ON (Recommend ONLY best luxury spots)" : "OFF"}
+      - VIP Mode: ${isLuxury ? "ON" : "OFF"}
+
+      [🚨 USER'S SPECIAL REQUEST - MUST FOLLOW PRIORITY]
+      "${request || "No special request"}"
 
       [🚨 CRITICAL INSTRUCTIONS]
-      1. **Language & Naming Rule (VERY IMPORTANT)**:
+      1. **User's Custom Request Priority (Highest Priority)**:
+         - If the user asked for "Shopping", include specific malls, outlets, or streets (e.g., 'The Mall' in Florence).
+         - If the user asked for "Flea Markets", include famous local markets with their specific names.
+         - If the user asked for "Restaurants", include specific local restaurant names.
+
+      2. **Start & End City (Crucial for Open-Jaw Flights)**:
+         - **IF** the user specified a "Start City" (e.g., "Nice IN") in the request, **Day 1 MUST** start in that city.
+         - **IF** the user specified an "End City" (e.g., "Marseille OUT") in the request, **The Last Day MUST** end in that city.
+         - **Explicitly write** "Arrive at [City Name]" in Day 1 description.
+         - **Explicitly write** "Depart from [City Name]" in Last Day description.
+
+      3. **Language & Naming Rule**:
          - **DESCRIPTIONS, TITLE, QUIZ**: Write in **${targetLang}**.
-         - **PLACE NAMES (\`name\` field)**: MUST be in **English or Local Language** (e.g., "Senso-ji", "Eiffel Tower", "Universal Studios Japan"). 
+         - **PLACE NAMES (\`name\` field)**: MUST be in **English or Local Language** (e.g., "Senso-ji", "Eiffel Tower"). 
          - **DO NOT** use Korean for the 'name' field to ensure map accuracy.
 
-      2. **Distance & Grouping (Strict Limits)**:
-         - **Daily Limit**: Total travel distance per day must be **under 100km**.
-         - **Proximity**: Distance between spots on the same day must be **under 30km**.
-         - **Optimization**: Group activities by **Neighborhood/Area** (e.g., Day 1: North Area, Day 2: Central Area).
-         - **NO TELEPORTING**: Do not verify locations that are far apart.
+      4. **Distance & Grouping**:
+         - Daily Limit: Under 100km.
+         - Proximity: Under 30km between spots.
+         - Optimization: Group activities by Area.
+         - NO TELEPORTING.
 
-      3. **Map Data**:
-         - **STOP generating GPS coordinates (lat/long).**
-         - Instead, provide the **specific search query** for Google Maps.
-         - Provide a short **Address** or Area name in English/Local.
-
-      4. **Quiz Generation**:
-         - Create 3 fun trivia questions about **${destination}**.
-         - Write questions/options in **${targetLang}**.
+      5. **Map Data**:
+         - NO GPS coordinates. Provide specific **Google Search Queries**.
 
       [Output Format (JSON Only)]
       Return ONLY the following JSON. Do NOT include markdown code blocks.
@@ -92,8 +99,8 @@ export async function POST(req) {
               {
                 "order": 1,
                 "name": "Place Name (English/Local ONLY)", 
-                "category": "Restaurant/Spot/Cafe",
-                "description": "Description (in ${targetLang})",
+                "category": "Restaurant/Spot/Cafe/Shopping",
+                "description": "Description (in ${targetLang}). Include 'Arrive at [City]' if Day 1.",
                 "address": "Short Address (English/Local)",
                 "googleSearchQuery": "Place Name + City"
               }
@@ -105,13 +112,12 @@ export async function POST(req) {
             "question": "Q1. Question in ${targetLang}?",
             "options": ["Opt1", "Opt2", "Opt3", "Opt4"],
             "answer": 0 
-          },
-          ... (Total 3 questions)
+          }
         ]
       }
     `;
 
-    // 모델 설정 (gemini-2.5-flash-lite)
+    // 모델 설정
     const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
     // AI 생성 요청

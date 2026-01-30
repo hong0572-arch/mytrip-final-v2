@@ -56,29 +56,148 @@ const companionOptions = [
 
 const themeTags = ["#힐링🌿", "#먹방🍖", "#호캉스🏨", "#액티비티🏄", "#커플여행💑", "#가성비💰"];
 
-// --- 공항 코드 매칭 ---
+// --- 공항 코드 매칭 (확장판) ---
+// --- 공항 코드 매칭 (전 세계 주요 도시 & 지역명 대통합) ---
 const CITY_TO_IATA = {
-    // 🌏 아시아
-    "오사카": "KIX", "도쿄": "NRT", "후쿠오카": "FUK", "삿포로": "CTS", "오키나와": "OKA",
-    "다낭": "DAD", "나트랑": "CXR", "방콕": "BKK", "푸켓": "HKT", "세부": "CEB", "보홀": "TAG",
-    "싱가포르": "SIN", "홍콩": "HKG", "타이베이": "TPE", "발리": "DPS", "코타키나발루": "BKI",
-    "제주": "CJU", "제주도": "CJU", "부산": "PUS",
+    // 🇰🇷 대한민국 (Korea)
+    "인천": "ICN", "Incheon": "ICN", "서울": "ICN", "Seoul": "ICN",
+    "김포": "GMP", "Gimpo": "GMP",
+    "부산": "PUS", "Busan": "PUS", "김해": "PUS",
+    "제주": "CJU", "Jeju": "CJU",
+    "대구": "TAE", "Daegu": "TAE",
+    "청주": "CJJ", "Cheongju": "CJJ",
 
-    // 🇪🇺 유럽
-    "파리": "CDG", "니스": "NCE", "남프랑스": "NCE", "마르세유": "MRS", "리옹": "LYS",
-    "런던": "LHR", "로마": "FCO", "밀라노": "MXP", "베네치아": "VCE", "피렌체": "FLR",
-    "바르셀로나": "BCN", "마드리드": "MAD", "세비야": "SVQ",
-    "프라하": "PRG", "비엔나": "VIE", "부다페스트": "BUD",
-    "취리히": "ZRH", "인터라켄": "ZRH", "스위스": "ZRH",
-    "베를린": "BER", "뮌헨": "MUC", "프랑크푸르트": "FRA",
-    "암스테르담": "AMS", "이스탄불": "IST",
+    // 🇯🇵 일본 (Japan)
+    "오사카": "KIX", "Osaka": "KIX", "간사이": "KIX",
+    "도쿄": "NRT", "Tokyo": "NRT", "나리타": "NRT", "하네다": "HND",
+    "후쿠오카": "FUK", "Fukuoka": "FUK",
+    "삿포로": "CTS", "Sapporo": "CTS", "치토세": "CTS", "홋카이도": "CTS",
+    "오키나와": "OKA", "Okinawa": "OKA", "나하": "OKA",
+    "나고야": "NGO", "Nagoya": "NGO",
+    "교토": "KIX", "Kyoto": "KIX", // 교토는 공항이 없어서 오사카로 연결
 
-    // 🇺🇸 미주 & 대양주
-    "뉴욕": "JFK", "LA": "LAX", "로스앤젤레스": "LAX", "샌프란시스코": "SFO", "라스베이거스": "LAS",
-    "하와이": "HNL", "호놀룰루": "HNL", "괌": "GUM", "사이판": "SPN",
-    "시드니": "SYD", "멜버른": "MEL", "브리즈번": "BNE", "호주": "SYD",
-    "밴쿠버": "YVR", "토론토": "YYZ"
+    // 🇨🇳 중화권 (China/Taiwan/HK)
+    "홍콩": "HKG", "Hong Kong": "HKG",
+    "마카오": "MFM", "Macau": "MFM",
+    "타이베이": "TPE", "Taipei": "TPE", "대만": "TPE", "Taiwan": "TPE",
+    "가오슝": "KHH", "Kaohsiung": "KHH",
+    "상하이": "PVG", "Shanghai": "PVG", "푸동": "PVG",
+    "베이징": "PEK", "Beijing": "PEK", "북경": "PEK",
+    "칭다오": "TAO", "Qingdao": "TAO",
+
+    // 🌏 동남아시아 (Southeast Asia)
+    "다낭": "DAD", "Danang": "DAD", "Da Nang": "DAD",
+    "나트랑": "CXR", "Nha Trang": "CXR",
+    "하노이": "HAN", "Hanoi": "HAN",
+    "호치민": "SGN", "Ho Chi Minh": "SGN", "사이공": "SGN",
+    "푸꾸옥": "PQC", "Phu Quoc": "PQC",
+    "베트남": "DAD", // 베트남만 입력하면 다낭으로 (인기도 기준)
+
+    "방콕": "BKK", "Bangkok": "BKK", "수완나품": "BKK",
+    "치앙마이": "CNX", "Chiang Mai": "CNX",
+    "푸켓": "HKT", "Phuket": "HKT",
+    "태국": "BKK",
+
+    "세부": "CEB", "Cebu": "CEB",
+    "보홀": "TAG", "Bohol": "TAG",
+    "마닐라": "MNL", "Manila": "MNL",
+    "보라카이": "KLO", "Boracay": "KLO", "칼리보": "KLO",
+    "필리핀": "CEB",
+
+    "싱가포르": "SIN", "Singapore": "SIN",
+    "발리": "DPS", "Bali": "DPS", "덴파사르": "DPS",
+    "자카르타": "CGK", "Jakarta": "CGK",
+    "코타키나발루": "BKI", "Kota Kinabalu": "BKI",
+    "쿠알라룸푸르": "KUL", "Kuala Lumpur": "KUL",
+
+    // 🇪🇺 유럽 (Europe) - 주요 허브 및 관광지
+    // 🇫🇷 프랑스 (France)
+    "파리": "CDG", "Paris": "CDG",
+    "니스": "NCE", "Nice": "NCE", "남부 프랑스": "NCE", "South France": "NCE",
+    "마르세유": "MRS", "Marseille": "MRS", "Marseilles": "MRS",
+    "리옹": "LYS", "Lyon": "LYS",
+    "프랑스": "CDG", "France": "CDG",
+
+    "로마": "FCO", "Rome": "FCO", "Roma": "FCO",
+    "밀라노": "MXP", "Milan": "MXP", "Milano": "MXP",
+    "베네치아": "VCE", "Venice": "VCE", "Venezia": "VCE",
+    "피렌체": "FLR", "Florence": "FLR", "Firenze": "FLR",
+    "나폴리": "NAP", "Naples": "NAP", "Napoli": "NAP",
+    "이탈리아": "FCO", "Italy": "FCO", // 국가명 검색 시 로마로 연결
+
+    // 🇪🇸 스페인 (Spain)
+    "바르셀로나": "BCN", "Barcelona": "BCN",
+    "마드리드": "MAD", "Madrid": "MAD",
+    "세비야": "SVQ", "Seville": "SVQ",
+    "스페인": "MAD", "Spain": "MAD",
+    "그라나다": "GRX", "Granada": "GRX",
+
+    // 🇨🇵 포르투갈 (Portugal)
+    "리스본": "LIS", "Lisbon": "LIS",
+    "포르투": "OPO", "Porto": "OPO",
+
+    // 영국/독일/스위스/기타
+    // 🇬🇧 영국 (UK)
+    "런던": "LHR", "London": "LHR", "히드로": "LHR",
+    "영국": "LHR", "UK": "LHR",
+    "맨체스터": "MAN", "Manchester": "MAN",
+    "에든버러": "EDI", "Edinburgh": "EDI",
+
+    "프랑크푸르트": "FRA", "Frankfurt": "FRA",
+    "뮌헨": "MUC", "Munich": "MUC",
+    "베를린": "BER", "Berlin": "BER",
+
+    // 🇨🇭 스위스 (Switzerland)
+    "취리히": "ZRH", "Zurich": "ZRH",
+    "제네바": "GVA", "Geneva": "GVA",
+    "인터라켄": "ZRH", "Interlaken": "ZRH",
+    "스위스": "ZRH", "Switzerland": "ZRH",
+
+    "암스테르담": "AMS", "Amsterdam": "AMS", "네덜란드": "AMS",
+    "브뤼셀": "BRU", "Brussels": "BRU", "벨기에": "BRU",
+
+    "프라하": "PRG", "Prague": "PRG", "체코": "PRG",
+    "비엔나": "VIE", "Vienna": "VIE", "오스트리아": "VIE",
+    "부다페스트": "BUD", "Budapest": "BUD", "헝가리": "BUD",
+    "동유럽": "PRG", // 동유럽 대표 -> 프라하
+
+    "이스탄불": "IST", "Istanbul": "IST", "튀르키예": "IST", "터키": "IST",
+    "아테네": "ATH", "Athens": "ATH", "그리스": "ATH",
+    "산토리니": "JTR", "Santorini": "JTR",
+    "자그레브": "ZAG", "Zagreb": "ZAG", "크로아티아": "ZAG",
+
+    // 🇺🇸 미주 (Americas)
+    "뉴욕": "JFK", "New York": "JFK",
+    "로스앤젤레스": "LAX", "Los Angeles": "LAX", "LA": "LAX", "엘에이": "LAX",
+    "샌프란시스코": "SFO", "San Francisco": "SFO",
+    "라스베이거스": "LAS", "Las Vegas": "LAS",
+    "시애틀": "SEA", "Seattle": "SEA",
+    "하와이": "HNL", "Hawaii": "HNL", "호놀룰루": "HNL",
+    "괌": "GUM", "Guam": "GUM",
+    "사이판": "SPN", "Saipan": "SPN",
+    "밴쿠버": "YVR", "Vancouver": "YVR", "캐나다": "YVR",
+    "토론토": "YYZ", "Toronto": "YYZ",
+    "칸쿤": "CUN", "Cancun": "CUN",
+
+    // 🇦🇺 대양주 (Oceania)
+    "시드니": "SYD", "Sydney": "SYD", "호주": "SYD",
+    "멜버른": "MEL", "Melbourne": "MEL",
+    "브리즈번": "BNE", "Brisbane": "BNE",
+    "오클랜드": "AKL", "Auckland": "AKL", "뉴질랜드": "AKL",
+
+    // 🌍 중동/아프리카 (Middle East / Africa)
+    "두바이": "DXB", "Dubai": "DXB",
+    "아부다비": "AUH", "Abu Dhabi": "AUH",
+    "리야드": "RUH", "Riyadh": "RUH", "사우디": "RUH",
+    "쿠웨이트": "KWI", "Kuwait": "KWI",
+    "제다": "JED", "Jeddah": "JED",
+    "도하": "DOH", "Doha": "DOH",
+    "카이로": "CAI", "Cairo": "CAI", "이집트": "CAI",
+    "케이프타운": "CPT", "Cape Town": "CPT", "남아공": "CPT",
+    "요하네스버그": "JNB", "Johannesburg": "JNB",
+    "카사블랑카": "CMN", "Casablanca": "CMN", "모로코": "CMN"
 };
+
 
 // 🏆 관리자 추천 여행지 데이터
 const RECOMMENDED_TRIPS = [
@@ -145,6 +264,57 @@ const translations = {
     }
 };
 
+// [수정] AI 일정에서 첫 도시(IN)와 마지막 도시(OUT) 코드를 찾아내는 함수
+// [수정] AI 일정에서 도시 코드를 꼼꼼하게 찾아내는 함수
+const extractIataFromItinerary = (tripResult) => {
+    let inCode = null;
+    let outCode = null;
+
+    if (!tripResult || !tripResult.itinerary) return { inCode, outCode };
+
+    const days = tripResult.itinerary;
+    const firstDay = days[0];
+    const lastDay = days[days.length - 1];
+
+    // 1. 첫날 일정에서 IN 공항 찾기
+    if (firstDay) {
+        // 날짜 제목 + 장소 이름 + 설명을 전부 합쳐서 영어/한글 검색
+        const textToCheck = `${firstDay.day} ${tripResult.tripTitle} ${firstDay.places?.map(p => p.name + " " + (p.description || "")).join(' ')}`.toLowerCase();
+
+        for (const [city, code] of Object.entries(CITY_TO_IATA)) {
+            if (textToCheck.includes(city.toLowerCase())) {
+                inCode = code;
+                break; // 찾았으면 탈출
+            }
+        }
+    }
+
+    // 2. 마지막 날 일정에서 OUT 공항 찾기
+    if (lastDay) {
+        const textToCheck = `${lastDay.day} ${tripResult.tripTitle} ${lastDay.places?.map(p => p.name + " " + (p.description || "")).join(' ')}`.toLowerCase();
+
+        for (const [city, code] of Object.entries(CITY_TO_IATA)) {
+            if (textToCheck.includes(city.toLowerCase())) {
+                outCode = code;
+                break;
+            }
+        }
+    }
+
+    // 3. 만약 위에서 못 찾았으면, '여행 제목(tripTitle)'이나 'destination'에서라도 찾기
+    if (!inCode) {
+        const titleCheck = (tripResult.tripTitle || "").toLowerCase();
+        for (const [city, code] of Object.entries(CITY_TO_IATA)) {
+            if (titleCheck.includes(city.toLowerCase())) {
+                inCode = code;
+                if (!outCode) outCode = code; // OUT도 못 찾았으면 일단 같은 곳으로
+                break;
+            }
+        }
+    }
+
+    return { inCode, outCode };
+};
 
 export default function Home() {
     const router = useRouter();
@@ -384,26 +554,33 @@ export default function Home() {
         return null;
     };
 
+    // handleTripClick 함수 전체 교체 또는 수정
     const handleTripClick = async (trip) => {
-        if (!trip.iata) {
-            alert("공항 정보를 찾을 수 없습니다. 도시 이름을 확인해주세요.");
+        // 1. 저장된 코드가 있으면 사용, 없으면 기존 iata 사용
+        const arrivalCode = trip.arrivalIata || trip.iata;
+        const returnOriginCode = trip.departureIata || trip.iata;
+
+        if (!arrivalCode) {
+            alert("공항 정보를 찾을 수 없습니다. (도시명 확인 필요)");
             return;
         }
 
         const depDateStr = formatDateForAPI(trip.startDate);
-        if (!depDateStr) {
-            alert("출발 날짜 정보가 올바르지 않습니다.");
-            return;
-        }
+        if (!depDateStr) { alert("날짜 정보 오류"); return; }
 
         let retDateStr = formatDateForAPI(trip.endDate);
         if (!retDateStr) {
-            const d = new Date(depDateStr);
-            d.setDate(d.getDate() + 4);
+            const d = new Date(depDateStr); d.setDate(d.getDate() + 4);
             retDateStr = d.toISOString().split('T')[0];
         }
 
-        setSelectedTrip({ ...trip, returnDateCalc: retDateStr });
+        setSelectedTrip({
+            ...trip,
+            iata: arrivalCode, // 화면 표시용 (가는 곳)
+            returnIata: returnOriginCode, // 화면 표시용 (오는 곳)
+            returnDateCalc: retDateStr
+        });
+
         setIsSearching(true);
         setFlightResults([]);
 
@@ -412,7 +589,8 @@ export default function Home() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    destinationCode: trip.iata,
+                    destinationCode: arrivalCode,       // 가는 편 도착지
+                    returnOriginCode: returnOriginCode, // ✨ 오는 편 출발지 (다구간 지원)
                     departureDate: depDateStr,
                     returnDate: retDateStr
                 })
@@ -451,25 +629,23 @@ export default function Home() {
                 body: JSON.stringify({ ...formData, isLuxury, language }), // 🌍 language 상태 추가 전송
             });
             const data = await response.json();
+            // generatePlan 함수 내부 수정
             if (data.result) {
                 setResult(data.result);
+
+                // ✨ [수정] AI 결과에서 IN/OUT 공항 코드 추출
+                const { inCode, outCode } = extractIataFromItinerary(data.result);
+
                 if (user) {
                     await addDoc(collection(db, "users", user.uid, "trips"), {
                         ...formData,
+                        tripTitle: data.result.tripTitle, // AI가 지어준 제목도 저장
+                        arrivalIata: inCode,     // ✨ IN 공항 코드 저장
+                        departureIata: outCode,  // ✨ OUT 공항 코드 저장
                         createdAt: serverTimestamp()
                     });
 
-                    const tripsRef = collection(db, "users", user.uid, "trips");
-                    const q = query(tripsRef, orderBy("createdAt", "desc"));
-                    const snap = await getDocs(q);
-                    const list = snap.docs.map(d => {
-                        const dat = d.data();
-                        let iataCode = null;
-                        const dest = dat.destination || "";
-                        Object.keys(CITY_TO_IATA).forEach(city => { if (dest.includes(city)) iataCode = CITY_TO_IATA[city]; });
-                        return { id: d.id, iata: iataCode, title: dest, ...dat };
-                    });
-                    setMySchedules(list);
+                    // (목록 갱신 로직은 onSnapshot이 처리하므로 그대로 두시면 됩니다)
                 }
             }
             else alert("오류: " + (data.error || "생성 실패"));
@@ -592,8 +768,18 @@ export default function Home() {
                                 <div className={`p-5 rounded-3xl border relative transition-all ${isLuxury ? "bg-amber-50 border-amber-200" : "bg-white border-gray-100 shadow-sm"}`}><div className="flex gap-4 items-center justify-between">{isLuxury ? (<div className="flex-1"><div className="flex items-center gap-2 text-amber-600 font-bold mb-1"><Sparkles size={16} /> VIP 예산</div><p className="text-xs text-gray-500">무제한 (AI 최적화)</p></div>) : (<div className="flex-1"><label className="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1"><Wallet size={12} /> {translations[language].label_budget}</label><div className="flex items-end gap-1 mb-2"><span className="text-xl font-bold text-[#FF5A5F]">{formData.budget.toLocaleString()}</span><span className="text-sm text-gray-400">{language === 'en' ? '0,000 KRW' : '만원'}</span></div><input type="range" name="budget" min="50" max="1000" step="10" value={formData.budget} onChange={handleInputChange} className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#FF5A5F]" /></div>)}<div className="w-[1px] h-10 bg-gray-100"></div><div className="flex flex-col items-center"><label className="text-xs font-bold text-gray-500 mb-1">{translations[language].label_people}</label><div className="flex items-center gap-2"><button onClick={() => updatePeople(-1)} className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 font-bold hover:bg-gray-200">-</button><span className="font-bold text-gray-800 w-4 text-center">{formData.people}</span><button onClick={() => updatePeople(1)} className="w-8 h-8 rounded-full bg-[#FF5A5F] text-white font-bold hover:bg-rose-600">+</button></div></div></div></div>
                                 <div><div className="grid grid-cols-3 gap-2 mb-3">{tourOptions.map((option) => (<button key={option.id} onClick={() => setFormData({ ...formData, tourType: option.id })} className={`py-3 px-2 rounded-2xl border transition-all flex flex-col items-center text-center ${formData.tourType === option.id ? 'bg-white border-[#FF5A5F] text-[#FF5A5F] shadow-md ring-1 ring-[#FF5A5F]' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200'}`}><span className="font-bold text-sm mb-1">{option.label}</span><span className="text-[10px] opacity-70 break-keep">{option.desc}</span></button>))}</div><button onClick={toggleLuxuryMode} className={`w-full py-3 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 border ${isLuxury ? "bg-amber-500 text-white border-amber-500 shadow-amber-200" : "bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-100"}`}>{isLuxury ? <><Crown size={16} fill="white" /> {translations[language].btn_luxury_on}</> : <><Crown size={16} /> {translations[language].btn_luxury_off}</>}</button></div>
                                 <div className="bg-white p-4 rounded-2xl border border-gray-200"><label className="text-xs font-bold text-gray-400 mb-1 block">{translations[language].label_contact}</label><input type="text" name="contact" value={formData.contact} onChange={handleInputChange} placeholder={translations[language].placeholder_contact} className="w-full text-sm font-medium outline-none text-gray-800" /></div>
-                                <div className="bg-white p-4 rounded-2xl border border-gray-200"><div className="flex items-center justify-between mb-2"><label className="text-xs font-bold text-gray-400 flex items-center gap-1"><MessageSquare size={12} /> {translations[language].label_request}</label><button onClick={() => handleVoiceInput('request')} className={`p-1.5 rounded-full transition-all ${listeningField === 'request' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100 text-gray-400'}`}><Mic size={14} /></button></div><textarea name="request" value={formData.request} onChange={handleInputChange} placeholder={listeningField === 'request' ? translations[language].msg_listening : translations[language].placeholder_request} className="w-full text-sm font-medium outline-none text-gray-800 resize-none h-20 bg-transparent" /></div>
+                                <div className="bg-white p-4 rounded-2xl border border-gray-200"><div className="flex items-center justify-between mb-2"><label className="text-xs font-bold text-gray-400 flex items-center gap-1"><MessageSquare size={12} /> {translations[language].label_request}</label><button onClick={() => handleVoiceInput('request')} className={`p-1.5 rounded-full transition-all ${listeningField === 'request' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100 text-gray-400'}`}><Mic size={14} /></button></div>
+                                    <textarea
+                                        name="request"
+                                        value={formData.request}
+                                        onChange={handleInputChange}
+                                        // ✨ [수정] 안내 문구를 구체적으로 변경하여 사용자가 IN/OUT 도시를 적도록 유도
+                                        placeholder={listeningField === 'request' ? translations[language].msg_listening : "예: 니스 IN, 마르세유 OUT으로 짜줘. 빈티지 벼룩시장과 아울렛 쇼핑 꼭 넣어줘!"}
+                                        className="w-full text-sm font-medium outline-none text-gray-800 resize-none h-20 bg-transparent"
+                                    />
+                                </div>
                             </div>
+
                         )}
 
                         {activeTab === 'flights' && (
