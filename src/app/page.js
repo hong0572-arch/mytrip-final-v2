@@ -26,7 +26,11 @@ import { ko } from 'date-fns/locale';
 // Firebase
 import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { doc, getDoc, setDoc, deleteDoc, updateDoc, increment, serverTimestamp, collection, getDocs, addDoc, query, orderBy } from "firebase/firestore";
+// firebase/firestore import 부분을 찾아 아래 코드로 교체하세요. (모든 기능 포함)
+import {
+    doc, getDoc, setDoc, deleteDoc, updateDoc, increment, serverTimestamp,
+    collection, getDocs, addDoc, query, orderBy, onSnapshot
+} from "firebase/firestore";
 
 // --- 상수 데이터 ---
 const backgroundImages = [
@@ -83,6 +87,9 @@ const RECOMMENDED_TRIPS = [
     { id: 3, city: "파리", title: "🗼 낭만의 도시 산책", img: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=600&auto=format&fit=crop", desc: "에펠탑 보며 와인 한잔" },
 
 ];
+
+
+
 
 // 🌍 다국어 번역 데이터 (추가됨)
 const translations = {
@@ -142,13 +149,51 @@ const translations = {
 export default function Home() {
     const router = useRouter();
 
+    // [추가] 로딩 문구 변경을 위한 State
+
+
+    // 👇 1. 이 줄을 찾으세요! (loading 변수 선언)
+    const [loading, setLoading] = useState(false);
+
+    // -----------------------------------------------------------
+    // ✨ 2. 아까 그 코드를 반드시 이 밑에 붙여넣어야 합니다! ✨
+    // -----------------------------------------------------------
+
+    // [추가] 로딩 문구 변경을 위한 State
+    const [loadingText, setLoadingText] = useState("AI가 여행 계획을 짜고 있어요...");
+
+    // [추가] 로딩 중일 때 3초마다 문구 변경하는 useEffect
+    useEffect(() => {
+        if (!loading) return;
+
+        const messages = [
+            "AI가 여행지를 분석하고 있어요... 🧐",
+            "최적의 항공권을 찾고 있습니다... ✈️",
+            "현지 맛집 리스트를 훑어보는 중... 🍜",
+            "동선을 최적화하고 있어요... 🗺️",
+            "가성비 좋은 숙소를 찾고 있습니다... 🏨",
+            "거의 다 됐습니다! 냥냥! 🐾"
+        ];
+
+        let index = 0;
+        setLoadingText(messages[0]);
+
+        const interval = setInterval(() => {
+            index = (index + 1) % messages.length;
+            setLoadingText(messages[index]);
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, [loading]); // 이제 loading을 찾을 수 있어서 에러가 안 납니다!
+
+
+
     // --- 상태 관리 ---
     const [showSplash, setShowSplash] = useState(true); // ✨ 스플래시 화면 상태 (기본값 true)
 
     // 🌍 언어 설정 상태 (기본값 'ko')
     const [language, setLanguage] = useState('ko');
 
-    const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [bgIndex, setBgIndex] = useState(0);
     const [user, setUser] = useState(null);
@@ -183,44 +228,46 @@ export default function Home() {
     });
 
     useEffect(() => {
-        // ✨ [추가된 코드] 이미 스플래시를 봤는지 확인합니다.
+        // ✨ 스플래시 처리 (기존 로직 유지)
         const hasShownSplash = sessionStorage.getItem('hasShownSplash');
-        if (hasShownSplash) {
-            setShowSplash(false); // 봤으면 바로 끕니다.
-        }
-
+        if (hasShownSplash) setShowSplash(false);
 
         const timer = setInterval(() => setBgIndex((prev) => (prev + 1) % backgroundImages.length), 5000);
 
-        // ✨ [핵심] 현재 브라우저가 아니라 '앱'으로 실행 중인지 확인
+        // PWA 관련 (기존 로직 유지)
         const checkStandalone = () => {
             const isApp = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
             setIsStandalone(isApp);
         };
-        checkStandalone(); // 시작하자마자 체크
+        checkStandalone();
 
-        // ✨ [핵심] 설치가 완료되면 즉시 버튼 숨기기
-        const handleAppInstalled = () => {
-            setIsStandalone(true);
-            setDeferredPrompt(null);
-        };
+        const handleAppInstalled = () => { setIsStandalone(true); setDeferredPrompt(null); };
         window.addEventListener('appinstalled', handleAppInstalled);
-
-        // PWA 설치 이벤트 리스너
-        const handleBeforeInstallPrompt = (e) => {
-            e.preventDefault();
-            setDeferredPrompt(e);
-        };
+        const handleBeforeInstallPrompt = (e) => { e.preventDefault(); setDeferredPrompt(e); };
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+        // ------------------------------------------------------------------
+        // 🔥 [핵심 변경] 실시간 동기화 로직 (onSnapshot 사용)
+        // ------------------------------------------------------------------
+        let unsubscribeTrips = null; // DB 구독 취소 함수 저장용
+
+        const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
+
+            // 기존 구독이 있다면 해제 (중복 방지)
+            if (unsubscribeTrips) {
+                unsubscribeTrips();
+                unsubscribeTrips = null;
+            }
+
             if (currentUser) {
-                try {
-                    const tripsRef = collection(db, "users", currentUser.uid, "trips");
-                    const q = query(tripsRef, orderBy("createdAt", "desc"));
-                    const tripsSnap = await getDocs(q);
-                    const loadedTrips = tripsSnap.docs.map(doc => {
+                const tripsRef = collection(db, "users", currentUser.uid, "itineraries");
+                // 마이페이지와 동일하게 작성일 역순 정렬
+                const q = query(tripsRef, orderBy("createdAt", "desc"));
+
+                // ✨ getDocs 대신 onSnapshot 사용 -> 데이터 변경 시 즉시 반영됨
+                unsubscribeTrips = onSnapshot(q, (snapshot) => {
+                    const loadedTrips = snapshot.docs.map(doc => {
                         const data = doc.data();
                         let iataCode = null;
                         const dest = data.destination || "";
@@ -236,28 +283,25 @@ export default function Home() {
                             ...data
                         };
                     });
-                    loadedTrips.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
                     setMySchedules(loadedTrips);
-                } catch (error) {
-                    console.error("일정 불러오기 실패:", error);
-                    try {
-                        const tripsRef = collection(db, "users", currentUser.uid, "trips");
-                        const snap = await getDocs(tripsRef);
-                        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                        setMySchedules(list);
-                    } catch (e) { }
-                }
-            } else { setMySchedules([]); }
+                }, (error) => {
+                    console.error("실시간 연동 실패:", error);
+                });
+            } else {
+                setMySchedules([]);
+            }
         });
 
         const params = new URLSearchParams(window.location.search);
         if (params.get('ref')) localStorage.setItem('referralCode', params.get('ref'));
 
+        // --- 정리(Cleanup) 함수 ---
         return () => {
             clearInterval(timer);
             window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
             window.removeEventListener('appinstalled', handleAppInstalled);
-            unsubscribe();
+            unsubscribeAuth(); // 인증 리스너 해제
+            if (unsubscribeTrips) unsubscribeTrips(); // 🔥 데이터 리스너 해제
         };
     }, []);
 
@@ -643,12 +687,14 @@ export default function Home() {
                     </div>
                 </div>
 
+                {/* 항공권 검색 결과 모달 */}
                 <AnimatePresence>
                     {selectedTrip && (
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 z-50 bg-gray-100 flex flex-col"
                         >
+                            {/* 모달 헤더 */}
                             <div className="bg-white px-5 py-4 flex items-center gap-3 shadow-sm z-10">
                                 <button onClick={() => setSelectedTrip(null)} className="p-1 -ml-1 rounded-full hover:bg-gray-100"><ArrowRight className="rotate-180" size={24} /></button>
                                 <div>
@@ -659,57 +705,80 @@ export default function Home() {
                                 </div>
                             </div>
 
+                            {/* 모달 바디 (검색 결과 리스트) */}
                             <div className="flex-1 overflow-y-auto p-4 space-y-3">
                                 {isSearching ? (
-                                    [1, 2, 3].map(i => (
-                                        <div key={i} className="bg-white h-32 rounded-2xl animate-pulse" />
-                                    ))
+                                    [1, 2, 3].map(i => (<div key={i} className="bg-white h-32 rounded-2xl animate-pulse" />))
                                 ) : flightResults.length > 0 ? (
                                     flightResults.map((flight) => (
                                         <div key={flight.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 hover:border-indigo-500 transition-all relative">
                                             <div className="flex justify-between items-start mb-4">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 bg-gray-50 rounded flex items-center justify-center text-xs font-bold text-gray-500">{flight.carrierCode}</div>
-                                                    <span className="font-bold text-sm text-gray-700">{flight.airline}</span>
+                                                    {/* ✈️ 로고 처리: Fallback(가짜 티켓)이면 돋보기, 아니면 항공사 로고 */}
+                                                    {flight.isFallback || flight.carrierCode === 'ALL' ? (
+                                                        <div className="w-8 h-8 rounded bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                                            <Search size={16} />
+                                                        </div>
+                                                    ) : (
+                                                        <img
+                                                            src={`https://pics.avs.io/99/36/${flight.carrierCode}.png`}
+                                                            alt={flight.airline}
+                                                            className="w-8 h-8 rounded object-contain bg-white border border-gray-100"
+                                                            onError={(e) => { e.target.style.display = 'none' }}
+                                                        />
+                                                    )}
+                                                    <span className="font-bold text-sm text-gray-700">
+                                                        {flight.isFallback ? "전체 항공사 검색" : flight.carrierCode}
+                                                    </span>
                                                 </div>
+
                                                 <div className="text-right">
-                                                    <span className="block text-lg font-black text-indigo-600">{flight.price.toLocaleString()}원</span>
-                                                    <span className="text-[10px] text-gray-400">왕복 총액</span>
+                                                    {/* 💰 가격 처리: 0원이면 '최저가 확인' 텍스트 표시 */}
+                                                    <span className="block text-lg font-black text-indigo-600">
+                                                        {flight.price === 0 ? "최저가 확인" : `${flight.price.toLocaleString()}원~`}
+                                                    </span>
+                                                    {!flight.isFallback && <span className="text-[10px] text-gray-400">예상 최저가</span>}
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center justify-between px-1 mb-2">
-                                                <div className="text-center w-10">
-                                                    <div className="text-base font-bold text-gray-800">{flight.outbound.depTime}</div>
-                                                    <div className="text-[10px] text-gray-400">ICN</div>
-                                                </div>
-                                                <div className="flex-1 px-3 flex flex-col items-center">
-                                                    <div className="text-[10px] text-gray-400 mb-1">{flight.outbound.duration}</div>
-                                                    <div className="w-full h-[1px] bg-gray-300 relative flex items-center justify-center">
-                                                        <Plane size={12} className="text-gray-400 rotate-90 bg-white px-0.5" />
+                                            {/* 중간 상세 정보 (시간 등) - Fallback이 아닐 때만 표시 */}
+                                            {!flight.isFallback && (
+                                                <div className="flex items-center justify-between px-1 mb-2">
+                                                    <div className="text-center w-10">
+                                                        <div className="text-base font-bold text-gray-800">{flight.outbound.depTime}</div>
+                                                        <div className="text-[10px] text-gray-400">ICN</div>
+                                                    </div>
+                                                    <div className="flex-1 px-3 flex flex-col items-center">
+                                                        <div className="text-[10px] text-gray-400 mb-1">
+                                                            {Math.floor(flight.outbound.duration / 60) > 0 ? `${Math.floor(flight.outbound.duration / 60)}시간 ` : ""}
+                                                            {flight.outbound.duration % 60}분
+                                                        </div>
+                                                        <div className="w-full h-[1px] bg-gray-300 relative flex items-center justify-center">
+                                                            <Plane size={12} className="text-gray-400 rotate-90 bg-white px-0.5" />
+                                                        </div>
+                                                        <div className="text-[10px] text-indigo-500 mt-1">
+                                                            {flight.transfers === 0 ? "직항" : `${flight.transfers}회 경유`}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-center w-10">
+                                                        <div className="text-base font-bold text-gray-800">도착</div>
+                                                        <div className="text-[10px] text-gray-400">{selectedTrip.iata}</div>
                                                     </div>
                                                 </div>
-                                                <div className="text-center w-10">
-                                                    <div className="text-base font-bold text-gray-800">{flight.outbound.arrTime}</div>
-                                                    <div className="text-[10px] text-gray-400">{selectedTrip.iata}</div>
-                                                </div>
-                                            </div>
+                                            )}
 
-                                            <div className="bg-gray-50 rounded-lg p-2 flex items-center justify-between text-xs text-gray-500">
-                                                <span className="flex items-center gap-1"><Plane size={10} className="-rotate-90" /> 오는 편</span>
-                                                <span>{selectedTrip.returnDateCalc} • {flight.inbound.duration}</span>
-                                            </div>
-
-                                            <button className="w-full mt-3 py-2.5 bg-indigo-600 text-white font-bold text-sm rounded-xl hover:bg-indigo-700 transition-colors shadow-sm">
-                                                선택하기
+                                            {/* 하단 버튼 */}
+                                            <button
+                                                onClick={() => window.open(flight.deepLink, '_blank')}
+                                                className="w-full mt-3 py-2.5 bg-indigo-600 text-white font-bold text-sm rounded-xl hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center gap-2"
+                                            >
+                                                {flight.isFallback ? "실시간 가격 조회하러 가기" : "예약하러 가기"}
+                                                <ExternalLink size={14} />
                                             </button>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="text-center py-20 text-gray-400">
-                                        <p>검색된 항공권이 없습니다.</p>
-                                        <p className="text-xs mt-1">날짜를 변경하거나 나중에 다시 시도해주세요.</p>
-                                    </div>
+                                    <div className="text-center py-20 text-gray-400"><p>검색된 항공권이 없습니다.</p><p className="text-xs mt-1">날짜를 변경하거나 나중에 다시 시도해주세요.</p></div>
                                 )}
                             </div>
                         </motion.div>
@@ -726,7 +795,8 @@ export default function Home() {
                             className={`w-full py-4 rounded-2xl font-bold text-xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-95 ${isLuxury ? "bg-gradient-to-r from-amber-500 to-amber-600 shadow-amber-200 text-white" : "bg-gradient-to-r from-[#FF5A5F] to-[#FF3D43] shadow-rose-200 text-white hover:shadow-rose-400 hover:-translate-y-1"}`}
                         >
                             {loading ? (
-                                <><Sparkles className="animate-spin" size={24} /> {translations[language].msg_loading}</>
+                                // ✨ 여기가 바뀌었습니다: loadingText 변수 사용
+                                <><Sparkles className="animate-spin" size={24} /> {loadingText}</>
                             ) : isLuxury ? (
                                 translations[language].btn_luxury_on
                             ) : (

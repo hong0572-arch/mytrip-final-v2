@@ -1,141 +1,94 @@
-// app/api/flights/route.js
 import { NextResponse } from 'next/server';
 
-// 🔑 FlightAPI 키
-const FLIGHT_API_KEY = '6965d01a980abf41757c9615';
-
-// 💰 Travelpayouts 토큰
-const TP_TOKEN = '4c01a895965a510253489b6eef1e5fde';
+// 🔑 Travelpayouts 설정
+const TP_TOKEN = '4c01a895965a510253489b6eef1e5fde'; // 대표님 토큰 (확인됨)
+const TP_MARKER = '695932'; // 🚨 [필수] 대시보드 우측 상단 숫자 ID로 꼭 변경하세요!
 
 export async function POST(req) {
     try {
         const body = await req.json();
         const { destinationCode, departureDate, returnDate } = body;
-        const isDetailSearch = !!departureDate;
 
-        // ---------------------------------------------------------
-        // 🟢 Case 1: 대시보드 시세 조회 (Travelpayouts)
-        // ---------------------------------------------------------
-        if (!isDetailSearch) {
-            const today = new Date();
-            today.setDate(today.getDate() + 30);
-            const defaultDate = today.toISOString().split('T')[0];
-
-            const url = `https://api.travelpayouts.com/aviasales/v3/prices_for_dates?origin=ICN&destination=${destinationCode}&departure_at=${defaultDate}&currency=krw&limit=1&token=${TP_TOKEN}`;
-            const res = await fetch(url);
-            const data = await res.json();
-
-            if (data.success && data.data && data.data.length > 0) {
-                return NextResponse.json({
-                    price: data.data[0].price,
-                    airline: data.data[0].airline,
-                    flightTime: "직항/경유",
-                    isReal: true
-                });
-            }
-            return NextResponse.json({ price: null });
+        // 필수 정보 체크
+        if (!destinationCode || !departureDate) {
+            return NextResponse.json({ error: "필수 정보 누락" }, { status: 400 });
         }
 
-        // ---------------------------------------------------------
-        // 🔵 Case 2: 상세 리스트 검색 (FlightAPI) - 시간 표시 오류 해결판!
-        // ---------------------------------------------------------
-        else {
-            console.log(`✈️ [상세 검색] ICN <-> ${destinationCode} (${departureDate})`);
+        // 1. 딥링크(구매 페이지 URL) 미리 생성
+        // 날짜 포맷 변환 (2026-03-25 -> 2503)
+        const depParts = departureDate.split('-');
+        const depStr = `${depParts[2]}${depParts[1]}`;
 
-            const url = `https://api.flightapi.io/roundtrip/${FLIGHT_API_KEY}/ICN/${destinationCode}/${departureDate}/${returnDate}/1/0/0/Economy/KRW`;
-
-            const res = await fetch(url);
-            const textData = await res.text();
-
-            try {
-                const data = JSON.parse(textData);
-
-                if (data.itineraries && data.itineraries.length > 0) {
-                    const flights = data.itineraries.map(itinerary => {
-                        // 1. Leg 정보 찾기
-                        const outboundLegId = itinerary.leg_ids[0];
-                        const inboundLegId = itinerary.leg_ids[1];
-
-                        const outboundLeg = data.legs.find(l => l.id === outboundLegId);
-                        const inboundLeg = data.legs.find(l => l.id === inboundLegId);
-
-                        // 2. 항공사 정보
-                        const carrierId = outboundLeg.marketing_carrier_ids ? outboundLeg.marketing_carrier_ids[0] : outboundLeg.carrier_ids[0];
-                        const carrierObj = data.carriers ? data.carriers.find(c => c.id === carrierId) : null;
-                        const airlineName = carrierObj ? carrierObj.name : (carrierId || "항공사");
-
-                        // 3. 가격 정보
-                        const priceOption = itinerary.pricing_options[0];
-                        let price = priceOption.price.amount;
-                        if (price < 10000) price = Math.round(price * 1450);
-                        else price = Math.round(price);
-
-                        // ✨ [핵심 수정] 시간 데이터 추출 로직 강화 (Robust Time Extraction)
-                        const getTime = (leg) => {
-                            // API가 departureTime(카멜)이나 departure_time(스네이크) 중 하나로 줌 -> 둘 다 체크
-                            const rawTime = leg.departureTime || leg.departure_time || leg.departure;
-
-                            if (!rawTime) return "00:00";
-
-                            // Case A: "2026-04-12T09:30:00" (ISO 형식) -> T로 자르기
-                            if (rawTime.includes("T")) return rawTime.split("T")[1].substring(0, 5);
-
-                            // Case B: "2026-04-12 09:30:00" (공백 포함) -> 공백으로 자르기
-                            if (rawTime.includes(" ")) return rawTime.split(" ")[1].substring(0, 5);
-
-                            // Case C: "09:30" (시간만 있는 경우)
-                            return rawTime.substring(0, 5);
-                        };
-
-                        // 도착 시간도 동일하게 처리
-                        const getArrTime = (leg) => {
-                            const rawTime = leg.arrivalTime || leg.arrival_time || leg.arrival;
-                            if (!rawTime) return "00:00";
-                            if (rawTime.includes("T")) return rawTime.split("T")[1].substring(0, 5);
-                            if (rawTime.includes(" ")) return rawTime.split(" ")[1].substring(0, 5);
-                            return rawTime.substring(0, 5);
-                        };
-
-                        // 5. 소요 시간 계산 (데이터가 없을 경우 계산)
-                        const formatDuration = (leg) => {
-                            if (leg.duration) {
-                                const mins = leg.duration;
-                                const h = Math.floor(mins / 60);
-                                const m = mins % 60;
-                                return `${h}시간 ${m}분`;
-                            }
-                            return "시간 정보";
-                        };
-
-                        return {
-                            id: itinerary.id,
-                            price: price,
-                            airline: airlineName,
-                            carrierCode: carrierObj ? carrierObj.code : "N/A",
-                            outbound: {
-                                duration: formatDuration(outboundLeg),
-                                depTime: getTime(outboundLeg), // ✨ 강화된 함수 적용
-                                arrTime: getArrTime(outboundLeg)
-                            },
-                            inbound: {
-                                duration: inboundLeg ? formatDuration(inboundLeg) : "오는 편"
-                            }
-                        };
-                    }).slice(0, 10);
-
-                    return NextResponse.json({ flights });
-                }
-
-                return NextResponse.json({ flights: [] });
-
-            } catch (e) {
-                console.error("JSON Error:", e);
-                return NextResponse.json({ flights: [] });
-            }
+        let searchUrl = "";
+        if (returnDate && returnDate.length > 5) {
+            const retParts = returnDate.split('-');
+            const retStr = `${retParts[2]}${retParts[1]}`;
+            // 왕복 링크: ICN2503KIX27031
+            searchUrl = `https://www.aviasales.com/search/ICN${depStr}${destinationCode}${retStr}1?marker=${TP_MARKER}&currency=krw&locale=ko`;
+        } else {
+            // 편도 링크: ICN2503KIX1
+            searchUrl = `https://www.aviasales.com/search/ICN${depStr}${destinationCode}1?marker=${TP_MARKER}&currency=krw&locale=ko`;
         }
+
+        // 2. API 호출 (캐시 데이터 조회)
+        let baseUrl = `https://api.travelpayouts.com/aviasales/v3/prices_for_dates`;
+        let params = new URLSearchParams({
+            origin: 'ICN',
+            destination: destinationCode,
+            departure_at: departureDate,
+            currency: 'krw',
+            sorting: 'price',
+            direct: 'false',
+            limit: '30',
+            token: TP_TOKEN
+        });
+
+        if (returnDate && returnDate.length > 5) {
+            params.append('return_at', returnDate);
+        }
+
+        console.log("✈️ API 요청:", `${baseUrl}?${params.toString()}`);
+
+        const res = await fetch(`${baseUrl}?${params.toString()}`);
+        const data = await res.json();
+        let flights = [];
+
+        // 3. 데이터가 있으면 가공
+        if (data.success && data.data && data.data.length > 0) {
+            flights = data.data.map((item) => ({
+                id: (item.flight_number || 'FL') + item.departure_at + Math.random(),
+                price: item.price,
+                airline: item.airline,
+                carrierCode: item.airline,
+                transfers: item.transfers,
+                outbound: {
+                    depTime: item.departure_at.split('T')[1].substring(0, 5),
+                    duration: item.duration,
+                },
+                deepLink: searchUrl,
+                isFallback: false
+            }));
+        }
+
+        // 4. 🚨 데이터가 없으면 '실시간 조회 버튼'용 가짜 티켓 생성
+        if (flights.length === 0) {
+            console.log("⚠️ 데이터 없음 -> 실시간 조회 링크 생성");
+            flights.push({
+                id: "fallback_ticket",
+                price: 0, // 프론트엔드에서 0원이면 '최저가 확인'으로 표시
+                airline: "전체 항공사 실시간 검색",
+                carrierCode: "ALL",
+                transfers: 0,
+                outbound: { depTime: "--:--", duration: 0 },
+                deepLink: searchUrl,
+                isFallback: true // 프론트엔드 구분용 플래그
+            });
+        }
+
+        return NextResponse.json({ flights });
 
     } catch (error) {
-        console.error("Server Error:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        console.error("🚨 서버 에러:", error);
+        return NextResponse.json({ error: "서버 오류 발생" }, { status: 500 });
     }
 }

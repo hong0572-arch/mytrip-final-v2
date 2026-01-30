@@ -1,7 +1,7 @@
 {
     "name": "Trip Maker",
     "short_name": "Trip Maker",
-    "description": "내 여행 AI로 나만의 여행을 만들기",
+    "description": "든든한 내 여행 친구",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",

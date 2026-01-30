@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, db } from "../../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, collection, getDocs, query, orderBy, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, query, orderBy, deleteDoc, onSnapshot } from "firebase/firestore";
 import { User, Coins, Map, Calendar, LogOut, ChevronRight, BrainCircuit, X, History, Sparkles, Share2, Copy, Ticket, Gift, Trophy, Home, Trash2 } from 'lucide-react';
 import TravelQuiz from '../../components/TravelQuiz';
 
@@ -25,15 +25,56 @@ export default function MyPage() {
     const [quizLoading, setQuizLoading] = useState(false);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+        let unsubscribeTrips = null; // 실시간 감시 해제 함수 변수
+
+        const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
             if (!currentUser) {
                 router.push('/');
                 return;
             }
             setUser(currentUser);
-            await fetchUserData(currentUser);
+
+            // 1. 사용자 기본 정보 및 포인트 내역 가져오기 (1회성 로직 유지)
+            try {
+                const userRef = doc(db, "users", currentUser.uid);
+                const userSnap = await getDoc(userRef);
+                if (userSnap.exists()) setUserData(userSnap.data());
+
+                const historyQ = query(
+                    collection(db, "users", currentUser.uid, "point_history"),
+                    orderBy("createdAt", "desc")
+                );
+                const historySnap = await getDocs(historyQ);
+                const historyList = [];
+                historySnap.forEach((doc) => historyList.push({ id: doc.id, ...doc.data() }));
+                setPointHistory(historyList);
+            } catch (error) {
+                console.error("사용자 정보 로딩 실패:", error);
+            } finally {
+                setLoading(false);
+            }
+
+            // ✨ 2. 여행 일정 실시간 동기화 (itineraries -> trips 로 변경 & onSnapshot 적용)
+            // 이제 홈 화면이나 다른 곳에서 삭제해도 여기서 즉시 사라집니다.
+            const tripsQ = query(
+                collection(db, "users", currentUser.uid, "itineraries"), // 🔥 컬렉션 이름 통합 ('itineraries' -> 'trips')
+                orderBy("createdAt", "desc")
+            );
+
+            unsubscribeTrips = onSnapshot(tripsQ, (snapshot) => {
+                const list = [];
+                snapshot.forEach((doc) => {
+                    list.push({ id: doc.id, ...doc.data() });
+                });
+                setItineraries(list); // 실시간 데이터로 상태 업데이트
+            });
         });
-        return () => unsubscribe();
+
+        // 페이지를 떠날 때 감시 해제
+        return () => {
+            unsubscribeAuth();
+            if (unsubscribeTrips) unsubscribeTrips();
+        };
     }, []);
 
     const fetchUserData = async (currentUser) => {

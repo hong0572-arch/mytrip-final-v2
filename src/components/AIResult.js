@@ -17,6 +17,22 @@ import TravelQuiz from './TravelQuiz';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 
+// 🔗 통합 검색 딥링크 생성기 (Klook - 대표님 맞춤 설정)
+const getKlookLink = (keyword, markerId) => {
+    // 1. 검색어 인코딩
+    const encodedKeyword = encodeURIComponent(keyword);
+
+    // 2. Klook 검색 페이지 URL
+    const klookUrl = `https://www.klook.com/search?query=${encodedKeyword}`;
+
+    // 3. Travelpayouts 제휴 링크 생성 (대표님 스크린샷 설정 적용)
+    // u: 목적지 URL (검색 결과 페이지)
+    // p: 4110 (프로그램 ID)
+    // campaign_id: 137
+    // marker: 대표님 ID
+    return `https://tp.media/r?marker=${markerId}&trs=488085&p=4110&u=${encodeURIComponent(klookUrl)}&campaign_id=137`;
+};
+
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 const DAY_COLORS = ['#FF4B4B', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
 
@@ -557,8 +573,46 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
                                 </div>
 
                                 {/* 숙소 */}
-                                {hotels.length > 0 && (<div className="mb-6"><h3 className="flex items-center gap-2 text-sm font-bold text-gray-600 mb-2 px-1"><BedDouble size={16} /> 추천 숙소</h3><div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 scrollbar-hide">{hotels.map((hotel, idx) => (<div key={idx} className="place-card min-w-[220px] bg-white p-3 rounded-xl border border-gray-200 shadow-sm relative" data-lat={hotel.coordinates?.lat} data-lng={hotel.coordinates?.lng} onClick={() => { googleMapRef.current?.panTo(hotel.coordinates); googleMapRef.current?.setZoom(16); }}><div className="flex items-center gap-2 mb-1"><span className="bg-gray-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">추천 {idx + 1}</span><h4 className="font-bold text-sm truncate">{hotel.name}</h4></div><p className="text-xs text-[#FF5A5F] font-bold mb-1">{hotel.priceRange}</p><p className="text-[10px] text-gray-500 leading-relaxed bg-gray-50 p-1.5 rounded line-clamp-2">{hotel.description}</p><button className="absolute top-3 right-3 text-gray-400 hover:text-black" onClick={(e) => { e.stopPropagation(); googleMapRef.current?.panTo(hotel.coordinates); googleMapRef.current?.setZoom(16); }}><MapPin size={14} /></button></div>))}</div></div>)}
+                                {/* AIResult.js의 추천 숙소 리스트 부분 */}
+                                {hotels.length > 0 && (
+                                    <div className="mb-6">
+                                        <h3 className="flex items-center gap-2 text-sm font-bold text-gray-600 mb-2 px-1">
+                                            <BedDouble size={16} /> 추천 숙소
+                                        </h3>
+                                        <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 scrollbar-hide">
+                                            {hotels.map((hotel, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="place-card min-w-[220px] bg-white p-3 rounded-xl border border-gray-200 shadow-sm relative cursor-pointer hover:border-indigo-500 hover:shadow-md transition-all group"
+                                                    data-lat={hotel.coordinates?.lat}
+                                                    data-lng={hotel.coordinates?.lng}
+                                                    // ✨ 클릭 시 Klook 검색으로 이동
+                                                    onClick={() => {
+                                                        const link = getKlookLink(
+                                                            `${hotel.name} ${userInfo?.destination || ""}`, // 호텔명 + 도시명 조합
+                                                            '695932' // 🚨 [필수] 대표님의 마커 ID (숫자)로 꼭 바꾸세요!
+                                                        );
+                                                        window.open(link, '_blank');
+                                                    }}
+                                                >
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="bg-gray-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">추천 {idx + 1}</span>
+                                                        <h4 className="font-bold text-sm truncate group-hover:text-indigo-600 transition-colors">{hotel.name}</h4>
+                                                    </div>
+                                                    <p className="text-xs text-[#FF5A5F] font-bold mb-1">{hotel.priceRange}</p>
+                                                    <p className="text-[10px] text-gray-500 leading-relaxed bg-gray-50 p-1.5 rounded line-clamp-2">{hotel.description}</p>
 
+                                                    {/* 하단 버튼 텍스트 추가 */}
+                                                    <div className="mt-2 pt-2 border-t border-gray-50 text-center">
+                                                        <span className="text-[10px] font-bold text-indigo-500 flex items-center justify-center gap-1">
+                                                            Klook 최저가 보기 <ExternalLink size={10} />
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                                 {/* 일정 루프 */}
                                 {itinerary?.map((dayItem, dayIdx) => {
                                     const dayColor = DAY_COLORS[dayIdx % DAY_COLORS.length];
@@ -580,10 +634,41 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
                                                                         <div className="flex justify-end pt-1"><button onClick={() => handleDeletePlace(dayIdx, placeIdx)} className="flex items-center gap-1 text-[10px] text-red-500 font-bold bg-red-50 px-2 py-1 rounded hover:bg-red-100"><Trash2 size={10} /> 삭제</button></div>
                                                                     </div>
                                                                 ) : (
+                                                                    // ✨ 634번째 줄 근처: 여기서부터 덮어씌우세요 (띄어쓰기 수정됨)
                                                                     <div onClick={() => { googleMapRef.current?.panTo(place.coordinates); googleMapRef.current?.setZoom(17); }}>
-                                                                        <div className="flex justify-between items-start"><h3 className="text-base font-bold text-gray-900">{place.name}</h3><span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{place.category}</span></div>
+                                                                        <div className="flex justify-between items-start">
+                                                                            <h3 className="text-base font-bold text-gray-900">{place.name}</h3>
+                                                                            <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{place.category}</span>
+                                                                        </div>
                                                                         <p className="text-sm text-gray-600 mt-1">{place.description}</p>
-                                                                        <button className="mt-2 flex items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded-lg transition shadow-sm" style={{ backgroundColor: `${dayColor}15`, color: dayColor }} onClick={(e) => { e.stopPropagation(); handleOpenGoogleMaps(place.name); }}><ExternalLink size={10} /> 길찾기</button>
+
+                                                                        <div className="flex gap-2 mt-2">
+                                                                            {/* 기존 길찾기 버튼 */}
+                                                                            <button
+                                                                                className="flex items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded-lg transition shadow-sm"
+                                                                                style={{ backgroundColor: `${dayColor}15`, color: dayColor }}
+                                                                                onClick={(e) => { e.stopPropagation(); handleOpenGoogleMaps(place.name); }}
+                                                                            >
+                                                                                <ExternalLink size={10} /> 길찾기
+                                                                            </button>
+
+                                                                            {/* ✨ [추가됨] Klook 티켓/투어 버튼 (식당/카페 제외) */}
+                                                                            {!place.category?.includes("Restaurant") && !place.category?.includes("Cafe") && (
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        const link = getKlookLink(
+                                                                                            `${place.name} ${userInfo?.destination || ""}`, // 장소명 + 도시명
+                                                                                            '695932' // 🚨 [필수] 마커 ID 확인!
+                                                                                        );
+                                                                                        window.open(link, '_blank');
+                                                                                    }}
+                                                                                    className="flex items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded-lg bg-rose-50 text-rose-500 border border-rose-100 hover:bg-rose-100 transition shadow-sm"
+                                                                                >
+                                                                                    🎟️ 티켓/투어 예매
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -674,11 +759,35 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
                                     </div>
                                     <div className="space-y-3 pl-2 border-l-2 border-gray-200 ml-2">
                                         {/* 각 장소 하나하나를 독립된 블록(pdf-item)으로 만들어 페이지 넘김 처리 */}
-                                        {day.places?.map((place, pIdx) => (
-                                            <div key={pIdx} className="pdf-item pl-4 relative">
-                                                <div className="absolute -left-[9px] top-1 w-4 h-4 bg-indigo-600 rounded-full border-2 border-white"></div>
-                                                <p className="font-bold text-base">{place.name} <span className="text-xs font-normal text-gray-500 bg-gray-100 px-1 rounded ml-1">{place.category}</span></p>
-                                                <p className="text-sm text-gray-600 mt-0.5">{place.description}</p>
+                                        {/* 일정표 상세 (Places) 매핑 부분 */}
+                                        {day.places.map((place, pIndex) => (
+                                            <div key={pIndex} className="bg-gray-50 p-4 rounded-xl mb-3 border border-gray-100 relative">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <h4 className="font-bold text-gray-800 text-base">
+                                                            <span className="text-rose-500 mr-2">{place.order}.</span>
+                                                            {place.name}
+                                                        </h4>
+                                                        <p className="text-xs text-gray-500 mt-1">{place.description}</p>
+                                                    </div>
+                                                </div>
+
+                                                {/* 🎢 Klook 버튼 추가: 식당/카페가 아닐 때만 표시 (관광지/액티비티 위주) */}
+                                                {!place.category?.includes("Restaurant") && !place.category?.includes("Cafe") && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation(); // 부모 클릭 방지
+                                                            const link = getKlookLink(
+                                                                `${place.name} ${data.destination}`, // 예: "유니버셜 스튜디오 오사카"
+                                                                '695932' // 🚨 [필수] 마커 ID 변경!
+                                                            );
+                                                            window.open(link, '_blank');
+                                                        }}
+                                                        className="w-full mt-3 py-2 bg-white border border-rose-100 text-rose-500 text-xs font-bold rounded-lg hover:bg-rose-50 hover:border-rose-300 transition-all flex items-center justify-center gap-1 shadow-sm"
+                                                    >
+                                                        🎟️ Klook에서 입장권/투어 확인
+                                                    </button>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
@@ -705,6 +814,6 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
                     </>
                 )}
             </div>
-        </div>
+        </div >
     );
 }
