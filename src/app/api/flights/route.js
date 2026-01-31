@@ -2,17 +2,22 @@ import { NextResponse } from 'next/server';
 
 // 🔑 Travelpayouts 설정
 const TP_TOKEN = '4c01a895965a510253489b6eef1e5fde';
-const TP_MARKER = '695932'; // 대표님 ID
+const TP_MARKER = '695932';
 
 export async function POST(req) {
     try {
         const body = await req.json();
-        // returnOriginCode: 돌아오는 편의 출발 공항 (다구간 지원)
-        const { destinationCode, returnOriginCode, departureDate, returnDate } = body;
+        // ✨ [핵심] language 변수를 받아옵니다.
+        const { destinationCode, returnOriginCode, departureDate, returnDate, language } = body;
 
         if (!destinationCode || !departureDate) {
             return NextResponse.json({ error: "필수 정보 누락" }, { status: 400 });
         }
+
+        // 🌍 언어 및 통화 설정 (동적 처리)
+        const isKo = language !== 'en'; // 기본값은 한국어
+        const locale = isKo ? 'ko' : 'en';
+        const currency = isKo ? 'KRW' : 'USD';
 
         // 날짜 변환 (2026-03-25 -> 2503)
         const depParts = departureDate.split('-');
@@ -20,34 +25,32 @@ export async function POST(req) {
 
         let searchUrl = "";
 
-        // ✈️ 링크 생성 로직 (다구간 지원)
+        // ✈️ 딥링크 생성 로직
         if (returnDate && returnDate.length > 5) {
             const retParts = returnDate.split('-');
             const retStr = `${retParts[2]}${retParts[1]}`;
 
-            // 오는 편 공항이 지정되어 있고, 가는 편 도착지와 다르면? (Open Jaw)
             const inboundCode = returnOriginCode || destinationCode;
 
             if (inboundCode !== destinationCode) {
-                // 다구간 링크 형식: ICN2503NCE-MRS2803ICN1
-                // (인천->니스, 마르세유->인천)
-                searchUrl = `https://www.aviasales.com/search/ICN${depStr}${destinationCode}-${inboundCode}${retStr}ICN1?marker=${TP_MARKER}&currency=krw&locale=ko`;
+                // 다구간 (Open Jaw)
+                searchUrl = `https://www.aviasales.com/search/ICN${depStr}${destinationCode}-${inboundCode}${retStr}ICN1?marker=${TP_MARKER}&currency=${currency}&locale=${locale}`;
             } else {
-                // 일반 왕복: ICN2503NCE28031
-                searchUrl = `https://www.aviasales.com/search/ICN${depStr}${destinationCode}${retStr}1?marker=${TP_MARKER}&currency=krw&locale=ko`;
+                // 왕복
+                searchUrl = `https://www.aviasales.com/search/ICN${depStr}${destinationCode}${retStr}1?marker=${TP_MARKER}&currency=${currency}&locale=${locale}`;
             }
         } else {
             // 편도
-            searchUrl = `https://www.aviasales.com/search/ICN${depStr}${destinationCode}1?marker=${TP_MARKER}&currency=krw&locale=ko`;
+            searchUrl = `https://www.aviasales.com/search/ICN${depStr}${destinationCode}1?marker=${TP_MARKER}&currency=${currency}&locale=${locale}`;
         }
 
-        // 2. API 조회 (API는 단순 왕복 최저가만 조회 - 참고용)
+        // API 조회 (단순 가격 표시용 - API는 항상 KRW로 조회해도 무방하나 통일성 위해 currency 적용)
         let baseUrl = `https://api.travelpayouts.com/aviasales/v3/prices_for_dates`;
         let params = new URLSearchParams({
             origin: 'ICN',
             destination: destinationCode,
             departure_at: departureDate,
-            currency: 'krw',
+            currency: currency.toLowerCase(), // api는 소문자 krw/usd 사용
             sorting: 'price',
             direct: 'false',
             limit: '30',
@@ -70,21 +73,20 @@ export async function POST(req) {
                     depTime: item.departure_at.split('T')[1].substring(0, 5),
                     duration: item.duration,
                 },
-                deepLink: searchUrl, // 위에서 만든 정교한 링크 사용
+                deepLink: searchUrl,
                 isFallback: false
             }));
         }
 
-        // Fallback 티켓 (실시간 조회 버튼)
         if (flights.length === 0) {
             flights.push({
                 id: "fallback_ticket",
                 price: 0,
-                airline: "전체 항공사 실시간 검색",
+                airline: isKo ? "전체 항공사 실시간 검색" : "Search All Airlines",
                 carrierCode: "ALL",
                 transfers: 0,
                 outbound: { depTime: "--:--", duration: 0 },
-                deepLink: searchUrl, // ✨ 여기에 다구간 링크가 들어감
+                deepLink: searchUrl,
                 isFallback: true
             });
         }

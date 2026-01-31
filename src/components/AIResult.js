@@ -18,18 +18,17 @@ import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 
 // 🔗 통합 검색 딥링크 생성기 (Klook - 대표님 맞춤 설정)
-const getKlookLink = (keyword, markerId) => {
-    // 1. 검색어 인코딩
+// 언어(language) 인자를 추가로 받아서 동적으로 처리
+const getKlookLink = (keyword, markerId, language) => {
     const encodedKeyword = encodeURIComponent(keyword);
+    const isKo = language !== 'en';
 
-    // 2. Klook 검색 페이지 URL
-    const klookUrl = `https://www.klook.com/search?query=${encodedKeyword}`;
+    // 한국어면 /ko/ 경로 + KRW, 영어면 기본 경로 + USD
+    const baseUrl = isKo ? "https://www.klook.com/ko/search" : "https://www.klook.com/search";
+    const langParam = isKo ? "ko_KR" : "en_US";
+    const currParam = isKo ? "KRW" : "USD";
 
-    // 3. Travelpayouts 제휴 링크 생성 (대표님 스크린샷 설정 적용)
-    // u: 목적지 URL (검색 결과 페이지)
-    // p: 4110 (프로그램 ID)
-    // campaign_id: 137
-    // marker: 대표님 ID
+    const klookUrl = `${baseUrl}?query=${encodedKeyword}&lang=${langParam}&currency=${currParam}`;
     return `https://tp.media/r?marker=${markerId}&trs=488085&p=4110&u=${encodeURIComponent(klookUrl)}&campaign_id=137`;
 };
 

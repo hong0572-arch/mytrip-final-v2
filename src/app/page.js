@@ -589,10 +589,11 @@ export default function Home() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    destinationCode: arrivalCode,       // 가는 편 도착지
-                    returnOriginCode: returnOriginCode, // ✨ 오는 편 출발지 (다구간 지원)
+                    destinationCode: arrivalCode,
+                    returnOriginCode: returnOriginCode,
                     departureDate: depDateStr,
-                    returnDate: retDateStr
+                    returnDate: retDateStr,
+                    language: language // ✨ [추가] 현재 언어 상태를 함께 보냅니다!
                 })
             });
             const data = await res.json();
