@@ -555,29 +555,36 @@ export default function Home() {
     };
 
     // handleTripClick 함수 전체 교체 또는 수정
+    // [수정] handleTripClick: 도시 이름(destinationName)을 함께 전송하여 Trip.com 라벨 오류 해결
     const handleTripClick = async (trip) => {
-        // 1. 저장된 코드가 있으면 사용, 없으면 기존 iata 사용
-        const arrivalCode = trip.arrivalIata || trip.iata;
-        const returnOriginCode = trip.departureIata || trip.iata;
+        let arrivalCode = trip.arrivalIata || trip.iata;
+        let returnOriginCode = trip.departureIata || trip.iata;
+
+        // 코드가 없으면 destination이나 title에서 다시 찾아봄
+        if (!arrivalCode && trip.destination) {
+            for (const [city, code] of Object.entries(CITY_TO_IATA)) {
+                if (trip.destination.includes(city) || (trip.title && trip.title.includes(city))) {
+                    arrivalCode = code;
+                    if (!returnOriginCode) returnOriginCode = code;
+                    break;
+                }
+            }
+        }
 
         if (!arrivalCode) {
-            alert("공항 정보를 찾을 수 없습니다. (도시명 확인 필요)");
+            alert("공항 정보를 찾을 수 없습니다. (도시명 확인 필요: " + (trip.destination || trip.title) + ")");
             return;
         }
 
         const depDateStr = formatDateForAPI(trip.startDate);
         if (!depDateStr) { alert("날짜 정보 오류"); return; }
-
         let retDateStr = formatDateForAPI(trip.endDate);
-        if (!retDateStr) {
-            const d = new Date(depDateStr); d.setDate(d.getDate() + 4);
-            retDateStr = d.toISOString().split('T')[0];
-        }
+        if (!retDateStr) { const d = new Date(depDateStr); d.setDate(d.getDate() + 4); retDateStr = d.toISOString().split('T')[0]; }
 
         setSelectedTrip({
             ...trip,
-            iata: arrivalCode, // 화면 표시용 (가는 곳)
-            returnIata: returnOriginCode, // 화면 표시용 (오는 곳)
+            iata: arrivalCode,
+            returnIata: returnOriginCode,
             returnDateCalc: retDateStr
         });
 
@@ -593,22 +600,14 @@ export default function Home() {
                     returnOriginCode: returnOriginCode,
                     departureDate: depDateStr,
                     returnDate: retDateStr,
-                    language: language // ✨ [추가] 현재 언어 상태를 함께 보냅니다!
+                    language: language,
+                    // ✨ [핵심] 도시 이름(예: 오사카)을 같이 보냅니다!
+                    destinationName: trip.destination || trip.title
                 })
             });
             const data = await res.json();
-
-            if (data.flights && data.flights.length > 0) {
-                setFlightResults(data.flights);
-            } else {
-                setFlightResults([]);
-            }
-        } catch (error) {
-            console.error(error);
-            alert("항공권 조회 중 오류가 발생했습니다.");
-        } finally {
-            setIsSearching(false);
-        }
+            if (data.flights && data.flights.length > 0) { setFlightResults(data.flights); } else { setFlightResults([]); }
+        } catch (error) { console.error(error); alert("항공권 조회 중 오류가 발생했습니다."); } finally { setIsSearching(false); }
     };
 
     const toggleLuxuryMode = () => { setIsLuxury(!isLuxury); setFormData(prev => ({ ...prev, hotelType: !isLuxury ? "5성급 스위트룸/풀빌라" : "호텔" })); };
@@ -955,13 +954,30 @@ export default function Home() {
                                             )}
 
                                             {/* 하단 버튼 */}
-                                            <button
-                                                onClick={() => window.open(flight.deepLink, '_blank')}
-                                                className="w-full mt-3 py-2.5 bg-indigo-600 text-white font-bold text-sm rounded-xl hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center gap-2"
-                                            >
-                                                {flight.isFallback ? "실시간 가격 조회하러 가기" : "예약하러 가기"}
-                                                <ExternalLink size={14} />
-                                            </button>
+                                            <div className="flex gap-2 mt-3">
+                                                {/* 1. 메인 버튼 (Trip.com 또는 기본 Aviasales) */}
+                                                <button
+                                                    onClick={() => window.open(flight.linkTrip || flight.linkGlobal, '_blank')}
+                                                    className="flex-1 py-3 bg-indigo-600 text-white font-bold text-sm rounded-xl hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center gap-2"
+                                                >
+                                                    {flight.isFallback
+                                                        ? (language === 'ko' ? "Trip.com 최저가 조회" : "Check Prices")
+                                                        : (language === 'ko' ? "Trip.com에서 예약" : "Book Now")
+                                                    }
+                                                    <ExternalLink size={14} />
+                                                </button>
+
+                                                {/* 2. 서브 버튼 (한국어일 때만 보임 - Aviasales 비교용) */}
+                                                {language === 'ko' && (
+                                                    <button
+                                                        onClick={() => window.open(flight.linkGlobal, '_blank')}
+                                                        className="flex-1 py-3 bg-white text-indigo-600 border border-indigo-200 font-bold text-sm rounded-xl hover:bg-indigo-50 transition-colors shadow-sm flex items-center justify-center gap-2"
+                                                    >
+                                                        글로벌 가격 비교
+                                                        <Search size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     ))
                                 ) : (
