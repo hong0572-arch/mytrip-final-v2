@@ -1,21 +1,19 @@
 import { NextResponse } from 'next/server';
 
-// 🔑 Travelpayouts 설정 (Aviasales - 영어권/데이터 조회용)
+// 🔑 Travelpayouts 설정
 const TP_TOKEN = '4c01a895965a510253489b6eef1e5fde';
 const TP_MARKER = '695932';
 
-// 🔑 Trip.com 설정 (한국어권 - 대표님 제휴 ID)
+// 🔑 Trip.com 설정
 const TRIP_ALLIANCE_ID = '7681311';
 const TRIP_SID = '287502125';
-const TRIP_SUB3 = 'D11411381'; // 링크에 있는 최신 추적 코드
+const TRIP_SUB3 = 'D11410520';
 
 export async function POST(req) {
     try {
         const body = await req.json();
-        // 프론트엔드에서 도시 이름(destinationName)도 받아오면 라벨 오류 방지에 좋습니다.
         const { destinationCode, destinationName, returnOriginCode, departureDate, returnDate, language } = body;
 
-        // 필수 정보 확인
         if (!destinationCode || !departureDate) {
             return NextResponse.json({ error: "필수 정보 누락" }, { status: 400 });
         }
@@ -23,53 +21,51 @@ export async function POST(req) {
         const isKo = language !== 'en';
 
         // ---------------------------------------------------------
-        // 🇰🇷 1. Trip.com 링크 생성 (보내주신 showfarefirst 참조)
+        // 🇰🇷 1. Trip.com 링크 생성 (PC vs Mobile 분리)
         // ---------------------------------------------------------
-        let tripUrl = null;
+        let tripUrl = null;       // PC용 (showfarefirst - 가격 바로 노출)
+        let tripUrlMobile = null; // Mobile용 (메인 페이지 - 안전한 검색)
+
         if (isKo) {
-            // ✨ 보내주신 링크의 엔드포인트 사용
-            const tripBase = "https://kr.trip.com/flights/showfarefirst";
+            // [PC용] showfarefirst 사용 (가격 바로 보임)
+            const tripBasePC = "https://kr.trip.com/flights/showfarefirst";
+            let paramsPC = `dcity=icn&acity=${destinationCode.toLowerCase()}&ddate=${departureDate}&class=y&quantity=1&lowpricesource=searchform&searchboxarg=t&nonstoponly=off&locale=ko-KR&curr=KRW`;
 
-            // 보내주신 링크의 파라미터 구조를 그대로 적용
-            // dcity: 출발지 (ICN) - 소문자 icn 사용
-            // acity: 도착지 - 소문자 변환
-            // ddate: 가는날
-            // class: y
-            // quantity: 1
-            // lowpricesource: searchform (필수)
-            // searchboxarg: t
-            // nonstoponly: off
-            // locale: ko-KR
-            // curr: KRW
+            // [Mobile용] 일반 메인 페이지 사용 (showfarefirst는 모바일에서 깨짐)
+            const tripBaseMobile = "https://kr.trip.com/flights";
+            let paramsMobile = `dcity=icn&acity=${destinationCode.toLowerCase()}&ddate=${departureDate}&class=y&quantity=1&locale=ko-KR&curr=KRW`;
 
-            let tripParams = `dcity=icn&acity=${destinationCode.toLowerCase()}&ddate=${departureDate}&class=y&quantity=1&lowpricesource=searchform&searchboxarg=t&nonstoponly=off&locale=ko-KR&curr=KRW`;
-
-            // 만약 도시 이름이 있다면 추가 (검색창에 '오사카' 등이 예쁘게 뜨도록)
+            // 도시 이름 추가 (라벨 오류 방지)
             if (destinationName) {
-                tripParams += `&acityname=${encodeURIComponent(destinationName)}`;
+                const encName = encodeURIComponent(destinationName);
+                paramsPC += `&acityname=${encName}`;
+                paramsMobile += `&acityname=${encName}`;
             }
 
             if (returnDate && returnDate.length > 5) {
-                // 왕복 (triptype=rt)
-                tripParams += `&rdate=${returnDate}&triptype=rt`;
+                // 왕복
+                paramsPC += `&rdate=${returnDate}&triptype=rt`;
+                paramsMobile += `&rdate=${returnDate}&flighttype=rt`; // 모바일은 flighttype 파라미터 선호
             } else {
-                // 편도 (triptype=ow)
-                tripParams += `&triptype=ow`;
+                // 편도
+                paramsPC += `&triptype=ow`;
+                paramsMobile += `&flighttype=ow`;
             }
 
-            // ✨ 제휴 ID 및 추적 코드 붙이기 (Allianceid, SID, trip_sub3)
-            tripUrl = `${tripBase}?${tripParams}&Allianceid=${TRIP_ALLIANCE_ID}&SID=${TRIP_SID}&trip_sub3=${TRIP_SUB3}`;
+            // 제휴 ID 붙이기
+            const ids = `&Allianceid=${TRIP_ALLIANCE_ID}&SID=${TRIP_SID}&trip_sub3=${TRIP_SUB3}`;
+
+            tripUrl = `${tripBasePC}?${paramsPC}${ids}`;
+            tripUrlMobile = `${tripBaseMobile}?${paramsMobile}${ids}`;
         }
 
         // ---------------------------------------------------------
-        // 🇺🇸 2. Aviasales 링크 생성 (글로벌 - 영어권 또는 비교용)
+        // 🇺🇸 2. Aviasales 링크 생성 (글로벌)
         // ---------------------------------------------------------
         let aviaUrl = "";
         const domain = "aviasales.com";
         const locale = isKo ? 'ko' : 'en';
         const currency = isKo ? 'KRW' : 'USD';
-
-        // 날짜 변환 (2026-03-25 -> 2503)
         const depParts = departureDate.split('-');
         const depStr = `${depParts[2]}${depParts[1]}`;
 
@@ -79,19 +75,16 @@ export async function POST(req) {
             const inboundCode = returnOriginCode || destinationCode;
 
             if (inboundCode !== destinationCode) {
-                // 다구간 (Open Jaw)
                 aviaUrl = `https://www.${domain}/search/ICN${depStr}${destinationCode}-${inboundCode}${retStr}ICN1?marker=${TP_MARKER}&currency=${currency}&locale=${locale}`;
             } else {
-                // 왕복
                 aviaUrl = `https://www.${domain}/search/ICN${depStr}${destinationCode}${retStr}1?marker=${TP_MARKER}&currency=${currency}&locale=${locale}`;
             }
         } else {
-            // 편도
             aviaUrl = `https://www.${domain}/search/ICN${depStr}${destinationCode}1?marker=${TP_MARKER}&currency=${currency}&locale=${locale}`;
         }
 
         // ---------------------------------------------------------
-        // 3. API 데이터 조회 (가격 표시용 - Aviasales API 활용)
+        // 3. API 데이터 조회
         // ---------------------------------------------------------
         let apiCurrency = isKo ? 'krw' : 'usd';
         let baseUrl = `https://api.travelpayouts.com/aviasales/v3/prices_for_dates`;
@@ -122,14 +115,13 @@ export async function POST(req) {
                     depTime: item.departure_at.split('T')[1].substring(0, 5),
                     duration: item.duration,
                 },
-                // ✨ 두 개의 링크 전송
-                linkTrip: tripUrl,     // Trip.com (showfarefirst - 바로 가격표)
-                linkGlobal: aviaUrl,   // Aviasales
+                linkTrip: tripUrl,           // PC용
+                linkTripMobile: tripUrlMobile, // Mobile용 ✨
+                linkGlobal: aviaUrl,         // 글로벌용
                 isFallback: false
             }));
         }
 
-        // 결과가 없거나 로딩 전 보여줄 기본 티켓
         if (flights.length === 0) {
             flights.push({
                 id: "fallback_ticket",
@@ -139,6 +131,7 @@ export async function POST(req) {
                 transfers: 0,
                 outbound: { depTime: "--:--", duration: 0 },
                 linkTrip: tripUrl,
+                linkTripMobile: tripUrlMobile,
                 linkGlobal: aviaUrl,
                 isFallback: true
             });

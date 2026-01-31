@@ -954,10 +954,26 @@ export default function Home() {
                                             )}
 
                                             {/* 하단 버튼 */}
+                                            {/* ✨✨ Trip.com & Aviasales 버튼 영역 ✨✨ */}
                                             <div className="flex gap-2 mt-3">
                                                 {/* 1. 메인 버튼 (Trip.com 또는 기본 Aviasales) */}
                                                 <button
-                                                    onClick={() => window.open(flight.linkTrip || flight.linkGlobal, '_blank')}
+                                                    onClick={() => {
+                                                        // 📱 모바일 기기 체크 (User Agent)
+                                                        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+                                                        // 한국어일 때: 모바일이면 모바일 링크, 아니면 PC 링크 사용
+                                                        // 영어일 때: 글로벌 링크 사용
+                                                        let targetUrl = flight.linkGlobal;
+
+                                                        if (language === 'ko') {
+                                                            targetUrl = (isMobile && flight.linkTripMobile)
+                                                                ? flight.linkTripMobile
+                                                                : (flight.linkTrip || flight.linkGlobal);
+                                                        }
+
+                                                        window.open(targetUrl, '_blank');
+                                                    }}
                                                     className="flex-1 py-3 bg-indigo-600 text-white font-bold text-sm rounded-xl hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center gap-2"
                                                 >
                                                     {flight.isFallback
