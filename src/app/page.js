@@ -199,6 +199,8 @@ const CITY_TO_IATA = {
 };
 
 
+
+
 // 🏆 관리자 추천 여행지 데이터
 const RECOMMENDED_TRIPS = [
     { id: 1, city: "오사카", title: "🍜 식도락 힐링 여행", img: "https://images.unsplash.com/photo-1590559899731-a382839e5549?q=80&w=600&auto=format&fit=crop", desc: "먹다가 망한다는 오사카!" },
@@ -332,6 +334,8 @@ export default function Home() {
     // [추가] 로딩 문구 변경을 위한 State
     const [loadingText, setLoadingText] = useState("AI가 여행 계획을 짜고 있어요...");
 
+    const [recommendedTrips, setRecommendedTrips] = useState([]); // ✨ DB 추천 여행 데이터
+
     // [추가] 로딩 중일 때 3초마다 문구 변경하는 useEffect
     useEffect(() => {
         if (!loading) return;
@@ -396,6 +400,24 @@ export default function Home() {
         people: 2, budget: 100, hotelType: "호텔", tourType: "자유여행",
         themes: [], contact: "", request: "",
     });
+
+    // ✨ [추가] 추천 여행 DB에서 불러오기
+    useEffect(() => {
+        const fetchRecommendations = async () => {
+            try {
+                // "recommended_trips" -> "rectrips"로 변경됨
+                const q = query(collection(db, "rectrips"), orderBy("createdAt", "desc"));
+                const snapshot = await getDocs(q);
+                const recList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setRecommendedTrips(recList);
+            } catch (error) {
+                console.error("추천 여행 로딩 실패:", error);
+            }
+        };
+        fetchRecommendations();
+    }, []);
+
+
 
     useEffect(() => {
         // ✨ 스플래시 처리 (기존 로직 유지)
@@ -496,7 +518,7 @@ export default function Home() {
         if (!confirm(`'${destination}' 일정을 목록에서 삭제하시겠습니까?`)) return;
         try {
             if (user) {
-                await deleteDoc(doc(db, "users", user.uid, "trips", tripId));
+                await deleteDoc(doc(db, "users", user.uid, "itineraries", tripId));
                 setMySchedules(prev => prev.filter(trip => trip.id !== tripId));
                 alert("삭제되었습니다.");
             }
@@ -637,7 +659,7 @@ export default function Home() {
                 const { inCode, outCode } = extractIataFromItinerary(data.result);
 
                 if (user) {
-                    await addDoc(collection(db, "users", user.uid, "trips"), {
+                    await addDoc(collection(db, "users", user.uid, "itineraries"), {
                         ...formData,
                         tripTitle: data.result.tripTitle, // AI가 지어준 제목도 저장
                         arrivalIata: inCode,     // ✨ IN 공항 코드 저장
@@ -651,6 +673,12 @@ export default function Home() {
             else alert("오류: " + (data.error || "생성 실패"));
         } catch (error) { console.error(error); alert("서버 오류 발생"); }
         finally { setLoading(false); }
+    };
+
+    const handleRecommendedClick = (trip) => {
+        // 상세 페이지(/share/[id])로 이동
+        // 상세 페이지에서 rectrips ID를 조회해 원본 여행으로 자동 연결해줍니다.
+        router.push(`/share/${trip.id}`);
     };
 
     // 🌍 결과 화면에도 언어 정보 전달
@@ -791,25 +819,44 @@ export default function Home() {
                                         <Sparkles size={18} className="text-amber-500" />
                                         <span>{translations[language].tab_choices}</span>
                                     </h3>
-                                    <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x">
-                                        {RECOMMENDED_TRIPS.map((trip) => (
+                                    {/* ✨ [수정] 추천 여행 리스트 렌더링 부분 */}
+                                    {/* ✨ [수정] 추천 여행 리스트 렌더링 (제목 표시 강화) */}
+                                    <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x px-1">
+                                        {recommendedTrips.map((trip) => (
                                             <motion.div
                                                 key={trip.id}
-                                                whileTap={{ scale: 0.95 }}
-                                                onClick={() => {
-                                                    // 클릭 시 '나만의 일정' 탭으로 이동하고 도시 자동 입력!
-                                                    setFormData(prev => ({ ...prev, destination: trip.city }));
-                                                    setActiveTab('create');
-                                                    alert(`'${trip.city}' 여행 계획을 시작합니다!`);
-                                                }}
-                                                className="min-w-[160px] h-[200px] rounded-2xl relative overflow-hidden shadow-md snap-center cursor-pointer group"
+                                                whileTap={{ scale: 1.0 }}
+                                                onClick={() => handleRecommendedClick(trip)}
+                                                className="min-w-[160px] h-[220px] rounded-2xl relative overflow-hidden shadow-md snap-center cursor-pointer group bg-gray-100"
                                             >
-                                                <img src={trip.img} alt={trip.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                                                <div className="absolute bottom-3 left-3 right-3">
-                                                    <span className="text-[10px] font-bold text-amber-400 mb-1 block">{trip.city}</span>
-                                                    <h4 className="text-white font-bold text-sm leading-tight mb-1">{trip.title}</h4>
-                                                    <p className="text-[10px] text-gray-300 line-clamp-1">{trip.desc}</p>
+                                                {/* 배경 이미지 */}
+                                                <img
+                                                    src={trip.img || FALLBACK_IMAGE}
+                                                    alt={trip.title}
+                                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                    onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
+                                                />
+
+                                                {/* 그라데이션 오버레이 (텍스트 가독성 확보) */}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+
+                                                {/* 텍스트 정보 영역 */}
+                                                <div className="absolute bottom-0 left-0 right-0 p-4 text-left">
+                                                    {/* 도시 이름 */}
+                                                    <span className="text-[10px] font-bold text-amber-400 mb-1 block tracking-wider uppercase drop-shadow-md">
+                                                        {trip.city || "추천 여행"}
+                                                        {trip.tripPath ? " 🔗" : ""}
+                                                    </span>
+
+                                                    {/* 여행 제목 (여기가 안 보였던 부분) */}
+                                                    <h4 className="text-white font-bold text-sm leading-tight mb-1 line-clamp-2 drop-shadow-md">
+                                                        {trip.title || trip.tripTitle || "제목 없음"}
+                                                    </h4>
+
+                                                    {/* 짧은 설명 */}
+                                                    <p className="text-[10px] text-gray-300 line-clamp-1 opacity-90">
+                                                        {trip.desc || "관리자 추천 일정"}
+                                                    </p>
                                                 </div>
                                             </motion.div>
                                         ))}
