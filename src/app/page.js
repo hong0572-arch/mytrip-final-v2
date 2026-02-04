@@ -7,6 +7,8 @@ import dynamic from 'next/dynamic';
 // 스플래시 import
 import SplashScreen from "../components/SplashScreen";
 
+import useFcmToken from '../hooks/useFcmToken'; // 경로 맞춰주세요
+
 // 컴포넌트 import
 import CatMascot from '../components/CatMascot';
 import AIResult from "../components/AIResult";
@@ -320,6 +322,8 @@ const extractIataFromItinerary = (tripResult) => {
 
 export default function Home() {
     const router = useRouter();
+
+    const { token, notificationPermission } = useFcmToken();
 
     // [추가] 로딩 문구 변경을 위한 State
 
