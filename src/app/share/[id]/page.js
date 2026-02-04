@@ -97,20 +97,23 @@ export default function SharePage({ params }) {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* 상단 네비게이션 */}
-            <div className="bg-white sticky top-0 z-50 border-b px-4 py-3 flex items-center justify-between shadow-sm">
-                <button onClick={() => router.push('/')} className="flex items-center gap-1 text-gray-600 font-bold hover:bg-gray-100 px-3 py-2 rounded-lg transition">
-                    <ArrowLeft size={20} /> 메인으로
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+            {/* 🔴 [수정됨] 상단 네비게이션: 높이 축소 및 슬림화 */}
+            <div className="bg-white sticky top-0 z-50 border-b px-3 py-2 flex items-center justify-between shadow-sm shrink-0 h-12">
+                <button
+                    onClick={() => router.push('/')}
+                    className="flex items-center gap-1 text-gray-600 font-bold hover:bg-gray-100 px-2 py-1.5 rounded-lg transition text-sm"
+                >
+                    <ArrowLeft size={18} /> 메인으로
                 </button>
-                <h1 className="font-bold text-lg truncate max-w-[200px]">
+                <h1 className="font-bold text-base truncate max-w-[200px] text-gray-800">
                     {tripData.tripTitle || tripData.destination || "여행 일정"}
                 </h1>
-                <div className="w-20"></div> {/* 공간 맞춤용 */}
+                <div className="w-16"></div> {/* 레이아웃 균형용 빈 공간 */}
             </div>
 
-            {/* 일정 결과 컴포넌트 */}
-            <div className="max-w-3xl mx-auto p-4 md:p-8">
+            {/* 🟢 [수정됨] 일정 결과 컴포넌트: 여백(Padding) 제거하여 꽉 차게 표시 */}
+            <div className="max-w-3xl mx-auto w-full flex-1">
                 <AIResult
                     data={tripData}
                     userInfo={{ contact: tripData.contactInfo }}
