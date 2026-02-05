@@ -7,7 +7,7 @@ const TP_MARKER = '695932';
 // 🔑 Trip.com 설정
 const TRIP_ALLIANCE_ID = '7681311';
 const TRIP_SID = '287502125';
-const TRIP_SUB3 = 'D11410520';
+const TRIP_SUB3 = 'D11411381';
 
 export async function POST(req) {
     try {
@@ -21,46 +21,43 @@ export async function POST(req) {
         const isKo = language !== 'en';
 
         // ---------------------------------------------------------
-        // 🇰🇷 1. Trip.com 링크 생성 (PC vs Mobile 분리)
+        // 🇰🇷 1. Trip.com 링크 생성 (✨ 찾아주신 링크 포맷 적용)
         // ---------------------------------------------------------
-        let tripUrl = null;       // PC용 (showfarefirst - 가격 바로 노출)
-        let tripUrlMobile = null; // Mobile용 (메인 페이지 - 안전한 검색)
+        let tripUrl = null;
+        let tripUrlMobile = null;
 
         if (isKo) {
-            // [PC용] showfarefirst 사용 (가격 바로 보임)
-            const tripBasePC = "https://kr.trip.com/flights/showfarefirst";
-            let paramsPC = `dcity=icn&acity=${destinationCode.toLowerCase()}&ddate=${departureDate}&class=y&quantity=1&lowpricesource=searchform&searchboxarg=t&nonstoponly=off&locale=ko-KR&curr=KRW`;
+            // ✨ Endpoint를 'showfarefirst'로 변경
+            const tripBase = "https://kr.trip.com/flights/showfarefirst";
 
-            // [Mobile용] 일반 메인 페이지 사용 (showfarefirst는 모바일에서 깨짐)
-            const tripBaseMobile = "https://kr.trip.com/flights";
-            let paramsMobile = `dcity=icn&acity=${destinationCode.toLowerCase()}&ddate=${departureDate}&class=y&quantity=1&locale=ko-KR&curr=KRW`;
+            // 공항 코드: 예시 링크처럼 소문자로 변환 (sel, bki 등)
+            const depCode = 'icn';
+            const arrCode = destinationCode.toLowerCase();
 
-            // 도시 이름 추가 (라벨 오류 방지)
-            if (destinationName) {
-                const encName = encodeURIComponent(destinationName);
-                paramsPC += `&acityname=${encName}`;
-                paramsMobile += `&acityname=${encName}`;
-            }
+            // ✨ 파라미터 구성 (찾아주신 링크 참조)
+            // dcity, acity, ddate, class=y, quantity=1, locale, curr 등
+            let params = `dcity=${depCode}&acity=${arrCode}&ddate=${departureDate}&class=y&quantity=1&locale=ko-KR&curr=KRW`;
 
+            // 추가 옵션 파라미터
+            params += `&lowpricesource=searchform&searchboxarg=t&nonstoponly=off`;
+
+            // ✨ 중요: 왕복/편도 파라미터가 'flighttype' -> 'triptype'으로 변경됨
             if (returnDate && returnDate.length > 5) {
-                // 왕복
-                paramsPC += `&rdate=${returnDate}&triptype=rt`;
-                paramsMobile += `&rdate=${returnDate}&flighttype=rt`; // 모바일은 flighttype 파라미터 선호
+                params += `&rdate=${returnDate}&triptype=rt`; // 왕복
             } else {
-                // 편도
-                paramsPC += `&triptype=ow`;
-                paramsMobile += `&flighttype=ow`;
+                params += `&triptype=ow`; // 편도
             }
 
             // 제휴 ID 붙이기
             const ids = `&Allianceid=${TRIP_ALLIANCE_ID}&SID=${TRIP_SID}&trip_sub3=${TRIP_SUB3}`;
 
-            tripUrl = `${tripBasePC}?${paramsPC}${ids}`;
-            tripUrlMobile = `${tripBaseMobile}?${paramsMobile}${ids}`;
+            // 최종 URL 생성
+            tripUrl = `${tripBase}?${params}${ids}`;
+            tripUrlMobile = tripUrl; // 모바일도 동일 링크 사용
         }
 
         // ---------------------------------------------------------
-        // 🇺🇸 2. Aviasales 링크 생성 (글로벌)
+        // 🇺🇸 2. Aviasales 링크 생성 (기존 유지)
         // ---------------------------------------------------------
         let aviaUrl = "";
         const domain = "aviasales.com";
@@ -84,11 +81,11 @@ export async function POST(req) {
         }
 
         // ---------------------------------------------------------
-        // 3. API 데이터 조회
+        // 3. API 데이터 조회 (기존 유지)
         // ---------------------------------------------------------
         let apiCurrency = isKo ? 'krw' : 'usd';
         let baseUrl = `https://api.travelpayouts.com/aviasales/v3/prices_for_dates`;
-        let params = new URLSearchParams({
+        let paramsAPI = new URLSearchParams({
             origin: 'ICN',
             destination: destinationCode,
             departure_at: departureDate,
@@ -98,9 +95,9 @@ export async function POST(req) {
             limit: '30',
             token: TP_TOKEN
         });
-        if (returnDate) params.append('return_at', returnDate);
+        if (returnDate) paramsAPI.append('return_at', returnDate);
 
-        const res = await fetch(`${baseUrl}?${params.toString()}`);
+        const res = await fetch(`${baseUrl}?${paramsAPI.toString()}`);
         const data = await res.json();
         let flights = [];
 
@@ -115,13 +112,14 @@ export async function POST(req) {
                     depTime: item.departure_at.split('T')[1].substring(0, 5),
                     duration: item.duration,
                 },
-                linkTrip: tripUrl,           // PC용
-                linkTripMobile: tripUrlMobile, // Mobile용 ✨
-                linkGlobal: aviaUrl,         // 글로벌용
+                linkTrip: tripUrl,
+                linkTripMobile: tripUrlMobile,
+                linkGlobal: aviaUrl,
                 isFallback: false
             }));
         }
 
+        // 결과 없을 때 Fallback Ticket
         if (flights.length === 0) {
             flights.push({
                 id: "fallback_ticket",
