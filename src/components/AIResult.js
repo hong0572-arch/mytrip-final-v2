@@ -6,7 +6,7 @@ import {
     MessageCircle, Share2, Download, ExternalLink, BedDouble, Loader2,
     Sun, Lightbulb, RotateCcw, Pencil, Check, Trash2, Plus,
     ArrowUp, ArrowDown, MapPin, Search, Wand2, Navigation,
-    Calendar, BrainCircuit, Save, User, RefreshCw
+    Calendar, BrainCircuit, Save, User, RefreshCw, ChevronUp, ChevronDown, Home
 } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { collection, addDoc, updateDoc, doc, serverTimestamp, setDoc, increment, getDoc } from 'firebase/firestore';
@@ -51,6 +51,7 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
     // 🧠 퀴즈 관련 State
     const [currentQuizData, setCurrentQuizData] = useState(null);
     const [isQuizLoading, setIsQuizLoading] = useState(false);
+    const [showActions, setShowActions] = useState(false); // ✨ 하단 액션 버튼 토글 상태
 
     const isDragging = useRef(false);
     const hasAutoFixed = useRef(false);
@@ -553,7 +554,7 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
                         <button onClick={() => setActiveTab('quiz')} className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'quiz' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}><BrainCircuit size={16} /> 여행지 퀴즈</button>
                     </div>
 
-                    <div ref={scrollContainerRef} className="overflow-y-auto flex-1 px-5 pb-24 bg-white custom-scrollbar scroll-smooth">
+                    <div ref={scrollContainerRef} className="overflow-y-auto flex-1 px-5 pb-32 bg-white custom-scrollbar scroll-smooth">
                         {activeTab === 'itinerary' ? (
                             <>
                                 {/* 예산 */}
@@ -692,14 +693,7 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
                                 </div>
 
                                 {/* 🔥 [추가된 하단 버튼 3종] */}
-                                <div className="pt-2 pb-12" data-html2canvas-ignore="true">
-                                    <button onClick={onReset} className="w-full bg-white border border-gray-300 text-gray-700 py-3.5 rounded-xl font-bold text-base shadow-sm mb-3 flex items-center justify-center gap-2 cursor-pointer hover:bg-gray-50 active:scale-98 transition"><RefreshCw size={18} /> 조건 변경 / 견적 다시 받기</button>
-                                    <button onClick={handleKakaoConsult} disabled={loadingAction !== null} className="w-full bg-[#FAE100] text-[#371D1E] py-3.5 rounded-xl font-bold text-lg shadow-md mb-3 flex items-center justify-center gap-2 cursor-pointer hover:bg-[#FCE620] active:scale-98 transition disabled:opacity-70">{loadingAction === 'kakao' ? <Loader2 className="animate-spin" /> : <MessageCircle size={20} />}{loadingAction === 'kakao' ? (isEditMode ? '수정된 일정 저장 중...' : '저장 후 이동 중...') : '카카오톡 상담하기'}</button>
-                                    <div className="flex gap-3">
-                                        <button onClick={handleShare} disabled={loadingAction !== null} className="flex-1 bg-gray-800 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer hover:bg-gray-900 active:scale-98 transition disabled:opacity-70">{loadingAction === 'share' ? <Loader2 className="animate-spin" size={16} /> : <Share2 size={16} />}{loadingAction === 'share' ? '생성 중...' : '일정 공유'}</button>
-                                        <button onClick={handleDownloadPDF} disabled={loadingAction !== null} className="flex-1 bg-white text-gray-700 border border-gray-200 py-3 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer hover:bg-gray-50 active:scale-98 transition">{loadingAction === 'pdf' ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />} PDF</button>
-                                    </div>
-                                </div>
+                                {/* 🔥 [버튼 이동됨] 하단 고정 영역으로 이동 */}
                             </>
                         ) : (
                             <div className="mt-6 mb-24">
@@ -714,11 +708,59 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
                     </div>
                 </div>
 
+                {/* 🔥 [신규] 저장 FAB (원형 + 버튼) */}
                 {!tripId && (
-                    <div className="absolute bottom-0 left-0 w-full bg-white border-t border-gray-100 p-4 px-6 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-30">
-                        <button onClick={handleSaveAndLogin} disabled={isSaving} className="w-full bg-gray-900 text-white py-3.5 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-black transition-all active:scale-95 shadow-lg">{isSaving ? "저장 중..." : (<><Save size={20} /> 내 여행 일정 저장</>)}</button>
+                    <div className="absolute bottom-20 right-5 z-50 flex flex-col items-end gap-2 pointer-events-none">
+                        {/* 말풍선 */}
+                        <div className="bg-indigo-600 text-white text-xs font-bold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg animate-bounce pointer-events-auto relative">
+                            내 여행 저장
+                            <div className="absolute -bottom-1 right-0 w-3 h-3 bg-indigo-600 transform rotate-45"></div>
+                        </div>
+                        {/* FAB 버튼 */}
+                        <button
+                            onClick={handleSaveAndLogin}
+                            disabled={isSaving}
+                            className="w-14 h-14 bg-indigo-600 rounded-full shadow-[0_4px_15px_rgba(79,70,229,0.4)] flex items-center justify-center text-white hover:bg-indigo-700 active:scale-90 transition-all pointer-events-auto border-2 border-white"
+                        >
+                            {isSaving ? <Loader2 className="animate-spin" size={24} /> : <Plus size={28} strokeWidth={2.5} />}
+                        </button>
                     </div>
                 )}
+
+                {/* 하단 고정 버튼 바 (토글형 & 컴팩트 디자인) */}
+                <div className={`absolute bottom-0 left-0 w-full transition-transform duration-300 z-40 ${showActions ? 'translate-y-0' : 'translate-y-[calc(100%-40px)]'}`}>
+                    {/* 핸들바 (항상 보임) */}
+                    <div
+                        onClick={() => setShowActions(!showActions)}
+                        className="bg-white border-t border-gray-200 flex items-center justify-center py-2 cursor-pointer shadow-[0_-4px_10px_rgba(0,0,0,0.05)] hover:bg-gray-50 transition-colors"
+                    >
+                        {showActions ? (
+                            <div className="flex items-center gap-1 text-xs text-gray-400 font-bold"><ChevronDown size={14} /> 접기</div>
+                        ) : (
+                            <div className="flex items-center gap-1 text-xs text-indigo-500 font-bold animate-pulse"><ChevronUp size={14} /> 메뉴 열기 (저장/공유/PDF)</div>
+                        )}
+                    </div>
+
+                    {/* 버튼 영역 (토글됨) */}
+                    <div className="bg-white px-4 pb-4 pt-1 grid grid-cols-4 gap-2">
+                        <button onClick={handleReset} className="bg-rose-50 text-rose-600 py-2 rounded-lg font-bold text-[10px] flex flex-col items-center justify-center gap-0.5 hover:bg-rose-100 active:scale-95 transition">
+                            <Home size={16} />
+                            <span>홈으로</span>
+                        </button>
+                        <button onClick={handleKakaoConsult} disabled={loadingAction !== null} className="bg-[#FAE100] text-[#371D1E] py-2 rounded-lg font-bold text-[10px] flex flex-col items-center justify-center gap-0.5 hover:bg-[#FCE620] active:scale-95 transition disabled:opacity-70">
+                            {loadingAction === 'kakao' ? <Loader2 className="animate-spin" size={16} /> : <MessageCircle size={16} />}
+                            <span>카톡상담</span>
+                        </button>
+                        <button onClick={handleShare} disabled={loadingAction !== null} className="bg-gray-800 text-white py-2 rounded-lg font-bold text-[10px] flex flex-col items-center justify-center gap-0.5 hover:bg-gray-900 active:scale-95 transition disabled:opacity-70">
+                            {loadingAction === 'share' ? <Loader2 className="animate-spin" size={16} /> : <Share2 size={16} />}
+                            <span>공유하기</span>
+                        </button>
+                        <button onClick={handleDownloadPDF} disabled={loadingAction !== null} className="bg-blue-50 text-blue-600 py-2 rounded-lg font-bold text-[10px] flex flex-col items-center justify-center gap-0.5 hover:bg-blue-100 active:scale-95 transition">
+                            {loadingAction === 'pdf' ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />}
+                            <span>PDF저장</span>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {/* 🔥 [핵심] PDF 변환용 숨겨진 A4 서식 (Smart Pagination 적용) */}
@@ -727,7 +769,7 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
                     <>
                         <div className="pdf-item text-center border-b-2 border-black pb-5 mb-8">
                             <h1 className="text-3xl font-bold mb-2">{tripPlan.tripTitle}</h1>
-                            <p className="text-gray-500">TripMaker.Pro AI 여행 계획서</p>
+                            <p className="text-gray-500"> 여행 계획서 by Trip Maker</p>
                         </div>
 
                         {/* 1. 여행 개요 */}
