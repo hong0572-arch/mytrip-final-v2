@@ -345,79 +345,125 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
         }
     };
 
-    // --- 🔥 PDF 다운로드 (스마트 페이지 분할) ---
+    // --- 🔥 PDF 다운로드 (완벽한 A4 분할 출력) ---
     const handleDownloadPDF = async () => {
-        const input = document.getElementById(PDF_TEMPLATE_ID);
-        if (!input) return;
+        const source = document.getElementById(PDF_TEMPLATE_ID);
+        if (!source) return;
 
         setLoadingAction('pdf');
         try {
-            // 1. 기존 여백 초기화
-            input.querySelectorAll('.pdf-spacer').forEach(el => el.remove());
-            input.querySelectorAll('.pdf-item').forEach(el => el.style.marginTop = '0px');
+            // 1. 임시 출력 컨테이너 생성 (화면 밖에 배치)
+            const printContainerId = 'pdf-print-container';
+            let printContainer = document.getElementById(printContainerId);
+            if (printContainer) printContainer.remove();
 
-            // 2. 페이지 계산
-            const a4HeightMm = 297;
-            const pageWidthMM = 210;
-            const pxPerMm = input.offsetWidth / pageWidthMM;
-            const pageHeightPx = Math.floor(a4HeightMm * pxPerMm) - 20; // 20px 안전 여백
+            printContainer = document.createElement('div');
+            printContainer.id = printContainerId;
+            printContainer.style.position = 'fixed';
+            printContainer.style.top = '0';
+            printContainer.style.left = '0';
+            printContainer.style.zIndex = '-9999';
+            // 배경을 투명하게 두면 캡처 시 문제가 생길 수 있으므로 흰색 배경 지정
+            printContainer.style.backgroundColor = '#f0f0f0';
+            document.body.appendChild(printContainer);
 
-            let currentHeight = 0;
-            const items = input.querySelectorAll('.pdf-item'); // 잘리면 안 되는 덩어리들
+            // 2. A4 규격 설정 (mm 단위)
+            const A4_WIDTH_MM = 210;
+            const A4_HEIGHT_MM = 297;
+            const MARGIN_MM = 15;
+            const CONTENT_WIDTH_MM = A4_WIDTH_MM - (MARGIN_MM * 2);
+            const CONTENT_HEIGHT_MM = A4_HEIGHT_MM - (MARGIN_MM * 2);
 
-            // 3. 스마트 분할 로직 (넘치면 다음 페이지로 밀기)
-            items.forEach((item) => {
-                const itemHeight = item.offsetHeight;
-                const itemBottom = currentHeight + itemHeight;
+            // 픽셀 단위 변환 (96DPI 기준 대략적 계산, 실제로는 toPng가 배율 조정함)
+            // 화면상에서 A4 비율을 유지하며 렌더링하기 위해 width를 고정
+            const PAGE_WIDTH_PX = 794; // A4 width at 96 DPI
+            const PAGE_HEIGHT_PX = 1123; // A4 height at 96 DPI
+            const PADDING_PX = 56; // approx 15mm
 
-                const currentPage = Math.floor(currentHeight / pageHeightPx);
-                const endPage = Math.floor(itemBottom / pageHeightPx);
+            const createPage = () => {
+                const page = document.createElement('div');
+                page.className = 'pdf-page bg-white shadow-lg';
+                page.style.width = `${PAGE_WIDTH_PX}px`;
+                page.style.height = `${PAGE_HEIGHT_PX}px`;
+                page.style.padding = `${PADDING_PX}px`;
+                page.style.boxSizing = 'border-box';
+                page.style.marginBottom = '20px'; // 시각적 분리 (캡처엔 영향 없음)
+                page.style.overflow = 'hidden'; // 넘치는 내용 숨김 (안전장치)
+                page.style.position = 'relative';
 
-                if (currentPage !== endPage) {
-                    const nextPageStart = (currentPage + 1) * pageHeightPx;
-                    const marginNeeded = nextPageStart - currentHeight + 20;
+                // 폰트 상속 등을 위해 클래스 복사 (필요하면)
+                page.style.fontFamily = 'sans-serif';
 
-                    item.style.marginTop = `${marginNeeded}px`;
-                    currentHeight += marginNeeded + itemHeight;
-                } else {
-                    currentHeight += itemHeight;
+                // 내용물이 담길 내부 컨테이너
+                const contentArea = document.createElement('div');
+                contentArea.style.width = '100%';
+                contentArea.style.height = '100%';
+                contentArea.className = 'flex flex-col';
+                page.appendChild(contentArea);
+
+                printContainer.appendChild(page);
+                return { page, content: contentArea };
+            };
+
+            // 3. 페이지네이션 로직
+            const items = Array.from(source.querySelectorAll('.pdf-item'));
+            const pages = [];
+
+            let currentPage = createPage();
+            pages.push(currentPage);
+
+            for (const item of items) {
+                const clone = item.cloneNode(true);
+                clone.style.marginTop = '0'; // 기존 마진 제거
+                clone.style.marginBottom = '20px'; // 아이템 간 간격
+
+                // 일단 현재 페이지에 붙여봄
+                currentPage.content.appendChild(clone);
+
+                // 높이 초과 확인
+                // scrollHeight가 clientHeight보다 크면 넘친 것
+                const contentHeight = currentPage.content.scrollHeight;
+                const maxHeight = currentPage.content.clientHeight;
+
+                if (contentHeight > maxHeight) {
+                    // 넘쳤으므로 제거하고 새 페이지에 추가
+                    currentPage.content.removeChild(clone);
+
+                    currentPage = createPage();
+                    pages.push(currentPage);
+                    currentPage.content.appendChild(clone);
                 }
-            });
-
-            await new Promise(resolve => setTimeout(resolve, 300));
-
-            // 4. 캡처 및 PDF 생성
-            const imgData = await toPng(input, {
-                quality: 1.0,
-                pixelRatio: 2,
-                cacheBust: true,
-                backgroundColor: 'white',
-                fontEmbedCSS: ''
-            });
-
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const imgWidth = 210;
-            const pageHeight = 297;
-            const imgHeight = (input.offsetHeight * imgWidth) / input.offsetWidth;
-
-            let heightLeft = imgHeight;
-            let position = 0;
-
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-
-            while (heightLeft > 0) {
-                position -= pageHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
             }
 
-            pdf.save(`${tripPlan.tripTitle || 'travel_plan'}.pdf`);
+            // 렌더링 안정화 대기
+            await new Promise(resolve => setTimeout(resolve, 800));
+
+            // 4. 각 페이지를 이미지로 변환하여 PDF 병합
+            const pdf = new jsPDF('p', 'mm', 'a4');
+
+            for (let i = 0; i < pages.length; i++) {
+                const pageElement = pages[i].page;
+
+                const imgData = await toPng(pageElement, {
+                    quality: 1.0,
+                    pixelRatio: 2, // 고화질
+                    cacheBust: true,
+                    backgroundColor: 'white',
+                    fontEmbedCSS: '', // CORS 방지
+                });
+
+                if (i > 0) pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, 0, A4_WIDTH_MM, A4_HEIGHT_MM);
+            }
+
+            pdf.save(`${tripPlan.tripTitle || 'trip_plan'}.pdf`);
+
+            // 5. 청소
+            document.body.removeChild(printContainer);
 
         } catch (error) {
-            console.error("PDF Error:", error);
-            alert("PDF 변환 중 오류가 발생했습니다.");
+            console.error("PDF Pagination Error:", error);
+            alert("PDF 생성 중 오류가 발생했습니다.");
         } finally {
             setLoadingAction(null);
         }
@@ -428,7 +474,7 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
         let text = `✈️ [My Trip Pro] AI 여행 일정\n\n`;
         text += `📍 제목: ${tripPlan.tripTitle}\n`;
         if (tripPlan.budgetBreakdown?.length > 0) text += `\n💰 예상 견적:\n${tripPlan.budgetBreakdown.join('\n')}\n`;
-        if (url) text += `\n🔗 일정 상세 보기: ${url}`;
+        if (url) text += `\n🔗 일정 상세 보기: http://localhost:3000/share/example`; // 로컬 테스트용
         return text;
     };
 
@@ -802,7 +848,7 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
                                         {/* 각 장소 하나하나를 독립된 블록(pdf-item)으로 만들어 페이지 넘김 처리 */}
                                         {/* 일정표 상세 (Places) 매핑 부분 */}
                                         {day.places.map((place, pIndex) => (
-                                            <div key={pIndex} className="bg-gray-50 p-4 rounded-xl mb-3 border border-gray-100 relative">
+                                            <div key={pIndex} className="pdf-item bg-gray-50 p-4 rounded-xl mb-3 border border-gray-100 relative">
                                                 <div className="flex justify-between items-start">
                                                     <div>
                                                         <h4 className="font-bold text-gray-800 text-base">
@@ -813,22 +859,7 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
                                                     </div>
                                                 </div>
 
-                                                {/* 🎢 Klook 버튼 추가: 식당/카페가 아닐 때만 표시 (관광지/액티비티 위주) */}
-                                                {!place.category?.includes("Restaurant") && !place.category?.includes("Cafe") && (
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation(); // 부모 클릭 방지
-                                                            const link = getKlookLink(
-                                                                `${place.name} ${data.destination}`, // 예: "유니버셜 스튜디오 오사카"
-                                                                '695932' // 🚨 [필수] 마커 ID 변경!
-                                                            );
-                                                            window.open(link, '_blank');
-                                                        }}
-                                                        className="w-full mt-3 py-2 bg-white border border-rose-100 text-rose-500 text-xs font-bold rounded-lg hover:bg-rose-50 hover:border-rose-300 transition-all flex items-center justify-center gap-1 shadow-sm"
-                                                    >
-                                                        🎟️ Klook에서 입장권/투어 확인
-                                                    </button>
-                                                )}
+                                                {/* 🎢 Klook 버튼 제거됨 (PDF용) */}
                                             </div>
                                         ))}
                                     </div>
