@@ -27,7 +27,7 @@ import { ko } from 'date-fns/locale';
 
 // Firebase
 import { auth, db } from "../lib/firebase";
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { onAuthStateChanged, signInWithRedirect, GoogleAuthProvider } from "firebase/auth";
 // firebase/firestore import 부분을 찾아 아래 코드로 교체하세요. (모든 기능 포함)
 import {
     doc, getDoc, setDoc, deleteDoc, updateDoc, increment, serverTimestamp,
@@ -502,7 +502,7 @@ export default function Home() {
     }, []);
 
     const closeIntro = () => { setShowIntro(false); const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone; if (!isStandalone) setShowWelcome(true); };
-    const handleLogin = async () => { const provider = new GoogleAuthProvider(); try { await signInWithPopup(auth, provider); } catch (error) { console.error("Login failed", error); } };
+    const handleLogin = async () => { const provider = new GoogleAuthProvider(); try { await signInWithRedirect(auth, provider); } catch (error) { console.error("Login failed", error); } };
 
     // ✨ PWA 설치 버튼 클릭 핸들러
     const handleInstallClick = async () => {
