@@ -402,7 +402,7 @@ export default function Home() {
     const [formData, setFormData] = useState({
         destination: "", startDate: "", endDate: "", companion: "연인",
         people: 2, budget: 100, hotelType: "호텔", tourType: "자유여행",
-        themes: [], contact: "", request: "",
+        themes: [], request: "",
     });
 
     // ✨ [추가] 추천 여행 DB에서 불러오기
@@ -532,35 +532,153 @@ export default function Home() {
         }
     };
 
-    const handleVoiceInput = (targetField) => {
-        if (!('webkitSpeechRecognition' in window)) {
-            alert("크롬 브라우저에서 사용해주세요!");
-            return;
+    // ✨ [신규] 음성 날짜 파싱 헬퍼 함수
+    const parseSpokenDate = (text) => {
+        const today = new Date();
+        const year = today.getFullYear();
+        let start = null;
+        let end = null;
+
+        // 1. 상대 날짜 처리 ("내일", "모레")
+        if (text.includes('내일')) {
+            start = new Date(today); start.setDate(today.getDate() + 1);
+        } else if (text.includes('모레')) {
+            start = new Date(today); start.setDate(today.getDate() + 2);
+        } else if (text.includes('글피')) {
+            start = new Date(today); start.setDate(today.getDate() + 3);
+        } else if (text.includes('오늘')) {
+            start = new Date(today);
         }
+
+        // 2. 절대 날짜 처리 ("3월 5일", "12월 25일")
+        // 정규식으로 "X월 Y일" 패턴을 모두 찾습니다.
+        const dateMatches = [...text.matchAll(/(\d+)월\s*(\d+)일/g)];
+
+        if (dateMatches.length > 0) {
+            // 첫 번째 날짜 (시작일)
+            const m1 = parseInt(dateMatches[0][1]) - 1; // 월은 0부터 시작
+            const d1 = parseInt(dateMatches[0][2]);
+            start = new Date(year, m1, d1);
+
+            // 만약 날짜가 지났다면 내년으로 설정 (예: 12월에 "1월 5일"이라고 하면 내년 1월)
+            if (start < today) {
+                start.setFullYear(year + 1);
+            }
+
+            // 두 번째 날짜가 있다면 (종료일) "3월 1일부터 3월 5일"
+            if (dateMatches.length > 1) {
+                const m2 = parseInt(dateMatches[1][1]) - 1;
+                const d2 = parseInt(dateMatches[1][2]);
+                end = new Date(year, m2, d2);
+                if (end < start) end.setFullYear(year + 1);
+            }
+        }
+
+        return [start, end];
+    };
+
+
+    // ✨ [신규] 음성 입력 순서 정의 (목적지 -> 날짜 -> 동행자 -> 예산 -> 인원 -> 스타일 -> 요청사항)
+    const VOICE_SEQUENCE = ['destination', 'date', 'companion', 'budget', 'people', 'tourType', 'request'];
+
+    // ✨ [수정됨] 연속 음성 입력 로직
+    const handleVoiceInput = (targetField) => {
+        if (!('webkitSpeechRecognition' in window)) { alert("크롬 브라우저에서 사용해주세요!"); return; }
+
         const recognition = new window.webkitSpeechRecognition();
-        recognition.lang = language === 'en' ? 'en-US' : 'ko-KR'; // 🌍 언어에 따라 음성인식 언어도 변경
-        recognition.onstart = () => setListeningField(targetField);
-        recognition.onend = () => setListeningField(null);
+        recognition.lang = language === 'en' ? 'en-US' : 'ko-KR';
+        recognition.interimResults = false; // 중간 결과 끄기
+        recognition.maxAlternatives = 1;
+
+        // 시작 시 UI 상태 업데이트
+        setListeningField(targetField);
+
         recognition.onresult = (event) => {
             const text = event.results[0][0].transcript;
-            if (targetField === 'search') {
-                setSearchQuery(text);
+            console.log(`음성 입력(${targetField}):`, text);
+
+            // 날짜 처리
+            if (targetField === 'date') {
+                const [newStart, newEnd] = parseSpokenDate(text);
+                if (newStart) {
+                    setDateRange([newStart, newEnd]);
+                    setFormData(prev => ({
+                        ...prev,
+                        startDate: newStart.toISOString().split('T')[0],
+                        endDate: newEnd ? newEnd.toISOString().split('T')[0] : newStart.toISOString().split('T')[0]
+                    }));
+                }
+            }
+            else {
+                setFormData(prev => {
+                    // 예산
+                    if (targetField === 'budget') {
+                        const num = text.replace(/[^0-9]/g, '');
+                        return num ? { ...prev, budget: parseInt(num) } : prev;
+                    }
+                    // 인원
+                    else if (targetField === 'people') {
+                        let num = text.replace(/[^0-9]/g, '');
+                        if (!num) {
+                            if (text.includes('한') || text.includes('1')) num = 1;
+                            else if (text.includes('두') || text.includes('둘') || text.includes('2')) num = 2;
+                            else if (text.includes('세') || text.includes('셋') || text.includes('3')) num = 3;
+                            else if (text.includes('네') || text.includes('넷') || text.includes('4')) num = 4;
+                        }
+                        return num ? { ...prev, people: Math.max(1, Math.min(20, parseInt(num))) } : prev;
+                    }
+                    // 동행자
+                    else if (targetField === 'companion') {
+                        if (text.includes('혼자') || text.includes('나홀로')) return { ...prev, companion: '혼자' };
+                        if (text.includes('연인') || text.includes('커플')) return { ...prev, companion: '연인' };
+                        if (text.includes('친구')) return { ...prev, companion: '친구' };
+                        if (text.includes('가족') || text.includes('부모') || text.includes('아이')) return { ...prev, companion: '가족' };
+                        if (text.includes('출장') || text.includes('비즈니스')) return { ...prev, companion: '비즈니스' };
+                        return prev;
+                    }
+                    // 스타일
+                    else if (targetField === 'tourType') {
+                        if (text.includes('자유')) return { ...prev, tourType: '자유여행' };
+                        if (text.includes('소그룹')) return { ...prev, tourType: '소그룹' };
+                        if (text.includes('패키지')) return { ...prev, tourType: '패키지' };
+                        return prev;
+                    }
+                    // 목적지 및 요청사항
+                    else if (targetField === 'request' && prev.request) {
+                        return { ...prev, [targetField]: prev.request + " " + text };
+                    }
+                    return { ...prev, [targetField]: text };
+                });
+            }
+        };
+
+        recognition.onend = () => {
+            setListeningField(null);
+
+            // ✨ [핵심] 다음 순서 자동 실행 로직
+            const currentIndex = VOICE_SEQUENCE.indexOf(targetField);
+            if (currentIndex !== -1 && currentIndex < VOICE_SEQUENCE.length - 1) {
+                const nextField = VOICE_SEQUENCE[currentIndex + 1];
+
+                // 브라우저가 연속 실행을 막을 수 있으므로 약간의 딜레이 후 시도
                 setTimeout(() => {
-                    if (confirm(`'${text}'(으)로 네이버 검색을 띄울까요?`)) {
-                        window.open(`https://search.naver.com/search.naver?query=${encodeURIComponent(text)}`, '_blank');
+                    // 사용자 경험을 위해 다음 필드가 무엇인지 시각적으로(콘솔 등) 알림
+                    // 주의: 모바일 브라우저는 사용자 터치 없이 마이크를 다시 켜는 것을 막을 수 있습니다.
+                    // 이 경우 사용자가 다음 마이크 버튼을 눌러야 하지만, PC에서는 자동으로 넘어갑니다.
+                    try {
+                        const confirmNext = confirm(`다음 단계인 '${nextField}'(으)로 넘어갈까요? (확인을 누르면 마이크가 켜집니다)`);
+                        if (confirmNext) handleVoiceInput(nextField);
+                    } catch (e) {
+                        console.log("연속 실행 차단됨 (사용자 클릭 필요)");
                     }
                 }, 500);
-                return;
             }
-            setFormData(prev => {
-                if (targetField === 'request' && prev.request) {
-                    return { ...prev, [targetField]: prev.request + " " + text };
-                }
-                return { ...prev, [targetField]: text };
-            });
         };
+
         recognition.start();
     };
+
+
 
     const handleNaverSearch = () => {
         if (!searchQuery.trim()) return;
@@ -645,7 +763,7 @@ export default function Home() {
     const generatePlan = async () => {
         if (!formData.destination) { alert("여행지를 입력해주세요!"); return; }
         if (!formData.startDate || !formData.endDate) { alert("날짜를 선택해주세요!"); return; }
-        if (!formData.contact || formData.contact.trim().length < 2) { alert("연락처를 입력해주세요."); return; }
+
 
         setLoading(true);
         try {
@@ -794,24 +912,72 @@ export default function Home() {
                     <div className="px-6 pb-10">
                         {activeTab === 'create' && (
                             <div className="space-y-6 animate-fadeIn">
+                                {/* 목적지 */}
                                 <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100"><div className="flex items-center justify-between mb-2"><label className="flex items-center gap-2 text-sm font-bold text-gray-500"><MapPin size={16} className="text-[#FF5A5F]" /> {translations[language].label_where}</label><button onClick={() => handleVoiceInput('destination')} className={`p-2 rounded-full transition-all ${listeningField === 'destination' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100 text-gray-400'}`}><Mic size={16} /></button></div><input type="text" name="destination" value={formData.destination} onChange={handleInputChange} placeholder={listeningField === 'destination' ? translations[language].msg_listening : translations[language].placeholder_dest} className="w-full text-xl font-bold text-gray-800 placeholder-gray-300 outline-none bg-transparent mb-4" /><div className="flex flex-wrap gap-2 pt-2 border-t border-gray-50">{themeTags.map(tag => (<button key={tag} onClick={() => addThemeTag(tag)} className="px-2 py-1 bg-gray-50 rounded-lg text-xs text-gray-500 hover:bg-rose-50 hover:text-rose-500 transition-colors">{tag}</button>))}</div></div>
-                                <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100"><label className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Calendar size={16} className="text-[#FF5A5F]" /> {translations[language].label_when}</label><DatePicker selectsRange={true} startDate={startDate} endDate={endDate} onChange={handleDateChange} minDate={new Date()} locale={ko} dateFormat="yyyy.MM.dd" placeholderText={translations[language].placeholder_date} className="w-full text-lg font-bold text-gray-800 bg-transparent outline-none cursor-pointer placeholder-gray-300" wrapperClassName="w-full" /></div>
-                                <div><label className="text-sm font-bold text-gray-600 mb-3 block px-1">{translations[language].label_companion}</label><div className="grid grid-cols-5 gap-2">{companionOptions.map((opt) => (<button key={opt.id} onClick={() => setFormData({ ...formData, companion: opt.id })} className={`flex flex-col items-center justify-center py-3 rounded-2xl transition-all gap-1 ${formData.companion === opt.id ? 'bg-[#FF5A5F] text-white shadow-md scale-105 font-bold' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}>{opt.icon} <span className="text-[10px]">{language === 'en' ? opt.id : opt.label}</span></button>))}</div></div>
-                                <div className={`p-5 rounded-3xl border relative transition-all ${isLuxury ? "bg-amber-50 border-amber-200" : "bg-white border-gray-100 shadow-sm"}`}><div className="flex gap-4 items-center justify-between">{isLuxury ? (<div className="flex-1"><div className="flex items-center gap-2 text-amber-600 font-bold mb-1"><Sparkles size={16} /> VIP 예산</div><p className="text-xs text-gray-500">무제한 (AI 최적화)</p></div>) : (<div className="flex-1"><label className="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1"><Wallet size={12} /> {translations[language].label_budget}</label><div className="flex items-end gap-1 mb-2"><span className="text-xl font-bold text-[#FF5A5F]">{formData.budget.toLocaleString()}</span><span className="text-sm text-gray-400">{language === 'en' ? '0,000 KRW' : '만원'}</span></div><input type="range" name="budget" min="50" max="1000" step="10" value={formData.budget} onChange={handleInputChange} className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#FF5A5F]" /></div>)}<div className="w-[1px] h-10 bg-gray-100"></div><div className="flex flex-col items-center"><label className="text-xs font-bold text-gray-500 mb-1">{translations[language].label_people}</label><div className="flex items-center gap-2"><button onClick={() => updatePeople(-1)} className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 font-bold hover:bg-gray-200">-</button><span className="font-bold text-gray-800 w-4 text-center">{formData.people}</span><button onClick={() => updatePeople(1)} className="w-8 h-8 rounded-full bg-[#FF5A5F] text-white font-bold hover:bg-rose-600">+</button></div></div></div></div>
-                                <div><div className="grid grid-cols-3 gap-2 mb-3">{tourOptions.map((option) => (<button key={option.id} onClick={() => setFormData({ ...formData, tourType: option.id })} className={`py-3 px-2 rounded-2xl border transition-all flex flex-col items-center text-center ${formData.tourType === option.id ? 'bg-white border-[#FF5A5F] text-[#FF5A5F] shadow-md ring-1 ring-[#FF5A5F]' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200'}`}><span className="font-bold text-sm mb-1">{option.label}</span><span className="text-[10px] opacity-70 break-keep">{option.desc}</span></button>))}</div><button onClick={toggleLuxuryMode} className={`w-full py-3 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 border ${isLuxury ? "bg-amber-500 text-white border-amber-500 shadow-amber-200" : "bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-100"}`}>{isLuxury ? <><Crown size={16} fill="white" /> {translations[language].btn_luxury_on}</> : <><Crown size={16} /> {translations[language].btn_luxury_off}</>}</button></div>
-                                <div className="bg-white p-4 rounded-2xl border border-gray-200"><label className="text-xs font-bold text-gray-400 mb-1 block">{translations[language].label_contact}</label><input type="text" name="contact" value={formData.contact} onChange={handleInputChange} placeholder={translations[language].placeholder_contact} className="w-full text-sm font-medium outline-none text-gray-800" /></div>
-                                <div className="bg-white p-4 rounded-2xl border border-gray-200"><div className="flex items-center justify-between mb-2"><label className="text-xs font-bold text-gray-400 flex items-center gap-1"><MessageSquare size={12} /> {translations[language].label_request}</label><button onClick={() => handleVoiceInput('request')} className={`p-1.5 rounded-full transition-all ${listeningField === 'request' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100 text-gray-400'}`}><Mic size={14} /></button></div>
+
+                                {/* 날짜 (음성 없음) */}
+                                {/* 날짜 (음성 추가됨 ✨) */}
+                                <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="flex items-center gap-2 text-sm font-bold text-gray-500">
+                                            <Calendar size={16} className="text-[#FF5A5F]" /> {translations[language].label_when}
+                                        </label>
+                                        <button
+                                            onClick={() => handleVoiceInput('date')}
+                                            className={`p-2 rounded-full transition-all ${listeningField === 'date' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100 text-gray-400'}`}
+                                        >
+                                            <Mic size={16} />
+                                        </button>
+                                    </div>
+                                    <DatePicker
+                                        selectsRange={true}
+                                        startDate={startDate}
+                                        endDate={endDate}
+                                        onChange={handleDateChange}
+                                        minDate={new Date()}
+                                        locale={ko}
+                                        dateFormat="yyyy.MM.dd"
+                                        placeholderText={listeningField === 'date' ? "말씀해주세요 (예: 3월 5일)" : translations[language].placeholder_date}
+                                        className="w-full text-lg font-bold text-gray-800 bg-transparent outline-none cursor-pointer placeholder-gray-300"
+                                        wrapperClassName="w-full"
+                                    />
+                                </div>
+
+                                {/* 동행자 (음성 추가) */}
+                                <div><div className="flex items-center justify-between mb-2"><label className="text-sm font-bold text-gray-600 block px-1">{translations[language].label_companion}</label><button onClick={() => handleVoiceInput('companion')} className={`p-1.5 rounded-full transition-all ${listeningField === 'companion' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100 text-gray-400'}`}><Mic size={14} /></button></div><div className="grid grid-cols-5 gap-2">{companionOptions.map((opt) => (<button key={opt.id} onClick={() => setFormData({ ...formData, companion: opt.id })} className={`flex flex-col items-center justify-center py-3 rounded-2xl transition-all gap-1 ${formData.companion === opt.id ? 'bg-[#FF5A5F] text-white shadow-md scale-105 font-bold' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}>{opt.icon} <span className="text-[10px]">{language === 'en' ? opt.id : opt.label}</span></button>))}</div></div>
+
+                                {/* 예산 및 인원 (음성 추가) */}
+                                <div className={`p-5 rounded-3xl border relative transition-all ${isLuxury ? "bg-amber-50 border-amber-200" : "bg-white border-gray-100 shadow-sm"}`}><div className="flex gap-4 items-center justify-between">{isLuxury ? (<div className="flex-1"><div className="flex items-center gap-2 text-amber-600 font-bold mb-1"><Sparkles size={16} /> VIP 예산</div><p className="text-xs text-gray-500">무제한 (AI 최적화)</p></div>) : (<div className="flex-1"><div className="flex items-center gap-1 mb-1"><label className="text-xs font-bold text-gray-500 flex items-center gap-1"><Wallet size={12} /> {translations[language].label_budget}</label><button onClick={() => handleVoiceInput('budget')} className={`p-1 rounded-full transition-all ${listeningField === 'budget' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100 text-gray-400'}`}><Mic size={12} /></button></div><div className="flex items-end gap-1 mb-2"><span className="text-xl font-bold text-[#FF5A5F]">{formData.budget.toLocaleString()}</span><span className="text-sm text-gray-400">{language === 'en' ? '0,000 KRW' : '만원'}</span></div><input type="range" name="budget" min="50" max="1000" step="10" value={formData.budget} onChange={handleInputChange} className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#FF5A5F]" /></div>)}<div className="w-[1px] h-10 bg-gray-100"></div><div className="flex flex-col items-center"><div className="flex items-center gap-1 mb-1"><label className="text-xs font-bold text-gray-500">{translations[language].label_people}</label><button onClick={() => handleVoiceInput('people')} className={`p-1 rounded-full transition-all ${listeningField === 'people' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100 text-gray-400'}`}><Mic size={12} /></button></div><div className="flex items-center gap-2"><button onClick={() => updatePeople(-1)} className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 font-bold hover:bg-gray-200">-</button><span className="font-bold text-gray-800 w-4 text-center">{formData.people}</span><button onClick={() => updatePeople(1)} className="w-8 h-8 rounded-full bg-[#FF5A5F] text-white font-bold hover:bg-rose-600">+</button></div></div></div></div>
+
+                                {/* 여행 스타일 (음성 추가) */}
+                                <div><div className="flex items-center gap-2 mb-2"><label className="text-sm font-bold text-gray-600 px-1">여행 스타일</label><button onClick={() => handleVoiceInput('tourType')} className={`p-1.5 rounded-full transition-all ${listeningField === 'tourType' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100 text-gray-400'}`}><Mic size={14} /></button></div><div className="grid grid-cols-3 gap-2 mb-3">{tourOptions.map((option) => (<button key={option.id} onClick={() => setFormData({ ...formData, tourType: option.id })} className={`py-3 px-2 rounded-2xl border transition-all flex flex-col items-center text-center ${formData.tourType === option.id ? 'bg-white border-[#FF5A5F] text-[#FF5A5F] shadow-md ring-1 ring-[#FF5A5F]' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200'}`}><span className="font-bold text-sm mb-1">{option.label}</span><span className="text-[10px] opacity-70 break-keep">{option.desc}</span></button>))}</div><button onClick={toggleLuxuryMode} className={`w-full py-3 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 border ${isLuxury ? "bg-amber-500 text-white border-amber-500 shadow-amber-200" : "bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-100"}`}>{isLuxury ? <><Crown size={16} fill="white" /> {translations[language].btn_luxury_on}</> : <><Crown size={16} /> {translations[language].btn_luxury_off}</>}</button></div>
+
+                                {/* ❌ [삭제됨] 연락처 입력창 제거됨 */}
+
+                                {/* 추가 요청사항 (음성) */}
+                                {/* 추가 요청사항 (높이 확대 ✨) */}
+                                <div className="bg-white p-4 rounded-2xl border border-gray-200">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="text-xs font-bold text-gray-400 flex items-center gap-1">
+                                            <MessageSquare size={12} /> {translations[language].label_request}
+                                        </label>
+                                        <button
+                                            onClick={() => handleVoiceInput('request')}
+                                            className={`p-1.5 rounded-full transition-all ${listeningField === 'request' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100 text-gray-400'}`}
+                                        >
+                                            <Mic size={14} />
+                                        </button>
+                                    </div>
                                     <textarea
                                         name="request"
                                         value={formData.request}
                                         onChange={handleInputChange}
-                                        // ✨ [수정] 안내 문구를 구체적으로 변경하여 사용자가 IN/OUT 도시를 적도록 유도
-                                        placeholder={listeningField === 'request' ? translations[language].msg_listening : "예: 니스 IN, 마르세유 OUT으로 짜줘. 빈티지 벼룩시장과 아울렛 쇼핑 꼭 넣어줘!"}
-                                        className="w-full text-sm font-medium outline-none text-gray-800 resize-none h-20 bg-transparent"
+                                        placeholder={listeningField === 'request' ? translations[language].msg_listening : "예: 니스 IN, 마르세유 OUT으로 짜줘. 빈티지 벼룩시장과 아울렛 쇼핑 꼭 넣어줘! (음성으로 길게 말씀하셔도 됩니다)"}
+                                        // ✨ h-20 -> h-40으로 변경하여 2배 커짐
+                                        className="w-full text-sm font-medium outline-none text-gray-800 resize-none h-40 bg-transparent custom-scrollbar leading-relaxed"
                                     />
                                 </div>
                             </div>
-
                         )}
 
                         {activeTab === 'flights' && (
