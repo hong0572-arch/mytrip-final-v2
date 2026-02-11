@@ -1,30 +1,18 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { db } from '../../lib/firebase';
 import {
     collection, query, orderBy, getDocs, deleteDoc, doc, addDoc,
     serverTimestamp, updateDoc, increment, getDoc, limit, collectionGroup
 } from 'firebase/firestore';
 import {
-    Trash2, Plus, Search, MapPin, Calendar, Crown, Sparkles, Lock,
-    ArrowLeft, Check, FileSpreadsheet, Upload, Download, User,
-    Gift, UserX, LayoutDashboard, TrendingUp, ThumbsUp, Plane, X,
-    Link as LinkIcon, Image as ImageIcon, ExternalLink
+    Trash2, Plus, Search, Lock, Upload, Download, User,
+    Gift, UserX, LayoutDashboard, TrendingUp, Plane, X,
+    Link as LinkIcon, Image as ImageIcon, ArrowLeft
 } from 'lucide-react';
 import AIResult from '../../components/AIResult';
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import * as XLSX from 'xlsx';
-
-// --- 옵션 데이터 ---
-const companionOptions = [
-    { id: '혼자', label: '나홀로' },
-    { id: '연인', label: '연인' },
-    { id: '친구', label: '친구' },
-    { id: '가족', label: '가족' },
-    { id: '비즈니스', label: '출장' },
-];
 
 // 기본 이미지
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=800&auto=format&fit=crop";
@@ -36,7 +24,7 @@ export default function AdminPage() {
     const [activeTab, setActiveTab] = useState('trips');
 
     const [trips, setTrips] = useState([]);
-    const [rectrips, setRecTrips] = useState([]); // ✨ 변수명 변경 (recommendedTrips -> rectrips)
+    const [rectrips, setRecTrips] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTripId, setSelectedTripId] = useState(null);
@@ -50,15 +38,6 @@ export default function AdminPage() {
     const [selectedUserId, setSelectedUserId] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
     const [pointAmount, setPointAmount] = useState(0);
-
-    const [createLoading, setCreateLoading] = useState(false);
-    const [dateRange, setDateRange] = useState([null, null]);
-    const [startDate, endDate] = dateRange;
-    const [isLuxury, setIsLuxury] = useState(false);
-    const [formData, setFormData] = useState({
-        destination: "", startDate: "", endDate: "", companion: "연인",
-        people: 2, budget: 100, contact: "",
-    });
 
     const fileInputRef = useRef(null);
     const recommendInputRef = useRef(null);
@@ -86,8 +65,11 @@ export default function AdminPage() {
             const usersSnap = await getDocs(usersQuery);
             setUsers(usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
-            // ✨ [수정] 추천 여행 로드 (rectrips 컬렉션 사용)
-            const recQuery = query(collection(db, "rectrips"), orderBy("createdAt", "desc"));
+            // ✨ [수정됨] 추천 여행 로드 (정렬 조건 제거)
+            // 기존: const recQuery = query(collection(db, "rectrips"), orderBy("createdAt", "desc"));
+            // 👇 변경: 정렬 없이 모든 데이터 가져오기 (createdAt 없는 문서도 보이게 함)
+            const recQuery = collection(db, "rectrips");
+
             const recSnap = await getDocs(recQuery);
             setRecTrips(recSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
@@ -102,12 +84,16 @@ export default function AdminPage() {
         return `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?nologo=true&seed=${seed}`;
     };
 
-    // --- PC 이미지 업로드 ---
+    // --- 이미지 업로드 핸들러 ---
     const handleThumbnailUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        if (file.size > 1024 * 1024) {
-            alert("이미지 용량이 너무 큽니다. 1MB 이하의 이미지를 사용해주세요.");
+
+        // 파일 초기화 (같은 파일 다시 선택 가능하게)
+        e.target.value = null;
+
+        if (file.size > 2 * 1024 * 1024) { // 2MB 제한
+            alert("이미지 용량은 2MB 이하여야 합니다.");
             return;
         }
         const reader = new FileReader();
@@ -122,12 +108,13 @@ export default function AdminPage() {
 
         if (isRecommended && trip.tripPath) {
             try {
+                // 경로가 있으면 원본 문서를 가져와봄
                 const docRef = doc(db, trip.tripPath);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     setSelectedTripData({ ...docSnap.data(), id: trip.id, originalId: docSnap.id, isLinked: true });
                 } else {
-                    alert("원본 데이터가 삭제된 것 같습니다.");
+                    // 원본이 없으면 추천 데이터 자체를 사용
                     setSelectedTripData(trip);
                 }
             } catch (error) { setSelectedTripData(trip); }
@@ -136,7 +123,7 @@ export default function AdminPage() {
         }
     };
 
-    // --- ✨ [수정] 추천 여행 등록 (rectrips에 저장) ---
+    // --- 추천 여행 등록 (rectrips) ---
     const addToRecommended = async (trip) => {
         let finalImage = customImageUrl;
         if (!finalImage) finalImage = trip.img;
@@ -144,7 +131,7 @@ export default function AdminPage() {
             if (!customImageUrl) finalImage = generateTravelImage(trip.destination || "Travel");
         }
 
-        if (!confirm(`[${trip.tripTitle || trip.destination}] 여행을 추천 목록(rectrips)에 링크하시겠습니까?`)) return;
+        if (!confirm(`[${trip.tripTitle || trip.destination}] 여행을 추천 목록에 등록하시겠습니까?`)) return;
 
         try {
             const recTripLink = {
@@ -154,18 +141,17 @@ export default function AdminPage() {
                 img: finalImage,
                 startDate: trip.startDate, endDate: trip.endDate, budget: trip.budget, people: trip.people,
 
-                // ✨ 원본 경로 저장
-                tripPath: trip.path,
+                // 원본 경로 저장 (중요)
+                tripPath: trip.path || "",
                 originalTripId: trip.id,
 
                 flightTip: trip.flightTip || "", hotelTip: trip.hotelTip || "", budgetDetail: trip.budgetDetail || "",
                 createdAt: serverTimestamp()
             };
 
-            // ✨ rectrips 컬렉션에 저장
             await addDoc(collection(db, "rectrips"), recTripLink);
 
-            alert("✅ [rectrips] 폴더에 링크 저장 완료!");
+            alert("✅ 추천 여행 등록 완료!");
             setShowRecommendModal(false);
             setCustomImageUrl('');
             fetchAllData();
@@ -176,26 +162,21 @@ export default function AdminPage() {
     const handleDownloadExcel = async (trip) => {
         try {
             let dataToExport = trip;
+            // 원본 데이터가 필요하면 가져옴
             if (trip.tripPath && (!trip.itinerary || trip.itinerary.length === 0)) {
                 try {
                     const snap = await getDoc(doc(db, trip.tripPath));
                     if (snap.exists()) { dataToExport = { ...snap.data(), ...trip }; }
                 } catch (e) { }
             }
+
             const excelData = [];
             excelData.push({ 구분: "기본정보", 항목: "여행 제목", 내용: dataToExport.tripTitle || dataToExport.title, 비고: "", 좌표: "" });
             excelData.push({ 구분: "기본정보", 항목: "여행지", 내용: dataToExport.destination || dataToExport.city, 비고: "", 좌표: "" });
-            excelData.push({ 구분: "기본정보", 항목: "기간", 내용: `${dataToExport.startDate} ~ ${dataToExport.endDate}`, 비고: "YYYY-MM-DD", 좌표: "" });
+            excelData.push({ 구분: "기본정보", 항목: "기간", 내용: `${dataToExport.startDate} ~ ${dataToExport.endDate}`, 비고: "", 좌표: "" });
             excelData.push({ 구분: "기본정보", 항목: "예산", 내용: dataToExport.budget, 비고: "만원", 좌표: "" });
-            excelData.push({ 구분: "기본정보", 항목: "인원", 내용: dataToExport.people, 비고: "명", 좌표: "" });
-            excelData.push({ 구분: "기본정보", 항목: "동행", 내용: dataToExport.companion, 비고: "", 좌표: "" });
-            if (dataToExport.img) excelData.push({ 구분: "기본정보", 항목: "대표이미지", 내용: dataToExport.img, 비고: "URL", 좌표: "" });
 
-            excelData.push({});
-            excelData.push({ 구분: "팁", 항목: "항공권", 내용: dataToExport.flightTip || "", 비고: "", 좌표: "" });
-            excelData.push({ 구분: "팁", 항목: "숙소", 내용: dataToExport.hotelTip || "", 비고: "", 좌표: "" });
-            excelData.push({ 구분: "팁", 항목: "예산상세", 내용: dataToExport.budgetDetail || "", 비고: "", 좌표: "" });
-            excelData.push({});
+            excelData.push({}); // 빈 줄
 
             if (dataToExport.itinerary && Array.isArray(dataToExport.itinerary)) {
                 dataToExport.itinerary.forEach(day => {
@@ -206,6 +187,7 @@ export default function AdminPage() {
                     });
                 });
             }
+
             const ws = XLSX.utils.json_to_sheet(excelData);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "TravelPlan");
@@ -213,7 +195,7 @@ export default function AdminPage() {
         } catch (error) { console.error(error); alert("엑셀 다운로드 실패"); }
     };
 
-    // --- 엑셀 업로드 ---
+    // --- 엑셀 업로드 유틸리티 ---
     const parseExcelToTripData = (file) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -230,109 +212,170 @@ export default function AdminPage() {
                         tripTitle: "엑셀 업로드 여행", destination: "", startDate: "", endDate: "", budget: 0, people: 1, companion: "연인",
                         img: "", desc: "", flightTip: "", hotelTip: "", budgetDetail: "", itinerary: [], createdAt: serverTimestamp()
                     };
+
                     let currentDay = null; let dayCount = 1;
+
                     jsonData.forEach(row => {
                         const type = row["구분"]; const item = row["항목"]; const value = row["내용"]; const coords = row["좌표"];
                         if (!type) return;
+
                         if (type === "기본정보") {
                             if (item === "여행 제목") tripData.tripTitle = value;
                             if (item === "여행지") tripData.destination = value;
-                            if (item === "기간") { const parts = String(value).split("~"); tripData.startDate = parts[0]?.trim(); tripData.endDate = parts[1]?.trim() || parts[0]?.trim(); }
+                            if (item === "기간") {
+                                // ✨ 날짜 파싱 안전장치
+                                const strVal = String(value);
+                                if (strVal.includes("~")) {
+                                    const parts = strVal.split("~");
+                                    tripData.startDate = parts[0]?.trim();
+                                    tripData.endDate = parts[1]?.trim() || parts[0]?.trim();
+                                } else {
+                                    tripData.startDate = strVal; tripData.endDate = strVal;
+                                }
+                            }
                             if (item === "예산") tripData.budget = parseInt(value) || 0;
-                            if (item === "인원") tripData.people = parseInt(value) || 1;
-                            if (item === "동행") tripData.companion = value;
                             if (item === "대표이미지") tripData.img = value;
                             if (item === "짧은설명") tripData.desc = value;
-                        } else if (type === "팁") {
-                            if (item === "항공권") tripData.flightTip = value;
-                            if (item === "숙소") tripData.hotelTip = value;
-                            if (item === "예산상세") tripData.budgetDetail = value;
-                        } else if (type === "일정") {
+                        }
+                        else if (type === "일정") {
                             if (currentDay) tripData.itinerary.push(currentDay);
                             const dayNumMatch = String(item).match(/\d+/);
                             const dayNum = dayNumMatch ? parseInt(dayNumMatch[0]) : dayCount++;
                             currentDay = { day: dayNum, date: value, places: [] };
-                        } else if (type === "장소") {
+                        }
+                        else if (type === "장소") {
                             if (!currentDay) currentDay = { day: 1, date: "Day 1", places: [] };
                             let lat = 0, lng = 0;
-                            if (coords && typeof coords === 'string' && coords.includes(",")) { const parts = coords.split(","); lat = parseFloat(parts[0].trim()); lng = parseFloat(parts[1].trim()); }
-                            currentDay.places.push({ name: item, description: value, lat: lat, lng: lng });
+                            if (coords && typeof coords === 'string' && coords.includes(",")) {
+                                const parts = coords.split(","); lat = parseFloat(parts[0].trim()); lng = parseFloat(parts[1].trim());
+                            }
+                            currentDay.places.push({ name: item, description: value, lat, lng });
                         }
                     });
+
                     if (currentDay) tripData.itinerary.push(currentDay);
-                    if (!tripData.startDate) { const today = new Date().toISOString().split('T')[0]; tripData.startDate = today; tripData.endDate = today; }
+
+                    // 날짜 없을 경우 오늘 날짜
+                    if (!tripData.startDate) {
+                        const today = new Date().toISOString().split('T')[0];
+                        tripData.startDate = today; tripData.endDate = today;
+                    }
                     resolve(tripData);
                 } catch (error) { reject(error); }
             };
         });
     };
 
-    // ✨ 엑셀로 추천 여행 등록 시에도 rectrips 사용
+    // --- 파일 핸들러 (입력값 초기화 버그 수정) ---
     const handleUploadRecommend = async (e) => {
-        const file = e.target.files[0]; if (!file) return;
+        const file = e.target.files[0];
+        if (!file) return;
+
         try {
             const tripData = await parseExcelToTripData(file);
             if (!tripData.img) tripData.img = generateTravelImage(tripData.destination || "Travel");
             if (!tripData.desc) tripData.desc = "관리자 추천 여행";
 
-            // ✨ rectrips에 저장
             await addDoc(collection(db, "rectrips"), { ...tripData, city: tripData.destination, title: tripData.tripTitle });
-            alert("✅ [rectrips] 엑셀 등록 성공!"); fetchAllData();
-        } catch (error) { console.error(error); alert("파일 오류"); } e.target.value = null;
+            alert("✅ [rectrips] 엑셀 등록 성공!");
+            fetchAllData();
+        } catch (error) {
+            console.error(error);
+            alert("파일 처리 오류: 형식을 확인해주세요.");
+        } finally {
+            e.target.value = null; // ✨ 항상 초기화
+        }
     };
 
     const handleUploadTrip = async (e) => {
-        const file = e.target.files[0]; if (!file) return;
-        try { const tripData = await parseExcelToTripData(file); await addDoc(collection(db, "trips"), tripData); alert("✅ 등록 성공!"); fetchAllData(); }
-        catch (error) { console.error(error); alert("엑셀 파싱 실패"); } e.target.value = null;
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            const tripData = await parseExcelToTripData(file);
+            await addDoc(collection(db, "trips"), tripData);
+            alert("✅ 등록 성공!");
+            fetchAllData();
+        } catch (error) {
+            console.error(error);
+            alert("엑셀 파싱 실패");
+        } finally {
+            e.target.value = null; // ✨ 항상 초기화
+        }
     };
 
-    // --- 기타 ---
+    // --- 삭제 핸들러 (경로 오류 수정) ---
     const handleDeleteTrip = async (e, id, isRecommended = false) => {
         if (e) e.stopPropagation();
-        if (!confirm('⚠️ 정말 삭제하시겠습니까?')) return;
+        if (!confirm('⚠️ 정말 삭제하시겠습니까? (복구 불가)')) return;
+
         try {
             if (isRecommended) {
-                // ✨ rectrips에서 삭제
+                // 추천 여행 삭제
                 await deleteDoc(doc(db, "rectrips", id));
             } else {
+                // 일반 여행 삭제 (path 사용으로 안전하게)
                 const trip = trips.find(t => t.id === id);
-                if (trip && trip.path) { const parts = trip.path.split('/'); await deleteDoc(doc(db, parts[0], parts[1], parts[2], parts[3])); }
-                else await deleteDoc(doc(db, "trips", id));
+                if (trip && trip.path) {
+                    // ✨ [핵심 수정] path를 그대로 사용하여 정확한 문서 삭제
+                    await deleteDoc(doc(db, trip.path));
+                } else {
+                    // path가 없는 경우 (예외 처리)
+                    await deleteDoc(doc(db, "trips", id));
+                }
             }
-            alert("삭제되었습니다."); fetchAllData();
+            alert("삭제되었습니다.");
+            fetchAllData();
             if (selectedTripId === id) { setSelectedTripId(null); setViewMode('welcome'); }
-        } catch (error) { console.error(error); alert('삭제 실패'); }
+        } catch (error) {
+            console.error("삭제 에러:", error);
+            alert('삭제 실패: ' + error.message);
+        }
     };
 
     const handleDeleteUser = async () => { if (!selectedUserId || !confirm("강제 탈퇴?")) return; await deleteDoc(doc(db, "users", selectedUserId)); alert("삭제됨"); fetchAllData(); setSelectedUserId(null); };
     const handleUpdatePoints = async (amount) => { if (!selectedUserId) return; const userRef = doc(db, "users", selectedUserId); await updateDoc(userRef, { points: increment(amount) }); alert("수정됨"); setPointAmount(0); const s = await getDoc(userRef); setSelectedUser({ id: s.id, ...s.data() }); fetchAllData(); };
-    const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-    const handleDateChange = (u) => { setDateRange(u); setFormData({ ...formData, startDate: u[0]?.toISOString().split('T')[0], endDate: u[1]?.toISOString().split('T')[0] }); };
-    const generatePlanAI = async () => { /* AI 생략 */ };
 
+    // --- 필터링 ---
     const filteredTrips = trips.filter(t => t.tripTitle?.includes(searchTerm) || t.contactInfo?.includes(searchTerm));
-    const filteredRecommended = rectrips.filter(t => t.title?.includes(searchTerm)); // ✨ rectrips 사용
+    const filteredRecommended = rectrips.filter(t => t.title?.includes(searchTerm) || t.city?.includes(searchTerm));
     const filteredUsers = users.filter(u => u.name?.includes(searchTerm) || u.email?.includes(searchTerm));
 
+    // --- 렌더링 ---
     if (!isLoggedIn) return (<div className="min-h-screen flex items-center justify-center bg-gray-100"><form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl shadow-xl w-80 text-center"><div className="bg-rose-100 p-3 rounded-full inline-block mb-4"><Lock className="text-[#FF5A5F]" size={24} /></div><h2 className="text-xl font-bold mb-4">관리자 로그인</h2><input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 border rounded-xl mb-4" placeholder="비밀번호" autoFocus /><button className="w-full bg-[#FF5A5F] text-white py-3 rounded-xl font-bold">접속하기</button></form></div>);
 
     return (
         <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
+            {/* 왼쪽 사이드바 */}
             <div className="w-full sm:w-[350px] flex flex-col border-r border-gray-200 bg-white shrink-0 h-full">
                 <div className="flex p-2 gap-2 border-b border-gray-100 bg-gray-50">
                     <button onClick={() => { setActiveTab('trips'); setViewMode('welcome'); setSelectedTripId(null); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${activeTab === 'trips' ? 'bg-white shadow text-rose-500' : 'text-gray-400 hover:bg-gray-200'}`}>✈️ 전체 여행</button>
                     <button onClick={() => { setActiveTab('recommend'); setViewMode('welcome'); setSelectedTripId(null); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${activeTab === 'recommend' ? 'bg-white shadow text-amber-500' : 'text-gray-400 hover:bg-gray-200'}`}>🏆 추천 관리</button>
                     <button onClick={() => { setActiveTab('users'); setSelectedUserId(null); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${activeTab === 'users' ? 'bg-white shadow text-indigo-500' : 'text-gray-400 hover:bg-gray-200'}`}>👥 회원</button>
                 </div>
+
                 <div className="p-5 border-b border-gray-100 bg-white z-10">
                     <h1 className="text-xl font-extrabold text-gray-900 mb-4 flex items-center gap-2">
-                        {activeTab === 'trips' && `전체 여행 (${trips.length})`}{activeTab === 'recommend' && `추천 여행 (rectrips) (${rectrips.length})`}{activeTab === 'users' && `회원 목록 (${users.length})`}
+                        {activeTab === 'trips' && `전체 여행 (${trips.length})`}{activeTab === 'recommend' && `추천 여행 (${rectrips.length})`}{activeTab === 'users' && `회원 목록 (${users.length})`}
                     </h1>
-                    {activeTab === 'recommend' && (<div className="mb-3 space-y-2"><button onClick={() => setShowRecommendModal(true)} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md"><Plus size={18} /> 추천 여행 등록 (Link)</button><div className="flex gap-2"><button onClick={() => recommendInputRef.current.click()} className="flex-1 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold text-xs hover:bg-gray-50 flex items-center justify-center gap-1"><Upload size={14} /> 엑셀 등록</button><input type="file" accept=".xlsx, .xls" ref={recommendInputRef} className="hidden" onChange={handleUploadRecommend} /></div></div>)}
-                    {activeTab === 'trips' && (<div className="flex gap-2 mb-3"><button onClick={() => fileInputRef.current.click()} className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1"><Upload size={14} /> 엑셀 등록</button><input type="file" accept=".xlsx, .xls" ref={fileInputRef} className="hidden" onChange={handleUploadTrip} /></div>)}
+                    {activeTab === 'recommend' && (
+                        <div className="mb-3 space-y-2">
+                            <button onClick={() => setShowRecommendModal(true)} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md"><Plus size={18} /> 추천 여행 등록</button>
+                            <div className="flex gap-2">
+                                <button onClick={() => recommendInputRef.current.click()} className="flex-1 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold text-xs hover:bg-gray-50 flex items-center justify-center gap-1"><Upload size={14} /> 엑셀 등록</button>
+                                <input type="file" accept=".xlsx, .xls" ref={recommendInputRef} className="hidden" onChange={handleUploadRecommend} />
+                            </div>
+                        </div>
+                    )}
+                    {activeTab === 'trips' && (
+                        <div className="flex gap-2 mb-3">
+                            <button onClick={() => fileInputRef.current.click()} className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1"><Upload size={14} /> 엑셀 등록</button>
+                            <input type="file" accept=".xlsx, .xls" ref={fileInputRef} className="hidden" onChange={handleUploadTrip} />
+                        </div>
+                    )}
                     <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input type="text" placeholder="검색..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:border-rose-300 transition" /></div>
                 </div>
+
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
                     {activeTab === 'trips' && filteredTrips.map(trip => (
                         <div key={trip.id} onClick={() => handleSelectTrip(trip)} className={`p-4 rounded-xl border cursor-pointer hover:shadow-md relative ${selectedTripId === trip.id ? 'bg-rose-50 border-rose-300' : 'bg-white border-gray-100'}`}>
@@ -343,26 +386,23 @@ export default function AdminPage() {
                     ))}
                     {activeTab === 'recommend' && filteredRecommended.map(trip => (
                         <div key={trip.id} onClick={() => handleSelectTrip(trip, true)} className={`p-4 rounded-xl border cursor-pointer hover:shadow-md relative ${selectedTripId === trip.id ? 'bg-amber-50 border-amber-300' : 'bg-white border-gray-100'}`}>
-                            <div className="w-full h-24 mb-2 rounded-lg overflow-hidden relative bg-gray-100">
-                                <img
-                                    src={trip.img || FALLBACK_IMAGE}
-                                    alt={trip.title}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
-                                />
-                            </div>
+                            <div className="w-full h-24 mb-2 rounded-lg overflow-hidden relative bg-gray-100"><img src={trip.img || FALLBACK_IMAGE} alt={trip.title} className="w-full h-full object-cover" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} /></div>
                             <div className="flex justify-between items-start mb-1"><h3 className="font-bold text-gray-800 text-sm line-clamp-1 flex items-center gap-1">{trip.tripPath && <LinkIcon size={12} className="text-indigo-500" />} {trip.title}</h3><span className="text-[10px] text-gray-400">{trip.city}</span></div>
-                            <p className="text-xs text-gray-500 truncate">{trip.desc}</p>
-                            <button onClick={(e) => handleDeleteTrip(e, trip.id, true)} className="absolute top-4 right-3 text-gray-300 hover:text-red-600"><Trash2 size={16} /></button>
+                            <button onClick={(e) => handleDeleteTrip(e, trip.id, true)} className="absolute top-4 right-3 text-white bg-black/50 p-1 rounded-full hover:bg-red-600"><Trash2 size={14} /></button>
                         </div>
                     ))}
                     {activeTab === 'users' && filteredUsers.map(u => (<div key={u.id} onClick={() => { setSelectedUserId(u.id); setSelectedUser(u); }} className={`p-4 rounded-xl border cursor-pointer hover:shadow-md ${selectedUserId === u.id ? 'bg-indigo-50 border-indigo-300' : 'bg-white border-gray-100'}`}><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 overflow-hidden">{u.photo ? <img src={u.photo} alt="profile" /> : <User size={20} />}</div><div className="flex-1"><h3 className="font-bold text-gray-800 text-sm">{u.name}</h3><p className="text-xs text-gray-500 truncate">{u.email}</p></div><div className="text-right"><span className="block font-extrabold text-indigo-600">{u.points?.toLocaleString()} P</span></div></div></div>))}
                 </div>
             </div>
+
+            {/* 오른쪽 메인 콘텐츠 */}
             <div className="flex-1 bg-gray-50 h-full overflow-hidden relative">
                 {!selectedTripId && !selectedUserId && viewMode === 'welcome' && (<div className="h-full flex flex-col items-center justify-center text-gray-400"><LayoutDashboard size={64} className="mb-4 text-gray-200" /><p className="text-lg font-medium">왼쪽에서 항목을 선택해주세요.</p></div>)}
+
+                {/* 회원 관리 뷰 */}
                 {activeTab === 'users' && selectedUser && (<div className="h-full p-8 overflow-y-auto"><div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-8 max-w-2xl mx-auto relative"><button onClick={handleDeleteUser} className="absolute top-8 right-8 text-xs font-bold text-red-500 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg flex items-center gap-1 transition"><UserX size={14} /> 회원 탈퇴시키기</button><div className="flex items-center gap-4 mb-8 pb-8 border-b"><div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 overflow-hidden text-2xl">{selectedUser.photo ? <img src={selectedUser.photo} className="w-full h-full object-cover" /> : selectedUser.name?.[0]}</div><div><h2 className="text-2xl font-extrabold text-gray-900">{selectedUser.name}</h2><p className="text-gray-500">{selectedUser.email}</p><p className="text-xs text-gray-400 mt-1">UID: {selectedUser.id}</p></div></div><div className="grid grid-cols-2 gap-4 mb-8"><div className="bg-indigo-50 p-6 rounded-2xl text-center"><p className="text-sm font-bold text-indigo-400 mb-1">현재 보유 포인트</p><h3 className="text-4xl font-black text-indigo-600">{selectedUser.points?.toLocaleString()} P</h3></div><div className="bg-gray-50 p-6 rounded-2xl text-center"><p className="text-sm font-bold text-gray-400 mb-1">가입일</p><h3 className="text-xl font-bold text-gray-700 mt-2">{selectedUser.createdAt?.toDate ? selectedUser.createdAt.toDate().toLocaleDateString() : '-'}</h3></div></div><div className="bg-white border border-gray-200 rounded-2xl p-6"><h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><Gift size={18} className="text-rose-500" /> 포인트 관리</h3><div className="flex gap-2"><button onClick={() => handleUpdatePoints(1000)} className="flex-1 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold transition shadow">+ 1,000P</button><button onClick={() => handleUpdatePoints(5000)} className="flex-1 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold transition shadow">+ 5,000P</button></div><div className="mt-4 pt-4 border-t flex gap-2 items-center"><input type="number" placeholder="직접 입력" className="flex-1 p-3 border rounded-xl" value={pointAmount} onChange={e => setPointAmount(e.target.value)} /><button onClick={() => handleUpdatePoints(Number(pointAmount))} className="px-6 py-3 bg-gray-800 text-white rounded-xl font-bold hover:bg-black transition">적용</button></div></div></div></div>)}
-                {viewMode === 'create' && (<div className="h-full overflow-y-auto p-8 max-w-3xl mx-auto"><div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-8"><h2 className="text-2xl font-extrabold text-gray-900 mb-6 flex items-center gap-2"><Plus className="text-[#FF5A5F]" /> 새 여행 일정 생성 (AI)</h2>{/* AI 폼 생략 */}</div></div>)}
+
+                {/* 여행 상세 뷰 */}
                 {viewMode === 'edit' && selectedTripId && selectedTripData && (
                     <div className="h-full w-full flex flex-col">
                         <div className="h-12 bg-white border-b flex items-center justify-between px-6 shrink-0 z-20">
@@ -382,6 +422,8 @@ export default function AdminPage() {
                         </div>
                     </div>
                 )}
+
+                {/* 추천 여행 등록 모달 */}
                 {showRecommendModal && (
                     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
                         <div className="bg-white w-full max-w-2xl rounded-2xl h-[80vh] flex flex-col shadow-2xl overflow-hidden">
