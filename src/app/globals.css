@@ -1,7 +1,7 @@
-@import "tailwindcss";
-
 /* 1. 프리텐다드 폰트 불러오기 (CDN) */
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+
+@import "tailwindcss";
 
 @tailwind base;
 @tailwind components;
