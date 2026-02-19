@@ -27,7 +27,8 @@ import { ko } from 'date-fns/locale';
 
 // Firebase
 import { auth, db } from "../lib/firebase";
-import { onAuthStateChanged, signInWithRedirect, GoogleAuthProvider } from "firebase/auth";
+import { onAuthStateChanged, signInWithRedirect, signInWithPopup, getRedirectResult, GoogleAuthProvider } from "firebase/auth";
+
 // firebase/firestore import 부분을 찾아 아래 코드로 교체하세요. (모든 기능 포함)
 import {
     doc, getDoc, setDoc, deleteDoc, updateDoc, increment, serverTimestamp,
@@ -428,6 +429,24 @@ export default function Home() {
         const hasShownSplash = sessionStorage.getItem('hasShownSplash');
         if (hasShownSplash) setShowSplash(false);
 
+        const checkLoginResult = async () => {
+            try {
+                const result = await getRedirectResult(auth);
+                if (result && result.user) {
+                    console.log("로그인 성공:", result.user);
+                    const userRef = doc(db, "users", result.user.uid);
+                    const userSnap = await getDoc(userRef);
+                    if (!userSnap.exists()) {
+                        await setDoc(userRef, { email: result.user.email, name: result.user.displayName, points: 1000, createdAt: serverTimestamp(), quizStats: { date: "", count: 0 } });
+                        await addDoc(collection(db, "users", result.user.uid, "point_history"), { desc: "신규 가입 축하금", amount: 1000, createdAt: serverTimestamp() });
+                    }
+                }
+            } catch (error) {
+                console.error("리다이렉트 로그인 에러:", error);
+            }
+        };
+        checkLoginResult();
+
         const timer = setInterval(() => setBgIndex((prev) => (prev + 1) % backgroundImages.length), 5000);
 
         // PWA 관련 (기존 로직 유지)
@@ -502,8 +521,22 @@ export default function Home() {
     }, []);
 
     const closeIntro = () => { setShowIntro(false); const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone; if (!isStandalone) setShowWelcome(true); };
-    const handleLogin = async () => { const provider = new GoogleAuthProvider(); try { await signInWithRedirect(auth, provider); } catch (error) { console.error("Login failed", error); } };
+    const handleLogin = async () => {
+        const provider = new GoogleAuthProvider();
+        const isMobileApp = window.matchMedia('(display-mode: standalone)').matches || window.innerWidth <= 768;
 
+        try {
+            if (isMobileApp) {
+                // 스마트폰(앱)에서는 리다이렉트
+                await signInWithRedirect(auth, provider);
+            } else {
+                // PC(웹)에서는 팝업창
+                await signInWithPopup(auth, provider);
+            }
+        } catch (error) {
+            console.error("로그인 실패:", error);
+        }
+    };
     // ✨ PWA 설치 버튼 클릭 핸들러
     const handleInstallClick = async () => {
         if (deferredPrompt) {
