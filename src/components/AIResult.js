@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { collection, addDoc, updateDoc, doc, serverTimestamp, setDoc, increment, getDoc } from 'firebase/firestore';
-import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "firebase/auth";
 import TravelQuiz from './TravelQuiz';
 
 // ✨ PDF 및 이미지 변환 라이브러리
@@ -61,6 +61,43 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
     const polylineRef = useRef([]);
     const scrollContainerRef = useRef(null);
     const observerRef = useRef(null);
+
+    // 🚀 모바일 리다이렉트 로그인 후 데이터 복구 로직
+    useEffect(() => {
+        const checkRedirectResult = async () => {
+            try {
+                const result = await getRedirectResult(auth);
+                if (result && result.user) {
+                    const pendingData = sessionStorage.getItem('pendingTripSave');
+                    if (pendingData) {
+                        setIsSaving(true);
+                        const { savedUserInfo, savedTripPlan } = JSON.parse(pendingData);
+                        const user = result.user;
+                        const userRef = doc(db, "users", user.uid);
+                        const userSnap = await getDoc(userRef);
+
+                        let isNewUser = false;
+                        if (!userSnap.exists()) {
+                            isNewUser = true;
+                            await setDoc(userRef, { email: user.email, name: user.displayName, points: 1000, createdAt: serverTimestamp(), quizStats: { date: "", count: 0 } });
+                            await addDoc(collection(db, "users", user.uid, "point_history"), { desc: "신규 가입 축하금", amount: 1000, createdAt: serverTimestamp() });
+                        }
+                        await addDoc(collection(db, "users", user.uid, "itineraries"), { ...savedUserInfo, ...savedTripPlan, createdAt: serverTimestamp() });
+
+                        sessionStorage.removeItem('pendingTripSave');
+                        setIsSaving(false);
+                        alert(isNewUser ? "환영합니다! 가입 축하금 1,000P 지급 완료! 🎁" : "일정이 성공적으로 저장되었습니다!");
+                        router.push('/mypage');
+                    }
+                }
+            } catch (error) {
+                console.error("Redirect Auth Error:", error);
+                setIsSaving(false);
+            }
+        };
+        checkRedirectResult();
+    }, [router]);
+
 
     // ✨ [수정됨] ID 변수 선언 추가 (에러 해결!)
     const PDF_TEMPLATE_ID = "pdf-document-template";
@@ -519,11 +556,24 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
         setIsSaving(true);
         try {
             let user = auth.currentUser;
+
             if (!user) {
                 const provider = new GoogleAuthProvider();
-                const result = await signInWithPopup(auth, provider);
-                user = result.user;
+                // ✅ 현재 접속한 환경이 모바일 앱인지 확인
+                const isMobileApp = window.matchMedia('(display-mode: standalone)').matches || window.innerWidth <= 768;
+
+                if (isMobileApp) {
+                    // 모바일 환경: 리다이렉트 전 임시 저장고에 일정 보관
+                    sessionStorage.setItem('pendingTripSave', JSON.stringify({ savedUserInfo: userInfo, savedTripPlan: tripPlan }));
+                    await signInWithRedirect(auth, provider);
+                    return; // 함수 종료 (화면이 구글 로그인으로 넘어감)
+                } else {
+                    // PC 웹 환경: 기존 팝업창 유지
+                    const result = await signInWithPopup(auth, provider);
+                    user = result.user;
+                }
             }
+
             if (user) {
                 const userRef = doc(db, "users", user.uid);
                 const userSnap = await getDoc(userRef);
@@ -540,7 +590,6 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
         } catch (error) {
             console.error("저장 실패:", error);
             alert("저장 중 오류가 발생했습니다.");
-        } finally {
             setIsSaving(false);
         }
     };
