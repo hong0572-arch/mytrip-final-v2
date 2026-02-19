@@ -502,8 +502,15 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
         const url = await getOrSaveShareUrl();
         if (url) {
             const text = formatTripText(url);
-            if (navigator.share) { try { await navigator.share({ title: tripPlan.tripTitle, text: text, url: url }); } catch (e) { } }
-            else { try { await navigator.clipboard.writeText(text); alert("링크가 복사되었습니다!"); } catch (e) { } }
+            if (navigator.share) {
+                try {
+                    // 💡 url 파라미터를 제거하여 중복을 방지합니다.
+                    await navigator.share({ title: tripPlan.tripTitle, text: text });
+                } catch (e) { }
+            }
+            else {
+                try { await navigator.clipboard.writeText(text); alert("링크가 복사되었습니다!"); } catch (e) { }
+            }
         }
         setLoadingAction(null);
     };
