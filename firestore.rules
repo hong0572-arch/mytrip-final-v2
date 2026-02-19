@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. 관리자 페이지 기능을 위해 모든 읽기/쓰기 허용으로 변경
+    // (주의: 실제 서비스 런칭 후에는 관리자만 접근 가능하도록 백엔드 로직이 필요합니다)
+    
+    // 추천 여행 (rectrips)
+    match /rectrips/{tripId} {
+      allow read, write: if true;
+    }
+
+    // 구버전 추천 여행
+    match /recommended_trips/{tripId} {
+      allow read, write: if true;
+    }
+
+    // 일반 여행 (trips)
+    match /trips/{tripId} {
+      allow read, write: if true;
+    }
+
+    // 사용자 정보 (users) - 관리자 페이지에서 회원 목록을 보려면 열려 있어야 함
+    match /users/{userId} {
+       allow read, write: if true;
+    }
+
+    // 사용자의 하위 컬렉션 (여행 일정 등)
+    match /users/{userId}/{document=**} {
+       allow read, write: if true;
+    }
+
+    // 컬렉션 그룹 쿼리 (전체 여행 일정 조회용)
+    match /{path=**}/itineraries/{docId} {
+      allow read, write: if true;
+    }
+  }
+}

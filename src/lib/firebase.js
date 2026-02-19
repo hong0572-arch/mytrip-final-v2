@@ -7,7 +7,7 @@ import { getMessaging, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBlHvrHszUSCMBFx_w3rWvVNMFQ1oS7Ts0",
-    authDomain: "my-trip-pro.firebaseapp.com",
+    authDomain: "mytrip2.pro",
     projectId: "my-trip-pro",
     storageBucket: "my-trip-pro.firebasestorage.app",
     messagingSenderId: "817442711390",

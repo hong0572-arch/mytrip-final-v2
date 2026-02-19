@@ -1,0 +1,365 @@
+[debug] [2026-02-19T15:41:48.363Z] ----------------------------------------------------------------------
+[debug] [2026-02-19T15:41:48.366Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\iwing\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init
+[debug] [2026-02-19T15:41:48.367Z] CLI Version:   15.6.0
+[debug] [2026-02-19T15:41:48.367Z] Platform:      win32
+[debug] [2026-02-19T15:41:48.367Z] Node Version:  v24.11.1
+[debug] [2026-02-19T15:41:48.367Z] Time:          Fri Feb 20 2026 00:41:48 GMT+0900 (대한민국 표준시)
+[debug] [2026-02-19T15:41:48.368Z] ----------------------------------------------------------------------
+[debug] 
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  C:\Users\iwing\.antigravity\mytrip-final
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] 
+[debug] [2026-02-19T15:45:08.814Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-19T15:45:08.814Z] > authorizing via signed-in user (joonkiehong@gmail.com)
+[debug] [2026-02-19T15:45:08.816Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:08.816Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:08.818Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=100
+[debug] [2026-02-19T15:45:09.770Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-02-19T15:45:09.771Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[info] 
+=== Dataconnect Setup
+[info] i  dataconnect: ensuring required API firebasedataconnect.googleapis.com is enabled... 
+[debug] [2026-02-19T15:45:15.580Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:15.581Z] Checked if tokens are valid: true, expires at: 1771519285916
+[info] i  dataconnect: ensuring required API sqladmin.googleapis.com is enabled... 
+[debug] [2026-02-19T15:45:15.582Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:15.582Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:15.582Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-02-19T15:45:15.582Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/firebasedataconnect.googleapis.com  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:45:15.586Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/sqladmin.googleapis.com [none]
+[debug] [2026-02-19T15:45:15.586Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/sqladmin.googleapis.com  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:45:16.793Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-02-19T15:45:16.794Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/firebasedataconnect.googleapis.com [omitted]
+[warn] !  dataconnect: missing required API firebasedataconnect.googleapis.com. Enabling now... 
+[debug] [2026-02-19T15:45:16.795Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:16.796Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:16.796Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/firebasedataconnect.googleapis.com:enable [none]
+[debug] [2026-02-19T15:45:16.796Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/firebasedataconnect.googleapis.com:enable  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:45:16.807Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/sqladmin.googleapis.com 200
+[debug] [2026-02-19T15:45:16.807Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/sqladmin.googleapis.com [omitted]
+[warn] !  dataconnect: missing required API sqladmin.googleapis.com. Enabling now... 
+[debug] [2026-02-19T15:45:16.808Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:16.808Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:16.808Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/sqladmin.googleapis.com:enable [none]
+[debug] [2026-02-19T15:45:16.808Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/sqladmin.googleapis.com:enable  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:45:17.917Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/firebasedataconnect.googleapis.com:enable 200
+[debug] [2026-02-19T15:45:17.917Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/firebasedataconnect.googleapis.com:enable [omitted]
+[debug] [2026-02-19T15:45:17.939Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/sqladmin.googleapis.com:enable 200
+[debug] [2026-02-19T15:45:17.939Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/sqladmin.googleapis.com:enable [omitted]
+[debug] [2026-02-19T15:45:27.961Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:27.961Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:27.961Z] >>> [apiv2][query] GET https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/-/services [none]
+[debug] [2026-02-19T15:45:29.423Z] <<< [apiv2][status] GET https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/-/services 200
+[debug] [2026-02-19T15:45:29.424Z] <<< [apiv2][body] GET https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/-/services {}
+[info] i  : ensuring required API cloudaicompanion.googleapis.com is enabled... 
+[debug] [2026-02-19T15:45:38.521Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:38.521Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:38.522Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/cloudaicompanion.googleapis.com [none]
+[debug] [2026-02-19T15:45:38.522Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/cloudaicompanion.googleapis.com  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:45:39.766Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/cloudaicompanion.googleapis.com 200
+[debug] [2026-02-19T15:45:39.766Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/cloudaicompanion.googleapis.com [omitted]
+[info] +  : required API cloudaicompanion.googleapis.com is enabled 
+[debug] [2026-02-19T15:45:57.229Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:57.229Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:57.229Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/my-trip-pro/billingInfo [none]
+[debug] [2026-02-19T15:45:58.915Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/my-trip-pro/billingInfo 200
+[debug] [2026-02-19T15:45:58.915Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/my-trip-pro/billingInfo {"name":"projects/my-trip-pro/billingInfo","projectId":"my-trip-pro","billingAccountName":"billingAccounts/018CB3-59D8DC-D17D24","billingEnabled":true}
+[debug] [2026-02-19T15:45:58.916Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:58.916Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:58.916Z] >>> [apiv2][query] GET https://monitoring.googleapis.com/v3/projects/my-trip-pro/timeSeries/ filter=metric.type%3D%22serviceruntime.googleapis.com%2Fquota%2Fallocation%2Fusage%22+AND+metric.label.quota_metric+%3D+%22sqladmin.googleapis.com%2Ffdc_lifetime_free_trial_per_project%22&interval.endTime=2026-02-19T15%3A45%3A58.915Z&interval.startTime=2026-02-12T15%3A45%3A58.915Z
+[debug] [2026-02-19T15:45:59.930Z] <<< [apiv2][status] GET https://monitoring.googleapis.com/v3/projects/my-trip-pro/timeSeries/ 200
+[debug] [2026-02-19T15:45:59.930Z] <<< [apiv2][body] GET https://monitoring.googleapis.com/v3/projects/my-trip-pro/timeSeries/ {"unit":"1"}
+[info] +  dataconnect: CloudSQL no cost trial available! 
+[debug] [2026-02-19T15:45:59.931Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:59.931Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:45:59.932Z] >>> [apiv2][query] GET https://sqladmin.googleapis.com/v1/projects/my-trip-pro/instances [none]
+[debug] [2026-02-19T15:46:01.267Z] <<< [apiv2][status] GET https://sqladmin.googleapis.com/v1/projects/my-trip-pro/instances 200
+[debug] [2026-02-19T15:46:01.268Z] <<< [apiv2][body] GET https://sqladmin.googleapis.com/v1/projects/my-trip-pro/instances {}
+[debug] [2026-02-19T15:46:01.268Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:01.268Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:01.268Z] >>> [apiv2][query] GET https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations [none]
+[debug] [2026-02-19T15:46:02.337Z] <<< [apiv2][status] GET https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations 200
+[debug] [2026-02-19T15:46:02.337Z] <<< [apiv2][body] GET https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations {"locations":[{"name":"projects/my-trip-pro/locations/asia-east1","locationId":"asia-east1","displayName":"Taiwan"},{"name":"projects/my-trip-pro/locations/asia-east2","locationId":"asia-east2","displayName":"Hong Kong"},{"name":"projects/my-trip-pro/locations/asia-northeast1","locationId":"asia-northeast1","displayName":"Tokyo"},{"name":"projects/my-trip-pro/locations/asia-northeast2","locationId":"asia-northeast2","displayName":"Osaka"},{"name":"projects/my-trip-pro/locations/asia-northeast3","locationId":"asia-northeast3","displayName":"Seoul"},{"name":"projects/my-trip-pro/locations/asia-south1","locationId":"asia-south1","displayName":"Mumbai"},{"name":"projects/my-trip-pro/locations/asia-southeast1","locationId":"asia-southeast1","displayName":"Singapore"},{"name":"projects/my-trip-pro/locations/asia-southeast2","locationId":"asia-southeast2","displayName":"Jakarta"},{"name":"projects/my-trip-pro/locations/australia-southeast1","locationId":"australia-southeast1","displayName":"Sydney"},{"name":"projects/my-trip-pro/locations/australia-southeast2","locationId":"australia-southeast2","displayName":"Melbourne"},{"name":"projects/my-trip-pro/locations/europe-central2","locationId":"europe-central2","displayName":"Warsaw"},{"name":"projects/my-trip-pro/locations/europe-north1","locationId":"europe-north1","displayName":"Finland"},{"name":"projects/my-trip-pro/locations/europe-southwest1","locationId":"europe-southwest1","displayName":"Madrid"},{"name":"projects/my-trip-pro/locations/europe-west1","locationId":"europe-west1","displayName":"Belgium"},{"name":"projects/my-trip-pro/locations/europe-west2","locationId":"europe-west2","displayName":"London"},{"name":"projects/my-trip-pro/locations/europe-west3","locationId":"europe-west3","displayName":"Frankfurt"},{"name":"projects/my-trip-pro/locations/europe-west4","locationId":"europe-west4","displayName":"Netherlands"},{"name":"projects/my-trip-pro/locations/europe-west6","locationId":"europe-west6","displayName":"Zurich"},{"name":"projects/my-trip-pro/locations/europe-west8","locationId":"europe-west8","displayName":"Milan"},{"name":"projects/my-trip-pro/locations/europe-west9","locationId":"europe-west9","displayName":"Paris"},{"name":"projects/my-trip-pro/locations/me-west1","locationId":"me-west1","displayName":"Tel Aviv"},{"name":"projects/my-trip-pro/locations/northamerica-northeast1","locationId":"northamerica-northeast1","displayName":"Montréal"},{"name":"projects/my-trip-pro/locations/northamerica-northeast2","locationId":"northamerica-northeast2","displayName":"Toronto"},{"name":"projects/my-trip-pro/locations/southamerica-east1","locationId":"southamerica-east1","displayName":"São Paulo"},{"name":"projects/my-trip-pro/locations/southamerica-west1","locationId":"southamerica-west1","displayName":"Santiago"},{"name":"projects/my-trip-pro/locations/us-central1","locationId":"us-central1","displayName":"Iowa"},{"name":"projects/my-trip-pro/locations/us-east1","locationId":"us-east1","displayName":"South Carolina"},{"name":"projects/my-trip-pro/locations/us-east4","locationId":"us-east4","displayName":"Northern Virginia"},{"name":"projects/my-trip-pro/locations/us-south1","locationId":"us-south1","displayName":"Dallas"},{"name":"projects/my-trip-pro/locations/us-west1","locationId":"us-west1","displayName":"Oregon"},{"name":"projects/my-trip-pro/locations/us-west2","locationId":"us-west2","displayName":"Los Angeles"},{"name":"projects/my-trip-pro/locations/us-west3","locationId":"us-west3","displayName":"Salt Lake City"},{"name":"projects/my-trip-pro/locations/us-west4","locationId":"us-west4","displayName":"Las Vegas"}]}
+[info] +  dataconnect: Detected existing apps . (web) 
+[debug] [2026-02-19T15:46:24.079Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:24.079Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:24.080Z] >>> [apiv2][query] POST https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/us-east4/services service_id=mytrip-final
+[debug] [2026-02-19T15:46:24.080Z] >>> [apiv2][body] POST https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/us-east4/services {"name":"projects/my-trip-pro/locations/us-east4/services/mytrip-final"}
+[debug] [2026-02-19T15:46:27.482Z] <<< [apiv2][status] POST https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/us-east4/services 200
+[debug] [2026-02-19T15:46:27.482Z] <<< [apiv2][body] POST https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/us-east4/services {"name":"projects/my-trip-pro/locations/us-east4/operations/operation-1771515985535-64b2f35082371-df560ec7-7821559a","metadata":{"@type":"type.googleapis.com/google.firebase.dataconnect.v1.OperationMetadata","createTime":"2026-02-19T15:46:27.530185652Z","target":"projects/my-trip-pro/locations/us-east4/services/mytrip-final","verb":"create","requestedCancellation":false,"apiVersion":"v1"},"done":false}
+[debug] [2026-02-19T15:46:27.484Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:27.484Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:27.485Z] >>> [apiv2][query] GET https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/us-east4/operations/operation-1771515985535-64b2f35082371-df560ec7-7821559a [none]
+[debug] [2026-02-19T15:46:27.788Z] <<< [apiv2][status] GET https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/us-east4/operations/operation-1771515985535-64b2f35082371-df560ec7-7821559a 200
+[debug] [2026-02-19T15:46:27.788Z] <<< [apiv2][body] GET https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/us-east4/operations/operation-1771515985535-64b2f35082371-df560ec7-7821559a {"name":"projects/my-trip-pro/locations/us-east4/operations/operation-1771515985535-64b2f35082371-df560ec7-7821559a","metadata":{"@type":"type.googleapis.com/google.firebase.dataconnect.v1.OperationMetadata","createTime":"2026-02-19T15:46:27.530185652Z","target":"projects/my-trip-pro/locations/us-east4/services/mytrip-final","verb":"create","requestedCancellation":false,"apiVersion":"v1"},"done":false}
+[debug] [2026-02-19T15:46:28.304Z] [LRO Poller] Retrying task index 0
+[debug] [2026-02-19T15:46:28.305Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:28.305Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:28.306Z] >>> [apiv2][query] GET https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/us-east4/operations/operation-1771515985535-64b2f35082371-df560ec7-7821559a [none]
+[debug] [2026-02-19T15:46:28.609Z] <<< [apiv2][status] GET https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/us-east4/operations/operation-1771515985535-64b2f35082371-df560ec7-7821559a 200
+[debug] [2026-02-19T15:46:28.610Z] <<< [apiv2][body] GET https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/us-east4/operations/operation-1771515985535-64b2f35082371-df560ec7-7821559a {"name":"projects/my-trip-pro/locations/us-east4/operations/operation-1771515985535-64b2f35082371-df560ec7-7821559a","metadata":{"@type":"type.googleapis.com/google.firebase.dataconnect.v1.OperationMetadata","createTime":"2026-02-19T15:46:27.530185652Z","endTime":"2026-02-19T15:46:28.771123883Z","target":"projects/my-trip-pro/locations/us-east4/services/mytrip-final","verb":"create","requestedCancellation":false,"apiVersion":"v1"},"done":true,"response":{"@type":"type.googleapis.com/google.firebase.dataconnect.v1.Service","name":"projects/my-trip-pro/locations/us-east4/services/mytrip-final","createTime":"2026-02-19T15:46:27.525397239Z","updateTime":"2026-02-19T15:46:27.525397239Z","uid":"532ac0ac-da1b-435c-9648-c5c17bd2a859","reconciling":false,"etag":"wnaynCAox1hQV4FCHIJsWITihc2kXmpd5jchAZiJqco"}}
+[debug] [2026-02-19T15:46:28.619Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:28.619Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:28.619Z] >>> [apiv2][query] POST https://cloudaicompanion.googleapis.com/v1beta/projects/my-trip-pro/locations/global/instances/default:completeTask [none]
+[debug] [2026-02-19T15:46:28.619Z] >>> [apiv2][body] POST https://cloudaicompanion.googleapis.com/v1beta/projects/my-trip-pro/locations/global/instances/default:completeTask {"input":{"messages":[{"content":"trip maker","author":"USER"}]},"experienceContext":{"experience":"/appeco/firebase/fdc-schema-generator"}}
+[debug] [2026-02-19T15:46:37.010Z] <<< [apiv2][status] POST https://cloudaicompanion.googleapis.com/v1beta/projects/my-trip-pro/locations/global/instances/default:completeTask 200
+[debug] [2026-02-19T15:46:37.011Z] <<< [apiv2][body] POST https://cloudaicompanion.googleapis.com/v1beta/projects/my-trip-pro/locations/global/instances/default:completeTask {"output":{"messages":[{"content":"```graphql\ntype User @table {\n  displayName: String!\n  email: String!\n  createdAt: Timestamp!\n  photoUrl: String\n}\n\ntype Trip @table {\n  name: String!\n  destination: String!\n  startDate: Date!\n  endDate: Date!\n  createdAt: Timestamp!\n  description: String\n  budget: Float\n  owner: User\n}\n\ntype TripParticipant @table(key: [\"user\", \"trip\"]) {\n  user: User!\n  trip: Trip!\n  role: String!\n}\n\ntype TravelSegment @table {\n  trip: Trip\n  type: String!\n  departureLocation: String!\n  arrivalLocation: String!\n  departureTime: Timestamp!\n  arrivalTime: Timestamp!\n  createdAt: Timestamp!\n  bookingReference: String\n  notes: String\n  booked: Boolean\n}\n\ntype Accommodation @table {\n  trip: Trip\n  name: String!\n  location: String!\n  checkInDate: Date!\n  checkOutDate: Date!\n  createdAt: Timestamp!\n  bookingReference: String\n  notes: String\n  booked: Boolean\n  cost: Float\n}\n\ntype Activity @table {\n  trip: Trip\n  name: String!\n  date: Date!\n  createdAt: Timestamp!\n  description: String\n  time: Timestamp\n  location: String\n  notes: String\n  cost: Float\n  booked: Boolean\n}\n```\n"}]},"displayContext":{"additionalContext":{"@type":"type.googleapis.com/google.cloud.cloudaicompanion.v1main.FirebaseChatDisplayContext","firebaseFdcDisplayContext":{"schemaSyntaxError":""}}}}
+[debug] [2026-02-19T15:46:37.014Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:37.015Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:37.015Z] >>> [apiv2][query] PATCH https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/us-east4/services/mytrip-final/schemas/main allowMissing=true&validateOnly=false
+[debug] [2026-02-19T15:46:37.015Z] >>> [apiv2][body] PATCH https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/us-east4/services/mytrip-final/schemas/main {"name":"projects/my-trip-pro/locations/us-east4/services/mytrip-final/schemas/main","datasources":[{"postgresql":{}}],"source":{"files":[{"path":"schema.gql","content":"type User @table {\n  displayName: String!\n  email: String!\n  createdAt: Timestamp!\n  photoUrl: String\n}\n\ntype Trip @table {\n  name: String!\n  destination: String!\n  startDate: Date!\n  endDate: Date!\n  createdAt: Timestamp!\n  description: String\n  budget: Float\n  owner: User\n}\n\ntype TripParticipant @table(key: [\"user\", \"trip\"]) {\n  user: User!\n  trip: Trip!\n  role: String!\n}\n\ntype TravelSegment @table {\n  trip: Trip\n  type: String!\n  departureLocation: String!\n  arrivalLocation: String!\n  departureTime: Timestamp!\n  arrivalTime: Timestamp!\n  createdAt: Timestamp!\n  bookingReference: String\n  notes: String\n  booked: Boolean\n}\n\ntype Accommodation @table {\n  trip: Trip\n  name: String!\n  location: String!\n  checkInDate: Date!\n  checkOutDate: Date!\n  createdAt: Timestamp!\n  bookingReference: String\n  notes: String\n  booked: Boolean\n  cost: Float\n}\n\ntype Activity @table {\n  trip: Trip\n  name: String!\n  date: Date!\n  createdAt: Timestamp!\n  description: String\n  time: Timestamp\n  location: String\n  notes: String\n  cost: Float\n  booked: Boolean\n}"}]}}
+[debug] [2026-02-19T15:46:38.335Z] <<< [apiv2][status] PATCH https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/us-east4/services/mytrip-final/schemas/main 200
+[debug] [2026-02-19T15:46:38.335Z] <<< [apiv2][body] PATCH https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/us-east4/services/mytrip-final/schemas/main {"name":"projects/my-trip-pro/locations/us-east4/operations/operation-1771515998422-64b2f35ccc60a-70b79678-e1102577","metadata":{"@type":"type.googleapis.com/google.firebase.dataconnect.v1.OperationMetadata","createTime":"2026-02-19T15:46:38.510750536Z","target":"projects/my-trip-pro/locations/us-east4/services/mytrip-final/schemas/main","verb":"update","requestedCancellation":false,"apiVersion":"v1"},"done":false}
+[debug] [2026-02-19T15:46:38.336Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:38.336Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:38.336Z] >>> [apiv2][query] GET https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/us-east4/operations/operation-1771515998422-64b2f35ccc60a-70b79678-e1102577 [none]
+[debug] [2026-02-19T15:46:38.643Z] <<< [apiv2][status] GET https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/us-east4/operations/operation-1771515998422-64b2f35ccc60a-70b79678-e1102577 200
+[debug] [2026-02-19T15:46:38.644Z] <<< [apiv2][body] GET https://firebasedataconnect.googleapis.com/v1/projects/my-trip-pro/locations/us-east4/operations/operation-1771515998422-64b2f35ccc60a-70b79678-e1102577 {"name":"projects/my-trip-pro/locations/us-east4/operations/operation-1771515998422-64b2f35ccc60a-70b79678-e1102577","metadata":{"@type":"type.googleapis.com/google.firebase.dataconnect.v1.OperationMetadata","createTime":"2026-02-19T15:46:38.510750536Z","endTime":"2026-02-19T15:46:38.731028782Z","target":"projects/my-trip-pro/locations/us-east4/services/mytrip-final/schemas/main","verb":"update","requestedCancellation":false,"apiVersion":"v1"},"done":true}
+[debug] [2026-02-19T15:46:38.647Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:38.647Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:38.647Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:38.647Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:38.648Z] >>> [apiv2][query] POST https://cloudaicompanion.googleapis.com/v1beta/projects/my-trip-pro/locations/global/instances/default:completeTask [none]
+[debug] [2026-02-19T15:46:38.648Z] >>> [apiv2][body] POST https://cloudaicompanion.googleapis.com/v1beta/projects/my-trip-pro/locations/global/instances/default:completeTask {"input":{"messages":[{"content":"Create 4 operations for an app using the instance schema with proper authentication.","author":"USER"}]},"experienceContext":{"experience":"/appeco/firebase/fdc-query-generator"},"clientContext":{"additionalContext":{"@type":"type.googleapis.com/google.cloud.cloudaicompanion.v1main.FirebaseChatRequestContext","fdcInfo":{"fdcServiceName":"projects/my-trip-pro/locations/us-east4/services/mytrip-final","requiresQuery":true}}}}
+[debug] [2026-02-19T15:46:38.649Z] >>> [apiv2][query] POST https://cloudaicompanion.googleapis.com/v1beta/projects/my-trip-pro/locations/global/instances/default:completeTask [none]
+[debug] [2026-02-19T15:46:38.649Z] >>> [apiv2][body] POST https://cloudaicompanion.googleapis.com/v1beta/projects/my-trip-pro/locations/global/instances/default:completeTask {"input":{"messages":[{"content":"Create a mutation to populate the database with some seed data.","author":"USER"}]},"experienceContext":{"experience":"/appeco/firebase/fdc-query-generator"},"clientContext":{"additionalContext":{"@type":"type.googleapis.com/google.cloud.cloudaicompanion.v1main.FirebaseChatRequestContext","fdcInfo":{"fdcServiceName":"projects/my-trip-pro/locations/us-east4/services/mytrip-final","requiresQuery":true}}}}
+[debug] [2026-02-19T15:46:43.656Z] <<< [apiv2][status] POST https://cloudaicompanion.googleapis.com/v1beta/projects/my-trip-pro/locations/global/instances/default:completeTask 200
+[debug] [2026-02-19T15:46:43.657Z] <<< [apiv2][body] POST https://cloudaicompanion.googleapis.com/v1beta/projects/my-trip-pro/locations/global/instances/default:completeTask {"output":{"messages":[{"content":"```graphql\nquery listAllTrips @auth(level: PUBLIC, insecureReason: \"This operation is safe to expose to the public\") {\n  trips {\n    id\n    name\n    destination\n    startDate\n    endDate\n    budget\n  }\n}\n\nquery getMyTrips @auth(level: USER, insecureReason: \"This operation is safe to expose to all logged in users.\") {\n  trips(where: {ownerId: {eq_expr: \"auth.uid\"}}) {\n    id\n    name\n    destination\n    startDate\n    endDate\n    owner {\n      displayName\n    }\n  }\n}\n\nmutation createTrip($name: String!, $destination: String!, $startDate: Date!, $endDate: Date!, $budget: Float) @auth(level: USER) {\n  trip_insert(data: {\n    name: $name,\n    destination: $destination,\n    startDate: $startDate,\n    endDate: $endDate,\n    budget: $budget,\n    ownerId_expr: \"auth.uid\",\n    createdAt_expr: \"request.time\"\n  })\n}\n\nmutation updateTripDetails($id: UUID!, $name: String, $destination: String, $startDate: Date, $endDate: Date, $budget: Float) @auth(level: USER) {\n  trip_update(\n    key: {id: $id},\n    data: {\n      name: $name,\n      destination: $destination,\n      startDate: $startDate,\n      endDate: $endDate,\n      budget: $budget\n    },\n    where: {ownerId: {eq_expr: \"auth.uid\"}}\n  )\n}\n```","author":"model"}]},"outputDataContext":{"additionalContext":{"@type":"type.googleapis.com/google.cloud.cloudaicompanion.v1main.ChatOutputDataContext","relatedContent":{}}},"attributionContext":{"citationMetadata":{}}}
+[debug] [2026-02-19T15:46:49.588Z] <<< [apiv2][status] POST https://cloudaicompanion.googleapis.com/v1beta/projects/my-trip-pro/locations/global/instances/default:completeTask 200
+[debug] [2026-02-19T15:46:49.589Z] <<< [apiv2][body] POST https://cloudaicompanion.googleapis.com/v1beta/projects/my-trip-pro/locations/global/instances/default:completeTask {"output":{"messages":[{"content":"```graphql\nmutation CreateSeedData @transaction @auth(level: USER, insecureReason: \"Seed data mutation, safe for any logged in user to run once.\") {\n  user_insertMany(data: [\n    {\n      id: \"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11\",\n      createdAt: \"2024-01-01T10:00:00Z\",\n      displayName: \"Alice Wonderland\",\n      email: \"alice@example.com\",\n      photoUrl: \"https://example.com/alice.jpg\"\n    },\n    {\n      id: \"b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12\",\n      createdAt: \"2024-01-01T10:05:00Z\",\n      displayName: \"Bob The Builder\",\n      email: \"bob@example.com\",\n      photoUrl: \"https://example.com/bob.jpg\"\n    }\n  ])\n  trip_insertMany(data: [\n    {\n      id: \"c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13\",\n      ownerId: \"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11\",\n      budget: 2500.00,\n      createdAt: \"2024-01-10T14:30:00Z\",\n      description: \"A magical trip to Wonderland.\",\n      destination: \"Wonderland\",\n      endDate: \"2024-01-20\",\n      name: \"Wonderland Adventure\",\n      startDate: \"2024-01-15\"\n    },\n    {\n      id: \"d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14\",\n      ownerId: \"b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12\",\n      budget: 1500.00,\n      createdAt: \"2024-01-12T11:00:00Z\",\n      description: \"Building new structures and exploring.\",\n      destination: \"Construction Site A\",\n      endDate: \"2024-02-05\",\n      name: \"Building Expedition\",\n      startDate: \"2024-02-01\"\n    }\n  ])\n  tripParticipant_insertMany(data: [\n    {\n      userId: \"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11\",\n      tripId: \"c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13\",\n      role: \"Organizer\"\n    },\n    {\n      userId: \"b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12\",\n      tripId: \"c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13\",\n      role: \"Participant\"\n    },\n    {\n      userId: \"b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12\",\n      tripId: \"d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14\",\n      role: \"Organizer\"\n    }\n  ])\n  accommodation_insertMany(data: [\n    {\n      tripId: \"c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13\",\n      booked: true,\n      bookingReference: \"WNDRLND-HOTEL-REF\",\n      checkInDate: \"2024-01-15\",\n      checkOutDate: \"2024-01-20\",\n      cost: 1000.00,\n      createdAt: \"2024-01-05T12:00:00Z\",\n      location: \"Wonderland Hotel\",\n      name: \"Mad Hatter's Inn\",\n      notes: \"Close to the tea party venue.\"\n    }\n  ])\n  activity_insertMany(data: [\n    {\n      tripId: \"c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13\",\n      booked: true,\n      cost: 50.00,\n      createdAt: \"2024-01-06T09:00:00Z\",\n      date: \"2024-01-16\",\n      description: \"Enjoy a delightful tea party.\",\n      location: \"Tea Party Garden\",\n      name: \"Tea Party Extravaganza\",\n      notes: \"Don't be late!\"\n    }\n  ])\n  travelSegment_insertMany(data: [\n    {\n      tripId: \"c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13\",\n      arrivalLocation: \"Wonderland City\",\n      arrivalTime: \"2024-01-15T09:00:00Z\",\n      booked: true,\n      bookingReference: \"FLIGHT-TO-WNDRLND\",\n      createdAt: \"2024-01-01T08:00:00Z\",\n      departureLocation: \"Home Town\",\n      departureTime: \"2024-01-15T06:00:00Z\",\n      notes: \"Direct flight\",\n      type: \"Flight\"\n    }\n  ])\n}\n```","author":"model"}]},"outputDataContext":{"additionalContext":{"@type":"type.googleapis.com/google.cloud.cloudaicompanion.v1main.ChatOutputDataContext","relatedContent":{}}},"attributionContext":{"citationMetadata":{}}}
+[info] +  Wrote dataconnect\dataconnect.yaml 
+[info] +  Wrote dataconnect\seed_data.gql 
+[info] +  Wrote dataconnect\schema\schema.gql 
+[info] +  Wrote dataconnect\example\connector.yaml 
+[info] +  Wrote dataconnect\example\queries.gql 
+[info] +  Wrote dataconnect\example\connector.yaml 
+[info] i  dataconnect: Installing the generated SDKs ... 
+[info] i  dataconnect: downloading dataconnect-emulator-3.1.3.exe... {"metadata":{"emulator":{"name":"dataconnect"},"message":"downloading dataconnect-emulator-3.1.3.exe..."}}
+[debug] [2026-02-19T15:46:49.664Z] >>> [apiv2][query] GET https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.1.3 
+[debug] [2026-02-19T15:46:50.008Z] <<< [apiv2][status] GET https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.1.3 200
+[debug] [2026-02-19T15:46:50.008Z] <<< [apiv2][body] GET https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.1.3 [stream]
+[debug] [2026-02-19T15:46:52.407Z] defaultcredentials: writing to file C:\Users\iwing\AppData\Roaming\firebase\joonkiehong_gmail_com_application_default_credentials.json
+[error] !!  dataconnect: Failed to generate Data Connect SDKs
+Command failed with exit code 1 
+[info] +  dataconnect: Installed generated SDKs for . (web) 
+[info] i  Visit https://firebase.google.com/docs/data-connect/web-sdk#react for more information on how to set up React Generated SDKs for Firebase Data Connect 
+[info] 
+=== Firestore Setup
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-02-19T15:46:53.046Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:53.046Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:53.046Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/firestore.googleapis.com [none]
+[debug] [2026-02-19T15:46:53.046Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/firestore.googleapis.com  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:46:54.193Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/firestore.googleapis.com 200
+[debug] [2026-02-19T15:46:54.193Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/firestore.googleapis.com [omitted]
+[info] +  firestore: required API firestore.googleapis.com is enabled 
+[debug] [2026-02-19T15:46:54.211Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:54.211Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:46:54.212Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/my-trip-pro/databases [none]
+[debug] [2026-02-19T15:46:54.737Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/my-trip-pro/databases 200
+[debug] [2026-02-19T15:46:54.737Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/my-trip-pro/databases {"databases":[{"name":"projects/my-trip-pro/databases/(default)","uid":"1d28bec9-47a9-4060-a8e6-70b040dc1ac4","createTime":"2025-12-19T06:41:48.878085Z","updateTime":"2025-12-19T06:41:48.878085Z","locationId":"asia-northeast3","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-02-19T14:46:55.108802Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"v","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"IKqylrbz5ZIDMLCmrc6j15ID"}]}
+[info] 
+[info] Firestore Security Rules allow you to define how and when to allow
+[info] requests. You can keep these rules in your project directory
+[info] and publish them with firebase deploy.
+[info] 
+[debug] [2026-02-19T15:47:01.636Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:47:01.637Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:47:01.637Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/my-trip-pro/releases pageSize=10&pageToken=
+[debug] [2026-02-19T15:47:02.896Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/my-trip-pro/releases 200
+[debug] [2026-02-19T15:47:02.896Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/my-trip-pro/releases {"releases":[{"name":"projects/my-trip-pro/releases/cloud.firestore","rulesetName":"projects/my-trip-pro/rulesets/8829e477-0bca-4da6-95e1-7dfd00fff23c","createTime":"2025-12-19T06:41:57.469412Z","updateTime":"2026-02-09T13:51:32.080361Z"}]}
+[debug] [2026-02-19T15:47:02.897Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:47:02.897Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:47:02.897Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/my-trip-pro/rulesets/8829e477-0bca-4da6-95e1-7dfd00fff23c [none]
+[debug] [2026-02-19T15:47:03.973Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/my-trip-pro/rulesets/8829e477-0bca-4da6-95e1-7dfd00fff23c 200
+[debug] [2026-02-19T15:47:03.974Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/my-trip-pro/rulesets/8829e477-0bca-4da6-95e1-7dfd00fff23c [omitted]
+[info] i  Downloaded the existing Firestore Security Rules from the Firebase console 
+[info] 
+[info] Firestore indexes allow you to perform complex queries while
+[info] maintaining performance that scales with the size of the result
+[info] set. You can keep index definitions in your project directory
+[info] and publish them with firebase deploy.
+[info] 
+[debug] [2026-02-19T15:47:07.604Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:47:07.604Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:47:07.604Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:47:07.604Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:47:07.604Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/my-trip-pro/databases/(default)/collectionGroups/-/indexes [none]
+[debug] [2026-02-19T15:47:07.606Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/my-trip-pro/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* [none]
+[debug] [2026-02-19T15:47:07.734Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/my-trip-pro/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* 200
+[debug] [2026-02-19T15:47:07.734Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/my-trip-pro/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* {"fields":[{"name":"projects/my-trip-pro/databases/(default)/collectionGroups/__default__/fields/*","indexConfig":{"indexes":[{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","order":"ASCENDING"}],"state":"READY"},{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","order":"DESCENDING"}],"state":"READY"},{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","arrayConfig":"CONTAINS"}],"state":"READY"}]}},{"name":"projects/my-trip-pro/databases/(default)/collectionGroups/itineraries/fields/createdAt","indexConfig":{"indexes":[{"queryScope":"COLLECTION","fields":[{"fieldPath":"createdAt","order":"ASCENDING"}],"state":"READY"},{"queryScope":"COLLECTION","fields":[{"fieldPath":"createdAt","order":"DESCENDING"}],"state":"READY"},{"queryScope":"COLLECTION","fields":[{"fieldPath":"createdAt","arrayConfig":"CONTAINS"}],"state":"READY"},{"queryScope":"COLLECTION_GROUP","fields":[{"fieldPath":"createdAt","order":"DESCENDING"}],"state":"READY"}],"ancestorField":"projects/my-trip-pro/databases/(default)/collectionGroups/__default__/fields/*"}}]}
+[debug] [2026-02-19T15:47:07.734Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/my-trip-pro/databases/(default)/collectionGroups/-/indexes 200
+[debug] [2026-02-19T15:47:07.734Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/my-trip-pro/databases/(default)/collectionGroups/-/indexes {}
+[info] i  Downloaded the existing Firestore indexes from the Firebase console 
+[info] +  Wrote firestore.rules 
+[info] +  Wrote firestore.indexes.json 
+[info] 
+=== Genkit Setup
+[debug] [2026-02-19T15:47:18.868Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-19T15:47:18.868Z] > authorizing via signed-in user (joonkiehong@gmail.com)
+[debug] [2026-02-19T15:47:18.868Z] [iam] checking project my-trip-pro for permissions ["firebase.projects.get"]
+[debug] [2026-02-19T15:47:18.869Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:47:18.869Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:47:18.869Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/my-trip-pro:testIamPermissions [none]
+[debug] [2026-02-19T15:47:18.869Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/my-trip-pro:testIamPermissions  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:47:18.869Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/my-trip-pro:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2026-02-19T15:47:19.295Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/my-trip-pro:testIamPermissions 200
+[debug] [2026-02-19T15:47:19.295Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/my-trip-pro:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2026-02-19T15:47:19.296Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:47:19.296Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:47:19.296Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:47:19.297Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:47:19.297Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-02-19T15:47:19.297Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/cloudfunctions.googleapis.com  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:47:19.298Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/runtimeconfig.googleapis.com [none]
+[debug] [2026-02-19T15:47:19.298Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/runtimeconfig.googleapis.com  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:47:20.527Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/runtimeconfig.googleapis.com 200
+[debug] [2026-02-19T15:47:20.527Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/runtimeconfig.googleapis.com [omitted]
+[debug] [2026-02-19T15:47:20.549Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/cloudfunctions.googleapis.com 200
+[debug] [2026-02-19T15:47:20.550Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-02-19T15:47:20.550Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:47:20.550Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:47:20.550Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/cloudfunctions.googleapis.com:enable [none]
+[debug] [2026-02-19T15:47:20.550Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/cloudfunctions.googleapis.com:enable  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:47:21.037Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/cloudfunctions.googleapis.com:enable 200
+[debug] [2026-02-19T15:47:21.037Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/cloudfunctions.googleapis.com:enable [omitted]
+[info] Let's create a new codebase for your functions.
+[info] A directory corresponding to the codebase will be created in your project
+[info] with sample code pre-configured.
+
+[info] See https://firebase.google.com/docs/functions/organize-functions for
+[info] more information on organizing your functions using codebases.
+
+[info] Functions can be deployed with firebase deploy.
+
+[info] +  Wrote functions/.eslintrc.js 
+[info] +  Wrote functions/tsconfig.dev.json 
+[info] +  Wrote functions/package.json 
+[info] +  Wrote functions/tsconfig.json 
+[info] +  Wrote functions/src/index.ts 
+[info] +  Wrote functions/.gitignore 
+[info] 
+[info] i  genkit: Installing Genkit CLI version 1.28.0
+ 
+[info] i  genkit: Installing NPM packages for genkit 
+[info] +  genkit: Successfully installed NPM packages 
+[info] i  genkit: Updating tsconfig.json 
+[warn] !  genkit: Skipped updating tsconfig.json 
+[info] i  genkit: Updating package.json 
+[warn] !  genkit: Skipped updating package.json 
+[info] 
+[info] 
+Login to Google Cloud using:
+[info]     gcloud auth application-default login --project my-trip-pro
+
+[info] Then start the Genkit developer experience by running:
+[info]     cd functions && npm run genkit:start
+[info] 
+=== Functions Setup
+[debug] [2026-02-19T15:57:10.776Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-19T15:57:10.776Z] > authorizing via signed-in user (joonkiehong@gmail.com)
+[debug] [2026-02-19T15:57:10.776Z] [iam] checking project my-trip-pro for permissions ["firebase.projects.get"]
+[debug] [2026-02-19T15:57:10.776Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:10.777Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:10.777Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/my-trip-pro:testIamPermissions [none]
+[debug] [2026-02-19T15:57:10.777Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/my-trip-pro:testIamPermissions  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:57:10.778Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/my-trip-pro:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2026-02-19T15:57:11.017Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/my-trip-pro:testIamPermissions 200
+[debug] [2026-02-19T15:57:11.017Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/my-trip-pro:testIamPermissions {"permissions":["firebase.projects.get"]}
+[info] 
+Detected existing codebase(s): default
+
+[info] 
+Overwriting codebase default...
+
+[info] i  Skipping write of functions/package.json 
+[info] +  Wrote functions/index.js 
+[info] i  Skipping write of functions/.gitignore 
+[info] 
+=== App Hosting Setup
+[debug] [2026-02-19T15:57:54.964Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:54.964Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:54.964Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-02-19T15:57:54.964Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/firebaseapphosting.googleapis.com  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:57:56.154Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-02-19T15:57:56.154Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-02-19T15:57:56.173Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:56.173Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:56.173Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:56.173Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:56.174Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:56.174Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:56.174Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:56.174Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:56.175Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:56.175Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:56.175Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:56.175Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:56.175Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/developerconnect.googleapis.com [none]
+[debug] [2026-02-19T15:57:56.175Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/developerconnect.googleapis.com  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:57:56.176Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/cloudbuild.googleapis.com [none]
+[debug] [2026-02-19T15:57:56.176Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/cloudbuild.googleapis.com  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:57:56.177Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/secretmanager.googleapis.com [none]
+[debug] [2026-02-19T15:57:56.177Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/secretmanager.googleapis.com  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:57:56.178Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/run.googleapis.com [none]
+[debug] [2026-02-19T15:57:56.178Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/run.googleapis.com  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:57:56.180Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/artifactregistry.googleapis.com [none]
+[debug] [2026-02-19T15:57:56.180Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/artifactregistry.googleapis.com  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:57:56.181Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/iam.googleapis.com [none]
+[debug] [2026-02-19T15:57:56.181Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/iam.googleapis.com  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:57:57.278Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/developerconnect.googleapis.com 200
+[debug] [2026-02-19T15:57:57.279Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/developerconnect.googleapis.com [omitted]
+[debug] [2026-02-19T15:57:57.303Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/run.googleapis.com 200
+[debug] [2026-02-19T15:57:57.304Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/run.googleapis.com [omitted]
+[debug] [2026-02-19T15:57:57.318Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/secretmanager.googleapis.com 200
+[debug] [2026-02-19T15:57:57.318Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/secretmanager.googleapis.com [omitted]
+[debug] [2026-02-19T15:57:57.329Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/iam.googleapis.com 200
+[debug] [2026-02-19T15:57:57.329Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/iam.googleapis.com [omitted]
+[debug] [2026-02-19T15:57:57.340Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/cloudbuild.googleapis.com 200
+[debug] [2026-02-19T15:57:57.340Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/cloudbuild.googleapis.com [omitted]
+[debug] [2026-02-19T15:57:57.349Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/artifactregistry.googleapis.com 200
+[debug] [2026-02-19T15:57:57.350Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/my-trip-pro/services/artifactregistry.googleapis.com [omitted]
+[debug] [2026-02-19T15:57:57.364Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:57.364Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:57.365Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/my-trip-pro/serviceAccounts/firebase-app-hosting-compute@my-trip-pro.iam.gserviceaccount.com:testIamPermissions [none]
+[debug] [2026-02-19T15:57:57.365Z] >>> [apiv2][(partial)header] POST https://iam.googleapis.com/v1/projects/my-trip-pro/serviceAccounts/firebase-app-hosting-compute@my-trip-pro.iam.gserviceaccount.com:testIamPermissions  x-goog-user-project=my-trip-pro
+[debug] [2026-02-19T15:57:57.365Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/my-trip-pro/serviceAccounts/firebase-app-hosting-compute@my-trip-pro.iam.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2026-02-19T15:57:58.686Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/my-trip-pro/serviceAccounts/firebase-app-hosting-compute@my-trip-pro.iam.gserviceaccount.com:testIamPermissions 200
+[debug] [2026-02-19T15:57:58.686Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/my-trip-pro/serviceAccounts/firebase-app-hosting-compute@my-trip-pro.iam.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2026-02-19T15:57:58.686Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:58.687Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:58.687Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/my-trip-pro/serviceAccounts [none]
+[debug] [2026-02-19T15:57:58.687Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/my-trip-pro/serviceAccounts {"accountId":"firebase-app-hosting-compute","serviceAccount":{"displayName":"Firebase App Hosting compute service account","description":"Default service account used to run builds and deploys for Firebase App Hosting"}}
+[debug] [2026-02-19T15:57:59.091Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/my-trip-pro/serviceAccounts 409
+[debug] [2026-02-19T15:57:59.091Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/my-trip-pro/serviceAccounts [omitted]
+[debug] [2026-02-19T15:57:59.093Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:59.093Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:59.093Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/my-trip-pro:getIamPolicy [none]
+[debug] [2026-02-19T15:57:59.442Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/my-trip-pro:getIamPolicy 200
+[debug] [2026-02-19T15:57:59.442Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/my-trip-pro:getIamPolicy {"version":1,"etag":"BwZLLziGes0=","bindings":[{"role":"roles/cloudbuild.builds.builder","members":["serviceAccount:817442711390@cloudbuild.gserviceaccount.com"]},{"role":"roles/cloudbuild.serviceAgent","members":["serviceAccount:service-817442711390@gcp-sa-cloudbuild.iam.gserviceaccount.com"]},{"role":"roles/cloudfunctions.serviceAgent","members":["serviceAccount:service-817442711390@gcf-admin-robot.iam.gserviceaccount.com"]},{"role":"roles/containerregistry.ServiceAgent","members":["serviceAccount:service-817442711390@containerregistry.iam.gserviceaccount.com"]},{"role":"roles/developerconnect.readTokenAccessor","members":["serviceAccount:firebase-app-hosting-compute@my-trip-pro.iam.gserviceaccount.com"]},{"role":"roles/developerconnect.serviceAgent","members":["serviceAccount:service-817442711390@gcp-sa-devconnect.iam.gserviceaccount.com"]},{"role":"roles/editor","members":["serviceAccount:817442711390-compute@developer.gserviceaccount.com","serviceAccount:my-trip-pro@appspot.gserviceaccount.com"]},{"role":"roles/firebase.managementServiceAgent","members":["serviceAccount:service-817442711390@gcp-sa-firebase.iam.gserviceaccount.com"]},{"role":"roles/firebase.sdkAdminServiceAgent","members":["serviceAccount:firebase-adminsdk-fbsvc@my-trip-pro.iam.gserviceaccount.com","serviceAccount:firebase-app-hosting-compute@my-trip-pro.iam.gserviceaccount.com"]},{"role":"roles/firebaseapphosting.computeRunner","members":["serviceAccount:firebase-app-hosting-compute@my-trip-pro.iam.gserviceaccount.com"]},{"role":"roles/firebaseapphosting.serviceAgent","members":["serviceAccount:service-817442711390@gcp-sa-firebaseapphosting.iam.gserviceaccount.com"]},{"role":"roles/firebaseauth.admin","members":["serviceAccount:firebase-adminsdk-fbsvc@my-trip-pro.iam.gserviceaccount.com"]},{"role":"roles/firebasedataconnect.serviceAgent","members":["serviceAccount:service-817442711390@gcp-sa-firebasedataconnect.iam.gserviceaccount.com"]},{"role":"roles/firebaserules.system","members":["serviceAccount:service-817442711390@firebase-rules.iam.gserviceaccount.com"]},{"role":"roles/firestore.serviceAgent","members":["serviceAccount:service-817442711390@gcp-sa-firestore.iam.gserviceaccount.com"]},{"role":"roles/iam.serviceAccountTokenCreator","members":["serviceAccount:firebase-adminsdk-fbsvc@my-trip-pro.iam.gserviceaccount.com"]},{"role":"roles/owner","members":["user:joonkiehong@gmail.com"]},{"role":"roles/run.serviceAgent","members":["serviceAccount:service-817442711390@serverless-robot-prod.iam.gserviceaccount.com"]},{"role":"roles/secretmanager.admin_withcond_45e5f3761b3eb4ab7575","members":["serviceAccount:service-817442711390@gcp-sa-devconnect.iam.gserviceaccount.com"]}]}
+[debug] [2026-02-19T15:57:59.443Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:59.443Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:57:59.443Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/my-trip-pro:setIamPolicy [none]
+[debug] [2026-02-19T15:57:59.443Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/my-trip-pro:setIamPolicy {"policy":{"version":1,"etag":"BwZLLziGes0=","bindings":[{"role":"roles/cloudbuild.builds.builder","members":["serviceAccount:817442711390@cloudbuild.gserviceaccount.com"]},{"role":"roles/cloudbuild.serviceAgent","members":["serviceAccount:service-817442711390@gcp-sa-cloudbuild.iam.gserviceaccount.com"]},{"role":"roles/cloudfunctions.serviceAgent","members":["serviceAccount:service-817442711390@gcf-admin-robot.iam.gserviceaccount.com"]},{"role":"roles/containerregistry.ServiceAgent","members":["serviceAccount:service-817442711390@containerregistry.iam.gserviceaccount.com"]},{"role":"roles/developerconnect.readTokenAccessor","members":["serviceAccount:firebase-app-hosting-compute@my-trip-pro.iam.gserviceaccount.com"]},{"role":"roles/developerconnect.serviceAgent","members":["serviceAccount:service-817442711390@gcp-sa-devconnect.iam.gserviceaccount.com"]},{"role":"roles/editor","members":["serviceAccount:817442711390-compute@developer.gserviceaccount.com","serviceAccount:my-trip-pro@appspot.gserviceaccount.com"]},{"role":"roles/firebase.managementServiceAgent","members":["serviceAccount:service-817442711390@gcp-sa-firebase.iam.gserviceaccount.com"]},{"role":"roles/firebase.sdkAdminServiceAgent","members":["serviceAccount:firebase-adminsdk-fbsvc@my-trip-pro.iam.gserviceaccount.com","serviceAccount:firebase-app-hosting-compute@my-trip-pro.iam.gserviceaccount.com"]},{"role":"roles/firebaseapphosting.computeRunner","members":["serviceAccount:firebase-app-hosting-compute@my-trip-pro.iam.gserviceaccount.com"]},{"role":"roles/firebaseapphosting.serviceAgent","members":["serviceAccount:service-817442711390@gcp-sa-firebaseapphosting.iam.gserviceaccount.com"]},{"role":"roles/firebaseauth.admin","members":["serviceAccount:firebase-adminsdk-fbsvc@my-trip-pro.iam.gserviceaccount.com"]},{"role":"roles/firebasedataconnect.serviceAgent","members":["serviceAccount:service-817442711390@gcp-sa-firebasedataconnect.iam.gserviceaccount.com"]},{"role":"roles/firebaserules.system","members":["serviceAccount:service-817442711390@firebase-rules.iam.gserviceaccount.com"]},{"role":"roles/firestore.serviceAgent","members":["serviceAccount:service-817442711390@gcp-sa-firestore.iam.gserviceaccount.com"]},{"role":"roles/iam.serviceAccountTokenCreator","members":["serviceAccount:firebase-adminsdk-fbsvc@my-trip-pro.iam.gserviceaccount.com"]},{"role":"roles/owner","members":["user:joonkiehong@gmail.com"]},{"role":"roles/run.serviceAgent","members":["serviceAccount:service-817442711390@serverless-robot-prod.iam.gserviceaccount.com"]},{"role":"roles/secretmanager.admin_withcond_45e5f3761b3eb4ab7575","members":["serviceAccount:service-817442711390@gcp-sa-devconnect.iam.gserviceaccount.com"]},{"role":"roles/storage.objectViewer","members":["serviceAccount:firebase-app-hosting-compute@my-trip-pro.iam.gserviceaccount.com"]}]},"updateMask":"bindings"}
+[debug] [2026-02-19T15:58:00.729Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/my-trip-pro:setIamPolicy 200
+[debug] [2026-02-19T15:58:00.729Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/my-trip-pro:setIamPolicy {"version":1,"etag":"BwZLL1575kU=","bindings":[{"role":"roles/cloudbuild.builds.builder","members":["serviceAccount:817442711390@cloudbuild.gserviceaccount.com"]},{"role":"roles/cloudbuild.serviceAgent","members":["serviceAccount:service-817442711390@gcp-sa-cloudbuild.iam.gserviceaccount.com"]},{"role":"roles/cloudfunctions.serviceAgent","members":["serviceAccount:service-817442711390@gcf-admin-robot.iam.gserviceaccount.com"]},{"role":"roles/containerregistry.ServiceAgent","members":["serviceAccount:service-817442711390@containerregistry.iam.gserviceaccount.com"]},{"role":"roles/developerconnect.readTokenAccessor","members":["serviceAccount:firebase-app-hosting-compute@my-trip-pro.iam.gserviceaccount.com"]},{"role":"roles/developerconnect.serviceAgent","members":["serviceAccount:service-817442711390@gcp-sa-devconnect.iam.gserviceaccount.com"]},{"role":"roles/editor","members":["serviceAccount:817442711390-compute@developer.gserviceaccount.com","serviceAccount:my-trip-pro@appspot.gserviceaccount.com"]},{"role":"roles/firebase.managementServiceAgent","members":["serviceAccount:service-817442711390@gcp-sa-firebase.iam.gserviceaccount.com"]},{"role":"roles/firebase.sdkAdminServiceAgent","members":["serviceAccount:firebase-adminsdk-fbsvc@my-trip-pro.iam.gserviceaccount.com","serviceAccount:firebase-app-hosting-compute@my-trip-pro.iam.gserviceaccount.com"]},{"role":"roles/firebaseapphosting.computeRunner","members":["serviceAccount:firebase-app-hosting-compute@my-trip-pro.iam.gserviceaccount.com"]},{"role":"roles/firebaseapphosting.serviceAgent","members":["serviceAccount:service-817442711390@gcp-sa-firebaseapphosting.iam.gserviceaccount.com"]},{"role":"roles/firebaseauth.admin","members":["serviceAccount:firebase-adminsdk-fbsvc@my-trip-pro.iam.gserviceaccount.com"]},{"role":"roles/firebasedataconnect.serviceAgent","members":["serviceAccount:service-817442711390@gcp-sa-firebasedataconnect.iam.gserviceaccount.com"]},{"role":"roles/firebaserules.system","members":["serviceAccount:service-817442711390@firebase-rules.iam.gserviceaccount.com"]},{"role":"roles/firestore.serviceAgent","members":["serviceAccount:service-817442711390@gcp-sa-firestore.iam.gserviceaccount.com"]},{"role":"roles/iam.serviceAccountTokenCreator","members":["serviceAccount:firebase-adminsdk-fbsvc@my-trip-pro.iam.gserviceaccount.com"]},{"role":"roles/owner","members":["user:joonkiehong@gmail.com"]},{"role":"roles/run.serviceAgent","members":["serviceAccount:service-817442711390@serverless-robot-prod.iam.gserviceaccount.com"]},{"role":"roles/secretmanager.admin_withcond_45e5f3761b3eb4ab7575","members":["serviceAccount:service-817442711390@gcp-sa-devconnect.iam.gserviceaccount.com"]},{"role":"roles/storage.objectViewer","members":["serviceAccount:firebase-app-hosting-compute@my-trip-pro.iam.gserviceaccount.com"]}]}
+[info] i  This command links your local project to Firebase App Hosting. You will be able to deploy your web app with `firebase deploy` after setup. 
+[debug] [2026-02-19T15:58:12.470Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:58:12.470Z] Checked if tokens are valid: true, expires at: 1771519285916
+[debug] [2026-02-19T15:58:12.470Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/my-trip-pro/locations/-/backends 
+[debug] [2026-02-19T15:58:14.014Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/my-trip-pro/locations/-/backends 200
+[debug] [2026-02-19T15:58:14.014Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/my-trip-pro/locations/-/backends {}

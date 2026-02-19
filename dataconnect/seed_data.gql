@@ -1,0 +1,100 @@
+mutation CreateSeedData @transaction @auth(level: USER, insecureReason: "Seed data mutation, safe for any logged in user to run once.") {
+  user_insertMany(data: [
+    {
+      id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+      createdAt: "2024-01-01T10:00:00Z",
+      displayName: "Alice Wonderland",
+      email: "alice@example.com",
+      photoUrl: "https://example.com/alice.jpg"
+    },
+    {
+      id: "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+      createdAt: "2024-01-01T10:05:00Z",
+      displayName: "Bob The Builder",
+      email: "bob@example.com",
+      photoUrl: "https://example.com/bob.jpg"
+    }
+  ])
+  trip_insertMany(data: [
+    {
+      id: "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+      ownerId: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+      budget: 2500.00,
+      createdAt: "2024-01-10T14:30:00Z",
+      description: "A magical trip to Wonderland.",
+      destination: "Wonderland",
+      endDate: "2024-01-20",
+      name: "Wonderland Adventure",
+      startDate: "2024-01-15"
+    },
+    {
+      id: "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+      ownerId: "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+      budget: 1500.00,
+      createdAt: "2024-01-12T11:00:00Z",
+      description: "Building new structures and exploring.",
+      destination: "Construction Site A",
+      endDate: "2024-02-05",
+      name: "Building Expedition",
+      startDate: "2024-02-01"
+    }
+  ])
+  tripParticipant_insertMany(data: [
+    {
+      userId: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+      tripId: "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+      role: "Organizer"
+    },
+    {
+      userId: "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+      tripId: "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+      role: "Participant"
+    },
+    {
+      userId: "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+      tripId: "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+      role: "Organizer"
+    }
+  ])
+  accommodation_insertMany(data: [
+    {
+      tripId: "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+      booked: true,
+      bookingReference: "WNDRLND-HOTEL-REF",
+      checkInDate: "2024-01-15",
+      checkOutDate: "2024-01-20",
+      cost: 1000.00,
+      createdAt: "2024-01-05T12:00:00Z",
+      location: "Wonderland Hotel",
+      name: "Mad Hatter's Inn",
+      notes: "Close to the tea party venue."
+    }
+  ])
+  activity_insertMany(data: [
+    {
+      tripId: "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+      booked: true,
+      cost: 50.00,
+      createdAt: "2024-01-06T09:00:00Z",
+      date: "2024-01-16",
+      description: "Enjoy a delightful tea party.",
+      location: "Tea Party Garden",
+      name: "Tea Party Extravaganza",
+      notes: "Don't be late!"
+    }
+  ])
+  travelSegment_insertMany(data: [
+    {
+      tripId: "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+      arrivalLocation: "Wonderland City",
+      arrivalTime: "2024-01-15T09:00:00Z",
+      booked: true,
+      bookingReference: "FLIGHT-TO-WNDRLND",
+      createdAt: "2024-01-01T08:00:00Z",
+      departureLocation: "Home Town",
+      departureTime: "2024-01-15T06:00:00Z",
+      notes: "Direct flight",
+      type: "Flight"
+    }
+  ])
+}
