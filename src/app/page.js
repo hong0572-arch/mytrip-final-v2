@@ -517,11 +517,13 @@ export default function Home() {
 
     const closeIntro = () => { setShowIntro(false); const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone; if (!isStandalone) setShowWelcome(true); };
     const handleLogin = async () => {
+        alert("1. 로그인 버튼이 정상적으로 눌렸습니다!");
         try {
             const provider = new GoogleAuthProvider();
-            await signInWithRedirect(auth, provider); // 무조건 리다이렉트 실행
+            alert("2. 구글 로그인 화면으로 이동을 시도합니다...");
+            await signInWithRedirect(auth, provider);
         } catch (error) {
-            console.error("로그인 시도 실패:", error);
+            alert("🚨 로그인 에러 원인: " + error.message);
         }
     };
     // ✨ PWA 설치 버튼 클릭 핸들러
