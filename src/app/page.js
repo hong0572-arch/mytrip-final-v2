@@ -524,7 +524,7 @@ export default function Home() {
 
             // 성공하면 바로 환영 메시지를 띄웁니다.
             if (result && result.user) {
-                alert("🎉 구글 로그인 성공! 환영합니다!");
+
             }
         } catch (error) {
             alert("🚨 로그인 에러 원인: " + error.message);
