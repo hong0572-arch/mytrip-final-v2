@@ -471,10 +471,12 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
 
     const formatTripText = (url) => {
         if (!tripPlan) return "";
-        let text = `✈️ [My Trip Pro] AI 여행 일정\n\n`;
+        let text = `✈️ [Trip Maker] AI가 만든 여행 일정\n\n`;
         text += `📍 제목: ${tripPlan.tripTitle}\n`;
         if (tripPlan.budgetBreakdown?.length > 0) text += `\n💰 예상 견적:\n${tripPlan.budgetBreakdown.join('\n')}\n`;
-        if (url) text += `\n🔗 일정 상세 보기: http://localhost:3000/share/example`; // 로컬 테스트용
+
+        // ✅ 실제 생성된 공유 링크(url 변수)가 출력되도록 수정했습니다.
+        if (url) text += `\n🔗 일정 상세 보기: ${url}`;
         return text;
     };
 
