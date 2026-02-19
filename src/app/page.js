@@ -27,8 +27,7 @@ import { ko } from 'date-fns/locale';
 
 // Firebase
 import { auth, db } from "../lib/firebase";
-import { onAuthStateChanged, signInWithRedirect, signInWithPopup, getRedirectResult, GoogleAuthProvider } from "firebase/auth";
-
+import { onAuthStateChanged, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "firebase/auth";
 // firebase/firestore import 부분을 찾아 아래 코드로 교체하세요. (모든 기능 포함)
 import {
     doc, getDoc, setDoc, deleteDoc, updateDoc, increment, serverTimestamp,
@@ -433,16 +432,12 @@ export default function Home() {
             try {
                 const result = await getRedirectResult(auth);
                 if (result && result.user) {
-                    console.log("로그인 성공:", result.user);
-                    const userRef = doc(db, "users", result.user.uid);
-                    const userSnap = await getDoc(userRef);
-                    if (!userSnap.exists()) {
-                        await setDoc(userRef, { email: result.user.email, name: result.user.displayName, points: 1000, createdAt: serverTimestamp(), quizStats: { date: "", count: 0 } });
-                        await addDoc(collection(db, "users", result.user.uid, "point_history"), { desc: "신규 가입 축하금", amount: 1000, createdAt: serverTimestamp() });
-                    }
+                    alert("🎉 로그인에 성공했습니다!");
+                    // (가입 축하금 등 복잡한 로직은 나중에 추가하고 지금은 성공 알림만 띄웁니다)
                 }
             } catch (error) {
-                console.error("리다이렉트 로그인 에러:", error);
+                console.error("로그인 에러:", error);
+                alert("로그인 중 문제가 발생했습니다.");
             }
         };
         checkLoginResult();
@@ -522,19 +517,11 @@ export default function Home() {
 
     const closeIntro = () => { setShowIntro(false); const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone; if (!isStandalone) setShowWelcome(true); };
     const handleLogin = async () => {
-        const provider = new GoogleAuthProvider();
-        const isMobileApp = window.matchMedia('(display-mode: standalone)').matches || window.innerWidth <= 768;
-
         try {
-            if (isMobileApp) {
-                // 스마트폰(앱)에서는 리다이렉트
-                await signInWithRedirect(auth, provider);
-            } else {
-                // PC(웹)에서는 팝업창
-                await signInWithPopup(auth, provider);
-            }
+            const provider = new GoogleAuthProvider();
+            await signInWithRedirect(auth, provider); // 무조건 리다이렉트 실행
         } catch (error) {
-            console.error("로그인 실패:", error);
+            console.error("로그인 시도 실패:", error);
         }
     };
     // ✨ PWA 설치 버튼 클릭 핸들러
