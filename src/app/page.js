@@ -870,15 +870,7 @@ export default function Home() {
                             </span>
                         </button>
 
-                        {/* ✨ 앱 모드가 아닐 때만(!isStandalone) 버튼 표시 */}
-                        {!isStandalone && deferredPrompt && (
-                            <button
-                                onClick={handleInstallClick}
-                                className="px-3 py-1.5 rounded-full bg-rose-500 text-white font-bold text-xs shadow-md animate-pulse flex items-center gap-1 hover:bg-rose-600 transition-colors"
-                            >
-                                <Download size={12} /> 앱 설치
-                            </button>
-                        )}
+
 
                         {user ? (
                             <div className="flex items-center gap-2">
