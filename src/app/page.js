@@ -27,7 +27,7 @@ import { ko } from 'date-fns/locale';
 
 // Firebase
 import { auth, db } from "../lib/firebase";
-import { onAuthStateChanged, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "firebase/auth";
+import { onAuthStateChanged, signInWithRedirect, signInWithPopup, getRedirectResult, GoogleAuthProvider } from "firebase/auth";
 // firebase/firestore import 부분을 찾아 아래 코드로 교체하세요. (모든 기능 포함)
 import {
     doc, getDoc, setDoc, deleteDoc, updateDoc, increment, serverTimestamp,
@@ -524,6 +524,7 @@ export default function Home() {
 
             // 성공하면 바로 환영 메시지를 띄웁니다.
             if (result && result.user) {
+
 
             }
         } catch (error) {

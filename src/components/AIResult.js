@@ -646,9 +646,31 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
                     <div onMouseDown={handleDragStart} onTouchStart={handleDragStart} className="w-full flex items-center justify-between px-6 pt-3 pb-2 bg-white rounded-t-3xl border-b border-gray-100 shrink-0 cursor-row-resize hover:bg-gray-50">
                         <div className="w-16"></div>
                         <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
-                        <div className="flex gap-2">
-                            {isEditMode && (<button onClick={(e) => { e.stopPropagation(); handleAutoFixAll(); }} disabled={loadingAction === 'autoFix'} className="flex items-center gap-1 text-[10px] font-bold px-3 py-1.5 rounded-full border bg-violet-50 text-violet-600 border-violet-200 hover:bg-violet-100 transition shadow-sm">{loadingAction === 'autoFix' ? <Loader2 className="animate-spin" size={12} /> : <Wand2 size={12} />} 전체 위치 보정</button>)}
-                            <button onClick={(e) => { e.stopPropagation(); setIsEditMode(!isEditMode); }} className={`flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full border shadow-sm transition-all ${isEditMode ? 'bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-200' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}>{isEditMode ? <><Check size={14} /> 완료</> : <><Pencil size={14} /> 편집</>}</button>
+                        <div className="flex items-center gap-2 relative">
+                            {isEditMode && (
+                                <button onClick={(e) => { e.stopPropagation(); handleAutoFixAll(); }} disabled={loadingAction === 'autoFix'} className="flex items-center gap-1 text-[10px] font-bold px-3 py-1.5 rounded-full border bg-violet-50 text-violet-600 border-violet-200 hover:bg-violet-100 transition shadow-sm">
+                                    {loadingAction === 'autoFix' ? <Loader2 className="animate-spin" size={12} /> : <Wand2 size={12} />} 전체 위치 보정
+                                </button>
+                            )}
+
+                            {/* ✨ 말풍선 위치 수정: 위쪽이 아니라 버튼 '왼쪽'으로 옮겨서 잘림 방지! */}
+                            {!isEditMode && (
+                                <div className="absolute right-[calc(100%+12px)] top-1/2 -translate-y-1/2 bg-rose-500 text-white text-[12px] font-bold px-3 py-1.5 rounded-xl shadow-md animate-bounce whitespace-nowrap z-50">
+                                    나의 여행을 편집하세요!
+                                    {/* 뾰족한 꼬리가 오른쪽(버튼 쪽)을 향하도록 수정 */}
+                                    <div className="absolute top-1/2 -right-1 -translate-y-1/2 w-2.5 h-2.5 bg-rose-500 transform rotate-45"></div>
+                                </div>
+                            )}
+
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setIsEditMode(!isEditMode); }}
+                                className={`relative flex items-center gap-1 text-sm font-bold px-4 py-1.5 rounded-full border shadow-md transition-all z-40 ${isEditMode
+                                    ? 'bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-200'
+                                    : 'bg-white text-rose-500 border-rose-200 hover:bg-rose-50 ring-1 ring-rose-100'
+                                    }`}
+                            >
+                                {isEditMode ? <><Check size={15} /> 완료</> : <><Pencil size={20} /> 편집</>}
+                            </button>
                         </div>
                     </div>
 
