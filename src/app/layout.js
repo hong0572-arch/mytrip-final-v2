@@ -24,6 +24,14 @@ export const metadata = {
   title: SITE_TITLE,
   description: SITE_DESC,
 
+  verification: {
+    google: "8nAcn09V6787EXe4NIVWp49LJ6Ot--3wsQMrB3EdHfA",
+
+  },
+
+
+
+
   // ✅ [PWA 추가 2] 매니페스트 및 아이콘 연결
   manifest: "/manifest.json",
   icons: {
@@ -36,7 +44,7 @@ export const metadata = {
     canonical: '/',
   },
 
-  keywords: ["여행 계획", "여행 일정 짜기", "여행 코스", "AI 여행 코스", "트립메이커", "Trip Maker", "유럽 여행 코스", "아프리카 여행 코스",
+  keywords: ["AI Trip Maker", "AI 여행 계획", "AI 여행 코스", "AI 여행 일정", "여행 일정 짜기", "여행 코스", "AI 여행 코스", "트립메이커", "Trip Maker", "유럽 여행 코스", "아프리카 여행 코스",
     "미주 여행 코스", "일본 여행 코스", "중국 여행 코스", "오사카 일정", "호주 여행 코스", "남미 여행 코스", "중남미 여행 코스", "여행 플래너",
     "월드컵", "월드컵 응원", "월드컵 코스"],
 
