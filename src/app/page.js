@@ -269,54 +269,45 @@ const translations = {
 };
 
 // [수정] AI 일정에서 첫 도시(IN)와 마지막 도시(OUT) 코드를 찾아내는 함수
-// [수정] AI 일정에서 도시 코드를 꼼꼼하게 찾아내는 함수
-const extractIataFromItinerary = (tripResult) => {
-    let inCode = null;
-    let outCode = null;
+// 💡 [핵심] 영어 단어 오작동(Venice에서 nice를 찾는 현상)을 완벽 차단하는 검색기
+const findIataCode = (text) => {
+    if (!text) return null;
+    const lowerText = text.toLowerCase();
 
+    for (const [city, code] of Object.entries(CITY_TO_IATA)) {
+        const isKorean = /[가-힣]/.test(city);
+        if (isKorean) {
+            if (lowerText.includes(city)) return code; // 한국어는 포함만 되어도 인정
+        } else {
+            // 영어는 독립된 단어일 때만 잡도록 정규식 처리 (예: la가 vladivostok을 잡지 못함)
+            const regex = new RegExp(`\\b${city.toLowerCase()}\\b`);
+            if (regex.test(lowerText)) return code;
+        }
+    }
+    return null;
+};
+
+// [수정] AI 일정에서 IN/OUT 코드를 안전하게 추출
+const extractIataFromItinerary = (tripResult) => {
+    let inCode = null; let outCode = null;
     if (!tripResult || !tripResult.itinerary) return { inCode, outCode };
 
     const days = tripResult.itinerary;
     const firstDay = days[0];
     const lastDay = days[days.length - 1];
 
-    // 1. 첫날 일정에서 IN 공항 찾기
     if (firstDay) {
-        // 날짜 제목 + 장소 이름 + 설명을 전부 합쳐서 영어/한글 검색
-        const textToCheck = `${firstDay.day} ${tripResult.tripTitle} ${firstDay.places?.map(p => p.name + " " + (p.description || "")).join(' ')}`.toLowerCase();
-
-        for (const [city, code] of Object.entries(CITY_TO_IATA)) {
-            if (textToCheck.includes(city.toLowerCase())) {
-                inCode = code;
-                break; // 찾았으면 탈출
-            }
-        }
+        const textToCheck = `${firstDay.day} ${tripResult.tripTitle} ${firstDay.places?.map(p => p.name + " " + (p.description || "")).join(' ')}`;
+        inCode = findIataCode(textToCheck);
     }
-
-    // 2. 마지막 날 일정에서 OUT 공항 찾기
     if (lastDay) {
-        const textToCheck = `${lastDay.day} ${tripResult.tripTitle} ${lastDay.places?.map(p => p.name + " " + (p.description || "")).join(' ')}`.toLowerCase();
-
-        for (const [city, code] of Object.entries(CITY_TO_IATA)) {
-            if (textToCheck.includes(city.toLowerCase())) {
-                outCode = code;
-                break;
-            }
-        }
+        const textToCheck = `${lastDay.day} ${tripResult.tripTitle} ${lastDay.places?.map(p => p.name + " " + (p.description || "")).join(' ')}`;
+        outCode = findIataCode(textToCheck);
     }
-
-    // 3. 만약 위에서 못 찾았으면, '여행 제목(tripTitle)'이나 'destination'에서라도 찾기
     if (!inCode) {
-        const titleCheck = (tripResult.tripTitle || "").toLowerCase();
-        for (const [city, code] of Object.entries(CITY_TO_IATA)) {
-            if (titleCheck.includes(city.toLowerCase())) {
-                inCode = code;
-                if (!outCode) outCode = code; // OUT도 못 찾았으면 일단 같은 곳으로
-                break;
-            }
-        }
+        inCode = findIataCode(tripResult.tripTitle || tripResult.destination || "");
+        if (!outCode) outCode = inCode;
     }
-
     return { inCode, outCode };
 };
 
@@ -364,6 +355,9 @@ export default function Home() {
         return () => clearInterval(interval);
     }, [loading]); // 이제 loading을 찾을 수 있어서 에러가 안 납니다!
 
+
+    // 수동 공항 입력 팝업창 상태 관리
+    const [manualAirport, setManualAirport] = useState({ show: false, trip: null, searchStr: "", error: "" });
 
 
     // --- 상태 관리 ---
@@ -725,60 +719,69 @@ export default function Home() {
         return null;
     };
 
-    // handleTripClick 함수 전체 교체 또는 수정
-    // [수정] handleTripClick: 도시 이름(destinationName)을 함께 전송하여 Trip.com 라벨 오류 해결
-    const handleTripClick = async (trip) => {
-        let arrivalCode = trip.arrivalIata || trip.iata;
-        let returnOriginCode = trip.departureIata || trip.iata;
 
-        // 코드가 없으면 destination이나 title에서 다시 찾아봄
-        if (!arrivalCode && trip.destination) {
-            for (const [city, code] of Object.entries(CITY_TO_IATA)) {
-                if (trip.destination.includes(city) || (trip.title && trip.title.includes(city))) {
-                    arrivalCode = code;
-                    if (!returnOriginCode) returnOriginCode = code;
-                    break;
-                }
-            }
+    // ✈️ 실제 항공권 검색을 실행하는 함수 (분리)
+    const proceedFlightSearch = async (trip, arrivalCode, returnOriginCode) => {
+        const depDateStr = formatDateForAPI(trip.startDate);
+        if (!depDateStr) return;
+        let retDateStr = formatDateForAPI(trip.endDate);
+        if (!retDateStr) {
+            const d = new Date(depDateStr); d.setDate(d.getDate() + 4);
+            retDateStr = d.toISOString().split('T')[0];
+        }
+        setSelectedTrip({ ...trip, iata: arrivalCode, returnIata: returnOriginCode, returnDateCalc: retDateStr });
+        setIsSearching(true);
+        setFlightResults([]);
+        try {
+            const res = await fetch('/api/flights', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ destinationCode: arrivalCode, returnOriginCode: returnOriginCode, departureDate: depDateStr, returnDate: retDateStr, language: language, destinationName: trip.destination || trip.title }) });
+            const data = await res.json();
+            if (data.flights) { setFlightResults(data.flights); } else { setFlightResults([]); }
+        } catch (error) { console.error(error); } finally { setIsSearching(false); }
+    };
+
+    // ✈️ 내 일정 클릭 시 실행되는 함수 (수정됨: AI 환각 방지 철통 방어!)
+    // ✈️ 내 일정 클릭 시 실행되는 함수 (안전한 검색기 적용!)
+    const handleTripClick = async (trip) => {
+        const searchText = `${trip.destination || ''} ${trip.title || ''}`;
+
+        // 1. 철통 방어: 안전한 주소록 검색기를 먼저 돌립니다.
+        let arrivalCode = findIataCode(searchText);
+        let returnOriginCode = arrivalCode;
+
+        // 2. 주소록에 없으면 AI가 지어준 코드를 믿어봅니다.
+        if (!arrivalCode) {
+            arrivalCode = trip.arrivalIata || trip.iata;
+            returnOriginCode = trip.departureIata || trip.iata;
         }
 
-        if (!arrivalCode) {
-            alert("공항 정보를 찾을 수 없습니다. (도시명 확인 필요: " + (trip.destination || trip.title) + ")");
+        // 3. 그래도 코드가 없거나 영문 3자리(예: DPS)가 아니면 무조건 수동 팝업을 띄웁니다!
+        if (!arrivalCode || arrivalCode.length !== 3) {
+            setManualAirport({ show: true, trip: trip, searchStr: "", error: "" });
             return;
         }
 
-        const depDateStr = formatDateForAPI(trip.startDate);
-        if (!depDateStr) { alert("날짜 정보 오류"); return; }
-        let retDateStr = formatDateForAPI(trip.endDate);
-        if (!retDateStr) { const d = new Date(depDateStr); d.setDate(d.getDate() + 4); retDateStr = d.toISOString().split('T')[0]; }
+        proceedFlightSearch(trip, arrivalCode, returnOriginCode);
+    };
 
-        setSelectedTrip({
-            ...trip,
-            iata: arrivalCode,
-            returnIata: returnOriginCode,
-            returnDateCalc: retDateStr
-        });
+    // ✈️ 사용자가 팝업창에서 수동으로 입력했을 때 처리 (안전한 검색기 적용!)
+    const handleManualSubmit = () => {
+        const input = manualAirport.searchStr.trim();
+        if (!input) { setManualAirport(prev => ({ ...prev, error: "도시명이나 공항 코드를 입력해주세요." })); return; }
 
-        setIsSearching(true);
-        setFlightResults([]);
+        let resolvedCode = null;
+        if (/^[A-Za-z]{3}$/.test(input)) {
+            resolvedCode = input.toUpperCase(); // DPS 처럼 바로 치면 100% 통과
+        } else {
+            resolvedCode = findIataCode(input); // 한글/영문 도시명 치면 안전하게 검색
+        }
 
-        try {
-            const res = await fetch('/api/flights', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    destinationCode: arrivalCode,
-                    returnOriginCode: returnOriginCode,
-                    departureDate: depDateStr,
-                    returnDate: retDateStr,
-                    language: language,
-                    // ✨ [핵심] 도시 이름(예: 오사카)을 같이 보냅니다!
-                    destinationName: trip.destination || trip.title
-                })
-            });
-            const data = await res.json();
-            if (data.flights && data.flights.length > 0) { setFlightResults(data.flights); } else { setFlightResults([]); }
-        } catch (error) { console.error(error); alert("항공권 조회 중 오류가 발생했습니다."); } finally { setIsSearching(false); }
+        if (resolvedCode) {
+            const trip = manualAirport.trip;
+            setManualAirport({ show: false, trip: null, searchStr: "", error: "" });
+            proceedFlightSearch(trip, resolvedCode, resolvedCode);
+        } else {
+            setManualAirport(prev => ({ ...prev, error: "공항을 찾을 수 없습니다. (예: 발리, DPS)" }));
+        }
     };
 
     const toggleLuxuryMode = () => { setIsLuxury(!isLuxury); setFormData(prev => ({ ...prev, hotelType: !isLuxury ? "5성급 스위트룸/풀빌라" : "호텔" })); };
@@ -791,7 +794,6 @@ export default function Home() {
         if (!formData.destination) { alert("여행지를 입력해주세요!"); return; }
         if (!formData.startDate || !formData.endDate) { alert("날짜를 선택해주세요!"); return; }
 
-
         setLoading(true);
         try {
             const response = await fetch("/api/generate", {
@@ -800,24 +802,17 @@ export default function Home() {
                 body: JSON.stringify({ ...formData, isLuxury, language }), // 🌍 language 상태 추가 전송
             });
             const data = await response.json();
-            // generatePlan 함수 내부 수정
+
             if (data.result) {
-                setResult(data.result);
+                // ✨ [수정됨] 눈치 없이 미리 DB에 저장(addDoc)하던 코드를 완벽하게 삭제했습니다!
+                // 이제 결과 화면(AIResult)만 띄워주고, 저장은 유저가 직접 '저장 버튼'을 눌렀을 때만 작동합니다.
 
-                // ✨ [수정] AI 결과에서 IN/OUT 공항 코드 추출
+                // IN/OUT 공항 코드를 AI 결과 데이터에 몰래 끼워 넣습니다. (나중에 진짜 저장할 때 쓰기 위함)
                 const { inCode, outCode } = extractIataFromItinerary(data.result);
+                data.result.arrivalIata = inCode || data.result.arrivalIata;
+                data.result.departureIata = outCode || data.result.departureIata;
 
-                if (user) {
-                    await addDoc(collection(db, "users", user.uid, "itineraries"), {
-                        ...formData,
-                        tripTitle: data.result.tripTitle, // AI가 지어준 제목도 저장
-                        arrivalIata: inCode,     // ✨ IN 공항 코드 저장
-                        departureIata: outCode,  // ✨ OUT 공항 코드 저장
-                        createdAt: serverTimestamp()
-                    });
-
-                    // (목록 갱신 로직은 onSnapshot이 처리하므로 그대로 두시면 됩니다)
-                }
+                setResult(data.result); // 화면을 결과창으로 넘김
             }
             else alert("오류: " + (data.error || "생성 실패"));
         } catch (error) { console.error(error); alert("서버 오류 발생"); }
@@ -843,6 +838,47 @@ export default function Home() {
                         setShowSplash(false);
                         sessionStorage.setItem('hasShownSplash', 'true'); // ✨ "봤음" 도장 쾅!
                     }} />
+                )}
+            </AnimatePresence>
+
+
+            {/* 🌟 특수 지역(공항 없음) 예외 처리용 수동 입력 팝업 */}
+            <AnimatePresence>
+                {manualAirport.show && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl relative">
+                            {/* 닫기 버튼 */}
+                            <button onClick={() => setManualAirport({ show: false, trip: null, searchStr: "", error: "" })} className="absolute top-4 right-4 p-2 bg-gray-50 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition">
+                                <X size={20} />
+                            </button>
+
+                            {/* 아이콘 및 텍스트 */}
+                            <div className="flex justify-center mb-4 mt-2">
+                                <div className="w-14 h-14 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center shadow-inner"><MapPin size={28} /></div>
+                            </div>
+                            <h3 className="text-xl font-black text-center text-gray-800 mb-2">도착 공항 직접 입력</h3>
+                            <p className="text-sm text-center text-gray-500 mb-6 break-keep leading-relaxed">
+                                '<span className="font-bold text-rose-500">{manualAirport.trip?.destination || manualAirport.trip?.title}</span>' 지역의 공항 정보를 찾지 못했어요.<br />가까운 도시명이나 공항 코드(3자리)를 입력해 주세요.
+                            </p>
+
+                            {/* 입력 폼 */}
+                            <div className="mb-5 relative">
+                                <input
+                                    type="text"
+                                    placeholder="예: 발리, 롬복, DPS"
+                                    value={manualAirport.searchStr}
+                                    onChange={(e) => setManualAirport({ ...manualAirport, searchStr: e.target.value, error: "" })}
+                                    className={`w-full px-4 py-4 bg-gray-50 border rounded-2xl outline-none transition-all font-bold text-center text-lg placeholder-gray-300 ${manualAirport.error ? 'border-rose-400 focus:ring-rose-100' : 'border-gray-200 focus:border-slate-800 focus:ring-2 focus:ring-slate-100'}`}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
+                                />
+                                {manualAirport.error && <p className="text-[11px] text-rose-500 text-center mt-2 font-bold animate-pulse">{manualAirport.error}</p>}
+                            </div>
+
+                            <button onClick={handleManualSubmit} className="w-full py-4 bg-slate-900 text-white font-bold text-lg rounded-2xl shadow-lg hover:bg-slate-800 transition active:scale-95 flex items-center justify-center gap-2">
+                                <Plane size={18} /> 공항 검색 및 적용
+                            </button>
+                        </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
 
@@ -1233,7 +1269,25 @@ export default function Home() {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="text-center py-20 text-gray-400"><p>검색된 항공권이 없습니다.</p><p className="text-xs mt-1">날짜를 변경하거나 나중에 다시 시도해주세요.</p></div>
+                                    <div className="text-center py-16 text-gray-400 flex flex-col items-center justify-center">
+                                        <p className="font-bold text-gray-600 mb-2">검색된 항공권이 없습니다.</p>
+                                        <p className="text-xs mb-6 leading-relaxed">
+                                            해당 공항(<span className="font-bold text-rose-500">{selectedTrip?.iata}</span>)으로 가는 노선이 없거나,<br />
+                                            AI가 엉뚱한 공항을 지정했을 수 있습니다.
+                                        </p>
+
+                                        {/* ✨ 검색 실패 시 팝업을 다시 부르는 구원투수 버튼! */}
+                                        <button
+                                            onClick={() => {
+                                                const tripToRetry = selectedTrip;
+                                                setSelectedTrip(null); // 1. 항공권 모달 닫기
+                                                setManualAirport({ show: true, trip: tripToRetry, searchStr: "", error: "" }); // 2. 수동 입력 팝업 열기
+                                            }}
+                                            className="px-6 py-3 bg-indigo-50 text-indigo-600 font-bold text-sm rounded-xl hover:bg-indigo-100 transition-colors shadow-sm flex items-center gap-2 active:scale-95"
+                                        >
+                                            <Search size={16} /> 다른 공항으로 직접 검색하기
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         </motion.div>

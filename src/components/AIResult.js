@@ -596,8 +596,10 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
 
 
     const handleReset = () => {
-        if (confirm("초기 화면으로 돌아가서 새로운 여행을 계획하시겠습니까?")) {
-            router.push('/'); // 메인 페이지('/')로 이동
+        if (window.confirm("초기 화면으로 돌아가서 새로운 여행을 계획하시겠습니까?")) {
+            // 모든 찌꺼기 데이터를 날리고 앱을 처음 상태로 완벽하게 새로고침합니다.
+            window.location.href = '/';
+            // 만약 위 코드로 안 된다면 window.location.reload(); 로 바꿔서 써보세요!
         }
     };
 
@@ -656,7 +658,7 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
                             {/* ✨ 말풍선 위치 수정: 위쪽이 아니라 버튼 '왼쪽'으로 옮겨서 잘림 방지! */}
                             {!isEditMode && (
                                 <div className="absolute right-[calc(100%+12px)] top-1/2 -translate-y-1/2 bg-rose-500 text-white text-[12px] font-bold px-3 py-1.5 rounded-xl shadow-md animate-bounce whitespace-nowrap z-50">
-                                    나의 여행을 편집하세요!
+                                    일정 편집할까요?
                                     {/* 뾰족한 꼬리가 오른쪽(버튼 쪽)을 향하도록 수정 */}
                                     <div className="absolute top-1/2 -right-1 -translate-y-1/2 w-2.5 h-2.5 bg-rose-500 transform rotate-45"></div>
                                 </div>

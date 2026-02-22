@@ -31,7 +31,7 @@ export async function POST(req) {
         ? `Per person ${budget}0,000 KRW (Approx)`
         : `1인당 ${budget}0,000 원`);
 
-    // 🚀 프롬프트 수정: 사용자 요청(Start/End City, Shopping)을 강력하게 반영하도록 지시
+    // 🚀 프롬프트 수정: 공항 코드(IATA) 자동 추출 로직 추가!
     const prompt = `
       You are a professional travel planner "Nyang-Pro".
       Plan a **${days}-day trip** to **${destination}** (${startDate} ~ ${endDate}).
@@ -74,10 +74,17 @@ export async function POST(req) {
       5. **Map Data**:
          - NO GPS coordinates. Provide specific **Google Search Queries**.
 
+      6. **Airport IATA Codes (CRUCIAL FOR FLIGHT SEARCH)**:
+         - Find the most appropriate 3-letter IATA airport code for the starting city and ending city.
+         - **arrivalIata**: The closest major airport to start the trip. (e.g., If destination is "Gili Islands", the nearest is "LOP" or "DPS").
+         - **departureIata**: The closest major airport to end the trip. If it's a round trip, this is usually the same as arrivalIata.
+
       [Output Format (JSON Only)]
       Return ONLY the following JSON. Do NOT include markdown code blocks.
       {
         "tripTitle": "Creative Trip Title (in ${targetLang})",
+        "arrivalIata": "3-letter IATA code (e.g., JFK)",
+        "departureIata": "3-letter IATA code (e.g., LAX)",
         "weather": "Weather forecast (in ${targetLang})",
         "travelTips": ["Tip 1", "Tip 2", "Tip 3"],
         "budgetBreakdown": ["Flights: ...", "Accommodation: ...", ...],
