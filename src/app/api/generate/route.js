@@ -1,12 +1,43 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// API 키 환경변수 가져오기
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const TOUR_API_KEY = "8ed14b467e021a7ef5801d0a9628602170d0414f8ade42814a9cde30ec04f2fb";
+
+// 🌍 TourAPI 연동 함수 (language 파라미터 추가!)
+async function fetchRealTourData(keyword, language) {
+  try {
+    // ✨ 핵심: 한국어면 KorService1, 영어면 EngService1을 호출합니다!
+    const serviceName = language === 'en' ? 'EngService1' : 'KorService1';
+
+    const url = `https://apis.data.go.kr/B551011/${serviceName}/searchKeyword1?serviceKey=${TOUR_API_KEY}&numOfRows=40&pageNo=1&MobileOS=ETC&MobileApp=TripMaker&_type=json&listYN=Y&arrange=O&keyword=${encodeURIComponent(keyword)}`;
+
+    const res = await fetch(url, { method: 'GET', timeout: 5000 });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const items = data?.response?.body?.items?.item;
+
+    if (items && items.length > 0) {
+      const placesList = items.map(item => {
+        // 영문일 경우 카테고리 이름도 영어로 변경
+        const type = item.contenttypeid === '39'
+          ? (language === 'en' ? 'Restaurant/Cafe' : '음식점/카페')
+          : (language === 'en' ? 'Tourist Attraction' : '관광지/명소');
+
+        return `- ${item.title} (${type}, Address: ${item.addr1}, lat: ${item.mapy}, lng: ${item.mapx})`;
+      }).join('\n');
+      return placesList;
+    }
+    return null;
+  } catch (error) {
+    console.error("TourAPI Fetch Error:", error);
+    return null;
+  }
+}
 
 export async function POST(req) {
   try {
-    // 1. 클라이언트(page.js)에서 보낸 데이터 받기
     const body = await req.json();
     const {
       destination, startDate, endDate, companion,
@@ -19,83 +50,54 @@ export async function POST(req) {
     const diffTime = Math.abs(end - start);
     const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-    // 언어 설정
     const targetLang = language === 'en' ? 'English' : 'Korean';
 
-    // 초호화 모드 처리
     const budgetText = isLuxury
-      ? (language === 'en'
-        ? `**Ultra Luxury VIP Budget**: Unlimited (Best Luxury Service)`
-        : `**초호화 VIP 예산**: 1인당 2,000만원 ~ 5,000만원 (최고급 서비스 이용)`)
-      : (language === 'en'
-        ? `Per person ${budget}0,000 KRW (Approx)`
-        : `1인당 ${budget}0,000 원`);
+      ? (language === 'en' ? `Unlimited` : `1인당 2,000만원 ~ 5,000만원`)
+      : (language === 'en' ? `Per person ${budget}0,000 KRW` : `1인당 ${budget}0,000 원`);
 
-    // 🚀 프롬프트 수정: 공항 코드(IATA) 자동 추출 로직 추가!
+    // ✨ 이제 언어(language) 정보도 같이 넘겨서 한/영 데이터를 알아서 가져오게 합니다.
+    const realTourData = await fetchRealTourData(destination, language);
+
+    const tourApiPrompt = realTourData ? `
+      [🚨 TOUR API REAL DATA - CRITICAL PRIORITY]
+      You MUST use the following REAL places to build the itinerary.
+      IMPORTANT: If you use a place from this list, you MUST include its exact 'lat' and 'lng' in the JSON output!
+      
+      <Real Places List>
+      ${realTourData}
+      </Real Places List>
+    ` : "";
+
     const prompt = `
       You are a professional travel planner "Nyang-Pro".
       Plan a **${days}-day trip** to **${destination}** (${startDate} ~ ${endDate}).
-      Also, create **3 interesting quiz questions** about **${destination}**.
       
       [Traveler Info]
-      - Companion: ${companion}
-      - People: ${people}
-      - Budget: ${budgetText}
-      - Style: ${tourType}
-      - Themes: ${themes ? themes.join(", ") : "None"}
-      - VIP Mode: ${isLuxury ? "ON" : "OFF"}
-
-      [🚨 USER'S SPECIAL REQUEST - MUST FOLLOW PRIORITY]
+      Companion: ${companion}, People: ${people}, Budget: ${budgetText}, Style: ${tourType}
+      
+      [🚨 USER REQUEST]
       "${request || "No special request"}"
 
-      [🚨 CRITICAL INSTRUCTIONS]
-      1. **User's Custom Request Priority (Highest Priority)**:
-         - If the user asked for "Shopping", include specific malls, outlets, or streets (e.g., 'The Mall' in Florence).
-         - If the user asked for "Flea Markets", include famous local markets with their specific names.
-         - If the user asked for "Restaurants", include specific local restaurant names.
-
-      2. **Start & End City (Crucial for Open-Jaw Flights)**:
-         - **IF** the user specified a "Start City" (e.g., "Nice IN") in the request, **Day 1 MUST** start in that city.
-         - **IF** the user specified an "End City" (e.g., "Marseille OUT") in the request, **The Last Day MUST** end in that city.
-         - **Explicitly write** "Arrive at [City Name]" in Day 1 description.
-         - **Explicitly write** "Depart from [City Name]" in Last Day description.
-
-      3. **Language & Naming Rule**:
-         - **DESCRIPTIONS, TITLE, QUIZ**: Write in **${targetLang}**.
-         - **PLACE NAMES (\`name\` field)**: MUST be in **English or Local Language** (e.g., "Senso-ji", "Eiffel Tower"). 
-         - **DO NOT** use Korean for the 'name' field to ensure map accuracy.
-
-      4. **Distance & Grouping**:
-         - Daily Limit: Under 100km.
-         - Proximity: Under 30km between spots.
-         - Optimization: Group activities by Area.
-         - NO TELEPORTING.
-
-      5. **Map Data**:
-         - NO GPS coordinates. Provide specific **Google Search Queries**.
-
-      6. **Airport IATA Codes (CRUCIAL FOR FLIGHT SEARCH)**:
-         - Find the most appropriate 3-letter IATA airport code for the starting city and ending city.
-         - **arrivalIata**: The closest major airport to start the trip. (e.g., If destination is "Gili Islands", the nearest is "LOP" or "DPS").
-         - **departureIata**: The closest major airport to end the trip. If it's a round trip, this is usually the same as arrivalIata.
+      ${tourApiPrompt}
 
       [Output Format (JSON Only)]
-      Return ONLY the following JSON. Do NOT include markdown code blocks.
+      Return ONLY the following JSON.
       {
-        "tripTitle": "Creative Trip Title (in ${targetLang})",
-        "arrivalIata": "3-letter IATA code (e.g., JFK)",
-        "departureIata": "3-letter IATA code (e.g., LAX)",
-        "weather": "Weather forecast (in ${targetLang})",
-        "travelTips": ["Tip 1", "Tip 2", "Tip 3"],
-        "budgetBreakdown": ["Flights: ...", "Accommodation: ...", ...],
-        "estimatedCost": "Total Estimated Cost",
+        "tripTitle": "Title in ${targetLang}",
+        "arrivalIata": "3-letter IATA",
+        "departureIata": "3-letter IATA",
+        "weather": "Weather info",
+        "travelTips": ["Tip1", "Tip2"],
+        "budgetBreakdown": ["Detail..."],
+        "estimatedCost": "Total Cost",
         "recommendedHotels": [
           {
-            "name": "Hotel Name (English/Local)",
-            "priceRange": "Price per night",
-            "description": "Short description (in ${targetLang})",
-            "address": "Short Address or Area (English/Local)",
-            "googleSearchQuery": "Hotel Name + City"
+            "name": "Hotel Name",
+            "priceRange": "Price",
+            "description": "Desc",
+            "address": "Address",
+            "googleSearchQuery": "Name + City"
           }
         ],
         "itinerary": [
@@ -105,34 +107,26 @@ export async function POST(req) {
             "places": [
               {
                 "order": 1,
-                "name": "Place Name (English/Local ONLY)", 
-                "category": "Restaurant/Spot/Cafe/Shopping",
-                "description": "Description (in ${targetLang}). Include 'Arrive at [City]' if Day 1.",
-                "address": "Short Address (English/Local)",
-                "googleSearchQuery": "Place Name + City"
+                "name": "Place Name", 
+                "category": "Category",
+                "description": "Description",
+                "address": "Address",
+                "googleSearchQuery": "Name + City",
+                "lat": "Latitude number from Real Places List (or null if not available)",
+                "lng": "Longitude number from Real Places List (or null if not available)"
               }
             ]
           }
         ],
-        "quiz": [
-          {
-            "question": "Q1. Question in ${targetLang}?",
-            "options": ["Opt1", "Opt2", "Opt3", "Opt4"],
-            "answer": 0 
-          }
-        ]
+        "quiz": [{"question": "Q?", "options": ["A","B","C","D"], "answer": 0}]
       }
     `;
 
-    // 모델 설정
     const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
-
-    // AI 생성 요청
     const result = await model.generateContent(prompt);
     const response = await result.response;
     let text = response.text();
 
-    // JSON 파싱 (마크다운 제거)
     text = text.replace(/```json/g, "").replace(/```/g, "").trim();
     const jsonResult = JSON.parse(text);
 
@@ -140,9 +134,6 @@ export async function POST(req) {
 
   } catch (error) {
     console.error("AI Generation Error:", error);
-    return NextResponse.json(
-      { error: "Failed to generate plan." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to generate plan." }, { status: 500 });
   }
 }

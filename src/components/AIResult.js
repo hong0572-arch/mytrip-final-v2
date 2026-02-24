@@ -114,6 +114,21 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
             }
             if (!initialData.budgetBreakdown) initialData.budgetBreakdown = [];
 
+            // ✨ [추가됨] AI가 준 lat, lng를 구글 지도가 읽을 수 있는 coordinates 구조로 변환!
+            if (initialData.itinerary) {
+                initialData.itinerary.forEach(day => {
+                    day.places.forEach(place => {
+                        // TourAPI에서 가져온 정확한 좌표가 있다면 적용
+                        if (place.lat && place.lng && !isNaN(parseFloat(place.lat))) {
+                            place.coordinates = {
+                                lat: parseFloat(place.lat),
+                                lng: parseFloat(place.lng)
+                            };
+                        }
+                    });
+                });
+            }
+
             setTripPlan(initialData);
             if (initialData.quiz) {
                 setCurrentQuizData(initialData.quiz);
@@ -263,6 +278,12 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
         newPlan.itinerary.forEach((dayItem, dayIdx) => {
             dayItem.places.forEach((place, placeIdx) => {
                 const promise = new Promise((resolve) => {
+                    // ✨ [핵심 방어막] 이미 공공데이터(TourAPI)에서 가져온 완벽한 좌표가 있으면 구글 검색을 돌리지 않고 패스!
+                    if (place.coordinates && place.coordinates.lat && place.coordinates.lng) {
+                        resolve();
+                        return;
+                    }
+
                     setTimeout(() => {
                         let searchQuery = place.name;
                         if (region && !searchQuery.includes(region)) {
