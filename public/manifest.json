@@ -3,9 +3,10 @@
     "short_name": "Trip Maker",
     "description": "AI, 든든한 내 여행 친구",
     "start_url": "/",
-    "display": "fullscreen",
+    "display": "standalone",
     "background_color": "#ffffff",
-    "theme_color": "#4f46e5",
+    "theme_color": "#f43f5e",
+    "orientation": "portrait-primary",
     "icons": [
         {
             "src": "/icon-192.png",
