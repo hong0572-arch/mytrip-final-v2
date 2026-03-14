@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "817442711390",
+    "project_id": "my-trip-pro",
+    "storage_bucket": "my-trip-pro.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:817442711390:android:c53d9aa655908c6bad11cf",
+        "android_client_info": {
+          "package_name": "pro.mytrip2.twa"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "817442711390-3kptob7ojt896kajengup4955nl0gilt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "pro.mytrip2.twa",
+            "certificate_hash": "afdc1fa9779c08024e0e6fb26959fe233d319a32"
+          }
+        },
+        {
+          "client_id": "817442711390-fs91rqqbl1rtkqm4b5bcdq0htucs2qnb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "pro.mytrip2.twa",
+            "certificate_hash": "8dc39998b773208ed5b5229fd102dba309d93012"
+          }
+        },
+        {
+          "client_id": "817442711390-3l23qcluqvqdfpr7jadmjfutrfe0q7b4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKIiXYjv3UmjIybvAquuV6DTsmhnpZpes"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "817442711390-3l23qcluqvqdfpr7jadmjfutrfe0q7b4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -4,15 +4,28 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const TOUR_API_KEY = "8ed14b467e021a7ef5801d0a9628602170d0414f8ade42814a9cde30ec04f2fb";
 
-// 🌍 TourAPI 연동 함수 (language 파라미터 추가!)
+// 🌍 공통 CORS 헤더 설정
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*", // 모든 곳(앱 포함)에서 접속 허용
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+};
+
+// 🛡️ 1. 사전 검사(OPTIONS) 요청 해결 (앱 통신 필수)
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders,
+  });
+}
+
+// 🌍 TourAPI 연동 함수 (기존 유지)
 async function fetchRealTourData(keyword, language) {
   try {
-    // ✨ 핵심: 한국어면 KorService1, 영어면 EngService1을 호출합니다!
     const serviceName = language === 'en' ? 'EngService1' : 'KorService1';
-
     const url = `https://apis.data.go.kr/B551011/${serviceName}/searchKeyword1?serviceKey=${TOUR_API_KEY}&numOfRows=40&pageNo=1&MobileOS=ETC&MobileApp=TripMaker&_type=json&listYN=Y&arrange=O&keyword=${encodeURIComponent(keyword)}`;
 
-    const res = await fetch(url, { method: 'GET', timeout: 5000 });
+    const res = await fetch(url, { method: 'GET' });
     if (!res.ok) return null;
 
     const data = await res.json();
@@ -20,7 +33,6 @@ async function fetchRealTourData(keyword, language) {
 
     if (items && items.length > 0) {
       const placesList = items.map(item => {
-        // 영문일 경우 카테고리 이름도 영어로 변경
         const type = item.contenttypeid === '39'
           ? (language === 'en' ? 'Restaurant/Cafe' : '음식점/카페')
           : (language === 'en' ? 'Tourist Attraction' : '관광지/명소');
@@ -36,6 +48,7 @@ async function fetchRealTourData(keyword, language) {
   }
 }
 
+// 🤖 AI 생성 메인 함수
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -47,16 +60,13 @@ export async function POST(req) {
 
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const diffTime = Math.abs(end - start);
-    const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
+    const days = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
     const targetLang = language === 'en' ? 'English' : 'Korean';
 
     const budgetText = isLuxury
       ? (language === 'en' ? `Unlimited` : `1인당 2,000만원 ~ 5,000만원`)
       : (language === 'en' ? `Per person ${budget}0,000 KRW` : `1인당 ${budget}0,000 원`);
 
-    // ✨ 이제 언어(language) 정보도 같이 넘겨서 한/영 데이터를 알아서 가져오게 합니다.
     const realTourData = await fetchRealTourData(destination, language);
 
     const tourApiPrompt = realTourData ? `
@@ -70,27 +80,39 @@ export async function POST(req) {
     ` : "";
 
     const prompt = `
-      You are a professional travel planner "Nyang-Pro".
-      Plan a **${days}-day trip** to **${destination}** (${startDate} ~ ${endDate}).
+      You are an elite "AI Travel Therapist" and a professional travel planner named "Nyang-Pro".
+      Plan a **${days}-day trip** based on the user's input (${startDate} ~ ${endDate}).
       
       [Traveler Info]
+      User Input (Destination or Mood/Purpose): "${destination}"
       Companion: ${companion}, People: ${people}, Budget: ${budgetText}, Style: ${tourType}
       
       [🚨 USER REQUEST]
       "${request || "No special request"}"
+      
+      [CRITICAL INSTRUCTIONS FOR DESTINATION INFERENCE]
+      1. If the "User Input" is a specific city/country (e.g., "Paris", "Jeju"), plan the trip there.
+      2. IF the "User Input" is a MOOD or PURPOSE (e.g., "I want to rest quietly", "Christmas with lover"):
+         - YOU MUST INFER AND CHOOSE the absolutely most perfect destination (city/country) for them.
+         - Make sure to clearly state this chosen destination in the "destination" JSON field.
+
+      [CRITICAL INSTRUCTIONS FOR EMPATHY]
+      For EVERY place or food you recommend, you MUST include a "reason" field explaining WHY this matches their mood or specific request. Speak kindly like a therapist.
 
       ${tourApiPrompt}
 
       [Output Format (JSON Only)]
-      Return ONLY the following JSON.
+      Return ONLY the following JSON. Do not use Markdown formatting blocks like \`\`\`json.
       {
-        "tripTitle": "Title in ${targetLang}",
-        "arrivalIata": "3-letter IATA",
+        "tripTitle": "Catchy, emotional title reflecting the mood in ${targetLang}",
+        "destination": "The exact City/Country chosen (e.g., '삿포로, 일본' or '제주도, 한국')",
+        "theme": "The main emotional theme (e.g., 힐링, 로맨스)",
+        "arrivalIata": "3-letter IATA for the chosen destination",
         "departureIata": "3-letter IATA",
-        "weather": "Weather info",
-        "travelTips": ["Tip1", "Tip2"],
+        "weather": "Expected weather info",
+        "travelTips": ["Practical or emotional tip 1", "Tip 2"],
         "budgetBreakdown": ["Detail..."],
-        "estimatedCost": "Total Cost",
+        "estimatedCost": "Total Cost String",
         "recommendedHotels": [
           {
             "name": "Hotel Name",
@@ -110,10 +132,11 @@ export async function POST(req) {
                 "name": "Place Name", 
                 "category": "Category",
                 "description": "Description",
+                "reason": "The empathetic reason WHY you recommend this place based on their mood/purpose (Therapist comment).",
                 "address": "Address",
                 "googleSearchQuery": "Name + City",
-                "lat": "Latitude number from Real Places List (or null if not available)",
-                "lng": "Longitude number from Real Places List (or null if not available)"
+                "lat": "Latitude number from Real Places List (or null)",
+                "lng": "Longitude number from Real Places List (or null)"
               }
             ]
           }
@@ -122,18 +145,26 @@ export async function POST(req) {
       }
     `;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" }); // 모델명 최신화 권장
     const result = await model.generateContent(prompt);
     const response = await result.response;
     let text = response.text();
 
-    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    text = text.replace(/```json/gi, "").replace(/```/g, "").trim();
     const jsonResult = JSON.parse(text);
 
-    return NextResponse.json({ result: jsonResult });
+    // ✅ 응답 시 CORS 헤더를 포함하여 전송
+    return NextResponse.json({ result: jsonResult }, {
+      status: 200,
+      headers: corsHeaders,
+    });
 
   } catch (error) {
     console.error("AI Generation Error:", error);
-    return NextResponse.json({ error: "Failed to generate plan." }, { status: 500 });
+    // ✅ 에러 시에도 CORS 헤더를 보내야 앱에서 에러 메시지를 읽을 수 있음
+    return NextResponse.json(
+      { error: "Failed to generate plan.", details: error.message },
+      { status: 500, headers: corsHeaders }
+    );
   }
 }

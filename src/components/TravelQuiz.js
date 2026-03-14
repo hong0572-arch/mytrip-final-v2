@@ -16,7 +16,7 @@ export default function TravelQuiz({ aiQuizData }) {
     // 🚫 하루 제한 상태
     const [canPlay, setCanPlay] = useState(true);
     const [dailySuccessCount, setDailySuccessCount] = useState(0);
-    const MAX_DAILY_SUCCESS = 2;
+    const MAX_DAILY_SUCCESS = 1;
     const REWARD_POINTS = 200;
 
     // 로그인 체크 & 오늘 성공 횟수 확인

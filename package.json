@@ -9,6 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@capacitor/android": "^7.6.0",
+    "@capacitor/core": "^7.6.0",
+    "@capacitor/local-notifications": "^7.0.6",
+    "@capacitor/push-notifications": "^7.0.6",
+    "@codetrix-studio/capacitor-google-auth": "^3.4.0-rc.4",
     "@ducanh2912/next-pwa": "^10.2.9",
     "@google/generative-ai": "^0.24.1",
     "@next/third-parties": "^16.0.10",
@@ -40,12 +45,14 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.6.0",
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.19",
     "@types/node": "24.10.1",
     "@types/react": "19.2.7",
     "eslint": "^9",
     "eslint-config-next": "16.0.7",
-    "tailwindcss": "^4"
+    "tailwindcss": "^4",
+    "typescript": "^5.9.3"
   }
 }

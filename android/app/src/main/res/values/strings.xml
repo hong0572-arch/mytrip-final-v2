@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Trip Maker</string>
+    <string name="title_activity_main">Trip Maker</string>
+    <string name="package_name">pro.mytrip2.twa</string>
+    <string name="custom_url_scheme">pro.mytrip2.twa</string>
+    
+    <string name="server_client_id">817442711390-3l23qcluqvqdfpr7jadmjfutrfe0q7b4.apps.googleusercontent.com</string>
+</resources>
