@@ -31,7 +31,7 @@ const getKlookLink = (keyword, markerId, language) => {
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 const DAY_COLORS = ['#FF4B4B', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
 
-export default function AIResult({ data, userInfo, tripId, onReset }) {
+export default function AIResult({ data, userInfo, tripId, onReset, language = 'ko' }) {
     const router = useRouter();
 
     const [tripPlan, setTripPlan] = useState(null);
@@ -339,12 +339,25 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
     const getOrSaveShareUrl = async () => {
         if (shareUrl && !isEditMode) return shareUrl;
         try {
-            const saveData = { ...tripPlan, contactInfo: userInfo?.contact || "정보 없음", isEdited: Boolean(isEditMode || tripPlan.isEdited), createdAt: serverTimestamp() };
+            // ✨ Firebase는 undefined 값을 허용하지 않으므로 정제 작업 필요
+            const sanitizedTripPlan = JSON.parse(JSON.stringify(tripPlan));
+            const saveData = { 
+                ...sanitizedTripPlan, 
+                contactInfo: userInfo?.contact || "정보 없음", 
+                isEdited: Boolean(isEditMode || tripPlan.isEdited), 
+                createdAt: serverTimestamp() 
+            };
+            
             const docRef = await addDoc(collection(db, "shared_links"), saveData);
             const generatedUrl = `${window.location.origin}/share/${docRef.id}`;
             setShareUrl(generatedUrl);
             return generatedUrl;
-        } catch (e) { console.error("Save Error:", e); alert("공유 링크 생성 중 오류가 발생했습니다."); return null; }
+        } catch (e) { 
+            console.error("Save Error Details:", e); 
+            // 구체적인 에러 메시지를 포함하여 사용자에게 안내 (디버깅 지원)
+            alert(`공유 링크 생성 중 오류가 발생했습니다:\n${e.code || e.message || '알 수 없는 오류'}`); 
+            return null; 
+        }
     };
 
     const handleDownloadPDF = async () => {
@@ -384,7 +397,20 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
         if (url) text += `\n🔗 일정 상세 보기: ${url}`; return text;
     };
 
-    const handleKakaoConsult = async () => { setLoadingAction('kakao'); const url = await getOrSaveShareUrl(); if (url) { try { await navigator.clipboard.writeText(formatTripText(url)); alert("일정 내용이 복사되었습니다!\n상담 채팅방에 '붙여넣기' 해주세요."); window.open('http://pf.kakao.com/_xcJhrn/chat', '_blank'); } catch (e) { window.open('http://pf.kakao.com/_xcJhrn/chat', '_blank'); } } setLoadingAction(null); };
+    const handleKakaoConsult = async () => { 
+        setLoadingAction('kakao'); 
+        const url = await getOrSaveShareUrl(); 
+        if (url) { 
+            try { 
+                await navigator.clipboard.writeText(formatTripText(url)); 
+                alert("일정 내용이 복사되었습니다!\n상담 채팅방에 '붙여넣기' 해주세요."); 
+                window.open('http://pf.kakao.com/_xcJhrn/chat', '_blank'); 
+            } catch (e) { 
+                window.open('http://pf.kakao.com/_xcJhrn/chat', '_blank'); 
+            } 
+        } 
+        setLoadingAction(null); 
+    };
     const handleShare = async () => { setLoadingAction('share'); const url = await getOrSaveShareUrl(); if (url) { const text = formatTripText(url); if (navigator.share) { try { await navigator.share({ title: tripPlan.tripTitle, text: text }); } catch (e) { } } else { try { await navigator.clipboard.writeText(text); alert("링크가 복사되었습니다!"); } catch (e) { } } } setLoadingAction(null); };
 
     const executeSave = async () => {
@@ -480,7 +506,15 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
     };
 
     const handleReset = () => { if (window.confirm("초기 화면으로 돌아가서 새로운 여행을 계획하시겠습니까?")) { window.location.href = '/'; } };
-    const handleOpenGoogleMaps = (name) => { window.open(`http://google.com/maps/search/${encodeURIComponent(name)}`, '_blank'); };
+    const handleOpenGoogleMaps = (place) => {
+        const { name } = place;
+        const destContext = tripPlan?.destination || userInfo?.destination || "";
+        // 명확함을 위해 이름 + 여행지(도시)를 조합하여 검색
+        const query = `${name} ${destContext}`.trim();
+        
+        // hl 파라미터를 추가하여 현재 앱 언어(ko/en)에 맞는 지도가 뜨게 함
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}&hl=${language}`, '_blank');
+    };
 
     const handleDragStart = () => { isDragging.current = true; document.body.style.cursor = 'row-resize'; };
     useEffect(() => {
@@ -629,7 +663,7 @@ export default function AIResult({ data, userInfo, tripId, onReset }) {
                                                                             </div>
                                                                         )}
                                                                         <div className="flex gap-2 mt-2">
-                                                                            <button className="flex items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded-lg transition shadow-sm" style={{ backgroundColor: `${dayColor}15`, color: dayColor }} onClick={(e) => { e.stopPropagation(); handleOpenGoogleMaps(place.name); }}><ExternalLink size={10} /> 길찾기</button>
+                                                                            <button className="flex items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded-lg transition shadow-sm" style={{ backgroundColor: `${dayColor}15`, color: dayColor }} onClick={(e) => { e.stopPropagation(); handleOpenGoogleMaps(place); }}><ExternalLink size={10} /> 길찾기</button>
                                                                             {!place.category?.includes("Restaurant") && !place.category?.includes("Cafe") && (
                                                                                 <button onClick={(e) => { e.stopPropagation(); const link = getKlookLink(`${place.name} ${userInfo?.destination || ""}`, '695932'); window.open(link, '_blank'); }} className="flex items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded-lg bg-rose-50 text-rose-500 border border-rose-100 hover:bg-rose-100 transition shadow-sm">🎟️ 티켓/투어 예매</button>
                                                                             )}
