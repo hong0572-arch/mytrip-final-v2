@@ -9,6 +9,16 @@ import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
 export default function PushInitializer() {
+    // 🌐 Web Service Worker 등록 (Standard PWA)
+    useEffect(() => {
+        if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+            navigator.serviceWorker
+                .register('/firebase-messaging-sw.js')
+                .then((reg) => console.log('🚀 서비스 워커 등록 성공!', reg))
+                .catch((err) => console.log('❌ 서비스 워커 등록 실패!', err));
+        }
+    }, []);
+
     useEffect(() => {
         const initNativeFeatures = async () => {
             if (typeof window !== 'undefined' && window.Capacitor?.isNativePlatform()) {
