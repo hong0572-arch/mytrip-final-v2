@@ -10,7 +10,7 @@
     <color name="navigationDividerColor">#000000</color>
     <color name="navigationDividerColorDark">#000000</color>
     <color name="shortcut_background">#F5F5F5</color>
-    <integer name="splashScreenFadeOutDuration">300</integer>
+    <integer name="splashScreenFadeOutDuration">200</integer>
     <string name="appName" translatable="false">Trip Maker</string>
     <string name="assetStatements">
     [{
