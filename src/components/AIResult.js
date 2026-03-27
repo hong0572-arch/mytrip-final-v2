@@ -63,6 +63,59 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const scrollContainerRef = useRef(null);
     const observerRef = useRef(null);
 
+    const [selectedIndex, setSelectedIndex] = useState(0);
+    const infoWindowRef = useRef(null);
+    const [showInfoModal, setShowInfoModal] = useState(false);
+    const [infoModalTab, setInfoModalTab] = useState('budget');
+
+    const flatPlaces = React.useMemo(() => {
+        if (!tripPlan || !tripPlan.itinerary) return [];
+        let list = [];
+        tripPlan.itinerary.forEach((dayItem, dIdx) => {
+            dayItem.places.forEach((place, pIdx) => {
+                list.push({ dayIdx: dIdx, placeIdx: pIdx, day: dayItem.day, place: place, dayColor: DAY_COLORS[dIdx % DAY_COLORS.length] });
+            });
+        });
+        return list;
+    }, [tripPlan]);
+
+    useEffect(() => {
+        if (!window.google || !googleMapRef.current || flatPlaces.length === 0 || markersRef.current.length === 0) return;
+        const currentItem = flatPlaces[selectedIndex];
+        if (!currentItem) return;
+
+        const { place } = currentItem;
+        const marker = markersRef.current[selectedIndex];
+
+        if (place.coordinates?.lat && place.coordinates?.lng) {
+            googleMapRef.current.panTo(place.coordinates);
+            if (googleMapRef.current.getZoom() < 15) googleMapRef.current.setZoom(16);
+            
+            if (!infoWindowRef.current) {
+                infoWindowRef.current = new window.google.maps.InfoWindow();
+            }
+            
+            const contentString = `
+                <div style="padding: 10px; max-width: 250px; font-family: sans-serif;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 4px;">
+                        <h3 style="font-weight: bold; font-size: 15px; margin: 0; color: #111827;">${place.name}</h3>
+                        <span style="font-size: 10px; background: #f3f4f6; padding: 2px 6px; border-radius: 12px; color: #6b7280; white-space: nowrap; margin-left: 8px;">${place.category || '기타'}</span>
+                    </div>
+                    <p style="font-size: 12px; color: #4b5563; margin-top: 6px; margin-bottom: 8px; line-height: 1.4;">${place.description}</p>
+                    ${place.reason ? `<div style="font-size: 11px; color: #FF5A5F; background: #FFF0F0; padding: 6px 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #FFE4E6;"><strong>💡 냥프로의 픽!</strong><br />${place.reason}</div>` : ''}
+                    <div style="display: flex; gap: 8px; margin-top: 10px;">
+                        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&hl=${language}" target="_blank" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #4f46e5; background: #e0e7ff; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🗺️ 길찾기</a>
+                        ${(!place.category?.includes("Restaurant") && !place.category?.includes("Cafe")) ? `<a href="${getKlookLink(place.name, '', language)}" target="_blank" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #e11d48; background: #ffe4e6; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🎟️ 티켓 예매</a>` : ''}
+                    </div>
+                </div>
+            `;
+            infoWindowRef.current.setContent(contentString);
+            if (marker) {
+                infoWindowRef.current.open(googleMapRef.current, marker);
+            }
+        }
+    }, [selectedIndex, flatPlaces, language]);
+
     // ✨ 1. DB에서 진짜 유저 불러오기
     useEffect(() => {
         if (tripId) return;
@@ -257,6 +310,14 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     if (place.coordinates?.lat && place.coordinates?.lng) {
                         path.push(place.coordinates); bounds.extend(place.coordinates);
                         const marker = new google.maps.Marker({ position: place.coordinates, map, icon: { path: google.maps.SymbolPath.CIRCLE, fillColor: dayColor, fillOpacity: 1, strokeColor: "white", strokeWeight: 2, scale: 12 }, label: { text: (placeIdx + 1).toString(), color: "white", fontWeight: "bold", fontSize: "12px" }, zIndex: 100 + index });
+                        marker.addListener('click', () => {
+                            let fIdx = 0;
+                            for (let i = 0; i < index; i++) {
+                                fIdx += tripPlan.itinerary[i].places.length;
+                            }
+                            fIdx += placeIdx;
+                            setSelectedIndex(fIdx);
+                        });
                         markersRef.current.push(marker);
                     }
                 });
@@ -540,267 +601,247 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const destName = tripPlan.destination?.split('#')[0]?.trim() || "여행지";
 
     return (
-        <div className="min-h-screen bg-gray-100 flex justify-center items-start sm:items-center overflow-hidden relative font-sans">
-            <div id={CAPTURE_ID} className="w-full max-w-[480px] h-screen sm:h-[95vh] sm:rounded-[30px] bg-gray-50 relative shadow-2xl overflow-hidden flex flex-col border border-gray-200">
+        <div className="fixed inset-0 z-50 bg-black flex justify-center items-start sm:items-center overflow-hidden font-sans">
+            <div id={CAPTURE_ID} className="w-full max-w-[480px] h-[100dvh] sm:h-[95vh] sm:rounded-[30px] bg-gray-50 relative shadow-2xl overflow-hidden flex flex-col border border-gray-800">
 
-                {/* 지도 영역 */}
-                <div style={{ height: `${mapHeight}vh` }} className="w-full bg-gray-200 relative shrink-0">
+                {/* Full screen Map */}
+                <div className="absolute inset-0 z-0 bg-gray-900 pointer-events-auto">
                     <div ref={mapRef} className="w-full h-full" />
-
-                    <div className="absolute top-0 left-0 w-full p-4 bg-gradient-to-b from-black/60 to-transparent pointer-events-none z-10 flex flex-col items-start">
-                        {theme && (
-                            <span className="px-2 py-0.5 bg-rose-500 text-white text-[10px] font-black rounded-md mb-1 shadow-sm">
-                                {theme}
-                            </span>
-                        )}
-                        <h1 className="text-lg font-bold text-white drop-shadow-md w-full pr-10 leading-snug">{tripTitle}</h1>
-                    </div>
-
-                    <div className="absolute top-4 right-4 z-50 pointer-events-auto flex gap-2">
-                        <button onClick={() => router.push('/mypage')} className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md text-gray-700 hover:bg-white hover:text-indigo-600 transition" title="마이페이지"><User size={20} /></button>
-                    </div>
                 </div>
 
-                {/* 하단 리스트 영역 */}
-                <div className="flex-1 bg-gray-50 -mt-6 rounded-t-3xl relative z-20 shadow-lg flex flex-col overflow-hidden">
-                    <div onMouseDown={handleDragStart} onTouchStart={handleDragStart} className="w-full flex items-center justify-between px-6 pt-3 pb-2 bg-white rounded-t-3xl border-b border-gray-100 shrink-0 cursor-row-resize hover:bg-gray-50">
-                        <div className="w-16"></div>
-                        <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
-                        <div className="flex items-center gap-2 relative">
-                            {isEditMode && (
-                                <button onClick={(e) => { e.stopPropagation(); handleAutoFixAll(); }} disabled={loadingAction === 'autoFix'} className="flex items-center gap-1 text-[10px] font-bold px-3 py-1.5 rounded-full border bg-violet-50 text-violet-600 border-violet-200 hover:bg-violet-100 transition shadow-sm">
-                                    {loadingAction === 'autoFix' ? <Loader2 className="animate-spin" size={12} /> : <Wand2 size={12} />} 전체 위치 보정
-                                </button>
-                            )}
-                            <button onClick={(e) => { e.stopPropagation(); setIsEditMode(!isEditMode); }} className={`relative flex items-center gap-1 text-sm font-bold px-4 py-1.5 rounded-full border shadow-md transition-all z-40 ${isEditMode ? 'bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-200' : 'bg-white text-rose-500 border-rose-200 hover:bg-rose-50 ring-1 ring-rose-100'}`}>
-                                {isEditMode ? <><Check size={15} /> 완료</> : <><Pencil size={20} /> 편집</>}
-                            </button>
+                {/* Top Overlay */}
+                <div className="absolute top-0 left-0 w-full p-6 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none z-10 flex flex-col items-start pt-10 sm:pt-6">
+                    {theme && (
+                        <span className="px-2 py-1 bg-rose-500 text-white text-xs font-black rounded-lg mb-2 shadow-sm">
+                            {theme}
+                        </span>
+                    )}
+                    <h1 className="text-xl sm:text-2xl font-bold text-white drop-shadow-lg w-full pr-12 leading-tight">{tripPlan.tripTitle}</h1>
+                </div>
+
+                {/* Right Top Buttons */}
+                <div className="absolute top-8 right-5 z-50 pointer-events-auto flex flex-col gap-3">
+                    <button onClick={() => router.push('/mypage')} className="bg-white/20 backdrop-blur-md p-2.5 rounded-full shadow-lg text-white hover:bg-white hover:text-indigo-600 transition border border-white/30" title="마이페이지">
+                        <User size={20} />
+                    </button>
+                    <button onClick={() => setShowInfoModal(true)} className="bg-white/20 backdrop-blur-md p-2.5 rounded-full shadow-lg text-white hover:bg-white hover:text-rose-500 transition animate-pulse border border-rose-400/50" title="여행 정보">
+                        <Sparkles size={20} className="text-rose-200" />
+                    </button>
+                    <button onClick={() => setIsEditMode(!isEditMode)} className={`backdrop-blur-md p-2.5 rounded-full shadow-lg transition border border-white/30 ${isEditMode ? 'bg-indigo-600 text-white' : 'bg-white/20 text-white hover:bg-white hover:text-indigo-600'}`}>
+                        {isEditMode ? <Check size={20} /> : <Pencil size={20} />}
+                    </button>
+                </div>
+
+                {/* Right Side Dial Component */}
+                {!isEditMode && (
+                    <div className="absolute right-0 top-[20%] h-[60%] w-20 sm:w-24 z-20 pointer-events-none flex flex-col">
+                        <div className="h-full overflow-y-auto custom-scrollbar-hide scroll-smooth flex flex-col items-center py-[25vh] space-y-4 snap-y snap-mandatory pointer-events-auto" id="dial-scroll-container">
+                            {flatPlaces.map((item, i) => {
+                                const isSelected = i === selectedIndex;
+                                return (
+                                    <div 
+                                        key={i} 
+                                        onClick={() => setSelectedIndex(i)}
+                                        className={`snap-center shrink-0 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 shadow-xl border-2 ${isSelected ? 'w-16 h-16 sm:w-20 sm:h-20 rounded-full text-white border-white scale-110 z-10' : 'w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/90 text-gray-700 border-transparent hover:scale-105 opacity-80'}`}
+                                        style={isSelected ? { backgroundColor: item.dayColor } : {}}
+                                    >
+                                        <span className="text-[10px] sm:text-xs font-bold opacity-90 leading-none mb-1">D.{item.day}</span>
+                                        <span className={`text-base sm:text-xl font-black leading-none ${isSelected ? 'text-white' : 'text-gray-900'}`}>{item.placeIdx + 1}</span>
+                                    </div>
+                                )
+                            })}
                         </div>
-                    </div>
-
-                    <div className="flex border-b border-gray-200 bg-white">
-                        <button onClick={() => setActiveTab('itinerary')} className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'itinerary' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}><Calendar size={16} /> 상세 일정</button>
-                    </div>
-
-                    <div ref={scrollContainerRef} className="overflow-y-auto flex-1 px-5 pb-32 bg-white custom-scrollbar scroll-smooth">
-                        {theme && !isEditMode && (
-                                    <div className="mb-6 mt-6 bg-rose-50 rounded-[20px] p-5 border border-rose-100 shadow-sm relative overflow-hidden">
-                                        <div className="absolute -top-4 -right-4 text-6xl opacity-10">✨</div>
-                                        <div className="flex items-center gap-2 mb-3 relative z-10">
-                                            <Sparkles size={18} className="text-rose-500" />
-                                            <h3 className="font-bold text-gray-800 text-sm">AI 트래블 테라피스트의 코멘트</h3>
-                                        </div>
-                                        <p className="text-sm text-gray-600 leading-relaxed relative z-10">
-                                            "{userInfo?.destination || '이런 여행'}"을(를) 원하시는 당신을 위해,
-                                            <span className="font-bold text-rose-500"> {destName}</span>(으)로 떠나는
-                                            <span className="font-bold"> {theme}</span> 여행을 특별히 준비해 보았어요.
-                                        </p>
-                                    </div>
-                                )}
-
-                                <div className={`mb-6 ${theme && !isEditMode ? 'mt-2' : 'mt-6'}`}>
-                                    <h3 className="text-[#FF5A5F] font-bold text-base mb-2 px-1">예산 배분 제안</h3>
-                                    <div className="bg-white p-4 rounded-2xl border border-rose-100 shadow-sm space-y-2">
-                                        {isEditMode ? (
-                                            <div className="space-y-2">
-                                                {tripPlan.budgetBreakdown?.map((item, idx) => (
-                                                    <div key={idx} className="flex gap-2 items-center"><input type="text" value={item} onChange={(e) => handleBudgetChange(idx, e.target.value)} className="flex-1 text-sm p-2 border border-rose-200 rounded-lg outline-none focus:border-[#FF5A5F] bg-rose-50/30" /><button onClick={() => handleDeleteBudget(idx)} className="p-2 text-rose-400 hover:text-rose-600 bg-rose-50 rounded-lg"><Trash2 size={14} /></button></div>
-                                                ))}
-                                                <button onClick={handleAddBudget} className="w-full py-2 text-xs font-bold text-rose-500 border border-dashed border-rose-300 rounded-lg hover:bg-rose-50 flex items-center justify-center gap-1"><Plus size={12} /> 예산 항목 추가</button>
-                                            </div>
-                                        ) : ((tripPlan.budgetBreakdown?.length > 0) ? tripPlan.budgetBreakdown.map((item, idx) => (<div key={idx} className="flex items-start gap-2 text-sm"><div className="min-w-[4px] h-[4px] bg-[#FF5A5F] rounded-full mt-2"></div><p className="text-gray-700">{item}</p></div>)) : (<p className="text-gray-700 text-sm">{estimatedCost || "예산 정보 없음"}</p>))}
-                                    </div>
-                                </div>
-
-                                {hotels.length > 0 && (
-                                    <div className="mb-6">
-                                        <h3 className="flex items-center gap-2 text-sm font-bold text-gray-600 mb-2 px-1"><BedDouble size={16} /> 추천 숙소</h3>
-                                        <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 scrollbar-hide">
-                                            {hotels.map((hotel, idx) => (
-                                                <div key={idx} className="place-card min-w-[220px] bg-white p-3 rounded-xl border border-gray-200 shadow-sm relative cursor-pointer hover:border-indigo-500 hover:shadow-md transition-all group" data-lat={hotel.coordinates?.lat} data-lng={hotel.coordinates?.lng} onClick={() => { const link = getKlookLink(`${hotel.name} ${userInfo?.destination || ""}`, '695932'); window.open(link, '_blank'); }}>
-                                                    <div className="flex items-center gap-2 mb-1"><span className="bg-gray-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">추천 {idx + 1}</span><h4 className="font-bold text-sm truncate group-hover:text-indigo-600 transition-colors">{hotel.name}</h4></div>
-                                                    <p className="text-xs text-[#FF5A5F] font-bold mb-1">{hotel.priceRange}</p>
-                                                    <p className="text-[10px] text-gray-500 leading-relaxed bg-gray-50 p-1.5 rounded line-clamp-2">{hotel.description}</p>
-                                                    <div className="mt-2 pt-2 border-t border-gray-50 text-center"><span className="text-[10px] font-bold text-indigo-500 flex items-center justify-center gap-1">Klook 최저가 보기 <ExternalLink size={10} /></span></div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                {itinerary?.map((dayItem, dayIdx) => {
-                                    const dayColor = DAY_COLORS[dayIdx % DAY_COLORS.length];
-                                    return (
-                                        <div key={dayIdx} className="mb-8">
-                                            <div className="sticky top-0 bg-white/95 backdrop-blur-sm py-3 z-20 border-b border-gray-50 mb-4 flex items-center gap-2"><span className="text-xs font-bold text-white px-2 py-1 rounded-md shadow-sm" style={{ backgroundColor: dayColor }}>Day {dayItem.day}</span><span className="text-sm text-gray-500 font-medium">{dayItem.date}</span></div>
-                                            <div className="relative pl-4 ml-3 space-y-6" style={{ borderLeft: `2px solid ${dayColor}30` }}>
-                                                {dayItem.places.map((place, placeIdx) => {
-                                                    const nextPlace = dayItem.places[placeIdx + 1];
-                                                    const distance = (placeIdx < dayItem.places.length - 1) ? calculateDistance(place, nextPlace) : null;
-                                                    return (
-                                                        <div key={placeIdx} className="relative pl-6">
-                                                            <div className="absolute -left-[21px] top-0 w-7 h-7 rounded-full text-white flex items-center justify-center text-xs font-bold shadow-md ring-4 ring-white z-10" style={{ backgroundColor: dayColor }}>{placeIdx + 1}</div>
-                                                            <div className={`place-card bg-white p-3 rounded-xl border transition ${isEditMode ? 'border-indigo-200 shadow-inner' : 'border-gray-100 hover:border-gray-300 shadow-sm'}`} data-lat={place.coordinates?.lat} data-lng={place.coordinates?.lng}>
-                                                                {isEditMode ? (
-                                                                    <div className="space-y-2">
-                                                                        <div className="flex gap-2"><input type="text" value={place.name} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'name', e.target.value)} className="flex-1 font-bold text-sm p-1 border-b border-indigo-200 outline-none focus:border-indigo-500 bg-transparent" placeholder="장소명" /><button onClick={() => handleUpdateLocation(dayIdx, placeIdx, place.name)} className="p-1.5 rounded bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 hover:text-blue-700 transition" title="위치 찾기"><Search size={14} /></button><div className="flex gap-1"><button onClick={() => handleMovePlace(dayIdx, placeIdx, -1)} disabled={placeIdx === 0} className="p-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-30"><ArrowUp size={12} /></button><button onClick={() => handleMovePlace(dayIdx, placeIdx, 1)} disabled={placeIdx === dayItem.places.length - 1} className="p-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-30"><ArrowDown size={12} /></button></div></div>
-                                                                        <textarea value={place.description} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'description', e.target.value)} className="w-full text-xs p-1 border border-gray-200 rounded outline-none focus:border-indigo-500 bg-gray-50 h-16 resize-none" placeholder="설명" />
-                                                                        <div className="flex justify-end pt-1"><button onClick={() => handleDeletePlace(dayIdx, placeIdx)} className="flex items-center gap-1 text-[10px] text-red-500 font-bold bg-red-50 px-2 py-1 rounded hover:bg-red-100"><Trash2 size={10} /> 삭제</button></div>
-                                                                    </div>
-                                                                ) : (
-                                                                    <div onClick={() => { googleMapRef.current?.panTo(place.coordinates); googleMapRef.current?.setZoom(17); }}>
-                                                                        <div className="flex justify-between items-start"><h3 className="text-base font-bold text-gray-900">{place.name}</h3><span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{place.category}</span></div>
-                                                                        <p className="text-sm text-gray-600 mt-1">{place.description}</p>
-                                                                        {place.reason && (
-                                                                            <div className="relative mt-3">
-                                                                                <div className="absolute -top-1.5 left-4 w-3 h-3 bg-rose-50 rotate-45 border-l border-t border-rose-100"></div>
-                                                                                <div className="relative bg-rose-50 p-3 rounded-xl border border-rose-100 shadow-sm flex gap-2 items-start">
-                                                                                    <div className="text-rose-400 mt-0.5 text-sm">🐾</div>
-                                                                                    <div>
-                                                                                        <p className="text-[10px] font-black text-rose-400 mb-0.5 uppercase">냥프로의 픽!</p>
-                                                                                        <p className="text-xs font-bold text-gray-800 leading-snug">"{place.reason}"</p>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        )}
-                                                                        <div className="flex gap-2 mt-2">
-                                                                            <button className="flex items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded-lg transition shadow-sm" style={{ backgroundColor: `${dayColor}15`, color: dayColor }} onClick={(e) => { e.stopPropagation(); handleOpenGoogleMaps(place); }}><ExternalLink size={10} /> 길찾기</button>
-                                                                            {!place.category?.includes("Restaurant") && !place.category?.includes("Cafe") && (
-                                                                                <button onClick={(e) => { e.stopPropagation(); const link = getKlookLink(`${place.name} ${userInfo?.destination || ""}`, '695932'); window.open(link, '_blank'); }} className="flex items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded-lg bg-rose-50 text-rose-500 border border-rose-100 hover:bg-rose-100 transition shadow-sm">🎟️ 티켓/투어 예매</button>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                            {distance && (<div className="pl-2 py-3 flex items-center gap-2 text-[10px] text-gray-400 font-medium"><div className="w-0.5 h-3 bg-gray-200 rounded-full"></div><span className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md border border-gray-100"><Navigation size={10} className="text-blue-400" />직선거리 약 <span className="text-gray-600 font-bold">{distance}km</span> 이동</span></div>)}
-                                                        </div>
-                                                    );
-                                                })}
-                                                {isEditMode && (<div className="pl-6 pt-2"><button onClick={() => handleAddPlace(dayIdx)} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-400 text-xs font-bold flex items-center justify-center gap-1 hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50 transition"><Plus size={14} /> 장소 추가하기</button></div>)}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-
-                                <div className="mb-6">
-                                    {(weather || (travelTips && travelTips.length > 0)) && (
-                                        <div className="grid grid-cols-1 gap-3">
-                                            {weather && (<div className="bg-blue-50/80 p-4 rounded-xl border border-blue-100 flex items-center gap-3"><div className="bg-white p-2 rounded-full shadow-sm text-amber-500"><Sun size={20} /></div><div><p className="text-sm font-bold text-blue-900">여행지 날씨</p><p className="text-sm text-blue-700">{weather}</p></div></div>)}
-                                            {travelTips?.length > 0 && (<div className="bg-amber-50/80 p-4 rounded-xl border border-amber-100 flex items-start gap-3"><div className="bg-white p-2 rounded-full shadow-sm text-amber-500 shrink-0"><Lightbulb size={20} /></div><div className="overflow-hidden"><p className="text-sm font-bold text-amber-900 mb-1">여행 꿀팁</p><ul className="text-sm text-amber-800 space-y-1 list-disc list-inside">{travelTips.map((tip, i) => <li key={i}>{tip}</li>)}</ul></div></div>)}
-                                        </div>
-                                    )}
-                                </div>
-                    </div>
-                </div>
-
-                {/* 우측 하단 플로팅 저장 버튼 (기존 유지) */}
-                {!tripId && (
-                    <div className="absolute bottom-28 right-5 z-40 flex flex-col items-end gap-2 pointer-events-none">
-                        <div className="bg-indigo-600 text-white text-xs font-bold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg animate-bounce pointer-events-auto relative">내 여행 저장<div className="absolute -bottom-1 right-0 w-3 h-3 bg-indigo-600 transform rotate-45"></div></div>
-                        <button onClick={handleSaveClick} disabled={isSaving} className="w-14 h-14 bg-indigo-600 rounded-full shadow-[0_4px_15px_rgba(79,70,229,0.4)] flex items-center justify-center text-white hover:bg-indigo-700 active:scale-90 transition-all pointer-events-auto border-2 border-white">{isSaving ? <Loader2 className="animate-spin" size={24} /> : <Save size={24} strokeWidth={2.5} />}</button>
                     </div>
                 )}
 
-                {/* ✨ [핵심 수정] 마이페이지 스타일의 새로운 하단 메뉴바 */}
-                <div className="absolute bottom-6 left-0 w-full px-6 z-50 pointer-events-none">
-                    <nav className="bg-white/80 backdrop-blur-2xl border border-white/50 shadow-[0_20px_40px_rgba(0,0,0,0.1)] rounded-[32px] px-2 py-2 flex justify-around items-center pointer-events-auto">
-                        {/* 홈으로 버튼 */}
-                        <button onClick={handleReset} className="flex flex-col items-center gap-1 p-2 w-[75px] text-gray-500 hover:text-rose-500 transition active:scale-95">
-                            <Home size={22} strokeWidth={2} />
-                            <span className="text-[10px] font-black break-keep whitespace-nowrap">홈으로</span>
-                        </button>
+                {/* Edit Mode Overlay container */}
+                {isEditMode && (
+                    <div className="absolute bottom-[100px] left-4 right-4 bg-white/95 backdrop-blur-xl p-4 rounded-[24px] shadow-2xl z-20 max-h-[50vh] overflow-y-auto custom-scrollbar border border-gray-200">
+                        <div className="flex justify-between items-center mb-3">
+                            <h3 className="font-black text-indigo-600 flex items-center gap-1"><Pencil size={18} /> 일정 편집</h3>
+                            <button onClick={(e) => { e.stopPropagation(); handleAutoFixAll(); }} disabled={loadingAction === 'autoFix'} className="bg-violet-100 text-violet-600 py-1 px-3 rounded-full text-xs font-bold flex items-center gap-1 hover:bg-violet-200" title="위치 보정">
+                                {loadingAction === 'autoFix' ? <Loader2 className="animate-spin" size={14} /> : <Wand2 size={14} />} 전체 경로 재탐색
+                            </button>
+                        </div>
+                        {tripPlan.itinerary?.map((dayItem, dayIdx) => (
+                            <div key={dayIdx} className="mb-6">
+                                <h4 className="font-bold text-sm bg-gray-100 inline-block px-2 py-1 rounded text-gray-700 mb-2">Day {dayItem.day}</h4>
+                                <div className="space-y-3">
+                                {dayItem.places.map((place, placeIdx) => (
+                                    <div key={placeIdx} className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
+                                        <div className="flex gap-2 mb-2">
+                                            <input type="text" value={place.name} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'name', e.target.value)} className="flex-1 font-bold text-sm p-1.5 border-b border-indigo-200 outline-none bg-indigo-50/50 rounded-t" placeholder="장소명" />
+                                            <button onClick={() => handleUpdateLocation(dayIdx, placeIdx, place.name)} className="p-1.5 rounded bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"><Search size={14} /></button>
+                                        </div>
+                                        <textarea value={place.description} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'description', e.target.value)} className="w-full text-xs p-1.5 border border-gray-200 rounded bg-gray-50 h-12 resize-none mb-2" placeholder="설명" />
+                                        <div className="flex gap-2">
+                                            <button onClick={() => handleMovePlace(dayIdx, placeIdx, -1)} disabled={placeIdx === 0} className="flex-1 py-1 rounded bg-gray-50 flex justify-center disabled:opacity-30"><ArrowUp size={14} /></button>
+                                            <button onClick={() => handleMovePlace(dayIdx, placeIdx, 1)} disabled={placeIdx === dayItem.places.length - 1} className="flex-1 py-1 rounded bg-gray-50 flex justify-center disabled:opacity-30"><ArrowDown size={14} /></button>
+                                            <button onClick={() => handleDeletePlace(dayIdx, placeIdx)} className="flex-1 py-1 bg-red-50 text-red-500 rounded flex justify-center items-center"><Trash2 size={14} /></button>
+                                        </div>
+                                    </div>
+                                ))}
+                                </div>
+                                <button onClick={() => handleAddPlace(dayIdx)} className="w-full mt-3 py-2 border-2 border-dashed border-indigo-200 rounded-xl text-indigo-500 text-xs font-bold flex items-center justify-center gap-1 hover:bg-indigo-50"><Plus size={14} /> 장소 추가</button>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
-                        {/* 카톡상담 버튼 */}
-                        <button onClick={handleKakaoConsult} disabled={loadingAction !== null} className="flex flex-col items-center gap-1 p-2 w-[75px] text-gray-500 hover:text-yellow-600 transition active:scale-95 disabled:opacity-50">
-                            {loadingAction === 'kakao' ? <Loader2 className="animate-spin" size={22} /> : <MessageCircle size={22} strokeWidth={2} />}
-                            <span className="text-[10px] font-black break-keep whitespace-nowrap">카톡상담</span>
-                        </button>
+                {/* Bottom Center Gradient for fade effect */}
+                <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none z-10"></div>
 
-                        {/* 공유하기 버튼 */}
-                        <button onClick={handleShare} disabled={loadingAction !== null} className="flex flex-col items-center gap-1 p-2 w-[75px] text-gray-500 hover:text-indigo-600 transition active:scale-95 disabled:opacity-50">
-                            {loadingAction === 'share' ? <Loader2 className="animate-spin" size={22} /> : <Share2 size={22} strokeWidth={2} />}
-                            <span className="text-[10px] font-black break-keep whitespace-nowrap">공유하기</span>
+                {/* Save Button */}
+                {!tripId && (
+                    <div className="absolute bottom-[90px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
+                        <div className="bg-indigo-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">저장하기<div className="absolute -bottom-1 right-1 w-3 h-3 bg-indigo-600 transform rotate-45"></div></div>
+                        <button onClick={handleSaveClick} disabled={isSaving} className="w-14 h-14 bg-indigo-600 rounded-full shadow-2xl flex items-center justify-center text-white pointer-events-auto hover:bg-indigo-500 transition-transform active:scale-95 border-2 border-white">
+                            {isSaving ? <Loader2 className="animate-spin" size={24} /> : <Save size={24} strokeWidth={2.5} />}
                         </button>
+                    </div>
+                )}
 
-                        {/* PDF저장 버튼 */}
-                        <button onClick={handleDownloadPDF} disabled={loadingAction !== null} className="flex flex-col items-center gap-1 p-2 w-[75px] text-gray-500 hover:text-blue-600 transition active:scale-95 disabled:opacity-50">
-                            {loadingAction === 'pdf' ? <Loader2 className="animate-spin" size={22} /> : <Download size={22} strokeWidth={2} />}
-                            <span className="text-[10px] font-black break-keep whitespace-nowrap">PDF저장</span>
+                {/* Floating Bottom Navigation */}
+                <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-[90%] sm:w-[85%] z-50 pointer-events-auto">
+                    <nav className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-[32px] py-2 px-2 flex justify-around items-center">
+                        <button onClick={handleReset} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-rose-400 transition active:scale-95">
+                            <Home size={22} /><span className="text-[10px] font-bold">홈으로</span>
+                        </button>
+                        <button onClick={handleKakaoConsult} className="flex flex-col items-center gap-1 p-2 w-[65px] text-yellow-400 hover:text-yellow-300 transition active:scale-95 text-center">
+                            <MessageCircle size={22} /><span className="text-[10px] font-bold">카톡상담</span>
+                        </button>
+                        <button onClick={handleShare} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-indigo-400 transition active:scale-95">
+                            <Share2 size={22} /><span className="text-[10px] font-bold">공유하기</span>
+                        </button>
+                        <button onClick={handleDownloadPDF} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-blue-400 transition active:scale-95 relative">
+                            {loadingAction === 'pdf' ? <Loader2 className="animate-spin text-white mb-1" size={20} /> : <Download size={22} />}
+                            <span className="text-[10px] font-bold">PDF저장</span>
                         </button>
                     </nav>
                 </div>
 
-                {/* ✨ 진짜 유저 매칭 팝업 (중앙 정렬) */}
-                {showMatchModal && (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowMatchModal(false)}></div>
-                        <div className="bg-white/90 backdrop-blur-2xl border border-white/50 w-full max-w-sm rounded-[32px] p-6 relative z-10 animate-in zoom-in-95 duration-300 shadow-2xl">
-                            <button onClick={() => setShowMatchModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition"><X size={18} strokeWidth={2.5} /></button>
+                {/* Info Modal (Budget, Hotels, Tips) */}
+                {showInfoModal && (
+                    <div className="absolute inset-0 z-[60] flex items-end sm:items-center justify-center">
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowInfoModal(false)}></div>
+                        <div className="bg-white w-full sm:w-[90%] h-[75vh] sm:h-[80vh] rounded-t-[32px] sm:rounded-[32px] relative z-20 shadow-2xl flex flex-col p-5 animate-in slide-in-from-bottom-full sm:zoom-in-95">
+                            <button onClick={() => setShowInfoModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200">
+                                <X size={18} />
+                            </button>
+                            <h2 className="text-xl font-black mb-4 pr-10 text-gray-800 flex items-center gap-2"><Sparkles className="text-rose-500" size={20}/> 여정 꿀팁 박스</h2>
+                            
+                            <div className="flex bg-gray-100 p-1 rounded-xl mb-4">
+                                <button onClick={() => setInfoModalTab('budget')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'budget' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500'}`}>예산</button>
+                                <button onClick={() => setInfoModalTab('hotels')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'hotels' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500'}`}>추천 숙소</button>
+                                <button onClick={() => setInfoModalTab('tips')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'tips' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500'}`}>팁 & 날씨</button>
+                            </div>
 
+                            <div className="flex-1 overflow-y-auto custom-scrollbar pb-6">
+                                {infoModalTab === 'budget' && (
+                                    <div className="space-y-3">
+                                        <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex justify-between items-center mb-4">
+                                            <span className="font-bold text-indigo-800">총 예상 비용</span>
+                                            <span className="font-black text-indigo-600 text-lg">{estimatedCost || "예산 정보 없음"}</span>
+                                        </div>
+                                        {tripPlan.budgetBreakdown?.map((item, idx) => (
+                                            <div key={idx} className="flex gap-2 items-center p-3 bg-white border border-gray-100 rounded-xl shadow-sm">
+                                                <div className="w-6 h-6 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center font-bold text-xs shrink-0">{idx+1}</div>
+                                                <p className="flex-1 text-sm font-medium text-gray-700">{item}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {infoModalTab === 'hotels' && (
+                                    <div className="space-y-4">
+                                        {hotels.length > 0 ? hotels.map((hotel, idx) => (
+                                            <div key={idx} className="place-card bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative group cursor-pointer hover:border-indigo-500 transition-all" onClick={() => { const link = getKlookLink(`${hotel.name} ${userInfo?.destination || ""}`, '695932'); window.open(link, '_blank'); }}>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-1 rounded-md">추천 {idx + 1}</span>
+                                                    <h4 className="font-bold text-base">{hotel.name}</h4>
+                                                </div>
+                                                <p className="text-xs text-indigo-500 font-bold mb-2 bg-indigo-50 inline-block px-2 py-1 rounded-lg">{hotel.priceRange}</p>
+                                                <p className="text-xs text-gray-500 leading-relaxed bg-gray-50 p-2 rounded-lg">{hotel.description}</p>
+                                                <div className="mt-3 flex justify-end">
+                                                    <span className="text-[11px] font-bold text-indigo-600 flex items-center gap-1">Klook 예약 <ExternalLink size={12}/></span>
+                                                </div>
+                                            </div>
+                                        )) : <div className="text-center text-gray-400 p-10 text-sm font-medium">추천 숙소 정보가 없습니다.</div>}
+                                    </div>
+                                )}
+                                {infoModalTab === 'tips' && (
+                                    <div className="space-y-4">
+                                        {weather && (
+                                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-2xl border border-blue-100 flex items-start gap-4">
+                                                <div className="bg-white p-3 rounded-full text-amber-500 shadow-sm shrink-0"><Sun size={24} /></div>
+                                                <div>
+                                                    <p className="font-black text-blue-900 mb-1">날씨 정보</p>
+                                                    <p className="text-sm text-blue-800 leading-relaxed">{weather}</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {travelTips && travelTips.length > 0 && (
+                                            <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-2xl border border-amber-100 flex items-start gap-4">
+                                                <div className="bg-white p-3 rounded-full text-amber-500 shadow-sm shrink-0"><Lightbulb size={24} /></div>
+                                                <div>
+                                                    <p className="font-black text-amber-900 mb-2">여행 꿀팁</p>
+                                                    <ul className="text-sm text-amber-800 space-y-2 list-disc list-inside">
+                                                        {travelTips.map((tip, i) => <li key={i}>{tip}</li>)}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* 매칭 모달 (원본 유지) */}
+                {showMatchModal && (
+                    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowMatchModal(false)}></div>
+                        <div className="bg-white/90 backdrop-blur-2xl w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl animate-in zoom-in-95">
+                            <button onClick={() => setShowMatchModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500"><X size={18} /></button>
                             <div className="text-center mb-6 mt-2">
-                                <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30 animate-bounce">
-                                    <Sparkles size={32} className="text-white" />
-                                </div>
+                                <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30 animate-bounce"><Sparkles size={32} className="text-white" /></div>
                                 <h3 className="text-xl font-black text-gray-900 mb-1">여행 메이트 추천</h3>
                                 <p className="text-sm text-gray-500 font-bold">비슷한 성향의 여행자를 찾았어요!</p>
                             </div>
-
                             <div className="space-y-3 mb-6">
                                 {realMates.length === 0 ? (
                                     <p className="text-center text-sm text-gray-400 font-bold py-4">아직 추천할 만한 유저가 없습니다.</p>
                                 ) : (
                                     realMates.map(mate => (
-                                        <div key={mate.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-indigo-100 transition">
+                                        <div key={mate.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
                                             <div className="flex items-center gap-3">
-                                                <img src={mate.profileImgBase64 || "https://i.pravatar.cc/150?u=" + mate.id} alt="profile" className="w-12 h-12 rounded-full object-cover border-2 border-indigo-50" />
-                                                <div>
-                                                    <p className="font-bold text-gray-900 flex items-center gap-1">{mate.name}</p>
-                                                    <p className="text-[10px] text-gray-400 font-bold truncate max-w-[120px]">{mate.bio || "자기소개가 없습니다."}</p>
-                                                </div>
+                                                <img src={mate.profileImgBase64 || "https://i.pravatar.cc/150?u=" + mate.id} className="w-12 h-12 rounded-full object-cover border-2 border-indigo-50" />
+                                                <div><p className="font-bold text-gray-900">{mate.name}</p><p className="text-[10px] text-gray-400 font-bold truncate max-w-[120px]">{mate.bio || "반가워요!"}</p></div>
                                             </div>
-                                            <button onClick={() => handleRequestRealMate(mate)} className="bg-indigo-50 text-indigo-600 w-10 h-10 rounded-full flex items-center justify-center hover:bg-indigo-600 hover:text-white transition active:scale-95" title="동행 요청하기">
-                                                <Send size={16} className="ml-0.5" />
-                                            </button>
+                                            <button onClick={() => handleRequestRealMate(mate)} className="bg-indigo-50 text-indigo-600 w-10 h-10 rounded-full flex items-center justify-center hover:bg-indigo-600 hover:text-white transition"><Send size={16} /></button>
                                         </div>
                                     ))
                                 )}
                             </div>
-                            <button onClick={() => setShowMatchModal(false)} className="w-full bg-gray-100 text-gray-600 font-bold py-3.5 rounded-2xl active:scale-95 transition hover:bg-gray-200">나중에 할게요</button>
+                            <button onClick={() => setShowMatchModal(false)} className="w-full bg-gray-100 text-gray-600 font-bold py-3.5 rounded-2xl">나중에 할게요</button>
                         </div>
                     </div>
                 )}
 
-                {/* 저장 옵션 모달 */}
+                {/* 저장 모달 (원본 유지) */}
                 {showSaveModal && (
-                    <div className="absolute inset-0 z-50 flex items-center justify-center p-6">
-                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowSaveModal(false)}></div>
-                        <div className="bg-white w-full max-w-sm rounded-[32px] p-6 relative z-10 animate-in zoom-in-95 duration-300 shadow-2xl flex flex-col items-center">
-                            <button onClick={() => setShowSaveModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition"><X size={18} strokeWidth={2.5} /></button>
-                            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg shadow-indigo-500/30">
-                                <Save size={32} strokeWidth={2.5} />
-                            </div>
+                    <div className="absolute inset-0 z-[70] flex items-center justify-center p-6">
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSaveModal(false)}></div>
+                        <div className="bg-white w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95">
+                            <button onClick={() => setShowSaveModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500"><X size={18} /></button>
+                            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg"><Save size={32} /></div>
                             <h3 className="text-xl font-black text-gray-900 mb-1">일정을 저장할까요?</h3>
-                            <p className="text-sm text-gray-500 mb-6 text-center">저장된 일정은 마이페이지에서<br />언제든 확인하고 수정할 수 있어요.</p>
-
-                            <div
-                                onClick={() => setShareToFeed(!shareToFeed)}
-                                className={`w-full p-4 rounded-xl border-2 flex items-center gap-3 cursor-pointer transition-all mb-6 ${shareToFeed ? 'border-rose-500 bg-rose-50' : 'border-gray-200 bg-gray-50 hover:bg-gray-100'}`}
-                            >
-                                <div className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors ${shareToFeed ? 'bg-rose-500 text-white' : 'bg-gray-300 text-white'}`}>
-                                    <Check size={16} strokeWidth={3} />
-                                </div>
-                                <div className="text-left flex-1">
-                                    <p className={`text-sm font-bold ${shareToFeed ? 'text-rose-600' : 'text-gray-600'}`}>여행자 피드에 공유하고 100P 받기 ✨</p>
-                                    <p className="text-[10px] text-gray-400">다른 여행자들에게 영감을 주세요!</p>
-                                </div>
+                            <p className="text-sm text-gray-500 mb-6 text-center">저장된 일정은 마이페이지에서<br />수정할 수 있어요.</p>
+                            <div onClick={() => setShareToFeed(!shareToFeed)} className={`w-full p-4 rounded-xl border-2 flex items-center gap-3 cursor-pointer transition-all mb-6 ${shareToFeed ? 'border-rose-500 bg-rose-50' : 'border-gray-200 bg-gray-50'}`}>
+                                <div className={`w-6 h-6 rounded-md flex items-center justify-center ${shareToFeed ? 'bg-rose-500 text-white' : 'bg-gray-300'}`}><Check size={16} strokeWidth={3} /></div>
+                                <div className="text-left flex-1"><p className={`text-sm font-bold ${shareToFeed ? 'text-rose-600' : 'text-gray-600'}`}>여행자 피드 공유 (100P 적립)</p><p className="text-[10px] text-gray-400">다른 여행자들에게 영감을 주세요!</p></div>
                             </div>
-
-                            <button
-                                onClick={executeSave}
-                                disabled={isSaving}
-                                className="w-full bg-gray-900 text-white font-bold text-lg py-4 rounded-2xl shadow-xl hover:bg-black active:scale-[0.98] transition flex items-center justify-center gap-2"
-                            >
-                                {isSaving ? <Loader2 className="animate-spin" size={20} /> : "저장 완료"}
-                            </button>
+                            <button onClick={executeSave} disabled={isSaving} className="w-full bg-gray-900 text-white font-bold text-lg py-4 rounded-2xl shadow-xl hover:bg-black transition">{isSaving ? <Loader2 className="animate-spin" size={20} /> : "저장 완료"}</button>
                         </div>
                     </div>
                 )}
