@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import KakaoProvider from "next-auth/providers/kakao";
+import { admin } from "../../../../lib/firebaseAdmin";
 
 const handler = NextAuth({
     providers: [
@@ -9,10 +10,24 @@ const handler = NextAuth({
         }),
     ],
     secret: process.env.NEXTAUTH_SECRET,
-    // 로그인 성공 후 세션에 사용자 ID 등을 담고 싶을 때 설정
     callbacks: {
+        async jwt({ token, user, account }) {
+            // 카카오 로그인이 최초로 성공했을 때 한정
+            if (account && user) {
+                token.uid = `kakao:${user.id}`;
+                try {
+                    // Firebase 커스텀 토큰 발급
+                    const customToken = await admin.auth().createCustomToken(token.uid);
+                    token.firebaseToken = customToken;
+                } catch (error) {
+                    console.error("Firebase Custom Token 발급 에러:", error);
+                }
+            }
+            return token;
+        },
         async session({ session, token }) {
-            session.user.id = token.sub;
+            session.user.id = token.uid || token.sub;
+            session.firebaseToken = token.firebaseToken;
             return session;
         },
     },

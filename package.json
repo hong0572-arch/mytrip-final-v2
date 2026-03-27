@@ -24,6 +24,7 @@
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "firebase": "^12.7.0",
+    "firebase-admin": "^13.7.0",
     "framer-motion": "^12.23.25",
     "html-to-image": "^1.11.13",
     "jspdf": "^3.0.4",

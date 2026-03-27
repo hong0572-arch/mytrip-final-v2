@@ -31,7 +31,7 @@ import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { auth, db } from "../lib/firebase";
 import {
     onAuthStateChanged, signInWithRedirect, signInWithPopup, getRedirectResult,
-    GoogleAuthProvider, updateProfile, signInWithCredential
+    GoogleAuthProvider, updateProfile, signInWithCredential, signInWithCustomToken
 } from "firebase/auth";
 import {
     doc, getDoc, setDoc, deleteDoc, updateDoc, increment, serverTimestamp,
@@ -274,12 +274,31 @@ export default function Home() {
         return () => { clearInterval(timer); window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt); window.removeEventListener('appinstalled', handleAppInstalled); unsubscribeAuth(); if (unsubscribeTrips) unsubscribeTrips(); };
     }, [router]);
 
-    // ✨ NextAuth (카카오) 로그인 상태를 감지하여 마이페이지로 리다이렉트
+    // ✨ NextAuth (카카오) 로그인 상태를 감지하여 Firebase Custom Token 연동 및 마이페이지 리다이렉트
     useEffect(() => {
         if (session) {
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('mode') !== 'new') {
-                router.push('/mypage');
+            if (session.firebaseToken) {
+                // 파이어베이스 계정에 카카오 정보로 로그인 연동
+                if (!auth.currentUser) {
+                    signInWithCustomToken(auth, session.firebaseToken)
+                        .then(() => {
+                            const params = new URLSearchParams(window.location.search);
+                            if (params.get('mode') !== 'new') {
+                                router.push('/mypage');
+                            }
+                        })
+                        .catch(err => console.error("Firebase Custom Token Login Failed:", err));
+                } else {
+                    // 이미 연동되어 로그인 상태일 때
+                    const params = new URLSearchParams(window.location.search);
+                    if (params.get('mode') !== 'new') {
+                        router.push('/mypage');
+                    }
+                }
+            } else {
+                // 구형 세션 캐시 제거 유도
+                console.warn("Firebase Token 누락. 카카오 세션을 초기화합니다.");
+                signOut({ redirect: false });
             }
         }
     }, [session, router]);
