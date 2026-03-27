@@ -21,8 +21,17 @@ export default function useFcmToken() {
 
                 const messaging = getMessaging();
 
-                // 🛡️ 2단계: 권한 요청 전 안전장치
-                const permission = await Notification.requestPermission();
+                // 🛡️ 2단계: 권한 확인 및 요청 (단, 세션당 1회만 요청하여 중복 팝업 방지)
+                let permission = Notification.permission;
+                
+                if (permission === 'default') {
+                    const hasPrompted = sessionStorage.getItem('fcmPrompted');
+                    if (!hasPrompted) {
+                        sessionStorage.setItem('fcmPrompted', 'true');
+                        permission = await Notification.requestPermission();
+                    }
+                }
+                
                 setNotificationPermission(permission);
 
                 if (permission === 'granted') {
