@@ -274,6 +274,16 @@ export default function Home() {
         return () => { clearInterval(timer); window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt); window.removeEventListener('appinstalled', handleAppInstalled); unsubscribeAuth(); if (unsubscribeTrips) unsubscribeTrips(); };
     }, [router]);
 
+    // ✨ NextAuth (카카오) 로그인 상태를 감지하여 마이페이지로 리다이렉트
+    useEffect(() => {
+        if (session) {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('mode') !== 'new') {
+                router.push('/mypage');
+            }
+        }
+    }, [session, router]);
+
     // --- ✨ 로그인 핸들러 (통합 모달용) ---
     const handleGoogleLogin = async () => {
         setShowLoginModal(false);
@@ -297,7 +307,7 @@ export default function Home() {
 
     const handleKakaoLogin = () => {
         setShowLoginModal(false);
-        signIn("kakao");
+        signIn("kakao", { callbackUrl: '/mypage' });
     };
 
     // --- 기존 핸들러 로직 (원본 100% 유지) ---
