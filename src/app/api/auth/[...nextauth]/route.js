@@ -8,6 +8,7 @@ const handler = NextAuth({
             clientSecret: process.env.KAKAO_CLIENT_SECRET,
         }),
     ],
+    secret: process.env.NEXTAUTH_SECRET,
     // 로그인 성공 후 세션에 사용자 ID 등을 담고 싶을 때 설정
     callbacks: {
         async session({ session, token }) {
