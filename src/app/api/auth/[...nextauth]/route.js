@@ -2,6 +2,8 @@ import NextAuth from "next-auth";
 import KakaoProvider from "next-auth/providers/kakao";
 import { admin } from "../../../../lib/firebaseAdmin";
 
+export const runtime = 'nodejs';
+
 const handler = NextAuth({
     providers: [
         KakaoProvider({
