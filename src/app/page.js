@@ -287,7 +287,10 @@ export default function Home() {
                                 router.push('/mypage');
                             }
                         })
-                        .catch(err => console.error("Firebase Custom Token Login Failed:", err));
+                        .catch(err => {
+                            console.error("Firebase Custom Token Login Failed:", err);
+                            alert("Firebase 토큰 로그인에 실패했습니다.");
+                        });
                 } else {
                     // 이미 연동되어 로그인 상태일 때
                     const params = new URLSearchParams(window.location.search);
@@ -298,6 +301,7 @@ export default function Home() {
             } else {
                 // 구형 세션 캐시 제거 유도
                 console.warn("Firebase Token 누락. 카카오 세션을 초기화합니다.");
+                alert("구형 세션 충돌 오류 (Token Missing). 세션을 초기화했습니다. 다시 로그인 버튼을 눌러주세요!");
                 signOut({ redirect: false });
             }
         }
@@ -326,7 +330,7 @@ export default function Home() {
 
     const handleKakaoLogin = () => {
         setShowLoginModal(false);
-        signIn("kakao", { callbackUrl: '/mypage' });
+        signIn("kakao", { callbackUrl: '/' }); // 반드시 메인 페이지로 와서 signInWithCustomToken을 먼저 실행해야 함
     };
 
     // --- 기존 핸들러 로직 (원본 100% 유지) ---
