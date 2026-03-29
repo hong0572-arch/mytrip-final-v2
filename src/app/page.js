@@ -289,7 +289,7 @@ export default function Home() {
                         })
                         .catch(err => {
                             console.error("Firebase Custom Token Login Failed:", err);
-                            alert("Firebase 토큰 로그인에 실패했습니다.");
+                            alert("Firebase 토큰 로그인 에러: " + (err.code || "unknown") + " / " + (err.message || err));
                         });
                 } else {
                     // 이미 연동되어 로그인 상태일 때
