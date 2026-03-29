@@ -768,7 +768,10 @@ export default function Home() {
                                                 <div className="flex items-center gap-2"><span className="font-bold text-sm text-gray-700">{flight.carrierCode}</span></div>
                                                 <div className="text-right"><span className="block text-lg font-black text-indigo-600">{flight.price.toLocaleString()}원~</span></div>
                                             </div>
-                                            <button onClick={() => window.open(flight.linkGlobal, '_blank')} className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-sm">예약 사이트로 이동</button>
+                                            <div className="flex gap-2 mt-4">
+                                                <button onClick={() => window.open(flight.linkTripMobile || flight.linkTrip || flight.linkGlobal, '_blank')} className="flex-1 py-3 bg-[#2467F5] text-white font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all text-sm sm:text-base">Trip.com 최저가</button>
+                                                <button onClick={() => window.open(flight.linkGlobal, '_blank')} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all text-sm sm:text-base">Aviasales 예약</button>
+                                            </div>
                                         </div>
                                     ))
                                 ) : (

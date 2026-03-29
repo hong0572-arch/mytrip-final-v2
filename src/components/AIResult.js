@@ -19,7 +19,7 @@ import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 
 const getKlookLink = (keyword, markerId, language) => {
-    const encodedKeyword = encodeURIComponent(keyword);
+    const encodedKeyword = encodeURIComponent(keyword || '');
     const isKo = language !== 'en';
     const baseUrl = isKo ? "https://www.klook.com/ko/search" : "https://www.klook.com/search";
     const langParam = isKo ? "ko_KR" : "en_US";
@@ -105,7 +105,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     ${place.reason ? `<div style="font-size: 11px; color: #FF5A5F; background: #FFF0F0; padding: 6px 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #FFE4E6;"><strong>💡 냥프로의 픽!</strong><br />${place.reason}</div>` : ''}
                     <div style="display: flex; gap: 8px; margin-top: 10px;">
                         <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&hl=${language}" target="_blank" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #4f46e5; background: #e0e7ff; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🗺️ 길찾기</a>
-                        ${(!place.category?.includes("Restaurant") && !place.category?.includes("Cafe")) ? `<a href="${getKlookLink(place.name, '', language)}" target="_blank" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #e11d48; background: #ffe4e6; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🎟️ 티켓 예매</a>` : ''}
+                        ${(!place.category?.includes("Restaurant") && !place.category?.includes("Cafe")) ? `<div onclick="window.open('${getKlookLink(place.name, '', language)}', '_blank')" style="cursor: pointer; text-decoration: none; font-size: 11px; font-weight: bold; color: #e11d48; background: #ffe4e6; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center; display: inline-block;">🎟️ 티켓 예매</div>` : ''}
                     </div>
                 </div>
             `;
