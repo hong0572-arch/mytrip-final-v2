@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { signOut as nextAuthSignOut } from "next-auth/react";
 import { auth, db, storage } from "../../lib/firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage"; // ✨ Storage 업로드용 기능 추가
 import { onAuthStateChanged, updateProfile, signOut } from "firebase/auth";
@@ -562,7 +563,7 @@ export default function MyPage() {
             setUserData(prev => ({ ...prev, ...uData })); setShowProfileModal(false);
         } catch (e) { alert("오류"); } finally { setIsSaving(false); }
     };
-    const handleLogout = async () => { if (confirm("로그아웃 하시겠습니까?")) { await signOut(auth); router.push('/'); } };
+    const handleLogout = async () => { if (confirm("로그아웃 하시겠습니까?")) { await signOut(auth); await nextAuthSignOut({ redirect: false }); router.push('/'); } };
     const handleShareTrip = async (trip) => {
         const shareText = `[Trip Maker] 일정 공유\n${trip.destination}\n${trip.startDate} ~ ${trip.endDate}`;
         const shareUrl = `${window.location.origin}/share/${trip.id}`;
