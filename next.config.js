@@ -15,12 +15,8 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 
 // 2. 통합 설정 (환경변수 + CORS + 튕김방지)
 const nextConfig = {
+  // ✨ 통합 설정 (환경변수 + CORS + 튕김방지)
   reactStrictMode: true,
-
-  // ✨ 터미널 IP 경고창 없애기
-  experimental: {
-    allowedDevOrigins: ["localhost:3000", "192.168.45.31:3000"],
-  },
 
   // ✨ 핵심: 앱 환경에서 상세 페이지 진입 시 튕기는 현상을 막아줍니다.
   trailingSlash: true,
