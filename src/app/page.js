@@ -289,7 +289,12 @@ export default function Home() {
                         })
                         .catch(err => {
                             console.error("Firebase Custom Token Login Failed:", err);
-                            alert("Firebase 토큰 로그인 에러: " + (err.code || "unknown") + " / " + (err.message || err));
+                            let debugInfo = "";
+                            try {
+                                const payload = JSON.parse(atob(session.firebaseToken.split('.')[1]));
+                                debugInfo = `\n[디버그]\n발급자: ${payload.iss}\n프로젝트: ${payload.aud}`;
+                            } catch (e) {}
+                            alert("Firebase 토큰 로그인 에러: " + (err.code || "unknown") + " / " + (err.message || err) + debugInfo);
                         });
                 } else {
                     // 이미 연동되어 로그인 상태일 때
