@@ -13,10 +13,13 @@ if (!admin.apps.length) {
             console.error("🔥 Firebase Admin Error: Private key is completely missing.");
         }
 
+        const projectId = (process.env.FIREBASE_PROJECT_ID || '').replace(/^"|"$/g, '');
+        const clientEmail = (process.env.FIREBASE_CLIENT_EMAIL || '').replace(/^"|"$/g, '');
+
         admin.initializeApp({
             credential: admin.credential.cert({
-                projectId: process.env.FIREBASE_PROJECT_ID,
-                clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                projectId: projectId,
+                clientEmail: clientEmail,
                 privateKey: privateKey,
             }),
         });
