@@ -294,7 +294,8 @@ export default function Home() {
                                 const payload = JSON.parse(atob(session.firebaseToken.split('.')[1]));
                                 debugInfo = `\n[디버그]\n발급자: ${payload.iss}\n프로젝트: ${payload.aud}`;
                             } catch (e) {}
-                            alert("Firebase 토큰 로그인 에러: " + (err.code || "unknown") + " / " + (err.message || err) + debugInfo);
+                            alert("Firebase 토큰 로그인 에러: " + (err.code || "unknown") + " / " + (err.message || err) + debugInfo + "\n\n오손된 세션을 초기화합니다. 다시 로그인해주세요!");
+                            signOut({ redirect: false });
                         });
                 } else {
                     // 이미 연동되어 로그인 상태일 때
