@@ -307,7 +307,32 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 dayItem.places.forEach((place, placeIdx) => {
                     if (place.coordinates?.lat && place.coordinates?.lng) {
                         path.push(place.coordinates); bounds.extend(place.coordinates);
-                        const marker = new google.maps.Marker({ position: place.coordinates, map, icon: { path: google.maps.SymbolPath.CIRCLE, fillColor: dayColor, fillOpacity: 1, strokeColor: "white", strokeWeight: 2, scale: 12 }, label: { text: (placeIdx + 1).toString(), color: "white", fontWeight: "bold", fontSize: "12px" }, zIndex: 100 + index });
+                        
+                        const pinSvg = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+                            <svg width="40" height="42" viewBox="0 0 40 42" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 0C11.164 0 4 7.164 4 16c0 10.667 16 24 16 24s16-13.333 16-24c0-8.836-7.164-16-16-16z" fill="${dayColor}" stroke="white" stroke-width="2"/>
+                                <circle cx="20" cy="16" r="11" fill="white"/>
+                            </svg>
+                        `)}`;
+
+                        const marker = new google.maps.Marker({ 
+                            position: place.coordinates, 
+                            map, 
+                            icon: { 
+                                url: pinSvg,
+                                scaledSize: new google.maps.Size(36, 38),
+                                anchor: new google.maps.Point(18, 38),
+                                labelOrigin: new google.maps.Point(18, 15)
+                            }, 
+                            label: { 
+                                text: (placeIdx + 1).toString(), 
+                                color: dayColor, 
+                                fontWeight: "900", 
+                                fontSize: "13px" 
+                            }, 
+                            zIndex: 100 + index,
+                            animation: google.maps.Animation.DROP
+                        });
                         marker.addListener('click', () => {
                             let fIdx = 0;
                             for (let i = 0; i < index; i++) {
@@ -324,7 +349,33 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
             tripPlan.recommendedHotels?.forEach((hotel) => {
                 if (hotel.coordinates?.lat && hotel.coordinates?.lng) {
                     bounds.extend(hotel.coordinates);
-                    const marker = new google.maps.Marker({ position: hotel.coordinates, map, label: { text: "H", color: "white", fontWeight: "bold", fontSize: "10px" }, icon: { path: google.maps.SymbolPath.CIRCLE, fillColor: "#111827", fillOpacity: 1, strokeColor: "white", strokeWeight: 2, scale: 10 }, title: hotel.name, zIndex: 200 });
+                    
+                    const hotelSvg = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+                        <svg width="40" height="42" viewBox="0 0 40 42" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 0C11.164 0 4 7.164 4 16c0 10.667 16 24 16 24s16-13.333 16-24c0-8.836-7.164-16-16-16z" fill="#111827" stroke="white" stroke-width="2"/>
+                            <circle cx="20" cy="16" r="11" fill="white"/>
+                        </svg>
+                    `)}`;
+
+                    const marker = new google.maps.Marker({ 
+                        position: hotel.coordinates, 
+                        map, 
+                        icon: { 
+                            url: hotelSvg,
+                            scaledSize: new google.maps.Size(32, 34),
+                            anchor: new google.maps.Point(16, 34),
+                            labelOrigin: new google.maps.Point(16, 14)
+                        },
+                        label: { 
+                            text: "H", 
+                            color: "#111827", 
+                            fontWeight: "900", 
+                            fontSize: "12px" 
+                        }, 
+                        title: hotel.name, 
+                        zIndex: 200,
+                        animation: google.maps.Animation.DROP
+                    });
                     markersRef.current.push(marker);
                 }
             });
