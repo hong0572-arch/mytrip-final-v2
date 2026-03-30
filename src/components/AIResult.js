@@ -21,12 +21,9 @@ import jsPDF from 'jspdf';
 const getKlookLink = (keyword, markerId, language) => {
     const encodedKeyword = encodeURIComponent(keyword || '');
     const isKo = language !== 'en';
-    const baseUrl = isKo ? "https://www.klook.com/ko/search" : "https://www.klook.com/search";
-    const langParam = isKo ? "ko_KR" : "en_US";
-    const currParam = isKo ? "KRW" : "USD";
-    const klookUrl = `${baseUrl}?query=${encodedKeyword}&lang=${langParam}&currency=${currParam}`;
+    const klookUrl = `https://www.klook.com/${isKo ? 'ko/' : ''}search?query=${encodedKeyword}`;
     const finalMarker = markerId || '695932'; // ✨ markerId가 없을 경우 기본값 사용
-    return `https://tp.media/r?marker=${finalMarker}&p=4110&u=${encodeURIComponent(klookUrl)}`;
+    return `https://tp.st/r?marker=${finalMarker}&p=4110&u=${encodeURIComponent(klookUrl)}`;
 };
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
