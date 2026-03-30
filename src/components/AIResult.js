@@ -681,25 +681,61 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     </button>
                 </div>
 
-                {/* Right Side Dial Component */}
+                {/* Right Side Dial Component - Holographic 3D Wheel */}
                 {!isEditMode && (
-                    <div className="absolute right-0 top-[20%] h-[60%] w-20 sm:w-24 z-20 pointer-events-none flex flex-col">
-                        <div className="h-full overflow-y-auto custom-scrollbar-hide scroll-smooth flex flex-col items-center py-[25vh] space-y-4 snap-y snap-mandatory pointer-events-auto" id="dial-scroll-container">
+                    <div className="absolute right-0 top-[20%] h-[60%] w-24 sm:w-28 z-20 pointer-events-none flex flex-col items-center">
+                        <div 
+                            className="h-full w-full overflow-y-auto custom-scrollbar-hide scroll-smooth flex flex-col items-center py-[25vh] space-y-6 snap-y snap-mandatory pointer-events-auto" 
+                            id="dial-scroll-container"
+                            ref={(el) => {
+                                if (el) {
+                                    const selectedEl = el.children[selectedIndex];
+                                    if (selectedEl) {
+                                        el.scrollTo({
+                                            top: selectedEl.offsetTop - el.clientHeight / 2 + selectedEl.clientHeight / 2,
+                                            behavior: 'smooth'
+                                        });
+                                    }
+                                }
+                            }}
+                        >
                             {flatPlaces.map((item, i) => {
                                 const isSelected = i === selectedIndex;
+                                const diff = i - selectedIndex;
+                                const absDiff = Math.abs(diff);
+                                
+                                // 3D Transform calculations for Holographic Wheel effect
+                                const rotateX = diff * -20; 
+                                const translateZ = absDiff * -30;
+                                const scale = isSelected ? 1.25 : Math.max(0.7, 1 - absDiff * 0.15);
+                                const opacity = Math.max(0.3, 1 - absDiff * 0.25);
+                                
                                 return (
                                     <div 
                                         key={i} 
                                         onClick={() => setSelectedIndex(i)}
-                                        className={`snap-center shrink-0 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 shadow-xl border-2 ${isSelected ? 'w-16 h-16 sm:w-20 sm:h-20 rounded-full text-white border-white scale-110 z-10' : 'w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/90 text-gray-700 border-transparent hover:scale-105 opacity-80'}`}
-                                        style={isSelected ? { backgroundColor: item.dayColor } : {}}
+                                        className={`snap-center shrink-0 flex flex-col items-center justify-center cursor-pointer transition-all duration-500 rounded-2xl border backdrop-blur-xl ${isSelected ? 'shadow-[0_0_25px_rgba(255,255,255,0.4)] border-white z-10' : 'border-white/10 opacity-70'}`}
+                                        style={{
+                                            width: isSelected ? '70px' : '52px',
+                                            height: isSelected ? '70px' : '52px',
+                                            transform: `perspective(1000px) rotateX(${rotateX}deg) translateZ(${translateZ}px) scale(${scale})`,
+                                            opacity: opacity,
+                                            backgroundColor: isSelected ? item.dayColor : 'rgba(255, 255, 255, 0.05)',
+                                            boxShadow: isSelected ? `0 0 20px ${item.dayColor}80, inset 0 0 10px rgba(255,255,255,0.5)` : 'none',
+                                            color: isSelected ? 'white' : 'rgba(255, 255, 255, 0.6)'
+                                        }}
                                     >
-                                        <span className="text-[10px] sm:text-xs font-bold opacity-90 leading-none mb-1">D.{item.day}</span>
-                                        <span className={`text-base sm:text-xl font-black leading-none ${isSelected ? 'text-white' : 'text-gray-900'}`}>{item.placeIdx + 1}</span>
+                                        <span className={`text-[9px] font-black tracking-tighter mb-0.5 ${isSelected ? 'text-white' : 'text-white/40'}`}>DAY {item.day}</span>
+                                        <span className={`text-xl font-black leading-none ${isSelected ? 'text-white drop-shadow-md' : 'text-white/60'}`}>{item.placeIdx + 1}</span>
+                                        {isSelected && (
+                                            <div className="absolute -bottom-1 w-1.5 h-1.5 bg-white rounded-full animate-pulse shadow-[0_0_10px_white]"></div>
+                                        )}
                                     </div>
                                 )
                             })}
                         </div>
+                        {/* Glass Overlay for the center focus area */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 border border-white/20 rounded-2xl pointer-events-none bg-white/5 backdrop-blur-sm -z-10 shadow-[inset_0_0_20px_rgba(255,255,255,0.1)]"></div>
                     </div>
                 )}
 
