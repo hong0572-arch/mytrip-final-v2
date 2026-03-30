@@ -602,25 +602,40 @@ export default function Home() {
                                         <button onClick={() => handleVoiceInput('destination')} className={`p-2 rounded-full ${listeningField === 'destination' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={16} /></button>
                                     </div>
                                     <div className="flex bg-gray-100 p-1.5 rounded-2xl mb-5 gap-1.5 shadow-inner">
-                                        {['auto', 'domestic', 'international', 'daytrip'].map(type => (
-                                            <button key={type} onClick={() => {
-                                                if (type === 'daytrip') {
-                                                    setFormData({ ...formData, regionType: 'auto', request: formData.request ? `${formData.request}, 당일치기 여행` : '당일치기 여행' });
-                                                    if (!startDate) {
-                                                        const today = new Date();
-                                                        setDateRange([today, today]);
-                                                        setFormData(prev => ({ ...prev, startDate: today.toISOString().split('T')[0], endDate: today.toISOString().split('T')[0] }));
+                                        {['auto', 'domestic', 'international', 'daytrip'].map(type => {
+                                            const isDayTripActive = startDate && endDate && startDate.getTime() === endDate.getTime();
+                                            const isActive = type === 'daytrip' ? isDayTripActive : (formData.regionType === type && !isDayTripActive);
+
+                                            return (
+                                                <button key={type} onClick={() => {
+                                                    if (type === 'daytrip') {
+                                                        if (isDayTripActive) {
+                                                            // 토글 해제: 요청 사항만 제거하고 날짜는 그대로 유지
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                request: prev.request.replace(', 당일치기 여행', '').replace('당일치기 여행', '').trim()
+                                                            }));
+                                                            // 날짜 선택기를 다시 유연하게 만들기 위해 (필요시)
+                                                            // 여기서는 단순히 텍스트만 지우는 것으로 충분할 수 있습니다.
+                                                        } else {
+                                                            // 토글 활성화: 당일치기로 설정
+                                                            const baseDate = startDate || new Date();
+                                                            setDateRange([baseDate, baseDate]);
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                startDate: baseDate.toISOString().split('T')[0],
+                                                                endDate: baseDate.toISOString().split('T')[0],
+                                                                request: prev.request ? (prev.request.includes('당일치기') ? prev.request : `${prev.request}, 당일치기 여행`) : '당일치기 여행'
+                                                            }));
+                                                        }
                                                     } else {
-                                                        setDateRange([startDate, startDate]);
-                                                        setFormData(prev => ({ ...prev, endDate: prev.startDate }));
+                                                        setFormData({ ...formData, regionType: type });
                                                     }
-                                                } else {
-                                                    setFormData({ ...formData, regionType: type });
-                                                }
-                                            }} className={`flex-1 text-xs sm:text-sm font-black py-3.5 rounded-xl transition-all duration-300 ${formData.regionType === type || (type === 'daytrip' && startDate && startDate.getTime() === endDate?.getTime()) ? 'bg-white text-rose-500 shadow-md scale-[1.02]' : 'text-gray-500 hover:bg-white/50'}`}>
-                                                {type === 'auto' ? '🤖 AI 알아서' : type === 'domestic' ? '🇰🇷 국내만' : type === 'international' ? '✈️ 해외로' : '🌞 당일여행'}
-                                            </button>
-                                        ))}
+                                                }} className={`flex-1 text-xs sm:text-sm font-black py-3.5 rounded-xl transition-all duration-300 ${isActive ? 'bg-white text-rose-500 shadow-md scale-[1.02]' : 'text-gray-500 hover:bg-white/50'}`}>
+                                                    {type === 'auto' ? '🤖 AI 알아서' : type === 'domestic' ? '🇰🇷 국내만' : type === 'international' ? '✈️ 해외로' : '🌞 당일여행'}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                     <input type="text" name="destination" value={formData.destination} onChange={handleInputChange} placeholder={listeningField === 'destination' ? translations[language].msg_listening : translations[language].placeholder_dest} className="w-full text-xl font-bold text-gray-800 bg-transparent outline-none mb-4" />
                                     <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-50">
