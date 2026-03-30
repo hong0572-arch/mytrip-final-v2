@@ -25,7 +25,8 @@ const getKlookLink = (keyword, markerId, language) => {
     const langParam = isKo ? "ko_KR" : "en_US";
     const currParam = isKo ? "KRW" : "USD";
     const klookUrl = `${baseUrl}?query=${encodedKeyword}&lang=${langParam}&currency=${currParam}`;
-    return `https://tp.media/r?marker=${markerId}&trs=488085&p=4110&u=${encodeURIComponent(klookUrl)}&campaign_id=137`;
+    const finalMarker = markerId || '695932'; // ✨ markerId가 없을 경우 기본값 사용
+    return `https://tp.media/r?marker=${finalMarker}&trs=488085&p=4110&u=${encodeURIComponent(klookUrl)}&campaign_id=137`;
 };
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -105,7 +106,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     ${place.reason ? `<div style="font-size: 11px; color: #FF5A5F; background: #FFF0F0; padding: 6px 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #FFE4E6;"><strong>💡 냥프로의 픽!</strong><br />${place.reason}</div>` : ''}
                     <div style="display: flex; gap: 8px; margin-top: 10px;">
                         <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&hl=${language}" target="_blank" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #4f46e5; background: #e0e7ff; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🗺️ 길찾기</a>
-                        ${(!place.category?.includes("Restaurant") && !place.category?.includes("Cafe")) ? `<div onclick="window.open('${getKlookLink(place.name, '', language)}', '_blank')" style="cursor: pointer; text-decoration: none; font-size: 11px; font-weight: bold; color: #e11d48; background: #ffe4e6; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center; display: inline-block;">🎟️ 티켓 예매</div>` : ''}
+                        ${(!place.category?.includes("Restaurant") && !place.category?.includes("Cafe")) ? `<div onclick="window.open('${getKlookLink(place.name, '695932', language)}', '_blank')" style="cursor: pointer; text-decoration: none; font-size: 11px; font-weight: bold; color: #e11d48; background: #ffe4e6; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center; display: inline-block;">🎟️ 티켓 예매</div>` : ''}
                     </div>
                 </div>
             `;
