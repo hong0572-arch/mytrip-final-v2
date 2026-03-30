@@ -55,13 +55,17 @@ export async function POST(req) {
     const {
       destination, startDate, endDate, companion,
       budget, people, hotelType, tourType,
-      themes, request, isLuxury, language
+      themes, request, isLuxury, language,
+      currentTime, startLocation
     } = body;
 
     const start = new Date(startDate);
     const end = new Date(endDate);
     const days = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
     const targetLang = language === 'en' ? 'English' : 'Korean';
+
+    const timeContext = currentTime ? `현재 시간은 ${currentTime}입니다. 만약 오늘(${startDate}) 일정이라면, 이 시간 이후부터 가능한 일정을 짜주세요.` : "";
+    const startContext = startLocation ? `사용자의 현재 출발 위치는 "${startLocation}"입니다. 이 위치에서 이동 시간을 고려하여 일정을 짜주세요.` : "";
 
     const budgetText = isLuxury
       ? (language === 'en' ? `Unlimited` : `1인당 2,000만원 ~ 5,000만원`)
@@ -83,12 +87,21 @@ export async function POST(req) {
       You are an elite "AI Travel Therapist" and a professional travel planner named "Nyang-Pro".
       Plan a **${days}-day trip** based on the user's input (${startDate} ~ ${endDate}).
       
+      [Traveler Context]
+      ${timeContext}
+      ${startContext}
+      
       [Traveler Info]
       User Input (Destination or Mood/Purpose): "${destination}"
       Companion: ${companion}, People: ${people}, Budget: ${budgetText}, Style: ${tourType}
       
       [🚨 USER REQUEST]
       "${request || "No special request"}"
+      
+      [CRITICAL INSTRUCTIONS FOR TIME & LOCATION]
+      1. If "currentTime" is provided and the trip is for today, skip early morning activities and focus on what's possible from now on.
+      2. If "startLocation" is provided, ensure the first destination of the day is reachable from the starting point within a reasonable time.
+      3. Talk like a therapist, considering the user might be tired or in a hurry if starting late.
       
       [CRITICAL INSTRUCTIONS FOR DESTINATION INFERENCE]
       1. If the "User Input" is a specific city/country (e.g., "Paris", "Jeju"), plan the trip there.

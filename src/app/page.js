@@ -208,6 +208,8 @@ export default function Home() {
     const [isLuxury, setIsLuxury] = useState(false);
     const [listeningField, setListeningField] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [userLocation, setUserLocation] = useState(null);
+    const [isLocationLoading, setIsLocationLoading] = useState(false);
     const [formData, setFormData] = useState({
         destination: "", startDate: "", endDate: "", companion: "연인",
         people: 2, budget: 100, hotelType: "호텔", tourType: "자유여행",
@@ -482,12 +484,56 @@ export default function Home() {
     };
     const updatePeople = (delta) => setFormData(prev => ({ ...prev, people: Math.max(1, Math.min(20, prev.people + delta)) }));
 
+    // 📍 현재 위치 가져오기 (OpenStreetMap Nominatim 사용)
+    const fetchUserLocation = () => {
+        if (!navigator.geolocation) {
+            alert("브라우저가 위치 정보를 지원하지 않습니다.");
+            return;
+        }
+        setIsLocationLoading(true);
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const { latitude, longitude } = pos.coords;
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=ko`);
+                const data = await res.json();
+                const city = data.address.city || data.address.town || data.address.village || data.address.province || "내 위치";
+                setUserLocation(city);
+                setFormData(prev => ({ ...prev, destination: city }));
+            } catch (err) {
+                console.error("위치 변환 실패:", err);
+                setUserLocation(`${latitude.toFixed(2)}, ${longitude.toFixed(2)}`);
+                setFormData(prev => ({ ...prev, destination: `${latitude.toFixed(2)}, ${longitude.toFixed(2)}` }));
+            } finally {
+                setIsLocationLoading(false);
+            }
+        }, (err) => {
+            console.error("위치 획득 실패:", err);
+            alert("위치 정보를 가져올 수 없습니다. 권한을 확인해주세요.");
+            setIsLocationLoading(false);
+        });
+    };
+
     const generatePlan = async () => {
         if (!formData.destination) { alert("어떤 여행을 원하시는지 알려주세요!"); return; }
         if (!formData.startDate || !formData.endDate) { alert("날짜를 선택해주세요!"); return; }
         setLoading(true);
+
+        // 현재 시간 및 날짜 체크 (오늘일 경우 시간 전달)
+        const today = new Date().toISOString().split('T')[0];
+        const currentTime = (formData.startDate === today) ? new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) : null;
+
         try {
-            const response = await fetch("/api/generate/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...formData, isLuxury, language }) });
+            const response = await fetch("/api/generate/", { 
+                method: "POST", 
+                headers: { "Content-Type": "application/json" }, 
+                body: JSON.stringify({ 
+                    ...formData, 
+                    isLuxury, 
+                    language,
+                    currentTime,
+                    startLocation: userLocation || null
+                }) 
+            });
             const data = await response.json();
             if (data.result) {
                 const { inCode, outCode } = extractIataFromItinerary(data.result);
@@ -648,7 +694,12 @@ export default function Home() {
                                             </button>
                                         ))}
                                     </div>
-                                    <input type="text" name="destination" value={formData.destination} onChange={handleInputChange} placeholder={listeningField === 'destination' ? translations[language].msg_listening : translations[language].placeholder_dest} className="w-full text-xl font-bold text-gray-800 bg-transparent outline-none mb-4" />
+                                    <div className="relative">
+                                        <input type="text" name="destination" value={formData.destination} onChange={handleInputChange} placeholder={listeningField === 'destination' ? translations[language].msg_listening : translations[language].placeholder_dest} className="w-full text-xl font-bold text-gray-800 bg-transparent outline-none mb-4 pr-10" />
+                                        <button onClick={fetchUserLocation} disabled={isLocationLoading} className="absolute right-0 top-0 p-2 text-rose-500 hover:bg-rose-50 rounded-full transition-all active:scale-90">
+                                            {isLocationLoading ? <Sparkles size={20} className="animate-spin" /> : <MapPin size={22} />}
+                                        </button>
+                                    </div>
                                     <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-50">
                                         {QUICK_TAGS.map((tag, idx) => (
                                             <button key={idx} onClick={() => setFormData(prev => ({ ...prev, destination: prev.destination ? `${prev.destination}, ${cleanTagText(tag)}` : cleanTagText(tag) }))} className="bg-gray-50 border border-gray-100 text-gray-600 px-3 py-1.5 rounded-xl text-[12px] font-bold transition hover:bg-rose-50 active:scale-95">{tag}</button>
