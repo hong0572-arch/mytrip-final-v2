@@ -293,7 +293,7 @@ export default function Home() {
                             try {
                                 const payload = JSON.parse(atob(session.firebaseToken.split('.')[1]));
                                 debugInfo = `\n[디버그]\n발급자: ${payload.iss}\n프로젝트: ${payload.aud}`;
-                            } catch (e) {}
+                            } catch (e) { }
                             alert("Firebase 토큰 로그인 에러: " + (err.code || "unknown") + " / " + (err.message || err) + debugInfo + "\n\n오손된 세션을 초기화합니다. 다시 로그인해주세요!");
                             signOut({ redirect: false });
                         });
@@ -457,7 +457,29 @@ export default function Home() {
 
     const toggleLuxuryMode = () => { setIsLuxury(!isLuxury); setFormData(prev => ({ ...prev, hotelType: !isLuxury ? "5성급 스위트룸/풀빌라" : "호텔" })); };
     const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-    const handleDateChange = (update) => { setDateRange(update); if (update[0] && update[1]) setFormData(prev => ({ ...prev, startDate: update[0].toISOString().split('T')[0], endDate: update[1].toISOString().split('T')[0] })); };
+    const handleDateChange = (update) => {
+        setDateRange(update);
+        if (update[0] && update[1]) {
+            const isDay = update[0].getTime() === update[1].getTime();
+            setFormData(prev => {
+                let newRequest = prev.request;
+                if (isDay) {
+                    if (!newRequest.includes('당일치기')) {
+                        newRequest = newRequest ? `${newRequest}, 당일치기 여행` : '당일치기 여행';
+                    }
+                } else {
+                    newRequest = newRequest.replace(', 당일치기 여행', '').replace('당일치기 여행', '').trim();
+                }
+                return {
+                    ...prev,
+                    startDate: update[0].toISOString().split('T')[0],
+                    endDate: update[1].toISOString().split('T')[0],
+                    regionType: isDay ? 'daytrip' : (prev.regionType === 'daytrip' ? 'auto' : prev.regionType),
+                    request: newRequest
+                };
+            });
+        }
+    };
     const updatePeople = (delta) => setFormData(prev => ({ ...prev, people: Math.max(1, Math.min(20, prev.people + delta)) }));
 
     const generatePlan = async () => {
@@ -602,40 +624,29 @@ export default function Home() {
                                         <button onClick={() => handleVoiceInput('destination')} className={`p-2 rounded-full ${listeningField === 'destination' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={16} /></button>
                                     </div>
                                     <div className="flex bg-gray-100 p-1.5 rounded-2xl mb-5 gap-1.5 shadow-inner">
-                                        {['auto', 'domestic', 'international', 'daytrip'].map(type => {
-                                            const isDayTripActive = startDate && endDate && startDate.getTime() === endDate.getTime();
-                                            const isActive = type === 'daytrip' ? isDayTripActive : (formData.regionType === type && !isDayTripActive);
-
-                                            return (
-                                                <button key={type} onClick={() => {
-                                                    if (type === 'daytrip') {
-                                                        if (isDayTripActive) {
-                                                            // 토글 해제: 요청 사항만 제거하고 날짜는 그대로 유지
-                                                            setFormData(prev => ({
-                                                                ...prev,
-                                                                request: prev.request.replace(', 당일치기 여행', '').replace('당일치기 여행', '').trim()
-                                                            }));
-                                                            // 날짜 선택기를 다시 유연하게 만들기 위해 (필요시)
-                                                            // 여기서는 단순히 텍스트만 지우는 것으로 충분할 수 있습니다.
-                                                        } else {
-                                                            // 토글 활성화: 당일치기로 설정
-                                                            const baseDate = startDate || new Date();
-                                                            setDateRange([baseDate, baseDate]);
-                                                            setFormData(prev => ({
-                                                                ...prev,
-                                                                startDate: baseDate.toISOString().split('T')[0],
-                                                                endDate: baseDate.toISOString().split('T')[0],
-                                                                request: prev.request ? (prev.request.includes('당일치기') ? prev.request : `${prev.request}, 당일치기 여행`) : '당일치기 여행'
-                                                            }));
-                                                        }
-                                                    } else {
-                                                        setFormData({ ...formData, regionType: type });
-                                                    }
-                                                }} className={`flex-1 text-xs sm:text-sm font-black py-3.5 rounded-xl transition-all duration-300 ${isActive ? 'bg-white text-rose-500 shadow-md scale-[1.02]' : 'text-gray-500 hover:bg-white/50'}`}>
-                                                    {type === 'auto' ? '🤖 AI 알아서' : type === 'domestic' ? '🇰🇷 국내만' : type === 'international' ? '✈️ 해외로' : '🌞 당일여행'}
-                                                </button>
-                                            );
-                                        })}
+                                        {['auto', 'domestic', 'international', 'daytrip'].map(type => (
+                                            <button key={type} onClick={() => {
+                                                if (type === 'daytrip') {
+                                                    const baseDate = startDate || new Date();
+                                                    setDateRange([baseDate, baseDate]);
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        regionType: 'daytrip',
+                                                        startDate: baseDate.toISOString().split('T')[0],
+                                                        endDate: baseDate.toISOString().split('T')[0],
+                                                        request: prev.request ? (prev.request.includes('당일치기') ? prev.request : `${prev.request}, 당일치기 여행`) : '당일치기 여행'
+                                                    }));
+                                                } else {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        regionType: type,
+                                                        request: prev.request.replace(', 당일치기 여행', '').replace('당일치기 여행', '').trim()
+                                                    }));
+                                                }
+                                            }} className={`flex-1 text-xs sm:text-sm font-black py-3.5 rounded-xl transition-all duration-300 ${formData.regionType === type ? 'bg-white text-rose-500 shadow-md scale-[1.02]' : 'text-gray-500 hover:bg-white/50'}`}>
+                                                {type === 'auto' ? '🤖 AI 알아서' : type === 'domestic' ? '🇰🇷 국내만' : type === 'international' ? '✈️ 해외로' : '🌞 당일여행'}
+                                            </button>
+                                        ))}
                                     </div>
                                     <input type="text" name="destination" value={formData.destination} onChange={handleInputChange} placeholder={listeningField === 'destination' ? translations[language].msg_listening : translations[language].placeholder_dest} className="w-full text-xl font-bold text-gray-800 bg-transparent outline-none mb-4" />
                                     <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-50">
