@@ -187,7 +187,7 @@ export default function Home() {
     const [showLoginModal, setShowLoginModal] = useState(false); // ✨ 로그인 방식 선택 모달
     const [nicknameInput, setNicknameInput] = useState("");
     const [manualAirport, setManualAirport] = useState({ show: false, trip: null, searchStr: "", error: "" });
-    const [showSplash, setShowSplash] = useState(true);
+    const [showSplash, setShowSplash] = useState(false);
     const [language, setLanguage] = useState('ko');
     const [result, setResult] = useState(null);
     const [bgIndex, setBgIndex] = useState(0);
@@ -236,7 +236,7 @@ export default function Home() {
 
     useEffect(() => {
         const hasShownSplash = sessionStorage.getItem('hasShownSplash');
-        if (hasShownSplash) setShowSplash(false);
+        if (!hasShownSplash) setShowSplash(true);
         const timer = setInterval(() => setBgIndex((prev) => (prev + 1) % backgroundImages.length), 5000);
         const checkStandalone = () => { setIsStandalone(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true); };
         checkStandalone();
@@ -601,10 +601,26 @@ export default function Home() {
                                         <label className="flex items-center gap-2 text-sm font-bold text-gray-500"><Sparkles size={16} className="text-[#FF5A5F]" /> {translations[language].label_where}</label>
                                         <button onClick={() => handleVoiceInput('destination')} className={`p-2 rounded-full ${listeningField === 'destination' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={16} /></button>
                                     </div>
-                                    <div className="flex bg-gray-100 p-1 rounded-xl mb-4">
-                                        {['auto', 'domestic', 'international'].map(type => (
-                                            <button key={type} onClick={() => setFormData({ ...formData, regionType: type })} className={`flex-1 text-xs font-bold py-2 rounded-lg transition ${formData.regionType === type ? 'bg-white text-rose-500 shadow-sm' : 'text-gray-500'}`}>
-                                                {type === 'auto' ? '🤖 AI 알아서' : type === 'domestic' ? '🇰🇷 국내만' : '✈️ 해외로'}
+                                    <div className="flex bg-gray-100 p-1 rounded-xl mb-4 gap-1">
+                                        {['auto', 'domestic', 'international', 'daytrip'].map(type => (
+                                            <button key={type} onClick={() => {
+                                                if (type === 'daytrip') {
+                                                    setFormData({ ...formData, regionType: 'auto', request: formData.request ? `${formData.request}, 당일치기 여행` : '당일치기 여행' });
+                                                    // 당일여행 클릭 시 날짜가 비어있으면 오늘로 자동 설정 (선택 사항)
+                                                    if (!startDate) {
+                                                        const today = new Date();
+                                                        setDateRange([today, today]);
+                                                        setFormData(prev => ({ ...prev, startDate: today.toISOString().split('T')[0], endDate: today.toISOString().split('T')[0] }));
+                                                    } else {
+                                                        // 이미 날짜가 있으면 종료일을 시작일과 같게 설정
+                                                        setDateRange([startDate, startDate]);
+                                                        setFormData(prev => ({ ...prev, endDate: prev.startDate }));
+                                                    }
+                                                } else {
+                                                    setFormData({ ...formData, regionType: type });
+                                                }
+                                            }} className={`flex-1 text-[10px] sm:text-xs font-bold py-2 rounded-lg transition ${formData.regionType === type || (type === 'daytrip' && startDate && startDate.getTime() === endDate?.getTime()) ? 'bg-white text-rose-500 shadow-sm' : 'text-gray-500'}`}>
+                                                {type === 'auto' ? '🤖 AI 알아서' : type === 'domestic' ? '🇰🇷 국내만' : type === 'international' ? '✈️ 해외로' : '🌞 당일여행'}
                                             </button>
                                         ))}
                                     </div>
