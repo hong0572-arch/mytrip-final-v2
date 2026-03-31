@@ -702,8 +702,8 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const destName = tripPlan.destination?.split('#')[0]?.trim() || "여행지";
 
     return (
-            <div className="relative h-dvh w-full bg-black flex flex-col font-sans overflow-hidden selection:bg-indigo-500/30">
-            <div id={CAPTURE_ID} className="w-full max-w-[480px] h-[100dvh] sm:h-[95vh] sm:rounded-[30px] bg-gray-50 relative shadow-2xl overflow-hidden flex flex-col border border-gray-800">
+            <div className="fixed inset-0 w-full bg-black flex flex-col font-sans overflow-hidden selection:bg-indigo-500/30">
+            <div id={CAPTURE_ID} className="w-full max-w-[480px] h-full sm:h-[95vh] sm:rounded-[30px] bg-black relative shadow-2xl overflow-hidden flex flex-col border border-gray-800">
 
                 {/* Full screen Map */}
                 <div className="absolute inset-0 z-0 bg-gray-900 pointer-events-auto">
@@ -813,15 +813,6 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {/* Bottom Center Gradient for fade effect */}
                 <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none z-10"></div>
 
-                {/* 보라색 채팅 아이콘 (User identified this as "Chat Icon") */}
-                {!isEditMode && (
-                    <div className="absolute bottom-[170px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
-                        <div className="bg-indigo-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">카톡상담<div className="absolute -bottom-1 right-1 w-3 h-3 bg-indigo-600 transform rotate-45"></div></div>
-                        <button onClick={handleKakaoConsult} disabled={loadingAction === 'kakao'} className="w-14 h-14 bg-indigo-600 rounded-full shadow-2xl flex items-center justify-center text-white pointer-events-auto hover:bg-indigo-500 transition-transform active:scale-95 border-2 border-white">
-                            {loadingAction === 'kakao' ? <Loader2 className="animate-spin" size={24} /> : <MessageCircle size={24} strokeWidth={2.5} />}
-                        </button>
-                    </div>
-                )}
 
                 {/* 노란색 버튼을 저장 버튼으로 활용 (브랜드 컬러 대비) */}
                 {!tripId && (
@@ -838,6 +829,9 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     <nav className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-[32px] py-2 px-2 flex justify-around items-center">
                         <button onClick={handleReset} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-rose-400 transition active:scale-95">
                             <Home size={22} /><span className="text-[10px] font-bold">홈으로</span>
+                        </button>
+                        <button onClick={handleKakaoConsult} className="flex flex-col items-center gap-1 p-2 w-[65px] text-yellow-400 hover:text-yellow-300 transition active:scale-95 text-center">
+                            <MessageCircle size={22} /><span className="text-[10px] font-bold">카톡상담</span>
                         </button>
                         <button onClick={handleShare} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-indigo-400 transition active:scale-95">
                             <Share2 size={22} /><span className="text-[10px] font-bold">공유하기</span>

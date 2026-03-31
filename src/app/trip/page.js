@@ -155,7 +155,7 @@ function TripDetailContent() {
 
             {/* 채팅 플로팅 버튼 (✨ 메뉴바에 가리지 않게 bottom-32로 위로 올림) */}
             {user && tripData.memberIds?.includes(user.uid) && (
-                <div className="fixed bottom-32 right-6 z-40 sm:bottom-32 sm:right-10 pointer-events-auto">
+                <div className="fixed bottom-44 right-6 z-40 sm:bottom-44 sm:right-10 pointer-events-auto">
                     <button
                         onClick={() => setShowChat(true)}
                         className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full shadow-[0_8px_30px_rgba(79,70,229,0.4)] flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-all border-2 border-white"
