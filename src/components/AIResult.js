@@ -718,7 +718,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 </div>
                 {/* Horizontal Dial Selection Navigation (Bottom) */}
                 {!isEditMode && (
-                    <div className="absolute bottom-[180px] left-0 right-0 z-40 flex flex-col items-center">
+                    <div className="absolute bottom-[110px] left-0 right-0 z-40 flex flex-col items-center">
                         <div 
                             ref={dialRef}
                             onScroll={handleDialScroll}
@@ -808,7 +808,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 )}
 
                 {/* Floating Bottom Navigation */}
-                <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-[90%] sm:w-[85%] z-50 pointer-events-auto">
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-[90%] sm:w-[85%] z-50 pointer-events-auto">
                     <nav className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-[32px] py-2 px-2 flex justify-around items-center">
                         <button onClick={handleReset} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-rose-400 transition active:scale-95">
                             <Home size={22} /><span className="text-[10px] font-bold">홈으로</span>
