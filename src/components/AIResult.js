@@ -718,7 +718,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 </div>
                 {/* Horizontal Dial Selection Navigation (Bottom) */}
                 {!isEditMode && (
-                    <div className="absolute bottom-[110px] left-0 right-0 z-40 flex flex-col items-center">
+                    <div className="absolute bottom-[145px] left-0 right-0 z-40 flex flex-col items-center">
                         <div 
                             ref={dialRef}
                             onScroll={handleDialScroll}
@@ -799,7 +799,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                 {/* Save Button */}
                 {!tripId && (
-                    <div className="absolute bottom-[90px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
+                    <div className="absolute bottom-[105px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
                         <div className="bg-indigo-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">저장하기<div className="absolute -bottom-1 right-1 w-3 h-3 bg-indigo-600 transform rotate-45"></div></div>
                         <button onClick={handleSaveClick} disabled={isSaving} className="w-14 h-14 bg-indigo-600 rounded-full shadow-2xl flex items-center justify-center text-white pointer-events-auto hover:bg-indigo-500 transition-transform active:scale-95 border-2 border-white">
                             {isSaving ? <Loader2 className="animate-spin" size={24} /> : <Save size={24} strokeWidth={2.5} />}
@@ -808,7 +808,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 )}
 
                 {/* Floating Bottom Navigation */}
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-[90%] sm:w-[85%] z-50 pointer-events-auto">
+                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[90%] sm:w-[85%] z-50 pointer-events-auto">
                     <nav className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-[32px] py-2 px-2 flex justify-around items-center">
                         <button onClick={handleReset} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-rose-400 transition active:scale-95">
                             <Home size={22} /><span className="text-[10px] font-bold">홈으로</span>
