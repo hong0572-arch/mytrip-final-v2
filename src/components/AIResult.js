@@ -734,11 +734,11 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 </div>
                 {/* Horizontal Dial Selection Navigation (Bottom) */}
                 {!isEditMode && (
-                    <div className="absolute bottom-[100px] left-0 right-0 z-40 flex flex-col items-center">
+                    <div className="absolute bottom-[100px] left-0 right-0 z-40 flex flex-col items-center overflow-visible">
                         <div 
                             ref={dialRef}
                             onScroll={handleDialScroll}
-                            className="w-full h-[80px] overflow-x-auto scroll-smooth no-scrollbar snap-x snap-mandatory flex flex-row items-center px-[50%]"
+                            className="w-full h-[110px] overflow-x-auto overflow-y-visible scroll-smooth no-scrollbar snap-x snap-mandatory flex flex-row items-center px-[50%]"
                             style={{ perspective: '800px' }}
                         >
                             {flatPlaces.map((item, i) => {
@@ -815,7 +815,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                 {/* 보라색 채팅 아이콘 (User identified this as "Chat Icon") */}
                 {!isEditMode && (
-                    <div className="absolute bottom-[380px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
+                    <div className="absolute bottom-[170px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
                         <div className="bg-indigo-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">카톡상담<div className="absolute -bottom-1 right-1 w-3 h-3 bg-indigo-600 transform rotate-45"></div></div>
                         <button onClick={handleKakaoConsult} disabled={loadingAction === 'kakao'} className="w-14 h-14 bg-indigo-600 rounded-full shadow-2xl flex items-center justify-center text-white pointer-events-auto hover:bg-indigo-500 transition-transform active:scale-95 border-2 border-white">
                             {loadingAction === 'kakao' ? <Loader2 className="animate-spin" size={24} /> : <MessageCircle size={24} strokeWidth={2.5} />}
@@ -825,7 +825,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                 {/* 노란색 버튼을 저장 버튼으로 활용 (브랜드 컬러 대비) */}
                 {!tripId && (
-                    <div className="absolute bottom-[280px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
+                    <div className="absolute bottom-[240px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
                         <div className="bg-yellow-400 text-black text-[11px] font-bold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">저장하기<div className="absolute -bottom-1 right-1 w-3 h-3 bg-yellow-400 transform rotate-45"></div></div>
                         <button onClick={handleSaveClick} disabled={isSaving} className="w-14 h-14 bg-yellow-400 rounded-full shadow-2xl flex items-center justify-center text-[#3c1e1e] pointer-events-auto hover:bg-yellow-300 transition-transform active:scale-95 border-2 border-white">
                             {isSaving ? <Loader2 className="animate-spin" size={24} /> : <Save size={24} strokeWidth={2.5} />}
