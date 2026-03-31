@@ -695,7 +695,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const destName = tripPlan.destination?.split('#')[0]?.trim() || "여행지";
 
     return (
-        <div className="min-h-dvh bg-black flex justify-center items-start sm:items-center overflow-hidden relative font-sans">
+            <div className="relative h-dvh w-full bg-black flex flex-col font-sans overflow-hidden selection:bg-indigo-500/30">
             <div id={CAPTURE_ID} className="w-full max-w-[480px] h-[100dvh] sm:h-[95vh] sm:rounded-[30px] bg-gray-50 relative shadow-2xl overflow-hidden flex flex-col border border-gray-800">
 
                 {/* Full screen Map */}
@@ -727,7 +727,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 </div>
                 {/* Horizontal Dial Selection Navigation (Bottom) */}
                 {!isEditMode && (
-                    <div className="absolute bottom-[90px] left-0 right-0 z-40 flex flex-col items-center">
+                    <div className="absolute bottom-[100px] left-0 right-0 z-40 flex flex-col items-center">
                         <div 
                             ref={dialRef}
                             onScroll={handleDialScroll}
@@ -806,7 +806,17 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {/* Bottom Center Gradient for fade effect */}
                 <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none z-10"></div>
 
-                {/* Save Button */}
+                {/* Kakao Consult FAB (Higher as requested) */}
+                {!isEditMode && (
+                    <div className="absolute bottom-[250px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
+                        <div className="bg-yellow-400 text-black text-[11px] font-bold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">카톡상담<div className="absolute -bottom-1 right-1 w-3 h-3 bg-yellow-400 transform rotate-45"></div></div>
+                        <button onClick={handleKakaoConsult} disabled={loadingAction === 'kakao'} className="w-14 h-14 bg-yellow-400 rounded-full shadow-2xl flex items-center justify-center text-[#3c1e1e] pointer-events-auto hover:bg-yellow-300 transition-transform active:scale-95 border-2 border-white">
+                            {loadingAction === 'kakao' ? <Loader2 className="animate-spin" size={24} /> : <MessageCircle size={24} strokeWidth={2.5} />}
+                        </button>
+                    </div>
+                )}
+
+                {/* Save Button FAB */}
                 {!tripId && (
                     <div className="absolute bottom-[180px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
                         <div className="bg-indigo-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">저장하기<div className="absolute -bottom-1 right-1 w-3 h-3 bg-indigo-600 transform rotate-45"></div></div>
@@ -817,14 +827,10 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 )}
 
                 {/* Floating Bottom Navigation */}
-                <div className="absolute bottom-14 left-1/2 -translate-x-1/2 w-[90%] sm:w-[85%] z-50 pointer-events-auto">
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] sm:w-[85%] z-50 pointer-events-auto">
                     <nav className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-[32px] py-2 px-2 flex justify-around items-center">
                         <button onClick={handleReset} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-rose-400 transition active:scale-95">
                             <Home size={22} /><span className="text-[10px] font-bold">홈으로</span>
-                        </button>
-                        <button onClick={handleKakaoConsult} className="flex flex-col items-center gap-1 p-2 w-[65px] text-yellow-400 hover:text-yellow-300 transition active:scale-95 text-center">
-                            {loadingAction === 'kakao' ? <Loader2 className="animate-spin mb-1" size={22} /> : <MessageCircle size={22} />}
-                            <span className="text-[10px] font-bold">카톡상담</span>
                         </button>
                         <button onClick={handleShare} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-indigo-400 transition active:scale-95">
                             <Share2 size={22} /><span className="text-[10px] font-bold">공유하기</span>

@@ -550,7 +550,7 @@ export default function Home() {
 
     // --- 4. UI 렌더링 ---
     return (
-        <div className="h-screen w-full flex justify-center items-center bg-gray-900 sm:p-4 font-sans relative overflow-hidden">
+        <div className="h-dvh w-full flex justify-center items-center bg-gray-900 sm:p-4 font-sans relative overflow-hidden">
             {/* 스플래시 */}
             <AnimatePresence>{showSplash && <SplashScreen onFinish={() => { setShowSplash(false); sessionStorage.setItem('hasShownSplash', 'true'); }} />}</AnimatePresence>
 
