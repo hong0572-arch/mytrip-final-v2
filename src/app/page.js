@@ -666,7 +666,12 @@ export default function Home() {
                                 {/* 목적지 (원본 로직 유지) */}
                                 <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
                                     <div className="flex items-center justify-between mb-4">
-                                        <label className="flex items-center gap-2 text-sm font-bold text-gray-500"><Sparkles size={16} className="text-[#FF5A5F]" /> {translations[language].label_where}</label>
+                                        <div className="flex items-center gap-2">
+                                            <label className="flex items-center gap-2 text-sm font-bold text-gray-500"><Sparkles size={16} className="text-[#FF5A5F]" /> {translations[language].label_where}</label>
+                                            <button onClick={fetchUserLocation} disabled={isLocationLoading} className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-full transition-all active:scale-95 flex items-center justify-center">
+                                                {isLocationLoading ? <RefreshCw size={14} className="animate-spin" /> : <MapPin size={18} />}
+                                            </button>
+                                        </div>
                                         <button onClick={() => handleVoiceInput('destination')} className={`p-2 rounded-full ${listeningField === 'destination' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={16} /></button>
                                     </div>
                                     <div className="flex bg-gray-100 p-1.5 rounded-2xl mb-5 gap-1.5 shadow-inner">
@@ -695,10 +700,7 @@ export default function Home() {
                                         ))}
                                     </div>
                                     <div className="relative">
-                                        <input type="text" name="destination" value={formData.destination} onChange={handleInputChange} placeholder={listeningField === 'destination' ? translations[language].msg_listening : translations[language].placeholder_dest} className="w-full text-xl font-bold text-gray-800 bg-transparent outline-none mb-4 pr-10" />
-                                        <button onClick={fetchUserLocation} disabled={isLocationLoading} className="absolute right-0 top-0 p-2 text-rose-500 hover:bg-rose-50 rounded-full transition-all active:scale-90">
-                                            {isLocationLoading ? <Sparkles size={20} className="animate-spin" /> : <MapPin size={22} />}
-                                        </button>
+                                        <input type="text" name="destination" value={formData.destination} onChange={handleInputChange} placeholder={listeningField === 'destination' ? translations[language].msg_listening : translations[language].placeholder_dest} className="w-full text-xl font-bold text-gray-800 bg-transparent outline-none mb-4 pr-4" />
                                     </div>
                                     <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-50">
                                         {QUICK_TAGS.map((tag, idx) => (

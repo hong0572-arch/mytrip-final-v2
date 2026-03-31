@@ -18,11 +18,12 @@ import TravelQuiz from './TravelQuiz';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 
-const getKlookLink = (keyword, markerId, language) => {
-    const encodedKeyword = encodeURIComponent(keyword || '');
+const getKlookLink = (keyword, destination, language, markerId) => {
+    const query = `${keyword} ${destination || ''}`.trim();
+    const encodedKeyword = encodeURIComponent(query);
     const isKo = language !== 'en';
     const klookUrl = `https://www.klook.com/${isKo ? 'ko/' : ''}search/?query=${encodedKeyword}`;
-    const finalMarker = markerId || '695932'; // ✨ markerId가 없을 경우 기본값 사용
+    const finalMarker = markerId || '695932';
     return `https://tp.media/r?marker=${finalMarker}&p=4110&u=${encodeURIComponent(klookUrl)}`;
 };
 
@@ -103,7 +104,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     ${place.reason ? `<div style="font-size: 11px; color: #FF5A5F; background: #FFF0F0; padding: 6px 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #FFE4E6;"><strong>💡 냥프로의 픽!</strong><br />${place.reason}</div>` : ''}
                     <div style="display: flex; gap: 8px; margin-top: 10px;">
                         <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&hl=${language}" target="_blank" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #4f46e5; background: #e0e7ff; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🗺️ 길찾기</a>
-                        ${(!place.category?.includes("Restaurant") && !place.category?.includes("Cafe")) ? `<a href="${getKlookLink(`${place.name} ${userInfo?.destination || ""}`, '695932', language)}" target="_blank" rel="nofollow noopener noreferrer" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #e11d48; background: #ffe4e6; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center; display: inline-block;">🎟️ 티켓 예매</a>` : ''}
+                        ${(!place.category?.includes("Restaurant") && !place.category?.includes("Cafe")) ? `<a href="${getKlookLink(place.name, userInfo?.destination || "", language, '695932')}" target="_blank" rel="nofollow noopener noreferrer" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #e11d48; background: #ffe4e6; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center; display: inline-block;">🎟️ 티켓 예매</a>` : ''}
                     </div>
                 </div>
             `;
@@ -650,7 +651,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const destName = tripPlan.destination?.split('#')[0]?.trim() || "여행지";
 
     return (
-        <div className="fixed inset-0 z-50 bg-black flex justify-center items-start sm:items-center overflow-hidden font-sans">
+        <div className="min-h-dvh bg-black flex justify-center items-start sm:items-center overflow-hidden relative font-sans">
             <div id={CAPTURE_ID} className="w-full max-w-[480px] h-[100dvh] sm:h-[95vh] sm:rounded-[30px] bg-gray-50 relative shadow-2xl overflow-hidden flex flex-col border border-gray-800">
 
                 {/* Full screen Map */}
@@ -680,62 +681,47 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         {isEditMode ? <Check size={20} /> : <Pencil size={20} />}
                     </button>
                 </div>
-
-                {/* Right Side Dial Component - Holographic 3D Wheel */}
+                {/* Horizontal Dial Selection Navigation (Bottom) */}
                 {!isEditMode && (
-                    <div className="absolute right-0 top-[20%] h-[60%] w-24 sm:w-28 z-20 pointer-events-none flex flex-col items-center">
+                    <div className="absolute bottom-[180px] left-0 right-0 z-40 flex flex-col items-center">
                         <div 
-                            className="h-full w-full overflow-y-auto custom-scrollbar-hide scroll-smooth flex flex-col items-center py-[25vh] space-y-6 snap-y snap-mandatory pointer-events-auto" 
-                            id="dial-scroll-container"
-                            ref={(el) => {
-                                if (el) {
-                                    const selectedEl = el.children[selectedIndex];
-                                    if (selectedEl) {
-                                        el.scrollTo({
-                                            top: selectedEl.offsetTop - el.clientHeight / 2 + selectedEl.clientHeight / 2,
-                                            behavior: 'smooth'
-                                        });
-                                    }
-                                }
-                            }}
+                            ref={dialRef}
+                            onScroll={handleDialScroll}
+                            className="w-full h-[80px] overflow-x-auto scroll-smooth no-scrollbar snap-x snap-mandatory flex flex-row items-center px-[50%]"
+                            style={{ perspective: '800px' }}
                         >
                             {flatPlaces.map((item, i) => {
                                 const isSelected = i === selectedIndex;
                                 const diff = i - selectedIndex;
                                 const absDiff = Math.abs(diff);
-                                
-                                // 3D Transform calculations for Holographic Wheel effect
-                                const rotateX = diff * -15; 
-                                const translateZ = absDiff * -20;
-                                const scale = isSelected ? 1.15 : Math.max(0.8, 1 - absDiff * 0.1);
-                                const opacity = Math.max(0.4, 1 - absDiff * 0.15);
-                                
+
+                                // 3D Transform calculations for Horizontal Holographic effect
+                                const rotateY = diff * 20; 
+                                const translateZ = absDiff * -15;
+                                const scale = isSelected ? 1.2 : Math.max(0.7, 1 - absDiff * 0.15);
+                                const opacity = Math.max(0.3, 1 - absDiff * 0.2);
+
                                 return (
                                     <div 
-                                        key={i} 
+                                        key={i}
                                         onClick={() => setSelectedIndex(i)}
-                                        className={`snap-center shrink-0 flex flex-col items-center justify-center cursor-pointer transition-all duration-500 rounded-2xl border backdrop-blur-xl ${isSelected ? 'shadow-[0_0_20px_rgba(255,255,255,0.3)] border-white z-10' : 'border-white/10 opacity-70'}`}
+                                        className="snap-center shrink-0 flex flex-col items-center mx-3 cursor-pointer transition-all duration-300 pointer-events-auto"
                                         style={{
-                                            width: isSelected ? '64px' : '52px',
-                                            height: isSelected ? '64px' : '52px',
-                                            transform: `perspective(1000px) rotateX(${rotateX}deg) translateZ(${translateZ}px) scale(${scale})`,
-                                            opacity: opacity,
-                                            backgroundColor: isSelected ? item.dayColor : 'rgba(255, 255, 255, 0.1)',
-                                            boxShadow: isSelected ? `0 0 15px ${item.dayColor}60, inset 0 0 8px rgba(255,255,255,0.4)` : 'none',
-                                            color: isSelected ? 'white' : 'rgba(255, 255, 255, 0.7)'
+                                            transform: `rotateY(${rotateY}deg) translateZ(${translateZ}px) scale(${scale})`,
+                                            opacity,
+                                            transformStyle: 'preserve-3d'
                                         }}
                                     >
-                                        <span className={`text-[9px] font-black tracking-tighter mb-0.5 ${isSelected ? 'text-white' : 'text-white/50'}`}>DAY {item.day}</span>
-                                        <span className={`text-xl font-black leading-none ${isSelected ? 'text-white drop-shadow-md' : 'text-white/80'}`}>{item.placeIdx + 1}</span>
-                                        {isSelected && (
-                                            <div className="absolute -bottom-1 w-1.5 h-1.5 bg-white rounded-full animate-pulse shadow-[0_0_8px_white]"></div>
-                                        )}
+                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-sm border-2 shadow-xl transition-all ${isSelected ? 'bg-white border-indigo-500 text-indigo-600 scale-110' : 'bg-white/40 border-white/50 text-white backdrop-blur-md'}`} style={isSelected ? { borderColor: item.dayColor, color: item.dayColor } : {}}>
+                                            {item.dayIdx + 1}-{item.placeIdx + 1}
+                                        </div>
+                                        <div className={`mt-1 text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap transition-all ${isSelected ? 'bg-indigo-600 text-white opacity-100 shadow-lg' : 'bg-black/50 text-white/70 opacity-0'}`} style={isSelected ? { backgroundColor: item.dayColor } : {}}>
+                                            {item.place.name.substring(0, 6)}
+                                        </div>
                                     </div>
-                                )
+                                );
                             })}
                         </div>
-                        {/* Glass Overlay for the center focus area */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 border border-white/20 rounded-2xl pointer-events-none bg-white/5 backdrop-blur-sm -z-10 shadow-[inset_0_0_15px_rgba(255,255,255,0.1)]"></div>
                     </div>
                 )}
 
@@ -839,7 +825,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                 {infoModalTab === 'hotels' && (
                                     <div className="space-y-4">
                                         {hotels.length > 0 ? hotels.map((hotel, idx) => (
-                                            <div key={idx} className="place-card bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative group cursor-pointer hover:border-indigo-500 transition-all" onClick={() => { const link = getKlookLink(`${hotel.name} ${userInfo?.destination || ""}`, '695932'); window.open(link, '_blank'); }}>
+                                            <div key={idx} className="place-card bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative group cursor-pointer hover:border-indigo-500 transition-all" onClick={() => { const link = getKlookLink(hotel.name, userInfo?.destination || "", language, '695932'); window.open(link, '_blank'); }}>
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-1 rounded-md">추천 {idx + 1}</span>
                                                     <h4 className="font-bold text-base">{hotel.name}</h4>
@@ -884,12 +870,12 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                 {/* 매칭 모달 (원본 유지) */}
                 {showMatchModal && (
-                    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-70 flex items-center justify-center p-4">
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowMatchModal(false)}></div>
                         <div className="bg-white/90 backdrop-blur-2xl w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl animate-in zoom-in-95">
                             <button onClick={() => setShowMatchModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500"><X size={18} /></button>
                             <div className="text-center mb-6 mt-2">
-                                <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30 animate-bounce"><Sparkles size={32} className="text-white" /></div>
+                                <div className="w-16 h-16 bg-linear-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30 animate-bounce"><Sparkles size={32} className="text-white" /></div>
                                 <h3 className="text-xl font-black text-gray-900 mb-1">여행 메이트 추천</h3>
                                 <p className="text-sm text-gray-500 font-bold">비슷한 성향의 여행자를 찾았어요!</p>
                             </div>
@@ -915,11 +901,11 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                 {/* 저장 모달 (원본 유지) */}
                 {showSaveModal && (
-                    <div className="absolute inset-0 z-[70] flex items-center justify-center p-6">
+                    <div className="absolute inset-0 z-70 flex items-center justify-center p-6">
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSaveModal(false)}></div>
                         <div className="bg-white w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95">
                             <button onClick={() => setShowSaveModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500"><X size={18} /></button>
-                            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg"><Save size={32} /></div>
+                            <div className="w-16 h-16 bg-linear-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg"><Save size={32} /></div>
                             <h3 className="text-xl font-black text-gray-900 mb-1">일정을 저장할까요?</h3>
                             <p className="text-sm text-gray-500 mb-6 text-center">저장된 일정은 마이페이지에서<br />수정할 수 있어요.</p>
                             <div onClick={() => setShareToFeed(!shareToFeed)} className={`w-full p-4 rounded-xl border-2 flex items-center gap-3 cursor-pointer transition-all mb-6 ${shareToFeed ? 'border-rose-500 bg-rose-50' : 'border-gray-200 bg-gray-50'}`}>
