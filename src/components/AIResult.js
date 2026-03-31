@@ -61,7 +61,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const polylineRef = useRef([]);
     const scrollContainerRef = useRef(null);
     const observerRef = useRef(null);
-
+    const dialRef = useRef(null);
     const [selectedIndex, setSelectedIndex] = useState(0);
     const infoWindowRef = useRef(null);
     const [showInfoModal, setShowInfoModal] = useState(false);
@@ -424,6 +424,41 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
         setTimeout(() => { const cards = document.querySelectorAll('.place-card'); cards.forEach((card) => observerRef.current.observe(card)); }, 500);
         return () => { if (observerRef.current) observerRef.current.disconnect(); };
     }, [tripPlan, activeTab]);
+
+    useEffect(() => {
+        if (dialRef.current) {
+            const container = dialRef.current;
+            const items = container.children;
+            if (items[selectedIndex]) {
+                const item = items[selectedIndex];
+                const scrollLeft = item.offsetLeft - container.clientWidth / 2 + item.clientWidth / 2;
+                container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+            }
+        }
+    }, [selectedIndex, flatPlaces]);
+
+    const handleDialScroll = (e) => {
+        const container = e.target;
+        const scrollLeft = container.scrollLeft;
+        const center = scrollLeft + container.clientWidth / 2;
+        
+        const items = Array.from(container.children);
+        let closestIndex = 0;
+        let minDistance = Infinity;
+
+        items.forEach((item, index) => {
+            const itemCenter = item.offsetLeft + item.clientWidth / 2;
+            const distance = Math.abs(center - itemCenter);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestIndex = index;
+            }
+        });
+
+        if (closestIndex !== selectedIndex) {
+            setSelectedIndex(closestIndex);
+        }
+    };
 
     const handleUpdateLocation = (dayIndex, placeIndex, queryName) => {
         if (!window.google || !googleMapRef.current || !queryName) return;
