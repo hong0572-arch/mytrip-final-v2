@@ -543,28 +543,35 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
         if (url) text += `\n🔗 일정 상세 보기: ${url}`; return text;
     };
 
-    const handleKakaoConsult = async () => { 
-        if (loadingAction) return; // Prevent double clicks
+    const handleKakaoConsult = () => { 
+        if (loadingAction) return; 
         setLoadingAction('kakao'); 
-        try {
-            const url = await getOrSaveShareUrl(); 
+        
+        // ✨ 즉시 창을 열어 팝업 차단을 방지합니다.
+        const chatUrl = 'http://pf.kakao.com/_xcJhrn/chat';
+        const win = window.open(chatUrl, '_blank');
+        
+        // 창이 정상적으로 열리지 않았을 경우 (브라우저 설정 등)
+        if (!win || win.closed || typeof win.closed === 'undefined') {
+            alert("팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요!");
+            setLoadingAction(null);
+            return;
+        }
+
+        // ✨ 백그라운드에서 공유 링크 생성 및 복사
+        getOrSaveShareUrl().then(async (url) => { 
             if (url) { 
-                const text = formatTripText(url);
                 try { 
-                    await navigator.clipboard.writeText(text); 
-                    alert("일정 내용이 복사되었습니다!\n상담 채팅방에 '붙여넣기' 해주세요. 💬"); 
+                    await navigator.clipboard.writeText(formatTripText(url)); 
                 } catch (clipErr) {
-                    // Clipboard might fail in some mobile browsers, but we still open the window
                     console.warn("Clipboard failed:", clipErr);
                 } 
-                window.open('http://pf.kakao.com/_xcJhrn/chat', '_blank'); 
             } 
-        } catch (err) {
-            console.error("Kakao consult error:", err);
-            window.open('http://pf.kakao.com/_xcJhrn/chat', '_blank'); 
-        } finally {
+        }).catch(err => {
+            console.error("Kakao consult async error:", err);
+        }).finally(() => {
             setLoadingAction(null); 
-        }
+        });
     };
     const handleShare = async () => { setLoadingAction('share'); const url = await getOrSaveShareUrl(); if (url) { const text = formatTripText(url); if (navigator.share) { try { await navigator.share({ title: tripPlan.tripTitle, text: text }); } catch (e) { } } else { try { await navigator.clipboard.writeText(text); alert("링크가 복사되었습니다!"); } catch (e) { } } } setLoadingAction(null); };
 
@@ -756,7 +763,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                             transformStyle: 'preserve-3d'
                                         }}
                                     >
-                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm border-2 shadow-xl transition-all ${isSelected ? 'bg-white border-indigo-500 text-indigo-600 scale-110' : 'bg-white/40 border-white/50 text-white backdrop-blur-md'}`} style={isSelected ? { borderColor: item.dayColor, color: item.dayColor } : {}}>
+                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm border-2 shadow-xl transition-all ${isSelected ? 'bg-white border-indigo-500 text-indigo-600 scale-105' : 'bg-white/40 border-white/50 text-white backdrop-blur-md'}`} style={isSelected ? { borderColor: item.dayColor, color: item.dayColor } : {}}>
                                             {item.dayIdx + 1}-{item.placeIdx + 1}
                                         </div>
                                         <div className={`mt-1 text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap transition-all ${isSelected ? 'bg-indigo-600 text-white opacity-100 shadow-lg' : 'bg-black/50 text-white/70 opacity-0'}`} style={isSelected ? { backgroundColor: item.dayColor } : {}}>
@@ -806,21 +813,21 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {/* Bottom Center Gradient for fade effect */}
                 <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none z-10"></div>
 
-                {/* Kakao Consult FAB (Higher as requested) */}
+                {/* 보라색 채팅 아이콘 (User identified this as "Chat Icon") */}
                 {!isEditMode && (
-                    <div className="absolute bottom-[250px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
-                        <div className="bg-yellow-400 text-black text-[11px] font-bold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">카톡상담<div className="absolute -bottom-1 right-1 w-3 h-3 bg-yellow-400 transform rotate-45"></div></div>
-                        <button onClick={handleKakaoConsult} disabled={loadingAction === 'kakao'} className="w-14 h-14 bg-yellow-400 rounded-full shadow-2xl flex items-center justify-center text-[#3c1e1e] pointer-events-auto hover:bg-yellow-300 transition-transform active:scale-95 border-2 border-white">
+                    <div className="absolute bottom-[380px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
+                        <div className="bg-indigo-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">카톡상담<div className="absolute -bottom-1 right-1 w-3 h-3 bg-indigo-600 transform rotate-45"></div></div>
+                        <button onClick={handleKakaoConsult} disabled={loadingAction === 'kakao'} className="w-14 h-14 bg-indigo-600 rounded-full shadow-2xl flex items-center justify-center text-white pointer-events-auto hover:bg-indigo-500 transition-transform active:scale-95 border-2 border-white">
                             {loadingAction === 'kakao' ? <Loader2 className="animate-spin" size={24} /> : <MessageCircle size={24} strokeWidth={2.5} />}
                         </button>
                     </div>
                 )}
 
-                {/* Save Button FAB */}
+                {/* 노란색 버튼을 저장 버튼으로 활용 (브랜드 컬러 대비) */}
                 {!tripId && (
-                    <div className="absolute bottom-[180px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
-                        <div className="bg-indigo-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">저장하기<div className="absolute -bottom-1 right-1 w-3 h-3 bg-indigo-600 transform rotate-45"></div></div>
-                        <button onClick={handleSaveClick} disabled={isSaving} className="w-14 h-14 bg-indigo-600 rounded-full shadow-2xl flex items-center justify-center text-white pointer-events-auto hover:bg-indigo-500 transition-transform active:scale-95 border-2 border-white">
+                    <div className="absolute bottom-[280px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
+                        <div className="bg-yellow-400 text-black text-[11px] font-bold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">저장하기<div className="absolute -bottom-1 right-1 w-3 h-3 bg-yellow-400 transform rotate-45"></div></div>
+                        <button onClick={handleSaveClick} disabled={isSaving} className="w-14 h-14 bg-yellow-400 rounded-full shadow-2xl flex items-center justify-center text-[#3c1e1e] pointer-events-auto hover:bg-yellow-300 transition-transform active:scale-95 border-2 border-white">
                             {isSaving ? <Loader2 className="animate-spin" size={24} /> : <Save size={24} strokeWidth={2.5} />}
                         </button>
                     </div>
