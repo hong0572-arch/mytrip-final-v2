@@ -13,6 +13,7 @@ import useFcmToken from '../hooks/useFcmToken';
 // 컴포넌트
 import CatMascot from '../components/CatMascot';
 import AIResult from "../components/AIResult";
+import TravelNews from '../components/TravelNews';
 
 // 아이콘 및 UI 라이브러리
 import { motion, AnimatePresence } from "framer-motion";
@@ -194,6 +195,7 @@ export default function Home() {
     const [user, setUser] = useState(null); // Firebase (Google) 유저
     const [userData, setUserData] = useState(null);
     const [showIntro, setShowIntro] = useState(true);
+    const [showBannerNews, setShowBannerNews] = useState(false);
     const [activeTab, setActiveTab] = useState('create');
     const [showWelcome, setShowWelcome] = useState(false);
     const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -640,17 +642,42 @@ export default function Home() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto scrollbar-hide pt-2 pb-32">
-                    {/* 상단 배너 */}
+                    {/* 상단 배너 — 냥프로 인사 → 여행 소식 자동 전환 */}
                     <div className="mb-8 mt-6 px-2">
-                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative bg-gradient-to-br from-white to-rose-50/80 rounded-[1.5rem] p-6 border border-white shadow-lg flex flex-row items-center justify-center gap-6">
-                            <CatMascot width={90} />
-                            <div className="text-left">
-                                <h2 className="text-3xl sm:text-4xl font-black leading-tight break-keep">
-                                    <span className="block text-gray-700 text-lg font-bold mb-1 opacity-80">{translations[language].title_pre}</span>
-                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-800 via-indigo-800 to-gray-800">{translations[language].title_main}</span>🪄<br />
-                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF5A5F] via-rose-500 to-amber-500">{translations[language].title_sub}</span>
-                                </h2>
-                            </div>
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative bg-gradient-to-br from-white to-rose-50/80 rounded-[1.5rem] p-5 border border-white shadow-lg overflow-hidden min-h-[160px]">
+                            <AnimatePresence mode="wait">
+                                {!showBannerNews ? (
+                                    <motion.div
+                                        key="cat-greeting"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0, y: -15 }}
+                                        transition={{ duration: 0.4 }}
+                                        className="flex flex-row items-center justify-center gap-6"
+                                        onAnimationComplete={() => {
+                                            setTimeout(() => setShowBannerNews(true), 3000);
+                                        }}
+                                    >
+                                        <CatMascot width={90} />
+                                        <div className="text-left">
+                                            <h2 className="text-3xl sm:text-4xl font-black leading-tight break-keep">
+                                                <span className="block text-gray-700 text-lg font-bold mb-1 opacity-80">{translations[language].title_pre}</span>
+                                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-800 via-indigo-800 to-gray-800">{translations[language].title_main}</span>🪄<br />
+                                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF5A5F] via-rose-500 to-amber-500">{translations[language].title_sub}</span>
+                                            </h2>
+                                        </div>
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        key="travel-news"
+                                        initial={{ opacity: 0, y: 15 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.5 }}
+                                    >
+                                        <TravelNews language={language} />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </motion.div>
                     </div>
 
