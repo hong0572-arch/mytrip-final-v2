@@ -41,10 +41,10 @@ import {
 
 // --- 1. 상수 데이터 (제공해주신 모든 데이터 100% 유지) ---
 const backgroundImages = [
-    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1498855926480-d98e83099315?q=80&w=2070&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1543107511-b0481b23c445?q=80&w=2070&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop",
+    "/1.jpg",
+    "/2.jpg",
+    "/3.jpg",
+    "/4.JPG",
 ];
 
 const tourOptions = [
@@ -115,9 +115,11 @@ const CITY_TO_IATA = {
 };
 
 const RECOMMENDED_TRIPS = [
-    { id: 1, city: "오사카", title: "🍜 식도락 힐링 여행", img: "https://images.unsplash.com/photo-1590559899731-a382839e5549?q=80&w=600&auto=format&fit=crop", desc: "먹다가 망한다는 오사카!" },
-    { id: 2, city: "다낭", title: "🏖️ 가족과 함께 휴양", img: "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=600&auto=format&fit=crop", desc: "경기도 다낭시로 초대합니다" },
-    { id: 3, city: "파리", title: "🗼 낭만의 도시 산책", img: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=600&auto=format&fit=crop", desc: "에펠탑 보며 와인 한잔" },
+    { id: 'rec-tokyo', city: "도쿄", title: "🍱 도쿄 미식 & 쇼핑 투어", img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=600&auto=format&fit=crop", desc: "도심 속 미식과 트렌디한 스트릿", isHot: true },
+    { id: 'rec-bali', city: "발리", title: "🌿 우붓 정글 휴양 & 요가", img: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=600&auto=format&fit=crop", desc: "완벽한 휴식을 위한 지상낙원", isPremium: true },
+    { id: 'rec-zrh', city: "취리히", title: "🏔️ 만년설과 알프스 기차 여행", img: "https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?q=80&w=600&auto=format&fit=crop", desc: "그림 같은 대자연 속으로", isPremium: true },
+    { id: 'rec-hkg', city: "홍콩", title: "🏮 화려한 야경과 딤섬 투어", img: "https://images.unsplash.com/photo-1506158669146-619067262a00?q=80&w=600&auto=format&fit=crop", desc: "동양의 진주, 잠들지 않는 도시", isHot: true },
+    { id: 'rec-han', city: "하노이", title: "☕ 베트남 올드쿼터 산책", img: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=600&auto=format&fit=crop", desc: "진한 커피향과 정겨운 풍경" },
 ];
 
 const translations = {
@@ -232,8 +234,13 @@ export default function Home() {
             try {
                 const q = query(collection(db, "rectrips"), orderBy("createdAt", "desc"));
                 const snapshot = await getDocs(q);
-                setRecommendedTrips(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-            } catch (error) { console.error("추천 여행 로딩 실패:", error); }
+                const firestoreTrips = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // ✨ Firestore 데이터와 기본 고화질 추천 상품 통합
+                setRecommendedTrips([...RECOMMENDED_TRIPS, ...firestoreTrips].filter((v, i, a) => a.findIndex(t => t.id === v.id) === i));
+            } catch (error) { 
+                console.error("추천 여행 로딩 실패:", error);
+                setRecommendedTrips(RECOMMENDED_TRIPS); // 실패 시 기본 데이터 로드
+            }
         };
         fetchRecommendations();
     }, []);
@@ -525,16 +532,16 @@ export default function Home() {
         const currentTime = (formData.startDate === today) ? new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) : null;
 
         try {
-            const response = await fetch("/api/generate/", { 
-                method: "POST", 
-                headers: { "Content-Type": "application/json" }, 
-                body: JSON.stringify({ 
-                    ...formData, 
-                    isLuxury, 
+            const response = await fetch("/api/generate/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    ...formData,
+                    isLuxury,
                     language,
                     currentTime,
                     startLocation: userLocation || null
-                }) 
+                })
             });
             const data = await response.json();
             if (data.result) {
@@ -609,16 +616,27 @@ export default function Home() {
                 )}
             </AnimatePresence>
 
-            {/* 배경 */}
-            <div className="absolute inset-0 z-0">
-                <AnimatePresence mode='wait'><motion.img key={bgIndex} src={backgroundImages[bgIndex]} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1 }} className="absolute inset-0 w-full h-full object-cover" /></AnimatePresence>
-                <div className="absolute inset-0 bg-black/40" />
+            {/* 배경 — 프리미엄 켄 번 효과 */}
+            <div className="absolute inset-0 z-0 overflow-hidden">
+                <AnimatePresence mode='wait'>
+                    <motion.img
+                        key={bgIndex}
+                        src={backgroundImages[bgIndex]}
+                        initial={{ opacity: 0, scale: 1.1 }}
+                        animate={{ opacity: 1, scale: 1.0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 1.5, ease: "easeOut" }}
+                        className="absolute inset-0 w-full h-full object-cover"
+                    />
+                </AnimatePresence>
+                {/* 비네팅 오버레이로 고급스러움 추가 */}
+                <div className="absolute inset-0 bg-linear-to-b from-black/20 via-transparent to-black/40" />
             </div>
 
-            {/* 메인 박스 */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[560px] h-full sm:h-[95vh] bg-white/95 backdrop-blur-md sm:rounded-[35px] shadow-2xl overflow-hidden relative flex flex-col z-10">
-                {/* 헤더 */}
-                <div className="px-2 pt-6 pb-2 shrink-0 flex justify-between items-center bg-white/50 backdrop-blur-sm z-20">
+            {/* 메인 박스 — 독립형 플로팅 카드 UI로 변경 (배경 투명화) */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[560px] h-full sm:h-[95vh] bg-transparent sm:rounded-[35px] overflow-hidden relative flex flex-col z-10">
+                {/* 헤더 — 투명하게 유지하여 배경 노출 */}
+                <div className="px-4 pt-6 pb-2 shrink-0 flex justify-between items-center bg-transparent z-20">
                     <img src="/logo1.png" alt="Logo" className="h-8 w-auto object-contain" />
                     <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
                         <button onClick={() => setLanguage(prev => prev === 'ko' ? 'en' : 'ko')} className="w-9 h-9 rounded-full bg-white/80 shadow-sm flex items-center justify-center text-gray-700 hover:bg-gray-100 transition">
@@ -681,17 +699,31 @@ export default function Home() {
                         </motion.div>
                     </div>
 
-                    {/* 탭 메뉴 */}
-                    <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm px-2 border-b flex mb-6">
-                        <button onClick={() => setActiveTab('create')} className={`flex-1 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'create' ? 'border-rose-500 text-gray-900' : 'border-transparent text-gray-400'}`}>{translations[language].tab_schedule}</button>
-                        <button onClick={() => setActiveTab('flights')} className={`flex-1 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'flights' ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-400'}`}>{translations[language].tab_myflight}</button>
+                    {/* 탭 메뉴 — 프리미엄 슬라이딩 탭 디자인 */}
+                    <div className="sticky top-2 z-30 bg-white/90 backdrop-blur-md mx-4 p-1.5 rounded-[1.25rem] shadow-xl border border-white/40 flex mb-8 gap-1">
+                        <button onClick={() => setActiveTab('create')} className="relative flex-1 py-3.5 outline-none transition-all duration-300">
+                            {activeTab === 'create' && (
+                                <motion.div layoutId="activeTab" className="absolute inset-0 bg-rose-500 rounded-xl shadow-lg shadow-rose-200" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
+                            )}
+                            <span className={`relative z-10 text-sm font-black transition-colors duration-300 ${activeTab === 'create' ? 'text-white' : 'text-gray-400'}`}>
+                                {translations[language].tab_schedule}
+                            </span>
+                        </button>
+                        <button onClick={() => setActiveTab('flights')} className="relative flex-1 py-3.5 outline-none transition-all duration-300">
+                            {activeTab === 'flights' && (
+                                <motion.div layoutId="activeTab" className="absolute inset-0 bg-indigo-500 rounded-xl shadow-lg shadow-indigo-200" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
+                            )}
+                            <span className={`relative z-10 text-sm font-black transition-colors duration-300 ${activeTab === 'flights' ? 'text-white' : 'text-gray-400'}`}>
+                                {translations[language].tab_myflight}
+                            </span>
+                        </button>
                     </div>
 
-                    <div className="px-2 pb-10">
+                    <div className="px-4 pb-12">
                         {activeTab === 'create' && (
-                            <div className="space-y-6 animate-fadeIn">
-                                {/* 목적지 (원본 로직 유지) */}
-                                <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
+                            <div className="space-y-8 animate-fadeIn">
+                                {/* 목적지 — 그림자 강화된 화이트 카드 */}
+                                <div className="bg-white/95 p-6 rounded-[2rem] shadow-2xl border border-white">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-2">
                                             <label className="flex items-center gap-2 text-sm font-bold text-gray-500"><Sparkles size={16} className="text-[#FF5A5F]" /> {translations[language].label_where}</label>
@@ -825,16 +857,23 @@ export default function Home() {
                         {activeTab === 'flights' && (
                             <div className="space-y-6 animate-fadeIn">
                                 <div>
-                                    <h3 className="font-bold text-gray-800 text-lg mb-3 flex items-center gap-2"><Sparkles size={18} className="text-amber-500" /> {translations[language].tab_choices}</h3>
-                                    <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x px-1">
+                                    <h3 className="font-bold text-white text-lg mb-4 flex items-center gap-2 px-1"><Sparkles size={18} className="text-amber-500" /> {translations[language].tab_choices}</h3>
+                                    <div className="flex gap-4 overflow-x-auto pb-6 custom-scrollbar snap-x px-1">
                                         {recommendedTrips.map((trip) => (
-                                            <motion.div key={trip.id} whileTap={{ scale: 1.0 }} onClick={() => handleRecommendedClick(trip)} className="min-w-[160px] h-[220px] rounded-2xl relative overflow-hidden shadow-md cursor-pointer group bg-gray-100 shrink-0">
-                                                <img src={trip.img} alt={trip.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-                                                <div className="absolute bottom-0 left-0 right-0 p-4 text-left">
-                                                    <span className="text-[10px] font-bold text-amber-400 mb-1 block uppercase">{trip.city || "추천 여행"}</span>
-                                                    <h4 className="text-white font-bold text-sm leading-tight mb-1 line-clamp-2">{trip.title || trip.tripTitle}</h4>
-                                                    <p className="text-[10px] text-gray-300 line-clamp-1 opacity-90">{trip.desc || "냥프로 추천 일정"}</p>
+                                            <motion.div key={trip.id} whileTap={{ scale: 0.98 }} onClick={() => handleRecommendedClick(trip)} className="min-w-[180px] h-[260px] rounded-[1.75rem] relative overflow-hidden shadow-2xl cursor-pointer group shrink-0 border border-white/10">
+                                                <img src={trip.img} alt={trip.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                                                
+                                                {/* 배지 표시 */}
+                                                <div className="absolute top-3 left-3 flex gap-1">
+                                                    {trip.isHot && <span className="bg-rose-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">HOT</span>}
+                                                    {trip.isPremium && <span className="bg-indigo-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">PREMIUM</span>}
+                                                </div>
+
+                                                <div className="absolute bottom-0 left-0 right-0 p-5 text-left">
+                                                    <span className="text-[10px] font-black text-amber-400 mb-1.5 block uppercase tracking-wider">{trip.city}</span>
+                                                    <h4 className="text-white font-bold text-base leading-snug mb-1.5 line-clamp-2">{trip.title}</h4>
+                                                    <p className="text-[10px] text-gray-300 font-medium line-clamp-2 opacity-80 leading-relaxed">{trip.desc || "냥프로 전용 일정"}</p>
                                                 </div>
                                             </motion.div>
                                         ))}
