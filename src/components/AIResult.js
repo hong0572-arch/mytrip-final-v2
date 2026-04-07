@@ -7,7 +7,7 @@ import {
     Sun, Lightbulb, RotateCcw, Pencil, Check, Trash2, Plus,
     ArrowUp, ArrowDown, MapPin, Search, Wand2, Navigation,
     Calendar, BrainCircuit, Save, User, RefreshCw, ChevronUp, ChevronDown, Home,
-    UserPlus, X, MessageSquare, Sparkles, ChevronRight, CheckSquare, Square, Send
+    UserPlus, X, MessageSquare, Sparkles, ChevronRight, CheckSquare, Square, Send, Wallet
 } from 'lucide-react';
 
 import { db, auth } from '../lib/firebase';
@@ -101,6 +101,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         <span style="font-size: 10px; background: #f3f4f6; padding: 2px 6px; border-radius: 12px; color: #6b7280; white-space: nowrap; margin-left: 8px;">${place.category || '기타'}</span>
                     </div>
                     <p style="font-size: 12px; color: #4b5563; margin-top: 6px; margin-bottom: 8px; line-height: 1.4;">${place.description}</p>
+                    ${place.budget ? `<div style="font-size: 11px; font-weight: 800; color: #4f46e5; background: #f5f3ff; padding: 6px 10px; border-radius: 8px; margin-bottom: 8px; border: 1px dashed #c7d2fe; display: flex; align-items: center; gap: 4px;">💰 예산: ${place.budget}</div>` : ''}
                     ${place.reason ? `<div style="font-size: 11px; color: #FF5A5F; background: #FFF0F0; padding: 6px 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #FFE4E6;"><strong>💡 냥프로의 픽!</strong><br />${place.reason}</div>` : ''}
                     <div style="display: flex; gap: 8px; margin-top: 10px;">
                         <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&hl=${language}" target="_blank" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #4f46e5; background: #e0e7ff; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🗺️ 길찾기</a>
@@ -478,6 +479,34 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const handleAddBudget = () => { const newPlan = { ...tripPlan }; if (!newPlan.budgetBreakdown) newPlan.budgetBreakdown = []; newPlan.budgetBreakdown.push("새 항목: 0원"); setTripPlan(newPlan); if (!tripId) setShareUrl(null); };
     const handleDeleteBudget = (index) => { const newPlan = { ...tripPlan }; newPlan.budgetBreakdown.splice(index, 1); setTripPlan(newPlan); if (!tripId) setShareUrl(null); };
     const handleEditChange = (dayIndex, placeIndex, field, value) => { const newPlan = { ...tripPlan }; newPlan.itinerary[dayIndex].places[placeIndex][field] = value; setTripPlan(newPlan); if (!tripId) setShareUrl(null); };
+    
+    // ✨ 기존 저장된 여행 일정 업데이트 로직 추가
+    const handleUpdateItinerary = async () => {
+        if (!tripId) {
+            setIsEditMode(false);
+            return;
+        }
+        
+        setLoadingAction('save');
+        try {
+            const tripRef = doc(db, "trips", tripId);
+            // Firebase는 undefined를 허용하지 않으므로 정제
+            const sanitizedItinerary = JSON.parse(JSON.stringify(tripPlan.itinerary));
+            await updateDoc(tripRef, {
+                itinerary: sanitizedItinerary,
+                isEdited: true,
+                updatedAt: serverTimestamp()
+            });
+            alert("✅ 일정이 성공적으로 업데이트되었습니다!");
+            setIsEditMode(false);
+        } catch (err) {
+            console.error("Update Error:", err);
+            alert("일정 업데이트 중 오류가 발생했습니다.");
+        } finally {
+            setLoadingAction(null);
+        }
+    };
+
     const handleDeletePlace = (dayIndex, placeIndex) => { if (!confirm("이 장소를 삭제하시겠습니까?")) return; const newPlan = { ...tripPlan }; newPlan.itinerary[dayIndex].places.splice(placeIndex, 1); newPlan.itinerary[dayIndex].places.forEach((p, i) => p.order = i + 1); setTripPlan(newPlan); if (!tripId) setShareUrl(null); };
     const handleAddPlace = (dayIndex) => { const newPlan = { ...tripPlan }; const newOrder = newPlan.itinerary[dayIndex].places.length + 1; newPlan.itinerary[dayIndex].places.push({ order: newOrder, name: "새로운 장소", category: "기타", description: "설명을 입력해주세요.", coordinates: { lat: 35.6895, lng: 139.6917 } }); setTripPlan(newPlan); if (!tripId) setShareUrl(null); };
     const handleMovePlace = (dayIndex, placeIndex, direction) => { const newPlan = { ...tripPlan }; const places = newPlan.itinerary[dayIndex].places; const targetIndex = placeIndex + direction; if (targetIndex < 0 || targetIndex >= places.length) return;[places[placeIndex], places[targetIndex]] = [places[targetIndex], places[placeIndex]]; places.forEach((p, i) => p.order = i + 1); setTripPlan(newPlan); if (!tripId) setShareUrl(null); };
@@ -702,8 +731,8 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const destName = tripPlan.destination?.split('#')[0]?.trim() || "여행지";
 
     return (
-            <div className="fixed inset-0 w-full bg-black flex flex-col font-sans overflow-hidden selection:bg-indigo-500/30">
-            <div id={CAPTURE_ID} className="w-full max-w-[480px] h-full sm:h-[95vh] sm:rounded-[30px] bg-black relative shadow-2xl overflow-hidden flex flex-col border border-gray-800">
+            <div className="fixed inset-0 w-full z-[100] bg-[#030712] flex items-center justify-center font-sans overflow-hidden selection:bg-indigo-500/30">
+            <div id={CAPTURE_ID} className="w-full max-w-[480px] h-full sm:h-[92vh] sm:rounded-[48px] bg-black relative shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col border border-white/10 ring-1 ring-white/5">
 
                 {/* Full screen Map */}
                 <div className="absolute inset-0 z-0 bg-gray-900 pointer-events-auto">
@@ -728,8 +757,14 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     <button onClick={() => setShowInfoModal(true)} className="bg-white/20 backdrop-blur-md p-2.5 rounded-full shadow-lg text-white hover:bg-white hover:text-rose-500 transition animate-pulse border border-rose-400/50" title="여행 정보">
                         <Sparkles size={20} className="text-rose-200" />
                     </button>
-                    <button onClick={() => setIsEditMode(!isEditMode)} className={`backdrop-blur-md p-2.5 rounded-full shadow-lg transition border border-white/30 ${isEditMode ? 'bg-indigo-600 text-white' : 'bg-white/20 text-white hover:bg-white hover:text-indigo-600'}`}>
-                        {isEditMode ? <Check size={20} /> : <Pencil size={20} />}
+                    <button onClick={() => {
+                        if (isEditMode && tripId) {
+                            handleUpdateItinerary();
+                        } else {
+                            setIsEditMode(!isEditMode);
+                        }
+                    }} className={`backdrop-blur-md p-2.5 rounded-full shadow-lg transition border border-white/30 ${isEditMode ? 'bg-indigo-600 text-white' : 'bg-white/20 text-white hover:bg-white hover:text-indigo-600'}`}>
+                        {loadingAction === 'save' ? <Loader2 className="animate-spin" size={20} /> : (isEditMode ? <Check size={20} /> : <Pencil size={20} />)}
                     </button>
                 </div>
                 {/* Horizontal Dial Selection Navigation (Bottom) */}
@@ -766,9 +801,14 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm border-2 shadow-xl transition-all ${isSelected ? 'bg-white border-indigo-500 text-indigo-600 scale-105' : 'bg-white/40 border-white/50 text-white backdrop-blur-md'}`} style={isSelected ? { borderColor: item.dayColor, color: item.dayColor } : {}}>
                                             {item.dayIdx + 1}-{item.placeIdx + 1}
                                         </div>
-                                        <div className={`mt-1 text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap transition-all ${isSelected ? 'bg-indigo-600 text-white opacity-100 shadow-lg' : 'bg-black/50 text-white/70 opacity-0'}`} style={isSelected ? { backgroundColor: item.dayColor } : {}}>
-                                            {item.place.name.substring(0, 6)}
+                                        <div className={`mt-1 text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap transition-all shadow-sm ${isSelected ? 'bg-indigo-600 text-white opacity-100 scale-110' : 'bg-black/50 text-white/70 opacity-0'}`} style={isSelected ? { backgroundColor: item.dayColor } : {}}>
+                                            {item.place.name.substring(0, 8)}
                                         </div>
+                                        {isSelected && item.place.budget && (
+                                            <div className="mt-1 flex items-center gap-1 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-lg shadow-sm border border-indigo-100 animate-in zoom-in-50 duration-300">
+                                                <span className="text-[8px] font-black text-indigo-600">💰 {item.place.budget}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -795,7 +835,34 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                             <input type="text" value={place.name} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'name', e.target.value)} className="flex-1 font-bold text-sm p-1.5 border-b border-indigo-200 outline-none bg-indigo-50/50 rounded-t" placeholder="장소명" />
                                             <button onClick={() => handleUpdateLocation(dayIdx, placeIdx, place.name)} className="p-1.5 rounded bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"><Search size={14} /></button>
                                         </div>
-                                        <textarea value={place.description} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'description', e.target.value)} className="w-full text-xs p-1.5 border border-gray-200 rounded bg-gray-50 h-12 resize-none mb-2" placeholder="설명" />
+                                        <textarea value={place.description} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'description', e.target.value)} className="w-full text-xs p-1.5 border border-gray-200 rounded bg-gray-50 h-12 resize-none mb-2" placeholder="설명을 입력해주세요" />
+                                        
+                                        {/* ✨ 일정별 예산/지출 입력 필드 고도화 (MyPage와 동기화) */}
+                                        <div className="space-y-2 mb-3">
+                                            <div className="flex items-center gap-2 bg-indigo-50/30 p-2 rounded-lg border border-indigo-100/50">
+                                                <Wallet size={12} className="text-indigo-500 shrink-0" />
+                                                <span className="text-[9px] font-black text-indigo-400 uppercase shrink-0 w-8">Exp</span>
+                                                <input 
+                                                    type="number" 
+                                                    value={place.expectedBudget || ""} 
+                                                    onChange={(e) => handleEditChange(dayIdx, placeIdx, 'expectedBudget', parseInt(e.target.value) || 0)} 
+                                                    placeholder="예상 경비 (원)" 
+                                                    className="flex-1 bg-transparent border-none outline-none text-[11px] font-bold text-gray-700 placeholder:text-gray-300"
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-2 bg-rose-50/30 p-2 rounded-lg border border-rose-100/50">
+                                                <Receipt size={12} className="text-rose-500 shrink-0" />
+                                                <span className="text-[9px] font-black text-rose-400 uppercase shrink-0 w-8">Act</span>
+                                                <input 
+                                                    type="number" 
+                                                    value={place.actualExpense || ""} 
+                                                    onChange={(e) => handleEditChange(dayIdx, placeIdx, 'actualExpense', parseInt(e.target.value) || 0)} 
+                                                    placeholder="실제 지출 (원)" 
+                                                    className="flex-1 bg-transparent border-none outline-none text-[11px] font-bold text-rose-700 placeholder:text-rose-300"
+                                                />
+                                            </div>
+                                        </div>
+
                                         <div className="flex gap-2">
                                             <button onClick={() => handleMovePlace(dayIdx, placeIdx, -1)} disabled={placeIdx === 0} className="flex-1 py-1 rounded bg-gray-50 flex justify-center disabled:opacity-30"><ArrowUp size={14} /></button>
                                             <button onClick={() => handleMovePlace(dayIdx, placeIdx, 1)} disabled={placeIdx === dayItem.places.length - 1} className="flex-1 py-1 rounded bg-gray-50 flex justify-center disabled:opacity-30"><ArrowDown size={14} /></button>
@@ -1011,6 +1078,11 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                             <span className="text-rose-500 mr-2">{place.order}.</span>
                                                             {place.name}
                                                         </h4>
+                                                        {place.budget && (
+                                                            <div style={{ marginTop: '5px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 'bold', color: '#4f46e5' }}>
+                                                                💰 예산: {place.budget}
+                                                            </div>
+                                                        )}
                                                         <p className="text-xs text-gray-500 mt-1">{place.description}</p>
                                                         {place.reason && (
                                                             <div style={{ marginTop: '8px', padding: '8px', backgroundColor: '#fff1f2', borderRadius: '8px', fontSize: '11px', color: '#881337', border: '1px solid #ffe4e6' }}>

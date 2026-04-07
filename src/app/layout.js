@@ -1,4 +1,5 @@
 import PushInitializer from '../components/PushInitializer';
+import PortraitOnly from '../components/PortraitOnly';
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
@@ -51,6 +52,9 @@ export default function RootLayout({ children }) {
             그 안에 푸시 알림, GA, 콘텐츠(children)가 모두 들어갑니다.
         */}
         <AuthContext>
+          {/* 📱 모바일 세로 모드 권장 오버레이 */}
+          <PortraitOnly />
+          
           {/* 🔔 푸시 알림 초기화 */}
           <PushInitializer />
 

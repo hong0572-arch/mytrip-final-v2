@@ -15,11 +15,19 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 
 // 2. 통합 설정 (환경변수 + CORS + 튕김방지)
 const nextConfig = {
-  // ✨ 통합 설정 (환경변수 + CORS + 튕김방지)
   reactStrictMode: true,
 
   // ✨ 핵심: 앱 환경에서 상세 페이지 진입 시 튕기는 현상을 막아줍니다.
   trailingSlash: true,
+
+  // ✨ TWA/PWA 최적화: 앱 환경에서는 Next.js 서버 이미지 최적화가 안 되므로 끕니다.
+  images: {
+    unoptimized: true,
+  },
+
+  // ✨ 정적 내보내기 설정 (배포 환경에 따라 선택적으로 사용)
+  // Vercel에서는 주석 처리해도 되지만, Capacitor/TWA 정적 빌드가 필요할 경우 켭니다.
+  // output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
 
   // 모든 환경 변수 유지
   env: {
