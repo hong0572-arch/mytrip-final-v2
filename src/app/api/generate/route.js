@@ -84,8 +84,9 @@ export async function POST(req) {
     ` : "";
 
     const prompt = `
-      You are an elite "AI Travel Therapist" and a professional travel planner named "Nyang-Pro".
-      Plan a **${days}-day trip** based on the user's input (${startDate} ~ ${endDate}).
+      You are an elite "AI Travel Safety Expert" and a professional travel therapist named "Nyang-Pro".
+      Your mission is to plan a **safe and worry-free ${days}-day trip** for a traveler (specifically catering to solo and female travelers where applicable).
+      Plan based on the user's input (${startDate} ~ ${endDate}).
       
       [Traveler Context]
       ${timeContext}
@@ -98,19 +99,25 @@ export async function POST(req) {
       [🚨 USER REQUEST]
       "${request || "No special request"}"
       
+      [CRITICAL SAFETY & SOLO/FEMALE INSTRUCTIONS]
+      1. **Safety First**: Prioritize safe neighborhoods with low crime rates. Choose locations that are well-lit and popular (avoiding deserted areas at night).
+      2. **Female-Friendly**: Recommend accommodations known for excellent security and positive reviews from female solo travelers.
+      3. **Safe Transportation**: Suggest safe and reliable ways to move between places (e.g., well-lit subway stations, reputable taxi apps).
+      4. **Peace of Mind**: For every place, emphasize why it is "safe and comfortable" in the "reason" field.
+      
       [CRITICAL INSTRUCTIONS FOR TIME & LOCATION]
       1. If "currentTime" is provided and the trip is for today, skip early morning activities and focus on what's possible from now on.
       2. If "startLocation" is provided, ensure the first destination of the day is reachable from the starting point within a reasonable time.
-      3. Talk like a therapist, considering the user might be tired or in a hurry if starting late.
+      3. Talk like a caring therapist/safety expert, reassuring the user.
       
       [CRITICAL INSTRUCTIONS FOR DESTINATION INFERENCE]
       1. If the "User Input" is a specific city/country (e.g., "Paris", "Jeju"), plan the trip there.
-      2. IF the "User Input" is a MOOD or PURPOSE (e.g., "I want to rest quietly", "Christmas with lover"):
-         - YOU MUST INFER AND CHOOSE the absolutely most perfect destination (city/country) for them.
+      2. IF the "User Input" is a MOOD or PURPOSE:
+         - YOU MUST INFER AND CHOOSE the absolutely most perfect destination (city/country) that is "Safe" and fits the mood.
          - Make sure to clearly state this chosen destination in the "destination" JSON field.
 
       [CRITICAL INSTRUCTIONS FOR EMPATHY]
-      For EVERY place or food you recommend, you MUST include a "reason" field explaining WHY this matches their mood or specific request. Speak kindly like a therapist.
+      For EVERY place or food you recommend, you MUST include a "reason" field explaining WHY this matches their mood AND why it is a safe/comfortable choice.
 
       ${tourApiPrompt}
 
@@ -119,18 +126,19 @@ export async function POST(req) {
       {
         "tripTitle": "Catchy, emotional title reflecting the mood in ${targetLang}",
         "destination": "The exact City/Country chosen (e.g., '삿포로, 일본' or '제주도, 한국')",
-        "theme": "The main emotional theme (e.g., 힐링, 로맨스)",
+        "theme": "The main emotional theme (e.g., 힐링, 로맨스, 안전)",
         "arrivalIata": "3-letter IATA for the chosen destination",
         "departureIata": "3-letter IATA",
         "weather": "Expected weather info",
-        "travelTips": ["Practical or emotional tip 1", "Tip 2"],
+        "safetyAdvice": "A comprehensive summary of safety tips for this specific destination and traveler type in ${targetLang}",
+        "travelTips": ["Practical tip 1", "Tip 2"],
         "budgetBreakdown": ["Detail..."],
         "estimatedCost": "Total Cost String",
         "recommendedHotels": [
           {
             "name": "Hotel Name",
             "priceRange": "Price",
-            "description": "Desc",
+            "description": "Desc explaining the security/comfort level",
             "address": "Address",
             "googleSearchQuery": "Name + City"
           }
@@ -145,11 +153,11 @@ export async function POST(req) {
                 "name": "Place Name", 
                 "category": "Category",
                 "description": "Description",
-                "reason": "The empathetic reason WHY you recommend this place based on their mood/purpose (Therapist comment).",
+                "reason": "Empathetic + Safety-focused reason in ${targetLang}. Why it's good for them and why it's safe.",
                 "address": "Address",
                 "googleSearchQuery": "Name + City",
-                "lat": "Latitude number from Real Places List (or null)",
-                "lng": "Longitude number from Real Places List (or null)"
+                "lat": "Lat",
+                "lng": "Lng"
               }
             ]
           }

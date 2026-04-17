@@ -43,6 +43,21 @@ export default function useFcmToken() {
                     if (currentToken) {
                         setToken(currentToken);
                         console.log('✅ FCM Token:', currentToken);
+
+                        // 🔔 4. 포그라운드(앱이 열려있을 때) 알림 수신 대기
+                        import('firebase/messaging').then(({ onMessage }) => {
+                            onMessage(messaging, (payload) => {
+                                console.log('[포그라운드 FCM 수신]', payload);
+                                // 포그라운드에서도 브라우저 알림을 띄우려면 수동으로 띄워야 합니다.
+                                if (Notification.permission === 'granted') {
+                                    new Notification(payload.notification.title, {
+                                        body: payload.notification.body,
+                                        icon: '/icon-192.png'
+                                    });
+                                }
+                            });
+                        });
+                        
                     } else {
                         console.log('토큰을 가져올 수 없습니다.');
                     }

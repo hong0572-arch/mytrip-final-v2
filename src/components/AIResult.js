@@ -7,7 +7,8 @@ import {
     Sun, Lightbulb, RotateCcw, Pencil, Check, Trash2, Plus,
     ArrowUp, ArrowDown, MapPin, Search, Wand2, Navigation,
     Calendar, BrainCircuit, Save, User, RefreshCw, ChevronUp, ChevronDown, Home,
-    UserPlus, X, MessageSquare, Sparkles, ChevronRight, CheckSquare, Square, Send, Wallet
+    UserPlus, X, MessageSquare, Sparkles, ChevronRight, CheckSquare, Square, Send, Wallet,
+    ShieldCheck, PhoneCall
 } from 'lucide-react';
 
 import { db, auth } from '../lib/firebase';
@@ -102,7 +103,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     </div>
                     <p style="font-size: 12px; color: #4b5563; margin-top: 6px; margin-bottom: 8px; line-height: 1.4;">${place.description}</p>
                     ${place.budget ? `<div style="font-size: 11px; font-weight: 800; color: #4f46e5; background: #f5f3ff; padding: 6px 10px; border-radius: 8px; margin-bottom: 8px; border: 1px dashed #c7d2fe; display: flex; align-items: center; gap: 4px;">💰 예산: ${place.budget}</div>` : ''}
-                    ${place.reason ? `<div style="font-size: 11px; color: #FF5A5F; background: #FFF0F0; padding: 6px 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #FFE4E6;"><strong>💡 냥프로의 픽!</strong><br />${place.reason}</div>` : ''}
+                    ${place.reason ? `<div style="font-size: 11px; color: #0891b2; background: #ecfeff; padding: 6px 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #cffafe;"><strong>🛡️ 안심 포인트!</strong><br />${place.reason}</div>` : ''}
                     <div style="display: flex; gap: 8px; margin-top: 10px;">
                         <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&hl=${language}" target="_blank" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #4f46e5; background: #e0e7ff; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🗺️ 길찾기</a>
                         ${(!place.category?.includes("Restaurant") && !place.category?.includes("Cafe")) ? `<a href="${getKlookLink(place.name, userInfo?.destination || "", language, '695932')}" target="_blank" rel="nofollow noopener noreferrer" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #e11d48; background: #ffe4e6; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center; display: inline-block;">🎟️ 티켓 예매</a>` : ''}
@@ -728,6 +729,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
     const { tripTitle, itinerary, budgetBreakdown, estimatedCost, recommendedHotels, weather, travelTips, theme } = tripPlan;
     const hotels = recommendedHotels || [];
+    const safetyAdvice = tripPlan.safetyAdvice || null; // 🛡️ 안전 정보 추가
     const destName = tripPlan.destination?.split('#')[0]?.trim() || "여행지";
 
     return (
@@ -960,8 +962,17 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                 )}
                                 {infoModalTab === 'tips' && (
                                     <div className="space-y-4">
+                                        {safetyAdvice && (
+                                            <div className="bg-gradient-to-br from-cyan-50 to-blue-50 p-4 rounded-2xl border border-cyan-100 flex items-start gap-4 mb-4">
+                                                <div className="bg-white p-3 rounded-full text-cyan-500 shadow-sm shrink-0"><ShieldCheck size={24} /></div>
+                                                <div>
+                                                    <p className="font-black text-cyan-900 mb-1">안심 & 안전 가이드</p>
+                                                    <p className="text-sm text-cyan-800 leading-relaxed font-medium whitespace-pre-wrap">{safetyAdvice}</p>
+                                                </div>
+                                            </div>
+                                        )}
                                         {weather && (
-                                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-2xl border border-blue-100 flex items-start gap-4">
+                                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-2xl border border-blue-100 flex items-start gap-4 mb-4">
                                                 <div className="bg-white p-3 rounded-full text-amber-500 shadow-sm shrink-0"><Sun size={24} /></div>
                                                 <div>
                                                     <p className="font-black text-blue-900 mb-1">날씨 정보</p>

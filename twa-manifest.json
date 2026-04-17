@@ -19,8 +19,8 @@
     "path": "C:\\Users\\iwing\\.antigravity\\mytrip-final\\android.keystore",
     "alias": "tripmaker"
   },
-  "appVersionName": "5",
-  "appVersionCode": 5,
+  "appVersionName": "2.1",
+  "appVersionCode": 8,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://mytrip2.pro/manifest.json",
@@ -38,7 +38,6 @@
   "isMetaQuest": false,
   "fullScopeUrl": "https://mytrip2.pro/",
   "minSdkVersion": 21,
-  "targetSdkVersion": 35,
   "orientation": "portrait-primary",
   "fingerprints": [],
   "additionalTrustedOrigins": [],
@@ -47,5 +46,5 @@
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "5"
+  "appVersion": "2.1"
 }

@@ -124,22 +124,22 @@ const RECOMMENDED_TRIPS = [
 
 const translations = {
     ko: {
-        title_pre: "Trip Maker,", title_main: '"냥 프로"', title_sub: "나만의 여행",
-        tab_schedule: "🗓️ 나만의 여행", tab_flight: "실시간 항공권", tab_myflight: "✈️ 내 일정 항공권", tab_choices: "냥프로의 강력 추천!",
-        label_where: "어떤 여행을 떠나고 싶나요?", label_when: "언제 떠나세요?", placeholder_dest: "예: 조용히 멍때리고 싶어 (음성 가능)", placeholder_date: "날짜 선택 (최대 30일)",
+        title_pre: "Trip Maker,", title_main: '"냥 프로"', title_sub: "안전하고 편안한 여행",
+        tab_schedule: "🗓️ 안심 여행", tab_flight: "실시간 항공권", tab_myflight: "✈️ 내 일정 항공권", tab_choices: "냥프로의 안심 추천!",
+        label_where: "어디로 안심 여행을 떠날까요?", label_when: "언제 떠나세요?", placeholder_dest: "예: 혼자 조용히 쉬고 싶어 (음성 가능)", placeholder_date: "날짜 선택 (최대 30일)",
         label_companion: "동행자", label_budget: "1인 예산", label_people: "인원", label_contact: "연락처 (필수)", placeholder_contact: "카톡ID 또는 이메일",
-        label_request: "추가 요청사항", placeholder_request: "예: 부모님이 계셔서 걷는 건 줄여주세요.",
-        btn_generate: "✨ 나만의 여행 만들기!", btn_luxury_off: "👑 럭셔리 여행 체험하기", btn_luxury_on: "💎 VIP 플랜 생성",
-        msg_loading: "AI가 당신의 여행을 만들고 있어요...", msg_listening: "듣고 있어요...",
+        label_request: "추가 요청사항 (안전 등)", placeholder_request: "예: 여성 혼자 가기 안전한 곳으로 추천해주세요.",
+        btn_generate: "✨ 안심 여행 일정 만들기!", btn_luxury_off: "👑 럭셔리 여행 체험하기", btn_luxury_on: "💎 VIP 플랜 생성",
+        msg_loading: "AI가 가장 안전한 여행을 설계하고 있어요...", msg_listening: "듣고 있어요...",
     },
     en: {
-        title_pre: "Trip Maker,", title_main: "Meow AI", title_sub: "My Own Trip",
-        tab_schedule: "🗓️ My Trip", tab_flight: "Real-time Flights", tab_myflight: "✈️ Flights of my trips", tab_choices: "Meow Pro's Choices!",
-        label_where: "What kind of trip do you want?", label_when: "When do you leave?", placeholder_dest: "e.g. A quiet walk in Kyoto", placeholder_date: "Select dates (Max 30 days)",
+        title_pre: "Trip Maker,", title_main: "Meow AI", title_sub: "Safe & Worry-free Trip",
+        tab_schedule: "🗓️ Safe Trip", tab_flight: "Real-time Flights", tab_myflight: "✈️ Flights of my trips", tab_choices: "Meow Pro's Safe Picks!",
+        label_where: "Where would you like to travel safely?", label_when: "When do you leave?", placeholder_dest: "e.g. Quiet rest in Kyoto", placeholder_date: "Select dates (Max 30 days)",
         label_companion: "Companion", label_budget: "Budget (per person)", label_people: "Travelers", label_contact: "Contact (Required)", placeholder_contact: "Email or Messenger ID",
-        label_request: "Special Requests", placeholder_request: "ex: Less walking for parents.",
-        btn_generate: "✨ Make My Trip!", btn_luxury_off: "👑 Try Luxury Mode", btn_luxury_on: "💎 Create VIP Plan",
-        msg_loading: "AI is creating your trip...", msg_listening: "Listening...",
+        label_request: "Special Requests (Safety, etc.)", placeholder_request: "ex: Recommend safe places for solo female travelers.",
+        btn_generate: "✨ Create my safe trip!", btn_luxury_off: "👑 Try Luxury Mode", btn_luxury_on: "💎 Create VIP Plan",
+        msg_loading: "AI is designing your safest trip...", msg_listening: "Listening...",
     }
 };
 
