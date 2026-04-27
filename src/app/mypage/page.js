@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion'; // ✨ 애니메이션 추가
 import { useRouter } from 'next/navigation';
 import { signOut as nextAuthSignOut } from "next-auth/react";
 import { auth, db, storage } from "../../lib/firebase";
@@ -216,6 +217,13 @@ export default function MyPage() {
 
     const [feedSort, setFeedSort] = useState('latest'); // 'latest'(최신순) or 'popular'(인기순)
     const [feedLimit, setFeedLimit] = useState(5); // 처음엔 5개만 보여줌
+    const [toast, setToast] = useState({ show: false, message: '', type: 'info' }); // ✨ 커스텀 토스트 상태 추가
+
+    // ✨ 토스트 알림 함수
+    const showToast = (message, type = 'info') => {
+        setToast({ show: true, message, type });
+        setTimeout(() => setToast({ show: false, message: '', type: 'info' }), 3000);
+    };
 
     const actualPointsHistory = pointHistory.filter(item =>
         item.reason?.includes('보상') || item.reason?.includes('좋아요') ||
@@ -423,11 +431,11 @@ export default function MyPage() {
                     dDayTripTitle: null,
                     dDayStartDate: null
                 });
-                alert("🔔 D-Day 알림이 해제되었습니다.");
+                showToast("🔔 D-Day 알림이 해제되었습니다.", "info");
             } else {
                 // 새로운 일정으로 설정
                 if (!trip.startDate) {
-                    alert("⚠️ 시작 날짜가 설정된 일정만 D-Day 알림을 받을 수 있습니다.");
+                    showToast("⚠️ 시작 날짜가 설정된 일정만 알림이 가능합니다.", "error");
                     return;
                 }
                 
@@ -436,27 +444,27 @@ export default function MyPage() {
                     dDayTripTitle: trip.destination || trip.title || "여행",
                     dDayStartDate: trip.startDate
                 });
-                alert(`🔔 '${trip.destination || "여행"}' 일정이 D-Day 알림으로 설정되었습니다!\n매일 오전 9시에 알림을 보내드릴게요.`);
+                showToast(`🔔 '${trip.destination || "여행"}' 일정이 D-Day 알림으로 설정되었습니다!`, "success");
             }
         } catch (error) {
             console.error("D-Day 설정 실패:", error);
-            alert("설정 중 오류가 발생했습니다.");
+            showToast("설정 중 오류가 발생했습니다.", "error");
         }
     };
 
-    const handleDeleteTrip = async (e, tripId, dest) => { e.stopPropagation(); if (confirm(`'${dest}' 일정을 삭제할까요?`)) { try { await deleteDoc(doc(db, "trips", tripId)); } catch (e) { alert("오류"); } } };
+    const handleDeleteTrip = async (e, tripId, dest) => { e.stopPropagation(); if (confirm(`'${dest}' 일정을 삭제할까요?`)) { try { await deleteDoc(doc(db, "trips", tripId)); } catch (e) { showToast("삭제 중 오류가 발생했습니다.", "error"); } } };
     const handleLikeFeed = async (feedId) => { try { await updateDoc(doc(db, "feeds", feedId), { likes: increment(1) }); } catch (e) { console.error("좋아요 실패"); } };
     const handleDeleteRequest = async (id) => { if (confirm('삭제하시겠습니까?')) { try { await deleteDoc(doc(db, "match_requests", id)); } catch (e) { } } };
     const handleRejectRequest = async (id) => { if (confirm('거절하시겠습니까?')) { try { await updateDoc(doc(db, "match_requests", id), { status: 'rejected' }); } catch (e) { } } };
-    const handleAcceptRequest = async (id) => { try { await updateDoc(doc(db, "match_requests", id), { status: 'accepted' }); alert("수락 완료!"); } catch (e) { } };
+    const handleAcceptRequest = async (id) => { try { await updateDoc(doc(db, "match_requests", id), { status: 'accepted' }); showToast("수락 완료!", "success"); } catch (e) { } };
 
     const handleRequestDeposit = async () => {
         const targetTotal = selectedTrip.targetTotalCost || parseCost(selectedTrip.estimatedCost) || 0;
-        if (!targetTotal) return alert("먼저 총 여행 경비를 설정해주세요.");
+        if (!targetTotal) return showToast("먼저 총 여행 경비를 설정해주세요.", "info");
         const actualMembers = selectedTrip.membersInfo || [];
         const amountPerPerson = Math.ceil(targetTotal / actualMembers.length);
         const membersToRequest = actualMembers.filter(m => m.uid !== user?.uid);
-        if (membersToRequest.length === 0) return alert("동행자가 없습니다.");
+        if (membersToRequest.length === 0) return showToast("동행자가 없습니다.", "info");
         try {
             const promises = membersToRequest.map(member => addDoc(collection(db, "match_requests"), {
                 type: "deposit_request", senderId: user.uid, senderName: userData?.name || user.displayName,
@@ -466,21 +474,21 @@ export default function MyPage() {
                 createdAt: serverTimestamp()
             }));
             await Promise.all(promises);
-            alert("요청을 보냈습니다! 💌");
-        } catch (e) { alert("발송 실패"); }
+            showToast("요청을 보냈습니다! 💌", "success");
+        } catch (e) { showToast("발송 실패", "error"); }
     };
 
     const handlePayDeposit = async (req) => {
         const amount = req.amount;
-        if (currentAsset < amount) return alert("잔액이 부족합니다.");
+        if (currentAsset < amount) return showToast("잔액이 부족합니다.", "error");
         if (!confirm(`${amount.toLocaleString()}원을 입금할까요?`)) return;
         try {
             await updateDoc(doc(db, "users", user.uid), { currentAsset: increment(-amount) });
             await updateDoc(doc(db, "trips", req.tripId), { tripWalletBalance: increment(amount), [`depositStatus.${user.uid}`]: increment(amount) });
             await addDoc(collection(db, "users", user.uid, "point_history"), { reason: `'${req.destination}' 송금`, amount: -amount, createdAt: serverTimestamp() });
             await updateDoc(doc(db, "match_requests", req.id), { status: 'accepted' });
-            alert("입금 완료! 🎉");
-        } catch (e) { alert("입금 실패"); }
+            showToast("입금 완료! 🎉", "success");
+        } catch (e) { showToast("입금 실패", "error"); }
     };
 
     const handleAddExpense = async () => {
@@ -492,7 +500,7 @@ export default function MyPage() {
             else await updateDoc(tripRef, { [`foreignWallets.${newExpenseCurrency}`]: increment(-amount) });
             await addDoc(collection(db, "trips", selectedTrip.id, "expenses"), { name: newExpenseName, amount, currency: newExpenseCurrency, category: "기타", createdAt: serverTimestamp(), by: userData?.name || user.displayName });
             setNewExpenseName(''); setNewExpenseCost('');
-        } catch (e) { alert("지출 등록 실패"); }
+        } catch (e) { showToast("지출 등록에 실패했습니다.", "error"); }
     };
 
     const handleDeleteExpense = async (exp) => {
@@ -502,7 +510,7 @@ export default function MyPage() {
                 if (exp.currency === 'KRW') await updateDoc(tripRef, { tripWalletBalance: increment(exp.amount) });
                 else await updateDoc(tripRef, { [`foreignWallets.${exp.currency}`]: increment(exp.amount) });
                 await deleteDoc(doc(db, "trips", selectedTrip.id, "expenses", exp.id));
-            } catch (e) { alert("실패"); }
+            } catch (e) { showToast("삭제 실패", "error"); }
         }
     };
 
@@ -512,28 +520,28 @@ export default function MyPage() {
         try {
             await updateDoc(doc(db, "users", user.uid), { currentAsset: increment(amount) });
             await addDoc(collection(db, "users", user.uid, "point_history"), { reason: "지갑 입금", amount, createdAt: serverTimestamp() });
-            alert("입금되었습니다! 💰"); setShowAssetModal(false); setTempAssetInput('');
-        } catch (e) { alert("실패"); }
+            showToast("입금되었습니다! 💰", "success"); setShowAssetModal(false); setTempAssetInput('');
+        } catch (e) { showToast("입금 실패", "error"); }
     };
 
     const handleSetTargetCost = async () => {
         if (!targetTotalCostInput) return;
         try {
             await updateDoc(doc(db, "trips", selectedTrip.id), { targetTotalCost: parseInt(targetTotalCostInput), estimatedCost: `${parseInt(targetTotalCostInput).toLocaleString()}원` });
-            alert("목표 경비 설정 완료!"); setTargetTotalCostInput('');
-        } catch (e) { alert("실패"); }
+            showToast("목표 경비 설정 완료!", "success"); setTargetTotalCostInput('');
+        } catch (e) { showToast("설정 실패", "error"); }
     };
 
     const handleDepositToTrip = async () => {
         const amount = parseInt(myDepositInput);
         if (!amount || amount <= 0) return;
-        if (currentAsset < amount) return alert("잔액 부족!");
+        if (currentAsset < amount) return showToast("잔액이 부족합니다.", "error");
         try {
             await updateDoc(doc(db, "users", user.uid), { currentAsset: increment(-amount) });
             await updateDoc(doc(db, "trips", selectedTrip.id), { tripWalletBalance: increment(amount), [`depositStatus.${user.uid}`]: increment(amount) });
             await addDoc(collection(db, "users", user.uid, "point_history"), { reason: "이체", amount: -amount, createdAt: serverTimestamp() });
-            alert("입금 완료! 🎉"); setMyDepositInput('');
-        } catch (e) { alert("실패"); }
+            showToast("입금 완료! 🎉", "success"); setMyDepositInput('');
+        } catch (e) { showToast("입금 실패", "error"); }
     };
 
     const handleTripExchange = async () => {
@@ -541,12 +549,12 @@ export default function MyPage() {
         if (!amount || amount <= 0) return;
         const costKRW = Math.floor(amount * CURRENCY_RATES[tripExchangeCurrency]);
         const currentBalance = selectedTrip.tripWalletBalance || 0;
-        if (currentBalance < costKRW) return alert(`잔액 부족 (${costKRW.toLocaleString()}원 필요)`);
+        if (currentBalance < costKRW) return showToast(`잔액 부족 (${costKRW.toLocaleString()}원 필요)`, "error");
         try {
             await updateDoc(doc(db, "trips", selectedTrip.id), { tripWalletBalance: increment(-costKRW), [`foreignWallets.${tripExchangeCurrency}`]: increment(amount) });
             await addDoc(collection(db, "trips", selectedTrip.id, "expenses"), { name: `[환전] ${tripExchangeCurrency}`, amount: costKRW, currency: 'KRW', category: "환전", createdAt: serverTimestamp(), by: userData?.name || user.displayName });
-            alert("환전 완료! 💱"); setTripExchangeAmount('');
-        } catch (e) { alert("실패"); }
+            showToast("환전 완료! 💱", "success"); setTripExchangeAmount('');
+        } catch (e) { showToast("환전 실패", "error"); }
     };
 
     // ✨ 일정별 예산/지출 업데이트 핸들러
@@ -1960,6 +1968,32 @@ export default function MyPage() {
                     </div>
                 </div>
             )}
+
+            {/* ✨ 커스텀 토스트 알림창 */}
+            <AnimatePresence>
+                {toast.show && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                        className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm"
+                    >
+                        <div className={`
+                            backdrop-blur-xl border border-white/40 shadow-2xl rounded-[24px] p-4 flex items-center gap-3
+                            ${toast.type === 'success' ? 'bg-emerald-500/90 text-white' : 
+                              toast.type === 'error' ? 'bg-rose-500/90 text-white' : 
+                              'bg-gray-900/80 text-white'}
+                        `}>
+                            <div className="bg-white/20 p-2 rounded-full shrink-0">
+                                {toast.type === 'success' ? <CheckCircle size={20} /> : 
+                                 toast.type === 'error' ? <AlertCircle size={20} /> : 
+                                 <Bell size={20} />}
+                            </div>
+                            <p className="font-bold text-[14px] leading-tight break-keep">{toast.message}</p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
