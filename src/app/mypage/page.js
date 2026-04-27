@@ -410,6 +410,40 @@ export default function MyPage() {
     }, [selectedTrip, showBudgetModal, user]);
 
     // --- Actions (기존 로직 100% 보존) ---
+    const handleToggleDDayNotify = async (trip) => {
+        if (!user) return;
+        
+        const isCurrentDDay = userData?.dDayTripId === trip.id;
+        
+        try {
+            if (isCurrentDDay) {
+                // 이미 설정된 경우 해제
+                await updateDoc(doc(db, "users", user.uid), {
+                    dDayTripId: null,
+                    dDayTripTitle: null,
+                    dDayStartDate: null
+                });
+                alert("🔔 D-Day 알림이 해제되었습니다.");
+            } else {
+                // 새로운 일정으로 설정
+                if (!trip.startDate) {
+                    alert("⚠️ 시작 날짜가 설정된 일정만 D-Day 알림을 받을 수 있습니다.");
+                    return;
+                }
+                
+                await updateDoc(doc(db, "users", user.uid), {
+                    dDayTripId: trip.id,
+                    dDayTripTitle: trip.destination || trip.title || "여행",
+                    dDayStartDate: trip.startDate
+                });
+                alert(`🔔 '${trip.destination || "여행"}' 일정이 D-Day 알림으로 설정되었습니다!\n매일 오전 9시에 알림을 보내드릴게요.`);
+            }
+        } catch (error) {
+            console.error("D-Day 설정 실패:", error);
+            alert("설정 중 오류가 발생했습니다.");
+        }
+    };
+
     const handleDeleteTrip = async (e, tripId, dest) => { e.stopPropagation(); if (confirm(`'${dest}' 일정을 삭제할까요?`)) { try { await deleteDoc(doc(db, "trips", tripId)); } catch (e) { alert("오류"); } } };
     const handleLikeFeed = async (feedId) => { try { await updateDoc(doc(db, "feeds", feedId), { likes: increment(1) }); } catch (e) { console.error("좋아요 실패"); } };
     const handleDeleteRequest = async (id) => { if (confirm('삭제하시겠습니까?')) { try { await deleteDoc(doc(db, "match_requests", id)); } catch (e) { } } };
@@ -802,7 +836,16 @@ export default function MyPage() {
                             <GlassCard key={trip.id} className="overflow-hidden group">
                                 <div className="h-40 bg-cover bg-center relative" style={{ backgroundImage: `url('https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(safeDest)}&zoom=11&size=600x300&maptype=roadmap&markers=color:red%7C${encodeURIComponent(safeDest)}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}')`, backgroundColor: '#e5e7eb' }}>
                                     <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold tracking-wider shadow-lg border border-white/20 break-keep whitespace-nowrap">{calculateDDay(trip.startDate)}</div>
-                                    <button onClick={(e) => handleDeleteTrip(e, trip.id, trip.destination)} className="absolute top-4 left-4 text-white bg-black/40 hover:bg-rose-500 p-2.5 rounded-full backdrop-blur-md transition shadow-md z-10 shrink-0" title="일정 삭제"><Trash2 size={16} strokeWidth={2.5} /></button>
+                                    <div className="absolute top-4 left-4 flex gap-2">
+                                        <button onClick={(e) => handleDeleteTrip(e, trip.id, trip.destination)} className="text-white bg-black/40 hover:bg-rose-500 p-2.5 rounded-full backdrop-blur-md transition shadow-md z-10 shrink-0" title="일정 삭제"><Trash2 size={16} strokeWidth={2.5} /></button>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); handleToggleDDayNotify(trip); }} 
+                                            className={`p-2.5 rounded-full backdrop-blur-md transition shadow-md z-10 shrink-0 border ${userData?.dDayTripId === trip.id ? 'bg-rose-500 text-white border-rose-400' : 'bg-black/40 text-white border-white/20 hover:bg-white/20'}`}
+                                            title={userData?.dDayTripId === trip.id ? "D-Day 알림 해제" : "D-Day 알림 설정"}
+                                        >
+                                            <BellRing size={16} strokeWidth={2.5} className={userData?.dDayTripId === trip.id ? "animate-bounce" : ""} />
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="p-5">
                                     <div className="flex justify-between items-start mb-1">

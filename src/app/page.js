@@ -260,7 +260,21 @@ export default function Home() {
         const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
             if (unsubscribeTrips) { unsubscribeTrips(); unsubscribeTrips = null; }
+            
             if (currentUser) {
+                // ✨ [추가] FCM 토큰이 있고 유저가 있으면 DB에 업데이트 (푸시 알림용)
+                if (token) {
+                    try {
+                        await updateDoc(doc(db, "users", currentUser.uid), {
+                            fcmToken: token,
+                            lastTokenUpdate: serverTimestamp()
+                        });
+                        console.log("✅ FCM 토큰이 유저 정보에 업데이트되었습니다.");
+                    } catch (e) {
+                        console.warn("FCM 토큰 업데이트 실패 (필드가 없을 수 있음):", e);
+                    }
+                }
+
                 const userDoc = await getDoc(doc(db, "users", currentUser.uid));
                 if (userDoc.exists()) setUserData(userDoc.data());
             }
@@ -283,7 +297,7 @@ export default function Home() {
             } else { setMySchedules([]); }
         });
         return () => { clearInterval(timer); window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt); window.removeEventListener('appinstalled', handleAppInstalled); unsubscribeAuth(); if (unsubscribeTrips) unsubscribeTrips(); };
-    }, [router]);
+    }, [router, token]); // ✨ token을 의존성 배열에 추가
 
     // ✨ NextAuth (카카오) 로그인 상태를 감지하여 Firebase Custom Token 연동 및 마이페이지 리다이렉트
     useEffect(() => {
