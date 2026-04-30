@@ -251,7 +251,19 @@ export default function Home() {
         const timer = setInterval(() => setBgIndex((prev) => (prev + 1) % backgroundImages.length), 5000);
         const checkStandalone = () => { setIsStandalone(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true); };
         checkStandalone();
-        const handleAppInstalled = () => { setIsStandalone(true); setDeferredPrompt(null); };
+        const handleAppInstalled = async () => { 
+            setIsStandalone(true); 
+            setDeferredPrompt(null); 
+            // 앱 설치 직후 알림 권한을 자동으로 요청 (설치 버튼 클릭 직후라 브라우저가 차단하지 않을 확률이 높음)
+            if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted') {
+                try {
+                    await Notification.requestPermission();
+                    console.log('앱 설치 시 알림 권한을 요청했습니다.');
+                } catch(e) {
+                    console.error('알림 권한 요청 실패:', e);
+                }
+            }
+        };
         window.addEventListener('appinstalled', handleAppInstalled);
         const handleBeforeInstallPrompt = (e) => { e.preventDefault(); setDeferredPrompt(e); };
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
