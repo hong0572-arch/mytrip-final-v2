@@ -65,6 +65,19 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const observerRef = useRef(null);
     const dialRef = useRef(null);
     const [selectedIndex, setSelectedIndex] = useState(0);
+
+    const handleSelectPlace = (idx) => {
+        setSelectedIndex(idx);
+        if (scrollContainerRef.current) {
+            const container = scrollContainerRef.current;
+            const items = container.querySelectorAll('.vertical-place-card');
+            if (items[idx]) {
+                const item = items[idx];
+                const scrollTop = item.offsetTop - container.clientHeight / 2 + item.clientHeight / 2;
+                container.scrollTo({ top: scrollTop, behavior: 'smooth' });
+            }
+        }
+    };
     const infoWindowRef = useRef(null);
     const [showInfoModal, setShowInfoModal] = useState(false);
     const [infoModalTab, setInfoModalTab] = useState('budget');
@@ -343,7 +356,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                 fIdx += tripPlan.itinerary[i].places.length;
                             }
                             fIdx += placeIdx;
-                            setSelectedIndex(fIdx);
+                            handleSelectPlace(fIdx);
                         });
                         markersRef.current.push(marker);
                     }
@@ -430,17 +443,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
         return () => { if (observerRef.current) observerRef.current.disconnect(); };
     }, [tripPlan, activeTab]);
 
-    useEffect(() => {
-        if (scrollContainerRef.current) {
-            const container = scrollContainerRef.current;
-            const items = container.querySelectorAll('.vertical-place-card');
-            if (items[selectedIndex]) {
-                const item = items[selectedIndex];
-                const scrollTop = item.offsetTop - container.clientHeight / 2 + item.clientHeight / 2;
-                container.scrollTo({ top: scrollTop, behavior: 'smooth' });
-            }
-        }
-    }, [selectedIndex, flatPlaces]);
+    // IntersectionObserver scroll loop fixed by removing automatic scrollTo useEffect
 
     // handleDialScroll removed because we use observer callback now
 
@@ -780,7 +783,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                     <React.Fragment key={i}>
                                         <div 
                                             data-index={i}
-                                            onClick={() => setSelectedIndex(i)}
+                                            onClick={() => handleSelectPlace(i)}
                                             className={`vertical-place-card relative p-4 rounded-2xl border-2 transition-all cursor-pointer ${isSelected ? 'border-indigo-500 bg-white shadow-md' : 'border-transparent bg-gray-50/80 hover:bg-white hover:border-gray-200'}`}
                                         >
                                             <div className="flex items-start gap-3">
