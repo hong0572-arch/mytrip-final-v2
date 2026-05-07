@@ -442,7 +442,8 @@ export default function MyPage() {
                 await updateDoc(doc(db, "users", user.uid), {
                     dDayTripId: trip.id,
                     dDayTripTitle: trip.destination || trip.title || "여행",
-                    dDayStartDate: trip.startDate
+                    dDayStartDate: trip.startDate,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
                 });
                 showToast(`🔔 '${trip.destination || "여행"}' 일정이 D-Day 알림으로 설정되었습니다!`, "success");
             }
