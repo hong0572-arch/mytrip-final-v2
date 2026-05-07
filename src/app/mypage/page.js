@@ -167,6 +167,14 @@ export default function MyPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchStatus, setSearchStatus] = useState('idle');
     const [searchResults, setSearchResults] = useState([]);
+
+    // ✨ Feed Interaction States (Comments & Forking)
+    const [feedToFork, setFeedToFork] = useState(null);
+    const [showCommentModal, setShowCommentModal] = useState(false);
+    const [activeCommentFeed, setActiveCommentFeed] = useState(null);
+    const [comments, setComments] = useState([]);
+    const [newCommentText, setNewCommentText] = useState('');
+    const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     const [editName, setEditName] = useState('');
     const [editBio, setEditBio] = useState('');
     const [selectedTags, setSelectedTags] = useState([]);
@@ -640,15 +648,60 @@ export default function MyPage() {
         if (navigator.share) { try { await navigator.share({ title: "여행 일정", text: shareText, url: shareUrl }); } catch (error) { } }
         else { navigator.clipboard.writeText(`${shareText}\n${shareUrl}`); alert("링크 복사됨!"); }
     };
-    const handleForkItinerary = async (feed) => {
-        if (confirm('가져올까요?')) {
-            setIsSaving(true);
-            try {
-                await addDoc(collection(db, "trips"), { ...feed.mockTripData, memberIds: [user.uid], membersInfo: [{ uid: user.uid, name: user.displayName, avatar: user.photoURL }], isForked: true, originalAuthor: feed.author, createdAt: serverTimestamp() });
-                await updateDoc(doc(db, "feeds", feed.id), { forks: increment(1) });
-                if (feed.authorUid && feed.authorUid !== user.uid) { await updateDoc(doc(db, "users", feed.authorUid), { points: increment(30) }); await addDoc(collection(db, "users", feed.authorUid, "point_history"), { reason: "포크 보상", amount: 30, createdAt: serverTimestamp() }); }
-                alert("저장 완료"); setViewingFeed(null);
-            } catch (e) { alert("실패"); } finally { setIsSaving(false); }
+    const handleForkClick = (feed) => {
+        setFeedToFork(feed);
+    };
+    const confirmForkItinerary = async () => {
+        if (!feedToFork) return;
+        setIsSaving(true);
+        try {
+            await addDoc(collection(db, "trips"), { ...feedToFork.mockTripData, memberIds: [user.uid], membersInfo: [{ uid: user.uid, name: user.displayName, avatar: user.photoURL }], isForked: true, originalAuthor: feedToFork.author, createdAt: serverTimestamp() });
+            await updateDoc(doc(db, "feeds", feedToFork.id), { forks: increment(1) });
+            if (feedToFork.authorUid && feedToFork.authorUid !== user.uid) { await updateDoc(doc(db, "users", feedToFork.authorUid), { points: increment(30) }); await addDoc(collection(db, "users", feedToFork.authorUid, "point_history"), { reason: "일정 공유됨", amount: 30, createdAt: serverTimestamp() }); }
+            setFeedToFork(null); setViewingFeed(null);
+            alert("일정 가져오기 완료");
+        } catch (e) { alert("오류"); } finally { setIsSaving(false); }
+    };
+
+    // ✨ 댓글 기능 함수
+    const openCommentModal = (feed) => {
+        setActiveCommentFeed(feed);
+        setShowCommentModal(true);
+        const commentsRef = collection(db, "feeds", feed.id, "comments");
+        const q = query(commentsRef, orderBy("createdAt", "asc"));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setComments(data);
+        });
+        return unsubscribe;
+    };
+
+    const closeCommentModal = () => {
+        setShowCommentModal(false);
+        setActiveCommentFeed(null);
+        setComments([]);
+    };
+
+    const handleAddComment = async () => {
+        if (!newCommentText.trim() || !activeCommentFeed || !user) return;
+        setIsSubmittingComment(true);
+        try {
+            await addDoc(collection(db, "feeds", activeCommentFeed.id, "comments"), {
+                uid: user.uid,
+                name: user.displayName || userData?.name || '익명',
+                avatar: user.photoURL || "https://i.pravatar.cc/150?u=default",
+                text: newCommentText.trim(),
+                createdAt: serverTimestamp()
+            });
+            await updateDoc(doc(db, "feeds", activeCommentFeed.id), {
+                commentCount: increment(1)
+            });
+            setNewCommentText('');
+        } catch (error) {
+            console.error("댓글 작성 실패", error);
+            alert("댓글 작성 실패");
+        } finally {
+            setIsSubmittingComment(false);
         }
     };
     const handleToggleLike = async (feed) => {
@@ -1025,9 +1078,12 @@ export default function MyPage() {
                                                 <div className="flex items-center justify-between mb-4">
                                                     <div className="flex items-center gap-4 shrink-0">
                                                         <button onClick={() => handleToggleLike(feed)} className={`transition-transform active:scale-75 ${isLiked ? 'text-rose-500' : 'text-gray-800'}`}><Heart size={28} className={isLiked ? "fill-rose-500" : ""} /></button>
-                                                        <button className="text-gray-800 hover:text-gray-500 transition"><MessageCircleIcon size={28} /></button>
+                                                        <button onClick={() => openCommentModal(feed)} className="text-gray-800 hover:text-gray-500 transition relative">
+                                                            <MessageCircleIcon size={28} />
+                                                            {feed.commentCount > 0 && <span className="absolute -top-1 -right-1 bg-indigo-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{feed.commentCount}</span>}
+                                                        </button>
                                                     </div>
-                                                    <button onClick={() => handleForkItinerary(feed)} disabled={isSaving} className="bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-600 hover:text-white px-4 py-2.5 rounded-2xl text-[12px] font-black transition-all active:scale-95 flex items-center gap-1.5 shadow-sm shrink-0 break-keep whitespace-nowrap"><Download size={16} className="shrink-0" /> 일정 가져오기 ({feed.forks || 0})</button>
+                                                    <button onClick={() => handleForkClick(feed)} disabled={isSaving} className="bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-600 hover:text-white px-4 py-2.5 rounded-2xl text-[12px] font-black transition-all active:scale-95 flex items-center gap-1.5 shadow-sm shrink-0 break-keep whitespace-nowrap"><Download size={16} className="shrink-0" /> 일정 가져오기 ({feed.forks || 0})</button>
                                                 </div>
                                                 <p className="font-bold text-sm text-gray-900 mb-2 break-keep whitespace-nowrap">좋아요 {(feed.likes || 0).toLocaleString()}개</p>
                                                 <p className="text-[14px] text-gray-800 leading-relaxed break-keep"><span className="font-black mr-2 text-gray-900">{feed.author}</span>{feed.title}</p>
@@ -1965,6 +2021,79 @@ export default function MyPage() {
                         </div>
                         <div className="p-5 flex-1 overflow-y-auto bg-gray-50 custom-scrollbar">
                             <TravelQuiz aiQuizData={quizData} /> 
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* ✨ 일정 가져오기 모달 */}
+            {feedToFork && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-6">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setFeedToFork(null)}></div>
+                    <div className="bg-white w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95">
+                        <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-500 mb-4 shadow-sm"><Download size={32} /></div>
+                        <h3 className="text-xl font-black text-gray-900 mb-2 text-center">일정 가져오기</h3>
+                        <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed">이 여행 일정을 내 일정으로<br />복사하시겠습니까?</p>
+                        <div className="flex gap-3 w-full">
+                            <button onClick={() => setFeedToFork(null)} className="flex-1 py-4 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">취소</button>
+                            <button onClick={confirmForkItinerary} disabled={isSaving} className="flex-1 py-4 rounded-xl font-bold text-white bg-indigo-500 hover:bg-indigo-600 transition-colors shadow-md disabled:bg-gray-400">
+                                {isSaving ? <Loader2 size={20} className="animate-spin mx-auto" /> : '가져오기'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ✨ 댓글 모달 / 바텀 시트 */}
+            {showCommentModal && (
+                <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={closeCommentModal}></div>
+                    <div className="bg-white w-full sm:max-w-md h-[70vh] sm:h-[600px] rounded-t-[32px] sm:rounded-[32px] relative z-10 flex flex-col animate-in slide-in-from-bottom-full shadow-2xl">
+                        <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-white/90 backdrop-blur-md rounded-t-[32px] shrink-0">
+                            <h3 className="font-black text-lg text-gray-900 flex items-center gap-2">
+                                <MessageCircleIcon size={20} className="text-indigo-500" /> 댓글
+                            </h3>
+                            <button onClick={closeCommentModal} className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition"><X size={18} /></button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar bg-gray-50/50">
+                            {comments.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-2">
+                                    <MessageSquare size={40} className="text-gray-200 mb-2" />
+                                    <p className="text-sm font-bold">첫 번째 댓글을 남겨보세요!</p>
+                                </div>
+                            ) : (
+                                comments.map(comment => (
+                                    <div key={comment.id} className="flex gap-3">
+                                        <img src={comment.avatar || "https://i.pravatar.cc/150"} alt="avatar" className="w-8 h-8 rounded-full border border-gray-200 shrink-0" />
+                                        <div className="bg-white p-3 rounded-2xl rounded-tl-sm border border-gray-100 shadow-sm w-full">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="font-bold text-xs text-gray-900">{comment.name}</span>
+                                                <span className="text-[10px] text-gray-400">{comment.createdAt ? new Date(comment.createdAt.seconds * 1000).toLocaleDateString() : '방금 전'}</span>
+                                            </div>
+                                            <p className="text-sm text-gray-700 leading-relaxed break-words">{comment.text}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        <div className="p-4 border-t border-gray-100 bg-white shrink-0 sm:rounded-b-[32px]">
+                            <div className="flex items-end gap-2 bg-gray-50 rounded-2xl border border-gray-200 p-2 focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                                <textarea
+                                    value={newCommentText}
+                                    onChange={(e) => setNewCommentText(e.target.value)}
+                                    placeholder="댓글을 입력하세요..."
+                                    className="w-full bg-transparent text-sm p-2 outline-none resize-none max-h-24 min-h-[40px] custom-scrollbar"
+                                    rows={1}
+                                />
+                                <button 
+                                    onClick={handleAddComment} 
+                                    disabled={!newCommentText.trim() || isSubmittingComment}
+                                    className="mb-1 w-9 h-9 rounded-full bg-indigo-500 text-white flex items-center justify-center shrink-0 disabled:bg-gray-300 transition-colors"
+                                >
+                                    {isSubmittingComment ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} className="-ml-0.5" />}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

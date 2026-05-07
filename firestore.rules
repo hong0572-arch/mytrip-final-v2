@@ -36,8 +36,13 @@ service cloud.firestore {
     match /feeds/{feedId} {
       allow read: if true;  // 누구나 피드 구경 가능
       allow write: if isAuthenticated(); // 글/사진 등록은 로그인한 사람만
-    }
 
+      // ✨ 피드 댓글
+      match /comments/{commentId} {
+        allow read: if true;
+        allow write: if isAuthenticated();
+      }
+    }
     // 4. 💌 동행 매칭 (찌르기) 알림함
     match /match_requests/{requestId} {
       allow read, write: if isAuthenticated();
