@@ -52,6 +52,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const [showMatchModal, setShowMatchModal] = useState(false);
 
     const [showSaveModal, setShowSaveModal] = useState(false);
+    const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [shareToFeed, setShareToFeed] = useState(true);
 
     const isSavingRef = useRef(false);
@@ -682,7 +683,8 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
         setShowSaveModal(true);
     };
 
-    const handleReset = () => { if (window.confirm("초기 화면으로 돌아가서 새로운 여행을 계획하시겠습니까?")) { window.location.href = '/'; } };
+    const handleReset = () => { setShowResetConfirm(true); };
+    const confirmReset = () => { window.location.href = '/'; };
     const handleOpenGoogleMaps = (place) => {
         const { name } = place;
         const destContext = tripPlan?.destination || userInfo?.destination || "";
@@ -1023,6 +1025,22 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                 )}
                             </div>
                             <button onClick={() => setShowMatchModal(false)} className="w-full bg-gray-100 text-gray-600 font-bold py-3.5 rounded-2xl">나중에 할게요</button>
+                        </div>
+                    </div>
+                )}
+
+                {/* 새 여행 시작 모달 */}
+                {showResetConfirm && (
+                    <div className="absolute inset-0 z-70 flex items-center justify-center p-6">
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowResetConfirm(false)}></div>
+                        <div className="bg-white w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95">
+                            <div className="w-16 h-16 bg-rose-100 rounded-2xl flex items-center justify-center text-rose-500 mb-4 shadow-sm"><RotateCcw size={32} /></div>
+                            <h3 className="text-xl font-black text-gray-900 mb-2 text-center">새로운 여행 시작</h3>
+                            <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed">초기 화면으로 돌아가서<br />새로운 여행 일정을 계획하시겠습니까?</p>
+                            <div className="flex gap-3 w-full">
+                                <button onClick={() => setShowResetConfirm(false)} className="flex-1 py-4 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">취소</button>
+                                <button onClick={confirmReset} className="flex-1 py-4 rounded-xl font-bold text-white bg-rose-500 hover:bg-rose-600 transition-colors shadow-md">확인</button>
+                            </div>
                         </div>
                     </div>
                 )}
