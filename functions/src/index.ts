@@ -10,10 +10,17 @@ setGlobalOptions({ maxInstances: 10 });
 /**
  * 매일 오전 9시에 실행되어 사용자의 여행 D-Day 알림을 보냅니다.
  */
-export const sendDailyDDayPush = onSchedule("0 9 * * *", async (event) => {
+export const sendDailyDDayPush = onSchedule({
+  schedule: "0 9 * * *",
+  timeZone: "Asia/Seoul"
+}, async (event) => {
   const db = admin.firestore();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  
+  // 한국 시간 기준으로 오늘 날짜를 구함 (UTC -> KST)
+  const now = new Date();
+  const kstOffset = 9 * 60 * 60 * 1000;
+  const kstNow = new Date(now.getTime() + kstOffset);
+  const todayKst = new Date(kstNow.getFullYear(), kstNow.getMonth(), kstNow.getDate());
 
   try {
     // 1. D-Day 알림 설정이 된 모든 사용자 조회
@@ -32,10 +39,17 @@ export const sendDailyDDayPush = onSchedule("0 9 * * *", async (event) => {
       if (!fcmToken || !startDateStr) return;
 
       // 2. D-Day 계산
-      const startDate = new Date(startDateStr);
-      startDate.setHours(0, 0, 0, 0);
+      // startDateStr은 보통 'YYYY-MM-DD' 형식
+      const startDateParts = startDateStr.split('-');
+      if (startDateParts.length !== 3) return;
+
+      const tripDateKst = new Date(
+        parseInt(startDateParts[0]), 
+        parseInt(startDateParts[1]) - 1, 
+        parseInt(startDateParts[2])
+      );
       
-      const diffTime = startDate.getTime() - today.getTime();
+      const diffTime = tripDateKst.getTime() - todayKst.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
       let messageBody = "";

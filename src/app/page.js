@@ -414,8 +414,9 @@ export default function Home() {
 
     const VOICE_SEQUENCE = ['destination', 'date', 'companion', 'budget', 'people', 'tourType', 'request'];
     const handleVoiceInput = (targetField) => {
-        if (!('webkitSpeechRecognition' in window)) { alert("크롬 브라우저를 사용해주세요!"); return; }
-        const recognition = new window.webkitSpeechRecognition();
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) { alert("현재 브라우저는 음성 인식을 지원하지 않습니다. 크롬(Chrome)이나 사파리(Safari)를 권장합니다!"); return; }
+        const recognition = new SpeechRecognition();
         recognition.lang = language === 'en' ? 'en-US' : 'ko-KR';
         setListeningField(targetField);
         recognition.onresult = (event) => {
