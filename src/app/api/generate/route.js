@@ -54,7 +54,7 @@ export async function POST(req) {
     const body = await req.json();
     const {
       destination, startDate, endDate, companion,
-      budget, people, hotelType, tourType,
+      budget, people, hotelType, tourType, transport,
       themes, request, isLuxury, language,
       currentTime, startLocation
     } = body;
@@ -95,6 +95,7 @@ export async function POST(req) {
       [Traveler Info]
       User Input (Destination or Mood/Purpose): "${destination}"
       Companion: ${companion}, People: ${people}, Budget: ${budgetText}, Style: ${tourType}
+      Preferred Transportation: ${transport ? transport.join(", ") : "Any"}
       
       [🚨 USER REQUEST]
       "${request || "No special request"}"
@@ -109,6 +110,10 @@ export async function POST(req) {
       1. If "currentTime" is provided and the trip is for today, skip early morning activities and focus on what's possible from now on.
       2. If "startLocation" is provided, ensure the first destination of the day is reachable from the starting point within a reasonable time.
       3. Talk like a caring therapist/safety expert, reassuring the user.
+
+      [CRITICAL INSTRUCTIONS FOR TRANSPORTATION]
+      1. Between every place on the same day, you MUST provide a realistic 'transitToNext' string based on the user's Preferred Transportation.
+      2. Keep it concise, e.g., "🚗 렌트카 15분", "🚶‍♂️ 도보 5분", "🚌 대중교통 30분", "🚕 택시 10분".
       
       [CRITICAL INSTRUCTIONS FOR DESTINATION INFERENCE]
       1. If the "User Input" is a specific city/country (e.g., "Paris", "Jeju"), plan the trip there.
@@ -157,7 +162,8 @@ export async function POST(req) {
                 "address": "Address",
                 "googleSearchQuery": "Name + City",
                 "lat": "Lat",
-                "lng": "Lng"
+                "lng": "Lng",
+                "transitToNext": "Transit method and estimated time to the next place on the same day (e.g., 🚗 렌트카 15분). Leave empty if it's the last place of the day."
               }
             ]
           }

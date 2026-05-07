@@ -7,7 +7,7 @@ import {
     Sun, Lightbulb, RotateCcw, Pencil, Check, Trash2, Plus,
     ArrowUp, ArrowDown, MapPin, Search, Wand2, Navigation,
     Calendar, BrainCircuit, Save, User, RefreshCw, ChevronUp, ChevronDown, Home,
-    UserPlus, X, MessageSquare, Sparkles, ChevronRight, CheckSquare, Square, Send, Wallet,
+    UserPlus, X, MessageSquare, Sparkles, ChevronRight, ChevronLeft, CheckSquare, Square, Send, Wallet,
     ShieldCheck, PhoneCall
 } from 'lucide-react';
 
@@ -42,6 +42,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const [activeTab, setActiveTab] = useState('itinerary');
     const [isSaving, setIsSaving] = useState(false);
     const [mapHeight, setMapHeight] = useState(40);
+    const [isPanelOpen, setIsPanelOpen] = useState(true);
 
     const [currentQuizData, setCurrentQuizData] = useState(null);
     const [isQuizLoading, setIsQuizLoading] = useState(false);
@@ -417,50 +418,31 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
         const callback = (entries) => {
             entries.forEach((entry) => {
                 if (entry.isIntersecting) {
-                    const lat = parseFloat(entry.target.getAttribute('data-lat')); const lng = parseFloat(entry.target.getAttribute('data-lng'));
-                    if (googleMapRef.current && !isNaN(lat) && !isNaN(lng)) { googleMapRef.current.panTo({ lat, lng }); if (googleMapRef.current.getZoom() < 14) googleMapRef.current.setZoom(15); }
+                    const idx = parseInt(entry.target.getAttribute('data-index'));
+                    if (!isNaN(idx) && idx !== selectedIndex) {
+                        setSelectedIndex(idx);
+                    }
                 }
             });
         };
-        observerRef.current = new IntersectionObserver(callback, { root: scrollContainerRef.current, threshold: 0.6, rootMargin: '-20% 0px -20% 0px' });
-        setTimeout(() => { const cards = document.querySelectorAll('.place-card'); cards.forEach((card) => observerRef.current.observe(card)); }, 500);
+        observerRef.current = new IntersectionObserver(callback, { root: scrollContainerRef.current, threshold: 0.6, rootMargin: '-30% 0px -30% 0px' });
+        setTimeout(() => { const cards = document.querySelectorAll('.vertical-place-card'); cards.forEach((card) => observerRef.current.observe(card)); }, 500);
         return () => { if (observerRef.current) observerRef.current.disconnect(); };
     }, [tripPlan, activeTab]);
 
     useEffect(() => {
-        if (dialRef.current) {
-            const container = dialRef.current;
-            const items = container.children;
+        if (scrollContainerRef.current) {
+            const container = scrollContainerRef.current;
+            const items = container.querySelectorAll('.vertical-place-card');
             if (items[selectedIndex]) {
                 const item = items[selectedIndex];
-                const scrollLeft = item.offsetLeft - container.clientWidth / 2 + item.clientWidth / 2;
-                container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+                const scrollTop = item.offsetTop - container.clientHeight / 2 + item.clientHeight / 2;
+                container.scrollTo({ top: scrollTop, behavior: 'smooth' });
             }
         }
     }, [selectedIndex, flatPlaces]);
 
-    const handleDialScroll = (e) => {
-        const container = e.target;
-        const scrollLeft = container.scrollLeft;
-        const center = scrollLeft + container.clientWidth / 2;
-        
-        const items = Array.from(container.children);
-        let closestIndex = 0;
-        let minDistance = Infinity;
-
-        items.forEach((item, index) => {
-            const itemCenter = item.offsetLeft + item.clientWidth / 2;
-            const distance = Math.abs(center - itemCenter);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestIndex = index;
-            }
-        });
-
-        if (closestIndex !== selectedIndex) {
-            setSelectedIndex(closestIndex);
-        }
-    };
+    // handleDialScroll removed because we use observer callback now
 
     const handleUpdateLocation = (dayIndex, placeIndex, queryName) => {
         if (!window.google || !googleMapRef.current || !queryName) return;
@@ -769,49 +751,62 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         {loadingAction === 'save' ? <Loader2 className="animate-spin" size={20} /> : (isEditMode ? <Check size={20} /> : <Pencil size={20} />)}
                     </button>
                 </div>
-                {/* Horizontal Dial Selection Navigation (Bottom) */}
+                {/* Right Sliding Panel */}
                 {!isEditMode && (
-                    <div className="absolute bottom-[100px] left-0 right-0 z-40 flex flex-col items-center overflow-visible">
-                        <div 
-                            ref={dialRef}
-                            onScroll={handleDialScroll}
-                            className="w-full h-[110px] overflow-x-auto overflow-y-visible scroll-smooth no-scrollbar snap-x snap-mandatory flex flex-row items-center px-[50%]"
-                            style={{ perspective: '800px' }}
+                    <div className={`absolute top-0 right-0 h-full w-[75%] sm:w-[320px] bg-white/95 backdrop-blur-xl shadow-[-10px_0_30px_rgba(0,0,0,0.3)] z-40 transition-transform duration-500 ease-[cubic-bezier(0.3,1,0.3,1)] flex flex-col ${isPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                        {/* Toggle Button */}
+                        <button 
+                            onClick={() => setIsPanelOpen(!isPanelOpen)}
+                            className="absolute top-1/2 -left-10 transform -translate-y-1/2 bg-white/95 backdrop-blur-md p-2 rounded-l-2xl shadow-[-5px_0_10px_rgba(0,0,0,0.1)] text-indigo-600 hover:text-indigo-800 transition"
                         >
+                            {isPanelOpen ? <ChevronRight size={24} /> : <ChevronLeft size={24} />}
+                        </button>
+                        
+                        {/* Panel Header */}
+                        <div className="p-5 border-b border-gray-100/50 pt-12 sm:pt-6">
+                            <h2 className="text-xl font-black text-gray-800 leading-tight">{tripPlan.tripTitle}</h2>
+                            {estimatedCost && <p className="text-sm font-bold text-indigo-600 mt-1">예상 비용: {estimatedCost}</p>}
+                        </div>
+
+                        {/* Vertical List */}
+                        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-32">
                             {flatPlaces.map((item, i) => {
                                 const isSelected = i === selectedIndex;
-                                const diff = i - selectedIndex;
-                                const absDiff = Math.abs(diff);
-
-                                // 3D Transform calculations for Horizontal Holographic effect
-                                const rotateY = diff * 20; 
-                                const translateZ = absDiff * -15;
-                                const scale = isSelected ? 1.2 : Math.max(0.7, 1 - absDiff * 0.15);
-                                const opacity = Math.max(0.3, 1 - absDiff * 0.2);
+                                const nextItem = flatPlaces[i + 1];
+                                const isSameDay = nextItem && nextItem.dayIdx === item.dayIdx;
+                                const showTransit = isSameDay && item.place.transitToNext;
 
                                 return (
-                                    <div 
-                                        key={i}
-                                        onClick={() => setSelectedIndex(i)}
-                                        className="snap-center shrink-0 flex flex-col items-center mx-3 cursor-pointer transition-all duration-300 pointer-events-auto"
-                                        style={{
-                                            transform: `rotateY(${rotateY}deg) translateZ(${translateZ}px) scale(${scale})`,
-                                            opacity,
-                                            transformStyle: 'preserve-3d'
-                                        }}
-                                    >
-                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm border-2 shadow-xl transition-all ${isSelected ? 'bg-white border-indigo-500 text-indigo-600 scale-105' : 'bg-white/40 border-white/50 text-white backdrop-blur-md'}`} style={isSelected ? { borderColor: item.dayColor, color: item.dayColor } : {}}>
-                                            {item.dayIdx + 1}-{item.placeIdx + 1}
+                                    <React.Fragment key={i}>
+                                        <div 
+                                            data-index={i}
+                                            onClick={() => setSelectedIndex(i)}
+                                            className={`vertical-place-card relative p-4 rounded-2xl border-2 transition-all cursor-pointer ${isSelected ? 'border-indigo-500 bg-white shadow-md' : 'border-transparent bg-gray-50/80 hover:bg-white hover:border-gray-200'}`}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs shrink-0 ${isSelected ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'}`} style={isSelected ? { backgroundColor: item.dayColor } : {}}>
+                                                    {item.placeIdx + 1}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <span className="text-[10px] font-black uppercase text-gray-400">Day {item.dayIdx + 1}</span>
+                                                        {item.place.budget && <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">💰 {item.place.budget}</span>}
+                                                    </div>
+                                                    <h3 className="text-sm font-bold text-gray-800 truncate mb-1">{item.place.name}</h3>
+                                                    <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{item.place.description}</p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className={`mt-1 text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap transition-all shadow-sm ${isSelected ? 'bg-indigo-600 text-white opacity-100 scale-110' : 'bg-black/50 text-white/70 opacity-0'}`} style={isSelected ? { backgroundColor: item.dayColor } : {}}>
-                                            {item.place.name.substring(0, 8)}
-                                        </div>
-                                        {isSelected && item.place.budget && (
-                                            <div className="mt-1 flex items-center gap-1 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-lg shadow-sm border border-indigo-100 animate-in zoom-in-50 duration-300">
-                                                <span className="text-[8px] font-black text-indigo-600">💰 {item.place.budget}</span>
+                                        {showTransit && (
+                                            <div className="flex flex-col items-center justify-center -my-2 z-10 relative pointer-events-none">
+                                                <div className="h-4 border-l-2 border-dashed border-gray-300"></div>
+                                                <div className="bg-white text-gray-600 text-[11px] font-bold px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center gap-1">
+                                                    {item.place.transitToNext}
+                                                </div>
+                                                <div className="h-4 border-l-2 border-dashed border-gray-300"></div>
                                             </div>
                                         )}
-                                    </div>
+                                    </React.Fragment>
                                 );
                             })}
                         </div>
