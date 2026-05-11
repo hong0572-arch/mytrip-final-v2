@@ -475,7 +475,7 @@ export default function MyPage() {
                         <div className="flex-1 flex items-center justify-center p-4"><img src={viewVaultImage} className="max-w-full max-h-full object-contain rounded-[12px]" alt="fullscreen" /></div>
                     </div>
                 )}
-                <button onClick={() => {setShowVaultUpload(true); setVaultCategory('ticket');}} className="fixed bottom-24 right-6 w-[60px] h-[60px] bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full text-white shadow-xl flex items-center justify-center z-40"><Plus size={28} strokeWidth={3} /></button>
+                <button onClick={() => {setShowVaultUpload(true); setVaultCategory('ticket');}} className="fixed bottom-32 right-6 w-[60px] h-[60px] bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full text-white shadow-xl flex items-center justify-center z-40"><Plus size={28} strokeWidth={3} /></button>
             </div>
         );
     };
