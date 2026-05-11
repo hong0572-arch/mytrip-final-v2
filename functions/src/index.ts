@@ -78,27 +78,46 @@ export const sendDailyDDayPush = onSchedule("0 * * * *", async (event) => {
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
       let messageBody = "";
+      let title = "";
+      // 다양한 고화질 여행 이미지 배열 (랜덤 선택)
+      const bannerImages = [
+        "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1200&auto=format&fit=crop", // 비행기 날개
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop", // 예쁜 해변
+        "https://images.unsplash.com/photo-1522083111333-6623fccb9c7b?q=80&w=1200&auto=format&fit=crop", // 여행 캐리어
+        "https://images.unsplash.com/photo-1488085061387-422e29b40080?q=80&w=1200&auto=format&fit=crop"  // 구름 여행
+      ];
+      const randomImage = bannerImages[Math.floor(Math.random() * bannerImages.length)];
+
       if (diffDays > 0) {
-        messageBody = `✈️ '${tripTitle}' 여행이 ${diffDays}일 남았습니다! 설레는 마음으로 준비해볼까요? 🐾`;
+        title = `✈️ '${tripTitle}' D-${diffDays}`;
+        messageBody = `여행이 ${diffDays}일 남았습니다!\n어떤 옷을 챙길지, 일정은 잘 짜여 있는지 미리 확인해볼까요? 😉`;
       } else if (diffDays === 0) {
-        messageBody = `🎉 드디어 오늘! '${tripTitle}' 여행이 시작되는 날입니다. 즐겁고 안전한 여행 되세요! ✈️`;
+        title = `🎉 드디어 오늘! '${tripTitle}'`;
+        messageBody = `기다리던 여행이 시작되는 날입니다.\n여권과 지갑을 꼭 챙기시고 안전하고 즐거운 여행 되세요! ✈️`;
       } else {
         // 여행이 이미 시작된 경우
         return;
       }
 
-      // 4. FCM 발송
+      // 4. FCM 발송 (Rich Push Notification 디자인 강화)
       const message = {
         notification: {
-          title: "트립메이커 D-Day 알림",
+          title: title,
           body: messageBody,
         },
         token: fcmToken,
         webpush: {
           notification: {
-            icon: "https://mytrip2.pro/icon-192.png",
+            icon: "https://mytrip2.pro/icon-512.png", // 아이콘 고화질로 교체
+            image: randomImage, // 안드로이드 알림창 하단에 크게 표시되는 배너 이미지
+            badge: "https://mytrip2.pro/icon-192.png", // 상태바에 작게 표시되는 아이콘
             click_action: "https://mytrip2.pro/mypage",
+            requireInteraction: true, // 알림이 자동으로 사라지지 않고 유지되도록 설정
+            vibrate: [200, 100, 200]
           },
+          fcmOptions: {
+            link: "https://mytrip2.pro/mypage"
+          }
         },
       };
 

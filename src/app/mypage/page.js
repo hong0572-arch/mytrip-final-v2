@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { signOut as nextAuthSignOut } from "next-auth/react";
 import { auth, db, storage } from "../../lib/firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage"; // ✨ Storage 업로드용 기능 추가
+import { saveVaultItem, getVaultItems, deleteVaultItem } from "../../lib/localVault";
 import { onAuthStateChanged, updateProfile, signOut } from "firebase/auth";
 import { getMessaging, getToken, isSupported } from "firebase/messaging";
 import { collection, query, where, orderBy, onSnapshot, doc, deleteDoc, updateDoc, getDocs, addDoc, serverTimestamp, increment, arrayUnion, arrayRemove, limit } from "firebase/firestore";
@@ -17,7 +18,7 @@ import {
     X, CheckCircle, Send, Loader2, Check, ArrowRightLeft,
     Banknote, TrendingDown, Settings, Edit3, Camera, LogOut,
     Inbox, MapPin, MoreHorizontal, Download, MessageCircle as MessageCircleIcon, Map as MapIcon, AlertCircle, ShoppingBag, Coffee, Bus,
-    Gem, Calculator, Target, RefreshCw, Landmark, BellRing, BrainCircuit, Link as LinkIcon, History, Copy, ChevronLeft
+    Gem, Calculator, Target, RefreshCw, Landmark, BellRing, BrainCircuit, Link as LinkIcon, History, Copy, ChevronLeft, Box
 } from 'lucide-react';
 import TravelQuiz from '../../components/TravelQuiz';
 
@@ -225,9 +226,18 @@ export default function MyPage() {
 
     const [feedSort, setFeedSort] = useState('latest'); // 'latest'(최신순) or 'popular'(인기순)
     const [feedLimit, setFeedLimit] = useState(5); // 처음엔 5개만 보여줌
-    const [toast, setToast] = useState({ show: false, message: '', type: 'info' }); // ✨ 커스텀 토스트 상태 추가
+    const [toast, setToast] = useState({ show: false, message: '', type: 'info' }); 
 
-    // ✨ 토스트 알림 함수
+    // Vault States
+    const [vaultItems, setVaultItems] = useState([]);
+    const [vaultCategory, setVaultCategory] = useState('ticket'); 
+    const [showVaultUpload, setShowVaultUpload] = useState(false);
+    const [vaultTitle, setVaultTitle] = useState('');
+    const [vaultImageBase64, setVaultImageBase64] = useState('');
+    const [viewVaultImage, setViewVaultImage] = useState(null);
+    const vaultFileInputRef = useRef(null);
+
+    // ? 佺Ʈ ˸ Լ
     const showToast = (message, type = 'info') => {
         setToast({ show: true, message, type });
         setTimeout(() => setToast({ show: false, message: '', type: 'info' }), 3000);
@@ -310,6 +320,7 @@ export default function MyPage() {
 
             setUser(currentUser);
             initPushNotifications();
+            getVaultItems().then(items => setVaultItems(items)).catch(e => console.error("Vault load error", e));
 
             // 1. 유저 정보 구독 (여기서 로딩을 해제합니다!)
             const userDocRef = doc(db, "users", currentUser.uid);
@@ -363,7 +374,112 @@ export default function MyPage() {
         };
     }, [router, selectedTrip?.id]);
 
+    // Vault logic
+    const handleVaultUpload = async () => {
+        if (!vaultTitle || !vaultImageBase64) return showToast("제목과 이미지를 모두 입력해주세요.", "error");
+        const id = Date.now().toString() + Math.random().toString(36).substr(2, 5);
+        await saveVaultItem({ id, title: vaultTitle, image: vaultImageBase64, category: vaultCategory, createdAt: Date.now() });
+        const items = await getVaultItems();
+        setVaultItems(items);
+        setShowVaultUpload(false);
+        setVaultTitle('');
+        setVaultImageBase64('');
+        showToast("보관함에 저장되었습니다.", "success");
+    };
+
+    const handleVaultImageChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onloadend = () => setVaultImageBase64(reader.result);
+        reader.readAsDataURL(file);
+    };
+
+    const deleteVault = async (id) => {
+        if (confirm("삭제할까요?")) {
+            await deleteVaultItem(id);
+            const items = await getVaultItems();
+            setVaultItems(items);
+        }
+    };
+
     // 퀴즈 데이터 가져오기 (Gemini API 연동)
+    const renderVault = () => {
+        const filteredItems = vaultItems.filter(item => item.category === vaultCategory);
+        return (
+            <div className="animate-in fade-in duration-500 p-4 pt-10">
+                <div className="flex items-center justify-between mb-6 px-2">
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">내 보관함</h1>
+                </div>
+                <div className="flex gap-2 mb-6 px-2 overflow-x-auto custom-scrollbar pb-2">
+                    {[ { id: 'ticket', label: '🎟️ 예약/티켓' }, { id: 'coupon', label: '🎫 쿠폰' }, { id: 'photo', label: '📸 사진첩' } ].map(cat => (
+                        <button key={cat.id} onClick={() => setVaultCategory(cat.id)} className={`px-5 py-2.5 rounded-[20px] font-bold text-sm whitespace-nowrap transition-all shadow-sm ${vaultCategory === cat.id ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white scale-105' : 'bg-white border border-gray-100 text-gray-600 hover:bg-gray-50'}`}>{cat.label}</button>
+                    ))}
+                </div>
+                {filteredItems.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4"><Box className="text-gray-400 w-10 h-10" /></div>
+                        <p className="text-gray-500 font-bold mb-1">아직 보관된 항목이 없습니다</p>
+                        <p className="text-xs text-gray-400">우측 하단의 + 버튼을 눌러 추가해보세요!</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 gap-4 px-2">
+                        {filteredItems.map(item => (
+                            <div key={item.id} className="bg-white p-2 rounded-[24px] shadow-sm border border-gray-100 relative group transition-all hover:shadow-md">
+                                <div className="aspect-[4/5] rounded-[18px] overflow-hidden bg-gray-100 mb-3 relative cursor-pointer" onClick={() => setViewVaultImage(item.image)}>
+                                    <img src={item.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={item.title} />
+                                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                                <p className="text-sm font-black text-gray-800 px-2 pb-1 truncate">{item.title}</p>
+                                <button onClick={() => deleteVault(item.id)} className="absolute top-4 right-4 w-8 h-8 bg-white/90 backdrop-blur-md rounded-full text-rose-500 flex items-center justify-center shadow-lg transform scale-0 group-hover:scale-100 transition-all"><Trash2 size={16} strokeWidth={2.5} /></button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                {showVaultUpload && (
+                    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col justify-end">
+                        <div className="bg-white w-full rounded-t-[40px] p-8 pb-safe animate-in slide-in-from-bottom-full duration-300">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-2xl font-black text-gray-900">새 항목 추가</h3>
+                                <button onClick={() => {setShowVaultUpload(false); setVaultImageBase64(''); setVaultTitle('');}} className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600"><X size={20} strokeWidth={2.5} /></button>
+                            </div>
+                            <div className="space-y-5">
+                                <div className="flex gap-2">
+                                    {[ { id: 'ticket', label: '🎟️ 예약/티켓' }, { id: 'coupon', label: '🎫 쿠폰' }, { id: 'photo', label: '📸 사진첩' } ].map(cat => (
+                                        <button key={cat.id} onClick={() => setVaultCategory(cat.id)} className={`flex-1 py-3 rounded-[16px] text-sm font-bold transition-all border ${vaultCategory === cat.id ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-white text-gray-500 border-gray-200'}`}>{cat.label}</button>
+                                    ))}
+                                </div>
+                                <input type="text" placeholder="제목이나 메모를 입력하세요" value={vaultTitle} onChange={e => setVaultTitle(e.target.value)} className="w-full bg-gray-50 border border-gray-200 px-5 py-4 rounded-[20px] font-bold text-gray-900 outline-none focus:ring-2 focus:ring-emerald-400 transition" />
+                                <div>
+                                    <input type="file" accept="image/*" className="hidden" ref={vaultFileInputRef} onChange={handleVaultImageChange} />
+                                    {vaultImageBase64 ? (
+                                        <div className="relative w-full aspect-video rounded-[24px] overflow-hidden shadow-sm group">
+                                            <img src={vaultImageBase64} className="w-full h-full object-cover" alt="preview" />
+                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => vaultFileInputRef.current.click()}><p className="text-white font-bold flex items-center gap-2"><Camera size={20} /> 사진 변경</p></div>
+                                        </div>
+                                    ) : (
+                                        <div onClick={() => vaultFileInputRef.current.click()} className="w-full aspect-video bg-gray-50 border-2 border-dashed border-gray-200 rounded-[24px] flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-gray-100 transition-colors">
+                                            <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400"><Camera size={24} /></div>
+                                            <p className="text-sm font-bold text-gray-500">사진 업로드</p>
+                                        </div>
+                                    )}
+                                </div>
+                                <button onClick={handleVaultUpload} className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black py-5 rounded-[24px] shadow-lg flex items-center justify-center gap-2"><CheckCircle size={20} /> 저장하기</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {viewVaultImage && (
+                    <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex flex-col animate-in fade-in duration-300">
+                        <div className="flex justify-end p-6"><button onClick={() => setViewVaultImage(null)} className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-white"><X size={24} /></button></div>
+                        <div className="flex-1 flex items-center justify-center p-4"><img src={viewVaultImage} className="max-w-full max-h-full object-contain rounded-[12px]" alt="fullscreen" /></div>
+                    </div>
+                )}
+                <button onClick={() => {setShowVaultUpload(true); setVaultCategory('ticket');}} className="fixed bottom-24 right-6 w-[60px] h-[60px] bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full text-white shadow-xl flex items-center justify-center z-40"><Plus size={28} strokeWidth={3} /></button>
+            </div>
+        );
+    };
+
     const handleOpenQuiz = async () => {
         if (isQuizLoading) return;
 
@@ -625,7 +741,8 @@ export default function MyPage() {
                 img.onload = () => {
                     const canvas = document.createElement("canvas"); let w = img.width, h = img.height;
                     if (w > h) { if (w > 400) { h *= 400 / w; w = 400; } } else { if (h > 400) { w *= 400 / h; h = 400; } }
-                    canvas.width = w; canvas.height = h; canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext("2d").drawImage(img, 0, 0, w, h);
                     setPreviewImage(canvas.toDataURL("image/jpeg", 0.7));
                 }
             }; reader.readAsDataURL(file);
@@ -1315,6 +1432,7 @@ export default function MyPage() {
                     {activeTab === 'schedule' && renderSchedule()}
                     {activeTab === 'social' && renderSocial()}
                     {activeTab === 'wallet' && renderWallet()}
+                    {activeTab === 'vault' && renderVault()}
                 </div>
 
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-[570px] px-6 z-50">
@@ -1322,7 +1440,8 @@ export default function MyPage() {
                         <button onClick={() => router.push('/?mode=new')} className="flex flex-col items-center gap-1 p-2 w-[70px] text-gray-500 hover:text-rose-600 transition"><HomeIcon size={24} strokeWidth={2} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">홈</span></button>
                         <button onClick={() => setActiveTab('social')} className={`flex flex-col items-center gap-1 p-2 w-[70px] transition ${activeTab === 'social' ? 'text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-pink-500 scale-110' : 'text-gray-500 hover:text-rose-600'}`}><Users size={24} strokeWidth={activeTab === 'social' ? 2.5 : 2} className={activeTab === 'social' ? 'text-rose-500' : ''} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">동행</span></button>
                         <button onClick={() => setActiveTab('schedule')} className={`flex flex-col items-center gap-1 p-2 w-[70px] transition ${activeTab === 'schedule' ? 'text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-pink-500 scale-110' : 'text-gray-500 hover:text-rose-600'}`}><Calendar size={24} strokeWidth={activeTab === 'schedule' ? 2.5 : 2} className={activeTab === 'schedule' ? 'text-rose-500' : ''} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">일정</span></button>
-                        <button onClick={() => setActiveTab('wallet')} className={`flex flex-col items-center gap-1 p-2 w-[70px] transition ${activeTab === 'wallet' ? 'text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 scale-110' : 'text-gray-500 hover:text-indigo-600'}`}><Wallet size={24} strokeWidth={activeTab === 'wallet' ? 2.5 : 2} className={activeTab === 'wallet' ? 'text-indigo-500' : ''} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">트립 머니</span></button>
+                        <button onClick={() => setActiveTab('wallet')} className={`flex flex-col items-center gap-1 p-2 w-[70px] transition ${activeTab === 'wallet' ? 'text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 scale-110' : 'text-gray-500 hover:text-indigo-600'}`}><Wallet size={24} strokeWidth={activeTab === 'wallet' ? 2.5 : 2} className={activeTab === 'wallet' ? 'text-indigo-500' : ''} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">트립머니</span></button>
+                        <button onClick={() => setActiveTab('vault')} className={`flex flex-col items-center gap-1 p-2 w-[70px] transition ${activeTab === 'vault' ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500 scale-110' : 'text-gray-500 hover:text-emerald-600'}`}><Box size={24} strokeWidth={activeTab === 'vault' ? 2.5 : 2} className={activeTab === 'vault' ? 'text-emerald-500' : ''} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">보관함</span></button>
                     </nav>
                 </div>
             </div>
