@@ -8,7 +8,8 @@ import {
     ArrowUp, ArrowDown, MapPin, Search, Wand2, Navigation,
     Calendar, BrainCircuit, Save, User, RefreshCw, ChevronUp, ChevronDown, Home,
     UserPlus, X, MessageSquare, Sparkles, ChevronRight, ChevronLeft, CheckSquare, Square, Send, Wallet,
-    ShieldCheck, PhoneCall
+    ShieldCheck, PhoneCall,
+    Car, Footprints, Train, Receipt
 } from 'lucide-react';
 
 import { db, auth } from '../lib/firebase';
@@ -19,13 +20,25 @@ import TravelQuiz from './TravelQuiz';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 
-const getKlookLink = (keyword, destination, language, markerId) => {
-    const query = `${keyword} ${destination || ''}`.trim();
+const getTripLink = (keyword, destination, language) => {
+    // ✨ 검색어 정제: 괄호 안의 설명이나 불필요한 수식어 제거
+    let cleanKeyword = keyword
+        .replace(/\([^)]*\)/g, '') // 괄호와 그 안의 내용 제거 (예: (프라이빗 예약))
+        .split(',')[0]            // 콤마 뒤의 상세 주소나 국가명 제거
+        .replace(/프라이빗 예약|입장권|티켓|투어|Reservation|Ticket|Tour/gi, '') // 불필요한 단어 제거
+        .trim();
+    
+    // 정제 후 너무 짧아지면 원본을 사용하되 괄호만 제거
+    if (cleanKeyword.length < 2) {
+        cleanKeyword = keyword.replace(/\([^)]*\)/g, '').trim();
+    }
+
+    const query = `${cleanKeyword}`.trim(); 
     const encodedKeyword = encodeURIComponent(query);
-    const isKo = language !== 'en';
-    const klookUrl = `https://www.klook.com/${isKo ? 'ko/' : ''}search/?query=${encodedKeyword}`;
-    const finalMarker = markerId || '695932';
-    return `https://tp.media/r?marker=${finalMarker}&p=4110&u=${encodeURIComponent(klookUrl)}`;
+    
+    // ✨ 제공해주신 링크(https://www.trip.com/t/ZNx7SJcMgU2)에서 추출한 트래킹 파라미터 적용
+    // Allianceid: 7681311, SID: 287502125
+    return `https://kr.trip.com/travel-guide/search/?keyword=${encodedKeyword}&locale=${language === 'en' ? 'en-XX' : 'ko-KR'}&Allianceid=7681311&SID=287502125`;
 };
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -43,6 +56,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const [isSaving, setIsSaving] = useState(false);
     const [mapHeight, setMapHeight] = useState(40);
     const [isPanelOpen, setIsPanelOpen] = useState(true);
+    const [travelMode, setTravelMode] = useState('DRIVING'); // 'DRIVING', 'WALKING', 'TRANSIT'
 
     const [currentQuizData, setCurrentQuizData] = useState(null);
     const [isQuizLoading, setIsQuizLoading] = useState(false);
@@ -121,7 +135,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     ${place.reason ? `<div style="font-size: 11px; color: #0891b2; background: #ecfeff; padding: 6px 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #cffafe;"><strong>🛡️ 안심 포인트!</strong><br />${place.reason}</div>` : ''}
                     <div style="display: flex; gap: 8px; margin-top: 10px;">
                         <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&hl=${language}" target="_blank" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #4f46e5; background: #e0e7ff; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🗺️ 길찾기</a>
-                        ${(!place.category?.includes("Restaurant") && !place.category?.includes("Cafe")) ? `<a href="${getKlookLink(place.name, userInfo?.destination || "", language, '695932')}" target="_blank" rel="nofollow noopener noreferrer" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #e11d48; background: #ffe4e6; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center; display: inline-block;">🎟️ 티켓 예매</a>` : ''}
+                        ${(!place.category?.includes("Restaurant") && !place.category?.includes("Cafe")) ? `<a href="${getTripLink(place.name, userInfo?.destination || "", language)}" target="_blank" rel="nofollow noopener noreferrer" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #e11d48; background: #ffe4e6; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center; display: inline-block;">🎟️ 티켓 예매</a>` : ''}
                     </div>
                 </div>
             `;
@@ -307,67 +321,138 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
         return (R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)))).toFixed(1);
     };
 
+    const currentDayIdx = React.useMemo(() => {
+        return flatPlaces[selectedIndex]?.dayIdx ?? 0;
+    }, [flatPlaces, selectedIndex]);
+
     useEffect(() => {
         if (!tripPlan || !tripPlan.itinerary) return;
         const loadMap = () => {
             if (!window.google || !mapRef.current) return;
             if (!googleMapRef.current) {
                 const startLocation = tripPlan.itinerary[0]?.places[0]?.coordinates || { lat: 35.6895, lng: 139.6917 };
-                googleMapRef.current = new google.maps.Map(mapRef.current, { center: startLocation, zoom: 13, disableDefaultUI: true, zoomControl: true, gestureHandling: 'greedy', styles: [{ featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }] });
+                googleMapRef.current = new google.maps.Map(mapRef.current, { 
+                    center: startLocation, 
+                    zoom: 13, 
+                    disableDefaultUI: true, 
+                    zoomControl: true, 
+                    gestureHandling: 'greedy', 
+                    styles: [{ featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }] 
+                });
             }
             const map = googleMapRef.current;
-            markersRef.current.forEach(m => m.setMap(null)); polylineRef.current.forEach(p => p.setMap(null));
-            markersRef.current = []; polylineRef.current = [];
-            const bounds = new google.maps.LatLngBounds();
-            tripPlan.itinerary.forEach((dayItem, index) => {
-                const dayColor = DAY_COLORS[index % DAY_COLORS.length];
-                const path = [];
-                dayItem.places.forEach((place, placeIdx) => {
-                    if (place.coordinates?.lat && place.coordinates?.lng) {
-                        path.push(place.coordinates); bounds.extend(place.coordinates);
-                        
-                        const pinSvg = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-                            <svg width="40" height="42" viewBox="0 0 40 42" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M20 0C11.164 0 4 7.164 4 16c0 10.667 16 24 16 24s16-13.333 16-24c0-8.836-7.164-16-16-16z" fill="${dayColor}" stroke="white" stroke-width="2"/>
-                                <circle cx="20" cy="16" r="11" fill="white"/>
-                            </svg>
-                        `)}`;
+            const directionsService = new google.maps.DirectionsService();
 
-                        const marker = new google.maps.Marker({ 
-                            position: place.coordinates, 
-                            map, 
-                            icon: { 
-                                url: pinSvg,
-                                scaledSize: new google.maps.Size(36, 38),
-                                anchor: new google.maps.Point(18, 38),
-                                labelOrigin: new google.maps.Point(18, 15)
-                            }, 
-                            label: { 
-                                text: (placeIdx + 1).toString(), 
-                                color: dayColor, 
-                                fontWeight: "900", 
-                                fontSize: "13px" 
-                            }, 
-                            zIndex: 100 + index,
-                            animation: google.maps.Animation.DROP
-                        });
-                        marker.addListener('click', () => {
-                            let fIdx = 0;
-                            for (let i = 0; i < index; i++) {
-                                fIdx += tripPlan.itinerary[i].places.length;
-                            }
-                            fIdx += placeIdx;
-                            handleSelectPlace(fIdx);
-                        });
-                        markersRef.current.push(marker);
-                    }
+            markersRef.current.forEach(m => m.setMap(null)); 
+            polylineRef.current.forEach(p => p.setMap(null));
+            markersRef.current = []; 
+            polylineRef.current = [];
+            
+            const bounds = new google.maps.LatLngBounds();
+            
+            tripPlan.itinerary.forEach((dayItem, index) => {
+                const isActive = index === currentDayIdx; // ✨ 현재 보고 있는 날짜인지 확인
+                const dayColor = isActive ? DAY_COLORS[index % DAY_COLORS.length] : '#E5E7EB'; // 비활성일은 회색
+                const zIndexBase = isActive ? 1000 : 100; // 활성일 마커를 위로
+                
+                const validPlaces = dayItem.places.filter(p => p.coordinates?.lat && p.coordinates?.lng);
+                
+                validPlaces.forEach((place, placeIdx) => {
+                    const pos = place.coordinates;
+                    if (isActive) bounds.extend(pos); // ✨ 활성일 장소들만 기준으로 줌 조절
+                    
+                    const pinSvg = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+                        <svg width="40" height="42" viewBox="0 0 40 42" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 0C11.164 0 4 7.164 4 16c0 10.667 16 24 16 24s16-13.333 16-24c0-8.836-7.164-16-16-16z" fill="${dayColor}" stroke="white" stroke-width="2"/>
+                            <circle cx="20" cy="16" r="11" fill="white"/>
+                        </svg>
+                    `)}`;
+
+                    const marker = new google.maps.Marker({ 
+                        position: pos, 
+                        map, 
+                        icon: { 
+                            url: pinSvg,
+                            scaledSize: isActive ? new google.maps.Size(36, 38) : new google.maps.Size(24, 26),
+                            anchor: isActive ? new google.maps.Point(18, 38) : new google.maps.Point(12, 26),
+                            labelOrigin: isActive ? new google.maps.Point(18, 15) : new google.maps.Point(12, 10)
+                        }, 
+                        label: { 
+                            text: (placeIdx + 1).toString(), 
+                            color: dayColor, 
+                            fontWeight: "900", 
+                            fontSize: isActive ? "13px" : "9px" 
+                        }, 
+                        zIndex: zIndexBase + placeIdx,
+                    });
+                    
+                    marker.addListener('click', () => {
+                        let fIdx = 0;
+                        for (let i = 0; i < index; i++) fIdx += tripPlan.itinerary[i].places.length;
+                        fIdx += placeIdx;
+                        handleSelectPlace(fIdx);
+                    });
+                    markersRef.current.push(marker);
                 });
-                if (path.length > 1) { const line = new google.maps.Polyline({ path, geodesic: true, strokeColor: dayColor, strokeOpacity: 0.8, strokeWeight: 4, map }); polylineRef.current.push(line); }
+
+                // Draw path using Directions API if more than 1 place
+                if (validPlaces.length > 1) {
+                    const strokeOpacity = isActive ? 0.8 : 0.3;
+                    const strokeWeight = isActive ? 5 : 2;
+                    
+                    // ✨ 도보 모드일 경우 점선(Dashed)으로 표시
+                    const polylineOptions = {
+                        geodesic: true,
+                        strokeColor: dayColor,
+                        strokeOpacity: travelMode === 'WALKING' ? 0 : strokeOpacity,
+                        strokeWeight: strokeWeight,
+                        map,
+                        zIndex: zIndexBase - 1,
+                        icons: travelMode === 'WALKING' ? [{
+                            icon: { path: 'M 0,-1 0,1', strokeOpacity: strokeOpacity, scale: 2 },
+                            offset: '0',
+                            repeat: '12px'
+                        }] : []
+                    };
+
+                    if (travelMode === 'TRANSIT') {
+                        for (let i = 0; i < validPlaces.length - 1; i++) {
+                            directionsService.route({
+                                origin: validPlaces[i].coordinates,
+                                destination: validPlaces[i+1].coordinates,
+                                travelMode: google.maps.TravelMode.TRANSIT
+                            }, (result, status) => {
+                                if (status === 'OK') {
+                                    const path = result.routes[0].overview_path;
+                                    const line = new google.maps.Polyline({ ...polylineOptions, path });
+                                    polylineRef.current.push(line);
+                                }
+                            });
+                        }
+                    } else {
+                        directionsService.route({
+                            origin: validPlaces[0].coordinates,
+                            destination: validPlaces[validPlaces.length - 1].coordinates,
+                            waypoints: validPlaces.slice(1, -1).map(p => ({ location: p.coordinates, stopover: true })),
+                            travelMode: google.maps.TravelMode[travelMode] || google.maps.TravelMode.DRIVING
+                        }, (result, status) => {
+                            if (status === 'OK') {
+                                const path = result.routes[0].overview_path;
+                                const line = new google.maps.Polyline({ ...polylineOptions, path });
+                                polylineRef.current.push(line);
+                            } else {
+                                const path = validPlaces.map(p => p.coordinates);
+                                const line = new google.maps.Polyline({ ...polylineOptions, path, strokeOpacity: strokeOpacity });
+                                polylineRef.current.push(line);
+                            }
+                        });
+                    }
+                }
             });
+
             tripPlan.recommendedHotels?.forEach((hotel) => {
                 if (hotel.coordinates?.lat && hotel.coordinates?.lng) {
                     bounds.extend(hotel.coordinates);
-                    
                     const hotelSvg = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
                         <svg width="40" height="42" viewBox="0 0 40 42" xmlns="http://www.w3.org/2000/svg">
                             <path d="M20 0C11.164 0 4 7.164 4 16c0 10.667 16 24 16 24s16-13.333 16-24c0-8.836-7.164-16-16-16z" fill="#111827" stroke="white" stroke-width="2"/>
@@ -401,7 +486,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
             if (!tripId && !hasAutoFixed.current) { hasAutoFixed.current = true; performSilentAutoFix(map); }
         };
         if (!window.google) { const script = document.createElement("script"); script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`; script.async = true; script.defer = true; script.onload = loadMap; document.head.appendChild(script); } else { loadMap(); }
-    }, [tripPlan]);
+    }, [tripPlan, travelMode, currentDayIdx]);
 
     const performSilentAutoFix = async (mapInstance) => {
         if (!mapInstance || !tripPlan) return;
@@ -755,6 +840,33 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     }} className={`backdrop-blur-md p-2.5 rounded-full shadow-lg transition border border-white/30 ${isEditMode ? 'bg-indigo-600 text-white' : 'bg-white/20 text-white hover:bg-white hover:text-indigo-600'}`}>
                         {loadingAction === 'save' ? <Loader2 className="animate-spin" size={20} /> : (isEditMode ? <Check size={20} /> : <Pencil size={20} />)}
                     </button>
+
+                    {/* Travel Mode Selector */}
+                    {!isEditMode && (
+                        <div className="flex flex-col gap-2 mt-4 bg-white/20 backdrop-blur-md p-1.5 rounded-full border border-white/30">
+                            <button 
+                                onClick={() => setTravelMode('DRIVING')}
+                                className={`p-2 rounded-full transition ${travelMode === 'DRIVING' ? 'bg-indigo-600 text-white shadow-lg' : 'text-white hover:bg-white/20'}`}
+                                title="자동차"
+                            >
+                                <Car size={18} />
+                            </button>
+                            <button 
+                                onClick={() => setTravelMode('WALKING')}
+                                className={`p-2 rounded-full transition ${travelMode === 'WALKING' ? 'bg-emerald-600 text-white shadow-lg' : 'text-white hover:bg-white/20'}`}
+                                title="도보"
+                            >
+                                <Footprints size={18} />
+                            </button>
+                            <button 
+                                onClick={() => setTravelMode('TRANSIT')}
+                                className={`p-2 rounded-full transition ${travelMode === 'TRANSIT' ? 'bg-amber-500 text-white shadow-lg' : 'text-white hover:bg-white/20'}`}
+                                title="대중교통"
+                            >
+                                <Train size={18} />
+                            </button>
+                        </div>
+                    )}
                 </div>
                 {/* Right Sliding Panel */}
                 {!isEditMode && (
@@ -946,7 +1058,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                 {infoModalTab === 'hotels' && (
                                     <div className="space-y-4">
                                         {hotels.length > 0 ? hotels.map((hotel, idx) => (
-                                            <div key={idx} className="place-card bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative group cursor-pointer hover:border-indigo-500 transition-all" onClick={() => { const link = getKlookLink(hotel.name, userInfo?.destination || "", language, '695932'); window.open(link, '_blank'); }}>
+                                            <div key={idx} className="place-card bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative group cursor-pointer hover:border-indigo-500 transition-all" onClick={() => { const link = getTripLink(hotel.name, userInfo?.destination || "", language); window.open(link, '_blank'); }}>
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-1 rounded-md">추천 {idx + 1}</span>
                                                     <h4 className="font-bold text-base">{hotel.name}</h4>
@@ -954,7 +1066,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                 <p className="text-xs text-indigo-500 font-bold mb-2 bg-indigo-50 inline-block px-2 py-1 rounded-lg">{hotel.priceRange}</p>
                                                 <p className="text-xs text-gray-500 leading-relaxed bg-gray-50 p-2 rounded-lg">{hotel.description}</p>
                                                 <div className="mt-3 flex justify-end">
-                                                    <span className="text-[11px] font-bold text-indigo-600 flex items-center gap-1">Klook 예약 <ExternalLink size={12}/></span>
+                                                    <span className="text-[11px] font-bold text-indigo-600 flex items-center gap-1">Trip.com 예약 <ExternalLink size={12}/></span>
                                                 </div>
                                             </div>
                                         )) : <div className="text-center text-gray-400 p-10 text-sm font-medium">추천 숙소 정보가 없습니다.</div>}
