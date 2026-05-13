@@ -41,6 +41,12 @@ const getTripLink = (keyword, destination, language) => {
     return `https://kr.trip.com/travel-guide/search/?keyword=${encodedKeyword}&locale=${language === 'en' ? 'en-XX' : 'ko-KR'}&Allianceid=7681311&SID=287502125`;
 };
 
+const getKlookLink = (keyword, language) => {
+    const cleanKeyword = keyword.replace(/\([^)]*\)/g, '').split(',')[0].trim();
+    const encodedKeyword = encodeURIComponent(cleanKeyword);
+    return `https://www.klook.com/${language === 'en' ? 'en-US' : 'ko'}/search?q=${encodedKeyword}`;
+};
+
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 const DAY_COLORS = ['#FF4B4B', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
 
@@ -135,7 +141,10 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     ${place.reason ? `<div style="font-size: 11px; color: #0891b2; background: #ecfeff; padding: 6px 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #cffafe;"><strong>🛡️ 안심 포인트!</strong><br />${place.reason}</div>` : ''}
                     <div style="display: flex; gap: 8px; margin-top: 10px;">
                         <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&hl=${language}" target="_blank" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #4f46e5; background: #e0e7ff; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🗺️ 길찾기</a>
-                        ${(!place.category?.includes("Restaurant") && !place.category?.includes("Cafe")) ? `<a href="${getTripLink(place.name, userInfo?.destination || "", language)}" target="_blank" rel="nofollow noopener noreferrer" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #e11d48; background: #ffe4e6; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center; display: inline-block;">🎟️ 티켓 예매</a>` : ''}
+                        ${(!place.category?.includes("Restaurant") && !place.category?.includes("Cafe")) ? `
+                            <a href="${getTripLink(place.name, userInfo?.destination || "", language)}" target="_blank" rel="nofollow noopener noreferrer" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #0087ff; background: #e6f3ff; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🎟️ Trip.com</a>
+                            <a href="${getKlookLink(place.name, language)}" target="_blank" rel="nofollow noopener noreferrer" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #ff5b00; background: #fff2e6; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🎟️ Klook</a>
+                        ` : ''}
                     </div>
                 </div>
             `;
@@ -1065,8 +1074,9 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                 </div>
                                                 <p className="text-xs text-indigo-500 font-bold mb-2 bg-indigo-50 inline-block px-2 py-1 rounded-lg">{hotel.priceRange}</p>
                                                 <p className="text-xs text-gray-500 leading-relaxed bg-gray-50 p-2 rounded-lg">{hotel.description}</p>
-                                                <div className="mt-3 flex justify-end">
-                                                    <span className="text-[11px] font-bold text-indigo-600 flex items-center gap-1">Trip.com 예약 <ExternalLink size={12}/></span>
+                                                <div className="mt-3 flex justify-end gap-3">
+                                                    <a href={getTripLink(hotel.name, userInfo?.destination || "", language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-bold text-indigo-600 flex items-center gap-1 hover:underline">Trip.com 예약 <ExternalLink size={12}/></a>
+                                                    <a href={getKlookLink(hotel.name, language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-bold text-orange-500 flex items-center gap-1 hover:underline">Klook 예약 <ExternalLink size={12}/></a>
                                                 </div>
                                             </div>
                                         )) : <div className="text-center text-gray-400 p-10 text-sm font-medium">추천 숙소 정보가 없습니다.</div>}
