@@ -669,13 +669,13 @@ export default function Home() {
                         <div className="flex bg-white/80 backdrop-blur-sm p-1 rounded-full text-[10px] font-black shadow-sm border border-white/50">
                             <button 
                                 onClick={() => setLanguage('ko')} 
-                                className={`px-4 py-1.5 rounded-full transition-all duration-300 ${language === 'ko' ? 'bg-white text-gray-800 shadow-xs' : 'text-gray-400 hover:text-gray-600'}`}
+                                className={`px-3 py-1.5 rounded-full transition-all duration-300 ${language === 'ko' ? 'bg-white text-gray-800 shadow-xs' : 'text-gray-400 hover:text-gray-600'}`}
                             >
                                 한국어
                             </button>
                             <button 
                                 onClick={() => setLanguage('en')} 
-                                className={`px-4 py-1.5 rounded-full transition-all duration-300 ${language === 'en' ? 'bg-white text-gray-800 shadow-xs' : 'text-gray-400 hover:text-gray-600'}`}
+                                className={`px-3 py-1.5 rounded-full transition-all duration-300 ${language === 'en' ? 'bg-white text-gray-800 shadow-xs' : 'text-gray-400 hover:text-gray-600'}`}
                             >
                                 English
                             </button>
