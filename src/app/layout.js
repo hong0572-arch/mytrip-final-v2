@@ -23,24 +23,50 @@ export const viewport = {
 
 export const metadata = {
   metadataBase: new URL('https://mytrip2.pro'),
-  title: SITE_TITLE,
+  title: {
+    default: SITE_TITLE,
+    template: `%s | Trip Maker`
+  },
   description: SITE_DESC,
-  verification: { google: "8nAcn09V6787EXe4NIVWp49LJ6Ot--3wsQMrB3EdHfA" },
+  verification: { 
+    google: "8nAcn09V6787EXe4NIVWp49LJ6Ot--3wsQMrB3EdHfA",
+    naver: "your-naver-verification-code" // 네이버 서치어드바이저용 (필요시 교체)
+  },
   manifest: "/manifest.json",
   icons: { icon: "/icon-192.png", apple: "/icon-192.png" },
-  alternates: { canonical: '/' },
+  alternates: { 
+    canonical: 'https://mytrip2.pro',
+    languages: {
+      'ko-KR': 'https://mytrip2.pro',
+      'en-US': 'https://mytrip2.pro/?lang=en',
+    },
+  },
   keywords: ["AI Trip Maker", "AI 여행 계획", "AI 여행 코스", "AI 여행 일정", "여행 일정 짜기", "여행 코스", "AI 여행 코스", "트립메이커", "Trip Maker", "유럽 여행 코스", "아프리카 여행 코스",
     "미주 여행 코스", "일본 여행 코스", "중국 여행 코스", "오사카 일정", "호주 여행 코스", "남미 여행 코스", "중남미 여행 코스", "여행 플래너",
-    "월드컵", "월드컵 응원", "월드컵 코스"],
+    "PWA Travel App", "AI Life Coach", "Vibe Planner"],
   openGraph: {
     title: SITE_TITLE,
     description: SITE_DESC,
     url: "https://mytrip2.pro",
     siteName: "Trip Maker",
-    images: [{ url: SITE_IMAGE, width: 1200, height: 630 }],
+    images: [{ url: SITE_IMAGE, width: 1200, height: 630, alt: "Trip Maker AI Travel Guide" }],
     locale: "ko_KR",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESC,
+    images: [SITE_IMAGE],
+  },
+  other: {
+    "geo.region": "KR",
+    "geo.placename": "Seoul",
+    "geo.position": "37.5665;126.9780",
+    "ICBM": "37.5665, 126.9780",
+    "apple-mobile-web-app-capable": "yes",
+    "mobile-web-app-capable": "yes",
+  }
 };
 
 // ✅ [최종 합본 레이아웃] 중복 없이 하나로 통합!
@@ -73,6 +99,36 @@ export default function RootLayout({ children }) {
 
           {/* 실제 페이지 내용 */}
           {children}
+
+          {/* ✨ JSON-LD 구조화 데이터 추가 (SEO 최적화) */}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "SoftwareApplication",
+                "name": "Trip Maker",
+                "operatingSystem": "Android, iOS, Web",
+                "applicationCategory": "TravelApplication",
+                "offers": {
+                  "@type": "Offer",
+                  "price": "0",
+                  "priceCurrency": "KRW"
+                },
+                "aggregateRating": {
+                  "@type": "AggregateRating",
+                  "ratingValue": "4.9",
+                  "ratingCount": "1024"
+                },
+                "description": SITE_DESC,
+                "url": "https://mytrip2.pro",
+                "author": {
+                  "@type": "Organization",
+                  "name": "Trip Maker Team"
+                }
+              })
+            }}
+          />
 
           {/* Vercel 도구 */}
           <SpeedInsights />

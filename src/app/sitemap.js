@@ -10,6 +10,17 @@ export default function sitemap() {
             changeFrequency: 'daily',
             priority: 1,
         },
-        // 나중에 페이지가 늘어나면 여기에 추가하면 됩니다.
+        {
+            url: `${baseUrl}/guide`,
+            lastModified: new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.8,
+        },
+        {
+            url: `${baseUrl}/rectrips`,
+            lastModified: new Date(),
+            changeFrequency: 'daily',
+            priority: 0.9,
+        },
     ];
 }
