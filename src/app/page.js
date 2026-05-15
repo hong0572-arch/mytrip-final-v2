@@ -666,9 +666,20 @@ export default function Home() {
                 <div className="px-4 pt-6 pb-2 shrink-0 flex justify-between items-center bg-transparent z-20">
                     <img src="/logo1.png" alt="Logo" className="h-8 w-auto object-contain" />
                     <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
-                        <button onClick={() => setLanguage(prev => prev === 'ko' ? 'en' : 'ko')} className="w-9 h-9 rounded-full bg-white/80 shadow-sm flex items-center justify-center text-gray-700 hover:bg-gray-100 transition">
-                            <Globe size={20} className={language === 'en' ? "text-indigo-600" : "text-gray-400"} />
-                        </button>
+                        <div className="flex bg-white/80 backdrop-blur-sm p-1 rounded-full text-[10px] font-black shadow-sm border border-white/50">
+                            <button 
+                                onClick={() => setLanguage('ko')} 
+                                className={`px-4 py-1.5 rounded-full transition-all duration-300 ${language === 'ko' ? 'bg-white text-gray-800 shadow-xs' : 'text-gray-400 hover:text-gray-600'}`}
+                            >
+                                한국어
+                            </button>
+                            <button 
+                                onClick={() => setLanguage('en')} 
+                                className={`px-4 py-1.5 rounded-full transition-all duration-300 ${language === 'en' ? 'bg-white text-gray-800 shadow-xs' : 'text-gray-400 hover:text-gray-600'}`}
+                            >
+                                English
+                            </button>
+                        </div>
                         {user || session ? (
                             <div onClick={() => router.push('/mypage')} className="flex items-center gap-2 cursor-pointer group hover:bg-white/60 p-1.5 rounded-full transition">
                                 <div className="w-10 h-10 rounded-full border-2 border-white shadow-md overflow-hidden shrink-0">
