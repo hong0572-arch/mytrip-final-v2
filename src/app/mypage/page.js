@@ -591,9 +591,18 @@ export default function MyPage() {
     const handleAcceptRequest = async (id) => { try { await updateDoc(doc(db, "match_requests", id), { status: 'accepted' }); showToast("수락 완료!", "success"); } catch (e) { } };
 
     const handleRequestDeposit = async () => {
-        const targetTotal = selectedTrip.targetTotalCost || parseCost(selectedTrip.estimatedCost) || 0;
-        if (!targetTotal) return showToast("먼저 총 여행 경비를 설정해주세요.", "info");
+        let targetTotal = selectedTrip.targetTotalCost || parseCost(selectedTrip.estimatedCost) || 0;
         const actualMembers = selectedTrip.membersInfo || [];
+        
+        if (!targetTotal) {
+            const inputVal = prompt("N빵 요청할 총 금액(원)을 입력해주세요:", "100000");
+            if (!inputVal) return;
+            targetTotal = parseInt(inputVal);
+            if (isNaN(targetTotal) || targetTotal <= 0) {
+                return showToast("올바른 금액을 입력해주세요.", "error");
+            }
+        }
+        
         const amountPerPerson = Math.ceil(targetTotal / actualMembers.length);
         const membersToRequest = actualMembers.filter(m => m.uid !== user?.uid);
         if (membersToRequest.length === 0) return showToast("동행자가 없습니다.", "info");
@@ -602,12 +611,46 @@ export default function MyPage() {
                 type: "deposit_request", senderId: user.uid, senderName: userData?.name || user.displayName,
                 targetMateId: member.uid, targetMateName: member.name, tripId: selectedTrip.id,
                 destination: selectedTrip.destination || selectedTrip.title || "여행", amount: amountPerPerson,
-                status: "pending", message: `💸 "${selectedTrip.destination || "여행"}" 총경비 정산! ${amountPerPerson.toLocaleString()}원 입금 요청.`,
+                status: "pending", message: `💸 "&quot;${selectedTrip.destination || "여행"}&quot;" 총경비 정산! ${amountPerPerson.toLocaleString()}원 입금 요청.`,
                 createdAt: serverTimestamp()
             }));
             await Promise.all(promises);
             showToast("요청을 보냈습니다! 💌", "success");
         } catch (e) { showToast("발송 실패", "error"); }
+    };
+
+    const handleIndividualRequestDeposit = async (member) => {
+        let targetTotal = selectedTrip.targetTotalCost || parseCost(selectedTrip.estimatedCost) || 0;
+        const actualMembers = selectedTrip.membersInfo || [];
+        let amountPerPerson = targetTotal > 0 ? Math.ceil(targetTotal / actualMembers.length) : 0;
+        
+        if (!amountPerPerson) {
+            const inputVal = prompt(`${member.name}님에게 요청할 입금 금액(원)을 입력해주세요:`, "50000");
+            if (!inputVal) return;
+            amountPerPerson = parseInt(inputVal);
+            if (isNaN(amountPerPerson) || amountPerPerson <= 0) {
+                return showToast("올바른 금액을 입력해주세요.", "error");
+            }
+        }
+        
+        try {
+            await addDoc(collection(db, "match_requests"), {
+                type: "deposit_request", 
+                senderId: user.uid, 
+                senderName: userData?.name || user.displayName,
+                targetMateId: member.uid, 
+                targetMateName: member.name, 
+                tripId: selectedTrip.id,
+                destination: selectedTrip.destination || selectedTrip.title || "여행", 
+                amount: amountPerPerson,
+                status: "pending", 
+                message: `💸 "${selectedTrip.destination || "여행"}" 총경비 정산! ${amountPerPerson.toLocaleString()}원 입금 요청.`,
+                createdAt: serverTimestamp()
+            });
+            showToast(`${member.name}님에게 입금 요청을 보냈습니다! 💌`, "success");
+        } catch (e) { 
+            showToast("발송 실패", "error"); 
+        }
     };
 
     const handlePayDeposit = async (req) => {
@@ -1564,11 +1607,17 @@ export default function MyPage() {
                                                 </div>
                                                 <button onClick={handleSetTargetCost} className="bg-gray-900 text-white font-bold text-xs px-4 py-2 rounded-lg active:scale-95 transition h-[36px] shrink-0 break-keep whitespace-nowrap">수정</button>
                                             </div>
-                                            {(selectedTrip.targetTotalCost || parseCost(selectedTrip.estimatedCost)) > 0 && (
-                                                <button onClick={handleRequestDeposit} className="w-full mt-2 bg-rose-50 text-rose-600 font-bold text-xs py-3 rounded-lg flex items-center justify-center gap-1.5 hover:bg-rose-100 active:scale-95 transition border border-rose-100 break-keep whitespace-nowrap">
-                                                    <BellRing size={14} className="shrink-0" /> {Math.ceil((selectedTrip.targetTotalCost || parseCost(selectedTrip.estimatedCost)) / (selectedTrip.membersInfo?.length || 1)).toLocaleString()}원씩 N빵 입금 알림 보내기
-                                                </button>
-                                            )}
+                                            <button 
+                                                onClick={handleRequestDeposit} 
+                                                className="w-full mt-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 font-black text-xs py-3.5 rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all break-keep whitespace-nowrap"
+                                            >
+                                                <BellRing size={14} className="shrink-0 text-rose-500" /> 
+                                                {selectedTrip.targetTotalCost || parseCost(selectedTrip.estimatedCost) ? (
+                                                    `${Math.ceil((selectedTrip.targetTotalCost || parseCost(selectedTrip.estimatedCost)) / (selectedTrip.membersInfo?.length || 1)).toLocaleString()}원씩 N빵 입금 알림 보내기`
+                                                ) : (
+                                                    "멤버들에게 N빵 입금 요청 보내기"
+                                                )}
+                                            </button>
                                         </div>
                                     )}
 
@@ -1577,17 +1626,27 @@ export default function MyPage() {
                                         const target = selectedTrip.targetDepositPerPerson || 0;
                                         const isComplete = target > 0 && deposited >= target;
                                         return (
-                                            <div key={m.uid} className="flex justify-between items-center">
-                                                <div className="flex items-center gap-3 w-full pr-4 overflow-hidden">
+                                            <div key={m.uid} className="flex justify-between items-center py-1">
+                                                <div className="flex items-center gap-3 w-full pr-2 overflow-hidden">
                                                     <img src={m.avatar} className="w-10 h-10 rounded-full object-cover border border-gray-200 shrink-0" />
                                                     <div className="overflow-hidden">
                                                         <p className="font-bold text-sm text-gray-900 truncate w-full break-keep whitespace-nowrap">{m.name} {m.uid === user?.uid && "(나)"}</p>
                                                         {target > 0 && <p className="text-[10px] text-gray-400 break-keep whitespace-nowrap">목표: {target.toLocaleString()}원</p>}
                                                     </div>
                                                 </div>
-                                                <div className="text-right shrink-0">
-                                                    <p className={`font-black text-sm break-keep whitespace-nowrap ${isComplete ? 'text-emerald-500' : 'text-gray-900'}`}>{deposited.toLocaleString()}원</p>
-                                                    {isComplete && <span className="text-[9px] bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded font-bold break-keep whitespace-nowrap">완료</span>}
+                                                <div className="text-right shrink-0 flex items-center gap-2.5">
+                                                    <div className="flex flex-col items-end">
+                                                        <p className={`font-black text-sm break-keep whitespace-nowrap ${isComplete ? 'text-emerald-500' : 'text-gray-900'}`}>{deposited.toLocaleString()}원</p>
+                                                        {isComplete && <span className="text-[9px] bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded font-bold break-keep whitespace-nowrap">완료</span>}
+                                                    </div>
+                                                    {selectedTrip.hostId === user?.uid && m.uid !== user?.uid && !isComplete && (
+                                                        <button 
+                                                            onClick={() => handleIndividualRequestDeposit(m)}
+                                                            className="text-[10px] font-black bg-rose-50 text-rose-500 border border-rose-100 px-2.5 py-1.5 rounded-xl hover:bg-rose-100 active:scale-95 transition-all shrink-0 break-keep whitespace-nowrap"
+                                                        >
+                                                            요청
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
