@@ -11,7 +11,7 @@ import { onAuthStateChanged, updateProfile, signOut } from "firebase/auth";
 import { getMessaging, getToken, isSupported } from "firebase/messaging";
 import { collection, query, where, orderBy, onSnapshot, doc, deleteDoc, updateDoc, getDocs, addDoc, serverTimestamp, increment, arrayUnion, arrayRemove, limit } from "firebase/firestore";
 import {
-    ArrowLeft, Search, Sparkles, Plane, Bed, Utensils,
+    ArrowLeft, ArrowRight, Search, Sparkles, Plane, Bed, Utensils,
     Calendar, Share2, Wallet, Receipt, Plus, ChevronRight,
     Home as HomeIcon, Bell, UserPlus, Heart, MessageSquare,
     PiggyBank, CreditCard, Users, Compass, User, Trash2,
@@ -150,6 +150,7 @@ const FeedCarousel = ({ feed, onClick }) => {
 export default function MyPage() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('schedule');
+    const [expandedDays, setExpandedDays] = useState({});
     const [user, setUser] = useState(null);
     const [userData, setUserData] = useState(null);
     const [itineraries, setItineraries] = useState([]);
@@ -1240,6 +1241,7 @@ export default function MyPage() {
             return { title: `✨ ${nearestTrip.destination} 펀딩 목표`, message: `D-${nearestTrip.daysLeft} 남았어요! 오늘부터 하루 ${dailySave.toLocaleString()}원씩 저축하면 완벽해요.`, action: "여행 지갑 관리", isGroup: false, trip: nearestTrip };
         };
         const advice = getFundingAdvice();
+        const pendingDeposits = matchRequests.filter(r => r.type === 'deposit_request' && r.status === 'pending');
 
         return (
             <div className="animate-in fade-in duration-500 pb-10">
@@ -1249,6 +1251,23 @@ export default function MyPage() {
                 </header>
 
                 <div className="px-3 pt-4 space-y-6">
+                    {/* ✨ 미납 정산금(N빵) 알림 배너 */}
+                    {pendingDeposits.map(req => (
+                        <div key={req.id} className="bg-rose-50 border border-rose-100 rounded-[20px] p-5 flex items-center justify-between shadow-sm animate-pulse mb-4">
+                            <div className="flex items-center gap-3 overflow-hidden mr-2">
+                                <div className="w-10 h-10 bg-rose-500 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-rose-200">
+                                    <AlertCircle size={20} />
+                                </div>
+                                <div className="overflow-hidden">
+                                    <h4 className="text-[13px] font-black text-rose-900 leading-tight">정산금 미납 알림 🚨</h4>
+                                    <p className="text-[11px] text-rose-700 font-bold leading-normal truncate">{req.destination}: {req.amount?.toLocaleString()}원</p>
+                                </div>
+                            </div>
+                            <button onClick={() => handlePayDeposit(req)} className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-black px-4 py-2.5 rounded-xl shadow-md transition-all active:scale-95 shrink-0 flex items-center gap-1.5">
+                                <Wallet size={14} className="shrink-0" /> 바로 송금
+                            </button>
+                        </div>
+                    ))}
                     <div className="flex justify-between items-end mb-2 px-1"><h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest break-keep whitespace-nowrap">Total Assets</h3></div>
                     <GlassCard className="p-6 bg-gradient-to-br from-gray-900 via-indigo-900 to-gray-900 text-white relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
@@ -1276,39 +1295,6 @@ export default function MyPage() {
                             </button>
                         </div>
                     </div>
-
-                    <section className="mb-6">
-                        <div className="flex justify-between items-end mb-4 px-1">
-                            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest break-keep whitespace-nowrap">Trip Points</h3>
-                        </div>
-                        <GlassCard className="p-6 bg-gradient-to-br from-purple-600 to-fuchsia-600 text-white relative overflow-hidden group shadow-lg shadow-purple-500/20">
-                            <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/4 blur-2xl"></div>
-                            <div className="relative z-10">
-                                <p className="text-purple-100 text-sm font-bold mb-1 flex items-center gap-1.5 break-keep whitespace-nowrap"><Gem size={16} className="shrink-0" /> 내 트립 포인트</p>
-                                <div className="flex items-end gap-2 mb-6">
-                                    <h2 className="text-4xl font-black tracking-tighter truncate max-w-[200px] sm:max-w-[300px]">{(userData?.points || 0).toLocaleString()}</h2>
-                                    <span className="text-lg font-bold text-purple-200 mb-1 shrink-0">P</span>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button onClick={() => alert('💸 현금 환전 기능은 곧 업데이트될 예정입니다!')} className="flex-[1.2] py-4 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-bold backdrop-blur-md transition flex flex-col items-center justify-center gap-2 shadow-sm break-keep whitespace-nowrap">
-                                        <Banknote size={24} className="shrink-0" /> 환전하기
-                                    </button>
-                                    <div className="flex-1 flex flex-col gap-2">
-                                        <button 
-                                            onClick={handleOpenQuiz} 
-                                            disabled={isQuizLoading}
-                                            className="flex-1 py-2.5 bg-white hover:bg-white/90 text-purple-600 rounded-xl text-[13px] font-bold shadow-md transition flex items-center justify-center gap-1.5 break-keep whitespace-nowrap"
-                                        >
-                                            {isQuizLoading ? <Loader2 size={14} className="animate-spin" /> : <BrainCircuit size={14} className="shrink-0 text-purple-600" />} 퀴즈 풀기
-                                        </button>
-                                        <button onClick={() => setShowPointModal(true)} className="flex-1 py-2.5 bg-white/20 hover:bg-white/30 rounded-xl text-[13px] font-bold backdrop-blur-md transition flex items-center justify-center gap-1.5 shadow-sm break-keep whitespace-nowrap">
-                                            <History size={14} className="shrink-0" /> 적립 내역
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </GlassCard>
-                    </section>
 
                     <section>
                         <div className="flex justify-between items-end mb-4 px-1"><h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest break-keep whitespace-nowrap">My Travel Funds</h3></div>
@@ -1397,13 +1383,21 @@ export default function MyPage() {
                                                                     <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-900 flex items-center justify-center text-[10px] font-black text-white shadow-sm">+{actualMembers.length - 4}</div>
                                                                 )}
                                                             </div>
-                                                            <button onClick={() => { setSelectedTrip(trip); setShowGroupManageModal(true); }} className={`text-[11px] font-black px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all active:scale-95 ${isHost ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200' : 'bg-white border border-gray-200 text-gray-800 hover:bg-gray-50 shadow-gray-100'}`}>
-                                                                {isHost ? <><Settings size={14} className="shrink-0" /> 관리</> : <><Wallet size={14} className="shrink-0" /> 입금</>}
-                                                            </button>
+                                                            <div className="flex gap-2">
+                                                                <button onClick={() => openBudgetModal(trip)} className="text-[11px] font-black bg-white border border-gray-200 text-gray-800 px-3.5 py-2.5 rounded-xl shadow-xs hover:bg-gray-50 active:scale-95 transition-all flex items-center gap-1.5 break-keep whitespace-nowrap">
+                                                                    <Plus size={14} className="text-rose-500 shrink-0" /> 지출 추가
+                                                                </button>
+                                                                <button onClick={() => { setSelectedTrip(trip); setShowGroupManageModal(true); }} className={`text-[11px] font-black px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all active:scale-95 ${isHost ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200' : 'bg-white border border-gray-200 text-gray-800 hover:bg-gray-50 shadow-gray-100'}`}>
+                                                                    {isHost ? <><Settings size={14} className="shrink-0" /> 관리</> : <><Wallet size={14} className="shrink-0" /> 입금</>}
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     )}
                                                     {!isGroup && (
-                                                        <div className="mt-1 pt-4 border-t border-gray-100/50 flex justify-end">
+                                                        <div className="mt-1 pt-4 border-t border-gray-100/50 flex justify-end gap-2">
+                                                            <button onClick={() => openBudgetModal(trip)} className="text-[11px] font-black bg-white border border-gray-200 text-gray-800 px-3.5 py-2.5 rounded-xl shadow-xs hover:bg-gray-50 active:scale-95 transition-all flex items-center gap-1.5 break-keep whitespace-nowrap">
+                                                                <Plus size={14} className="text-indigo-500 shrink-0" /> 지출 추가
+                                                            </button>
                                                             <button onClick={() => { setSelectedTrip(trip); setShowGroupManageModal(true); }} className="text-[11px] font-black bg-gray-900 text-white px-5 py-2.5 rounded-xl shadow-xl hover:bg-black transition-all active:scale-95 flex items-center gap-2">
                                                                 <Wallet size={14} className="shrink-0 text-indigo-400" /> 지갑 관리
                                                             </button>
@@ -1415,6 +1409,39 @@ export default function MyPage() {
                                     })
                             )}
                         </div>
+                    </section>
+
+                    <section className="mb-6">
+                        <div className="flex justify-between items-end mb-4 px-1">
+                            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest break-keep whitespace-nowrap">Trip Points</h3>
+                        </div>
+                        <GlassCard className="p-5 bg-gradient-to-br from-purple-600 to-fuchsia-600 text-white relative overflow-hidden group shadow-lg shadow-purple-500/20">
+                            <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/4 blur-2xl"></div>
+                            <div className="relative z-10">
+                                <p className="text-purple-100 text-xs font-bold mb-1 flex items-center gap-1.5 break-keep whitespace-nowrap"><Gem size={14} className="shrink-0" /> 내 트립 포인트</p>
+                                <div className="flex items-end gap-2 mb-6">
+                                    <h2 className="text-3xl font-black tracking-tighter truncate max-w-[200px] sm:max-w-[300px]">{(userData?.points || 0).toLocaleString()}</h2>
+                                    <span className="text-sm font-bold text-purple-200 mb-1 shrink-0">P</span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button onClick={() => alert('💸 현금 환전 기능은 곧 업데이트될 예정입니다!')} className="flex-[1.2] py-4 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-bold backdrop-blur-md transition flex flex-col items-center justify-center gap-2 shadow-sm break-keep whitespace-nowrap">
+                                        <Banknote size={24} className="shrink-0" /> 환전하기
+                                    </button>
+                                    <div className="flex-1 flex flex-col gap-2">
+                                        <button 
+                                            onClick={handleOpenQuiz} 
+                                            disabled={isQuizLoading}
+                                            className="flex-1 py-2.5 bg-white hover:bg-white/90 text-purple-600 rounded-xl text-[13px] font-bold shadow-md transition flex items-center justify-center gap-1.5 break-keep whitespace-nowrap"
+                                        >
+                                            {isQuizLoading ? <Loader2 size={14} className="animate-spin" /> : <BrainCircuit size={14} className="shrink-0 text-purple-600" />} 퀴즈 풀기
+                                        </button>
+                                        <button onClick={() => setShowPointModal(true)} className="flex-1 py-2.5 bg-white/20 hover:bg-white/30 rounded-xl text-[13px] font-bold backdrop-blur-md transition flex items-center justify-center gap-1.5 shadow-sm break-keep whitespace-nowrap">
+                                            <History size={14} className="shrink-0" /> 적립 내역
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </GlassCard>
                     </section>
                 </div>
             </div>
@@ -1561,10 +1588,23 @@ export default function MyPage() {
                                     })}
 
                                     <div className="mt-4 pt-4 border-t border-gray-100">
-                                        <p className="text-[10px] text-gray-500 font-bold mb-2 flex justify-between"><span className="break-keep whitespace-nowrap">모임통장으로 내 돈 입금하기</span><span className="break-keep whitespace-nowrap">내 지갑 잔고: {currentAsset.toLocaleString()}원</span></p>
+                                        <div className="flex items-center justify-between gap-2 mb-4 bg-indigo-50/50 p-3 rounded-xl border border-indigo-100/50">
+                                            <div className="text-center flex-1">
+                                                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">내 지갑</p>
+                                                <p className="text-sm font-black text-gray-900 truncate">{currentAsset.toLocaleString()}원</p>
+                                            </div>
+                                            <div className="flex flex-col items-center justify-center text-indigo-500 animate-pulse shrink-0 px-2">
+                                                <ArrowRight size={16} strokeWidth={3} className="rotate-90 sm:rotate-0" />
+                                                <span className="text-[8px] font-black text-indigo-600 mt-0.5">송금</span>
+                                            </div>
+                                            <div className="text-center flex-1">
+                                                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">모임 통장</p>
+                                                <p className="text-sm font-black text-indigo-600 truncate">{(selectedTrip.tripWalletBalance || 0).toLocaleString()}원</p>
+                                            </div>
+                                        </div>
                                         <div className="flex gap-2">
-                                            <input type="number" value={myDepositInput} onChange={e => setMyDepositInput(e.target.value)} placeholder="입금할 금액" className="flex-1 bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-400" />
-                                            <button onClick={handleDepositToTrip} className="bg-indigo-600 text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-md active:scale-95 transition shrink-0 break-keep whitespace-nowrap">입금</button>
+                                            <input type="number" value={myDepositInput} onChange={e => setMyDepositInput(e.target.value)} placeholder="입금할 금액 입력" className="flex-1 bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-400 transition" />
+                                            <button onClick={handleDepositToTrip} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-md active:scale-95 transition shrink-0 break-keep whitespace-nowrap">입금</button>
                                         </div>
                                     </div>
                                 </div>
@@ -1927,72 +1967,104 @@ export default function MyPage() {
                         </div>
 
                         <div className="flex-1 overflow-y-auto custom-scrollbar space-y-8 pr-1 pb-6">
-                            {/* ✨ 1. 일정별 상세 예산 관리 (Core Feature) */}
-                            <section>
-                                <div className="flex items-center justify-between mb-4 px-1">
-                                    <h4 className="font-black text-gray-900 text-base flex items-center gap-1.5"><Calendar size={18} className="text-indigo-500" /> 일정별 상세 관리</h4>
-                                    <span className="text-[10px] font-bold text-gray-400">항목별 예상/실제 경비</span>
-                                </div>
-                                <div className="space-y-6">
-                                    {(selectedTrip.itinerary || []).map((day, dIdx) => (
-                                        <div key={dIdx} className="bg-gray-50/50 rounded-[32px] p-5 border border-gray-100">
-                                            <h5 className="text-xs font-black text-gray-400 mb-4 px-1 uppercase tracking-widest flex items-center gap-2">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> Day {dIdx + 1}
-                                            </h5>
-                                            <div className="space-y-4">
-                                                {day.places.map((place, pIdx) => (
-                                                    <div key={pIdx} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm transition-all hover:border-indigo-100">
-                                                        <div className="flex items-center gap-3 mb-3">
-                                                            <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500 font-black text-[10px] shrink-0 border border-indigo-100">{pIdx + 1}</div>
-                                                            <p className="font-bold text-gray-900 text-sm truncate">{place.name}</p>
-                                                        </div>
-                                                        <div className="grid grid-cols-2 gap-2">
-                                                            <div className="relative group">
-                                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase pointer-events-none group-focus-within:text-indigo-500">Exp</div>
-                                                                <input 
-                                                                    type="number" 
-                                                                    value={place.expectedBudget || ''} 
-                                                                    onChange={(e) => handleUpdateItemBudget(dIdx, pIdx, 'expectedBudget', e.target.value)}
-                                                                    placeholder="0" 
-                                                                    className="w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-black text-gray-900 outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white transition"
-                                                                />
-                                                            </div>
-                                                            <div className="relative group text-right">
-                                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase pointer-events-none group-focus-within:text-rose-500">Act</div>
-                                                                <input 
-                                                                    type="number" 
-                                                                    value={place.actualExpense || ''} 
-                                                                    onChange={(e) => handleUpdateItemBudget(dIdx, pIdx, 'actualExpense', e.target.value)}
-                                                                    placeholder="0" 
-                                                                    className="w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-black text-rose-500 outline-none focus:ring-2 focus:ring-rose-400 focus:bg-white transition"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))}
+                            {/* 1. 새로운 영수증 등록 (Moved to Very Top for 1-step depth) */}
+                            <section className="bg-white border border-indigo-100 rounded-3xl p-5 shadow-sm">
+                                <p className="text-[11px] font-black text-indigo-500 mb-3 uppercase tracking-wider flex items-center gap-1">
+                                    <Receipt size={14} className="shrink-0 text-indigo-500" /> 새로운 지출 / 영수증 등록
+                                </p>
+                                <div className="flex w-full gap-2">
+                                    <input type="text" value={newExpenseName} onChange={(e) => setNewExpenseName(e.target.value)} placeholder="지출 사용처 입력" className="flex-[2] min-w-0 bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl font-bold text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-400 text-[13px] transition" />
+                                    <select value={newExpenseCurrency} onChange={e => setNewExpenseCurrency(e.target.value)} className="bg-gray-50 border border-gray-200 rounded-xl text-[10px] font-black text-gray-700 outline-none px-2 shrink-0">
+                                        <option value="KRW">KRW</option>
+                                        <option value="JPY">JPY</option>
+                                        <option value="USD">USD</option>
+                                        <option value="EUR">EUR</option>
+                                    </select>
+                                    <input type="number" value={newExpenseCost} onChange={(e) => setNewExpenseCost(e.target.value)} placeholder="금액" className="flex-[1.5] min-w-0 bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl font-bold text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-400 text-[13px] transition" />
+                                    <button onClick={handleAddExpense} disabled={!newExpenseName || !newExpenseCost} className="bg-indigo-600 hover:bg-indigo-700 text-white w-12 shrink-0 rounded-xl flex items-center justify-center active:scale-95 disabled:bg-gray-200 transition shadow-lg shadow-indigo-100"><Plus size={20} strokeWidth={3} /></button>
                                 </div>
                             </section>
 
-                            {/* 2. 일반 지출 내역 (Legacy & Manual Add) */}
+                            {/* 2. 일정별 상세 예산 관리 (Accordion Style) */}
+                            <section>
+                                <div className="flex items-center justify-between mb-4 px-1">
+                                    <h4 className="font-black text-gray-900 text-base flex items-center gap-1.5"><Calendar size={18} className="text-indigo-500" /> 일정별 상세 예산</h4>
+                                    <span className="text-[10px] font-bold text-gray-400">Day 카드 터치로 접기/펴기</span>
+                                </div>
+                                <div className="space-y-4">
+                                    {(selectedTrip.itinerary || []).map((day, dIdx) => {
+                                        const isExpanded = expandedDays[dIdx] ?? (dIdx === 0);
+                                        return (
+                                            <div key={dIdx} className="bg-gray-50/50 rounded-[28px] border border-gray-100/80 overflow-hidden shadow-xs">
+                                                {/* Accordion Trigger Header */}
+                                                <button 
+                                                    onClick={() => setExpandedDays(prev => ({ ...prev, [dIdx]: !isExpanded }))}
+                                                    className="w-full flex justify-between items-center p-5 bg-white border-b border-gray-100 hover:bg-gray-50/80 transition"
+                                                >
+                                                    <h5 className="text-xs font-black text-gray-800 uppercase tracking-widest flex items-center gap-2">
+                                                        <span className={`w-2 h-2 rounded-full ${isExpanded ? 'bg-indigo-500 animate-pulse' : 'bg-gray-300'}`}></span> Day {dIdx + 1}
+                                                    </h5>
+                                                    <ChevronRight size={16} strokeWidth={3} className={`text-gray-400 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
+                                                </button>
+                                                
+                                                {isExpanded && (
+                                                    <div className="p-5 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                                                        {day.places.map((place, pIdx) => {
+                                                            const expected = parseFloat(place.expectedBudget) || 0;
+                                                            const actual = parseFloat(place.actualExpense) || 0;
+                                                            const isExceeded = actual > expected && expected > 0;
+                                                            
+                                                            return (
+                                                                <div key={pIdx} className={`p-4 rounded-2xl border transition-all hover:border-indigo-100 shadow-xs bg-white ${isExceeded ? 'border-rose-200 bg-rose-50/30' : 'border-gray-100'}`}>
+                                                                    <div className="flex items-center justify-between gap-3 mb-3">
+                                                                        <div className="flex items-center gap-3 overflow-hidden">
+                                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-[10px] shrink-0 border ${isExceeded ? 'bg-rose-50 text-rose-500 border-rose-100' : 'bg-indigo-50 text-indigo-500 border-indigo-100'}`}>{pIdx + 1}</div>
+                                                                            <p className="font-bold text-gray-900 text-sm truncate">{place.name}</p>
+                                                                        </div>
+                                                                        {isExceeded && (
+                                                                            <span className="text-[10px] text-rose-500 font-black shrink-0 flex items-center gap-0.5 bg-rose-100/50 px-2 py-0.5 rounded-full animate-bounce">
+                                                                                ⚠️ 초과 (+{(actual - expected).toLocaleString()}원)
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="grid grid-cols-2 gap-2">
+                                                                        <div className="relative group">
+                                                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase pointer-events-none group-focus-within:text-indigo-500">Exp</div>
+                                                                            <input 
+                                                                                type="number" 
+                                                                                value={place.expectedBudget || ''} 
+                                                                                onChange={(e) => handleUpdateItemBudget(dIdx, pIdx, 'expectedBudget', e.target.value)}
+                                                                                placeholder="0" 
+                                                                                className="w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-black text-gray-900 outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white transition"
+                                                                            />
+                                                                        </div>
+                                                                        <div className="relative group text-right">
+                                                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase pointer-events-none group-focus-within:text-rose-500">Act</div>
+                                                                            <input 
+                                                                                type="number" 
+                                                                                value={place.actualExpense || ''} 
+                                                                                onChange={(e) => handleUpdateItemBudget(dIdx, pIdx, 'actualExpense', e.target.value)}
+                                                                                placeholder="0" 
+                                                                                className={`w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-black outline-none focus:ring-2 focus:bg-white transition ${isExceeded ? 'text-rose-600 focus:ring-rose-500 font-black' : 'text-gray-950 focus:ring-indigo-400 font-medium'}`}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+
+                            {/* 3. 공통 지출 내역 목록 */}
                             <section>
                                 <div className="flex items-center justify-between mb-4 px-1 pb-2 border-b border-gray-100">
                                     <h4 className="font-black text-gray-900 text-base flex items-center gap-1.5"><Receipt size={18} className="text-gray-400" /> 공통 지출 내역</h4>
                                     <span className="text-[10px] font-bold text-gray-400">영수증 및 환전 기록</span>
-                                </div>
-                                
-                                <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 mb-4 shadow-inner">
-                                    <p className="text-[11px] font-bold text-gray-400 mb-3 uppercase tracking-tighter">💸 새로운 영수증 등록 (모임통장에서 차감)</p>
-                                    <div className="flex w-full gap-2">
-                                        <input type="text" value={newExpenseName} onChange={(e) => setNewExpenseName(e.target.value)} placeholder="사용처" className="flex-[2] min-w-0 bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl font-bold text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-400 text-[13px] transition" />
-                                        <select value={newExpenseCurrency} onChange={e => setNewExpenseCurrency(e.target.value)} className="bg-gray-50 border border-gray-200 rounded-xl text-[10px] font-black text-gray-700 outline-none px-2 shrink-0">
-                                            <option value="KRW">KRW</option><option value="JPY">JPY</option><option value="USD">USD</option><option value="EUR">EUR</option>
-                                        </select>
-                                        <input type="number" value={newExpenseCost} onChange={(e) => setNewExpenseCost(e.target.value)} placeholder="금액" className="flex-[1.5] min-w-0 bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl font-bold text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-400 text-[13px] transition" />
-                                        <button onClick={handleAddExpense} disabled={!newExpenseName || !newExpenseCost} className="bg-indigo-600 text-white w-12 shrink-0 rounded-xl flex items-center justify-center active:scale-95 disabled:bg-gray-200 transition shadow-lg shadow-indigo-100"><Plus size={20} strokeWidth={3} /></button>
-                                    </div>
                                 </div>
 
                                 <div className="space-y-3">
