@@ -1608,27 +1608,49 @@ export default function MyPage() {
                                                 <p className="text-sm font-black text-indigo-600 truncate">{(selectedTrip.tripWalletBalance || 0).toLocaleString()}원</p>
                                             </div>
                                         </div>
-                                        <div className="flex gap-2">
-                                            <input type="number" value={myDepositInput} onChange={e => setMyDepositInput(e.target.value)} placeholder="입금할 금액 입력" className="flex-1 bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-400 transition" />
-                                            <button onClick={handleDepositToTrip} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-md active:scale-95 transition shrink-0 break-keep whitespace-nowrap">입금</button>
+                                        <div className="relative flex items-center w-full">
+                                            <input 
+                                                type="number" 
+                                                value={myDepositInput} 
+                                                onChange={e => setMyDepositInput(e.target.value)} 
+                                                placeholder="입금할 금액 입력" 
+                                                className="w-full bg-gray-50 border border-gray-200 pl-4 pr-16 py-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white transition" 
+                                            />
+                                            <button 
+                                                onClick={handleDepositToTrip} 
+                                                className="absolute right-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-lg shadow-md active:scale-95 transition shrink-0 break-keep whitespace-nowrap"
+                                            >
+                                                입금
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
-                            </section>
+                             </section>
 
-                            {selectedTrip.hostId === user?.uid && (
-                                <section>
-                                    <h4 className="font-black text-gray-900 text-base mb-3 flex items-center gap-1 break-keep whitespace-nowrap"><RefreshCw size={16} className="text-indigo-500 shrink-0" /> 여행 자금 환전 (방장)</h4>
-                                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                                        <div className="flex gap-2 mb-3">
-                                            {['JPY', 'USD', 'EUR'].map(c => (
-                                                <button key={c} onClick={() => setTripExchangeCurrency(c)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition break-keep whitespace-nowrap ${tripExchangeCurrency === c ? 'bg-indigo-50 text-indigo-600 border border-indigo-200' : 'bg-gray-50 text-gray-500'}`}>{c}</button>
-                                            ))}
-                                        </div>
-                                        <div className="flex gap-2 items-center">
-                                            <input type="number" value={tripExchangeAmount} onChange={e => setTripExchangeAmount(e.target.value)} placeholder={`${tripExchangeCurrency} 금액 입력`} className="flex-1 bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl text-sm font-bold outline-none" />
-                                            <button onClick={handleTripExchange} className="bg-gray-900 text-white font-bold text-sm px-4 py-2.5 rounded-xl shadow-md active:scale-95 transition shrink-0 break-keep whitespace-nowrap">환전</button>
-                                        </div>
+                             {selectedTrip.hostId === user?.uid && (
+                                 <section>
+                                     <h4 className="font-black text-gray-900 text-base mb-3 flex items-center gap-1 break-keep whitespace-nowrap"><RefreshCw size={16} className="text-indigo-500 shrink-0" /> 여행 자금 환전 (방장)</h4>
+                                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                                         <div className="flex gap-2 mb-3">
+                                             {['JPY', 'USD', 'EUR'].map(c => (
+                                                 <button key={c} onClick={() => setTripExchangeCurrency(c)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition break-keep whitespace-nowrap ${tripExchangeCurrency === c ? 'bg-indigo-50 text-indigo-600 border border-indigo-200' : 'bg-gray-50 text-gray-500'}`}>{c}</button>
+                                             ))}
+                                         </div>
+                                         <div className="relative flex items-center w-full">
+                                             <input 
+                                                 type="number" 
+                                                 value={tripExchangeAmount} 
+                                                 onChange={e => setTripExchangeAmount(e.target.value)} 
+                                                 placeholder={`${tripExchangeCurrency} 금액 입력`} 
+                                                 className="w-full bg-gray-50 border border-gray-200 pl-4 pr-16 py-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white transition" 
+                                             />
+                                             <button 
+                                                 onClick={handleTripExchange} 
+                                                 className="absolute right-2 px-4 py-2 bg-gray-900 hover:bg-slate-800 text-white font-black text-xs rounded-lg shadow-md active:scale-95 transition shrink-0 break-keep whitespace-nowrap"
+                                             >
+                                                 환전
+                                             </button>
+                                         </div>
                                         {tripExchangeAmount > 0 && (
                                             <p className="text-[10px] text-rose-500 font-bold mt-2 text-right break-keep whitespace-nowrap">모임통장에서 -{Math.floor(tripExchangeAmount * CURRENCY_RATES[tripExchangeCurrency]).toLocaleString()} KRW 차감</p>
                                         )}
