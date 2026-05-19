@@ -653,6 +653,27 @@ export default function MyPage() {
         }
     };
 
+    const handleNudgeDeposit = async (member) => {
+        const pendingReq = matchRequests.find(r => 
+            r.type === "deposit_request" && 
+            r.tripId === selectedTrip.id && 
+            r.senderId === user.uid && 
+            r.targetMateId === member.uid && 
+            r.status === "pending"
+        );
+        if (!pendingReq) return;
+        try {
+            await updateDoc(doc(db, "match_requests", pendingReq.id), {
+                message: `⚡ [재촉] "${selectedTrip.destination || "여행"}" 총경비 입금 재촉! 빨리 보내주세요! 💸`,
+                createdAt: serverTimestamp(),
+                isNudged: true
+            });
+            showToast(`${member.name}님에게 입금 재촉 찌르기를 완료했습니다! ⚡`, "success");
+        } catch (e) {
+            showToast("재촉 실패", "error");
+        }
+    };
+
     const handlePayDeposit = async (req) => {
         const amount = req.amount;
         if (currentAsset < amount) return showToast("잔액이 부족합니다.", "error");
@@ -1639,14 +1660,30 @@ export default function MyPage() {
                                                         <p className={`font-black text-sm break-keep whitespace-nowrap ${isComplete ? 'text-emerald-500' : 'text-gray-900'}`}>{deposited.toLocaleString()}원</p>
                                                         {isComplete && <span className="text-[9px] bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded font-bold break-keep whitespace-nowrap">완료</span>}
                                                     </div>
-                                                    {selectedTrip.hostId === user?.uid && m.uid !== user?.uid && !isComplete && (
-                                                        <button 
-                                                            onClick={() => handleIndividualRequestDeposit(m)}
-                                                            className="text-[10px] font-black bg-rose-50 text-rose-500 border border-rose-100 px-2.5 py-1.5 rounded-xl hover:bg-rose-100 active:scale-95 transition-all shrink-0 break-keep whitespace-nowrap"
-                                                        >
-                                                            요청
-                                                        </button>
-                                                    )}
+                                                    {selectedTrip.hostId === user?.uid && m.uid !== user?.uid && !isComplete && (() => {
+                                                        const pendingReq = matchRequests.find(r => 
+                                                            r.type === "deposit_request" && 
+                                                            r.tripId === selectedTrip.id && 
+                                                            r.senderId === user.uid && 
+                                                            r.targetMateId === m.uid && 
+                                                            r.status === "pending"
+                                                        );
+                                                        return pendingReq ? (
+                                                            <button 
+                                                                onClick={() => handleNudgeDeposit(m)}
+                                                                className="text-[10px] font-black bg-amber-50 text-amber-600 border border-amber-200 px-2.5 py-1.5 rounded-xl hover:bg-amber-100 active:scale-95 transition-all shrink-0 break-keep whitespace-nowrap flex items-center gap-1 animate-pulse"
+                                                            >
+                                                                재촉 ⚡
+                                                            </button>
+                                                        ) : (
+                                                            <button 
+                                                                onClick={() => handleIndividualRequestDeposit(m)}
+                                                                className="text-[10px] font-black bg-rose-50 text-rose-500 border border-rose-100 px-2.5 py-1.5 rounded-xl hover:bg-rose-100 active:scale-95 transition-all shrink-0 break-keep whitespace-nowrap"
+                                                            >
+                                                                요청
+                                                            </button>
+                                                        );
+                                                    })()}
                                                 </div>
                                             </div>
                                         );
