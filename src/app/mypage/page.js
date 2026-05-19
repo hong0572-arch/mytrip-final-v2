@@ -190,6 +190,12 @@ export default function MyPage() {
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [showBudgetModal, setShowBudgetModal] = useState(false);
     const [showExchangeModal, setShowExchangeModal] = useState(false);
+    const [exchangeSubscribed, setExchangeSubscribed] = useState(false);
+    const [exchangePhone, setExchangePhone] = useState('');
+    const handleSubscribeExchange = () => {
+        if (!exchangePhone) return;
+        setExchangeSubscribed(true);
+    };
     const [showPointModal, setShowPointModal] = useState(false);
     const [showAssetModal, setShowAssetModal] = useState(false);
     const [showGroupManageModal, setShowGroupManageModal] = useState(false);
@@ -1424,7 +1430,7 @@ export default function MyPage() {
                                     <span className="text-sm font-bold text-purple-200 mb-1 shrink-0">P</span>
                                 </div>
                                 <div className="flex gap-2">
-                                    <button onClick={() => alert('💸 현금 환전 기능은 곧 업데이트될 예정입니다!')} className="flex-[1.2] py-4 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-bold backdrop-blur-md transition flex flex-col items-center justify-center gap-2 shadow-sm break-keep whitespace-nowrap">
+                                    <button onClick={() => setShowExchangeModal(true)} className="flex-[1.2] py-4 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-bold backdrop-blur-md transition flex flex-col items-center justify-center gap-2 shadow-sm break-keep whitespace-nowrap">
                                         <Banknote size={24} className="shrink-0" /> 환전하기
                                     </button>
                                     <div className="flex-1 flex flex-col gap-2">
@@ -1922,6 +1928,81 @@ export default function MyPage() {
                             ) : (
                                 <button onClick={handleDailyCheckIn} className="w-full bg-purple-600 text-white font-bold py-4 rounded-2xl hover:bg-purple-700 transition active:scale-95 shadow-lg shadow-purple-500/30 break-keep whitespace-nowrap">📅 출석체크하고 포인트 받기 (+50P)</button>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ✨ [신규] 포인트 환전 신청 모달 (alert 대체용) */}
+            {showExchangeModal && (
+                <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowExchangeModal(false)}></div>
+                    <div className="bg-white/95 backdrop-blur-2xl border border-white/60 w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl flex flex-col overflow-hidden">
+                        
+                        {/* Decorative Gradient Background */}
+                        <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-purple-500 via-fuchsia-500 to-indigo-600"></div>
+                        <button onClick={() => setShowExchangeModal(false)} className="absolute top-6 right-6 w-10 h-10 bg-gray-200/50 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition z-20 shrink-0"><X size={20} strokeWidth={2.5} /></button>
+                        
+                        <div className="text-center pt-6 mb-6 shrink-0">
+                            <div className="w-16 h-16 bg-gradient-to-tr from-purple-500 to-fuchsia-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-500/20 text-white animate-bounce flex items-center justify-center"><Banknote size={32} /></div>
+                            <h3 className="text-2xl font-black text-gray-900 tracking-tight break-keep">실시간 현금 환전 서비스</h3>
+                            <p className="text-xs text-gray-400 font-bold mt-1 uppercase tracking-wider">Point to Cash Exchange</p>
+                        </div>
+
+                        <div className="space-y-5 flex-1 py-2">
+                            {/* Point Conversion Card */}
+                            <div className="bg-gray-900 text-white rounded-[24px] p-5 shadow-xl relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl"></div>
+                                <p className="text-[10px] font-bold text-purple-300 mb-1 uppercase tracking-widest">환전 가능 포인트</p>
+                                <div className="flex items-baseline gap-1.5 mb-4">
+                                    <span className="text-3xl font-black text-white">{(userData?.points || 0).toLocaleString()}</span>
+                                    <span className="text-sm font-bold text-gray-400">P</span>
+                                </div>
+                                <div className="pt-4 border-t border-white/10 flex justify-between items-center text-xs font-bold text-gray-300">
+                                    <span>예상 환전 금액</span>
+                                    <span className="text-purple-400 text-sm font-black">₩ {((userData?.points || 0) * 10).toLocaleString()} 원 <span className="text-[9px] font-normal text-gray-400">(1P = 10원)</span></span>
+                                </div>
+                            </div>
+
+                            {/* Service Status Notice */}
+                            <div className="bg-purple-50/70 border border-purple-100 rounded-2xl p-4 text-center">
+                                <p className="text-xs font-bold text-purple-800 leading-relaxed break-keep">
+                                    현재 현금 환전 모듈 최종 조율 및 본인인증(KCB) 연동 작업 중입니다. 조금만 기다려주세요! 🛠️
+                                </p>
+                            </div>
+
+                            {/* Launch Reservation Form */}
+                            {!exchangeSubscribed ? (
+                                <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-xs">
+                                    <label className="block text-[10px] font-black text-gray-400 mb-2 uppercase tracking-wider pl-1">환전 기능 오픈 사전 예약</label>
+                                    <div className="flex gap-2">
+                                        <input 
+                                            type="text" 
+                                            value={exchangePhone} 
+                                            onChange={e => setExchangePhone(e.target.value)} 
+                                            placeholder="알림받을 휴대폰 번호 입력" 
+                                            className="flex-1 bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl text-xs font-bold outline-none focus:bg-white focus:ring-2 focus:ring-purple-500 transition" 
+                                        />
+                                        <button 
+                                            onClick={handleSubscribeExchange}
+                                            disabled={!exchangePhone}
+                                            className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-200 text-white font-black text-xs px-4 py-2.5 rounded-xl transition shadow-md shadow-purple-100 active:scale-95 shrink-0 break-keep whitespace-nowrap"
+                                        >
+                                            신청
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-center animate-in zoom-in-95 duration-300">
+                                    <div className="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-2 shadow-md shadow-emerald-100 animate-pulse"><Check size={16} strokeWidth={3} /></div>
+                                    <p className="text-[11px] font-black text-emerald-800 break-keep">사전 예약 신청이 완료되었습니다! 🎉</p>
+                                    <p className="text-[9px] font-bold text-emerald-600/80 mt-0.5 break-keep">서비스가 활성화되는 즉시 휴대폰 알림을 전송해 드립니다.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mt-4 pt-4 border-t border-gray-100 flex gap-2 shrink-0">
+                            <button onClick={() => setShowExchangeModal(false)} className="flex-1 py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-black text-sm rounded-2xl transition active:scale-95 text-center break-keep">돌아가기</button>
                         </div>
                     </div>
                 </div>
