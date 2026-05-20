@@ -172,7 +172,7 @@ export async function POST(req) {
       }
     `;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" }); // 모델명 최신화 권장
+    const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" }); // 모델명 최신화 권장
     const result = await model.generateContent(prompt);
     const response = await result.response;
     let text = response.text();

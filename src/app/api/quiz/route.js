@@ -5,11 +5,11 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export async function POST(req) {
-    try {
-        const { destination } = await req.json();
+  try {
+    const { destination } = await req.json();
 
-        // 🎲 매번 다른 퀴즈를 위해 랜덤성 강화 프롬프트
-        const prompt = `
+    // 🎲 매번 다른 퀴즈를 위해 랜덤성 강화 프롬프트
+    const prompt = `
       당신은 여행 전문가입니다. 
       **${destination}** 여행과 관련된 **재미있는 상식 퀴즈 3문제**를 새로 만들어주세요.
       
@@ -34,19 +34,19 @@ export async function POST(req) {
       }
     `;
 
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" }); // 가볍고 빠른 모델 추천
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        let text = response.text();
+    const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" }); // 가볍고 빠른 모델 추천
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text();
 
-        // JSON 정제
-        text = text.replace(/```json/g, "").replace(/```/g, "").trim();
-        const jsonResult = JSON.parse(text);
+    // JSON 정제
+    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    const jsonResult = JSON.parse(text);
 
-        return NextResponse.json({ result: jsonResult.quiz });
+    return NextResponse.json({ result: jsonResult.quiz });
 
-    } catch (error) {
-        console.error("Quiz Generation Error:", error);
-        return NextResponse.json({ error: "Failed to generate quiz." }, { status: 500 });
-    }
+  } catch (error) {
+    console.error("Quiz Generation Error:", error);
+    return NextResponse.json({ error: "Failed to generate quiz." }, { status: 500 });
+  }
 }
