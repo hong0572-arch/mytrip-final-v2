@@ -8,7 +8,7 @@ import AuthContext from "../components/AuthContext";
 // ✅ 환경 변수 및 설정
 const SITE_TITLE = process.env.NEXT_PUBLIC_OG_TITLE || "Trip Maker - 내 AI 여행 가이드";
 const SITE_DESC = process.env.NEXT_PUBLIC_OG_DESC || "일본, 중국, 동남아시아, 미국, 미주, 호주, 아프리카, 유럽 여행 코스 짜기 어렵고 귀찮다면? AI가 바로 즉시 당신만을 위한 여행 계획을 짜드립니다.";
-const SITE_IMAGE = process.env.NEXT_PUBLIC_OG_IMAGE || "https://mytrip2.pro/og-final.jpg";
+const SITE_IMAGE = process.env.NEXT_PUBLIC_OG_IMAGE || "https://mytrip2.pro/og-image.png";
 const GA_ID = "G-DC122J4LJL";
 
 // ✅ [PWA & Metadata] 설정
@@ -28,13 +28,13 @@ export const metadata = {
     template: `%s | Trip Maker`
   },
   description: SITE_DESC,
-  verification: { 
+  verification: {
     google: "8nAcn09V6787EXe4NIVWp49LJ6Ot--3wsQMrB3EdHfA",
     naver: "your-naver-verification-code" // 네이버 서치어드바이저용 (필요시 교체)
   },
   manifest: "/manifest.json",
   icons: { icon: "/icon-192.png", apple: "/icon-192.png" },
-  alternates: { 
+  alternates: {
     canonical: 'https://mytrip2.pro',
     languages: {
       'ko-KR': 'https://mytrip2.pro',
@@ -80,7 +80,7 @@ export default function RootLayout({ children }) {
         <AuthContext>
           {/* 📱 모바일 세로 모드 권장 오버레이 */}
           <PortraitOnly />
-          
+
           {/* 🔔 푸시 알림 초기화 */}
           <PushInitializer />
 
