@@ -4,6 +4,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import AuthContext from "../components/AuthContext";
+import GlobalSafeMode from '../components/GlobalSafeMode';
 
 // ✅ 환경 변수 및 설정
 const SITE_TITLE = process.env.NEXT_PUBLIC_OG_TITLE || "Trip Maker - 내 AI 여행 가이드";
@@ -83,6 +84,9 @@ export default function RootLayout({ children }) {
 
           {/* 🔔 푸시 알림 초기화 */}
           <PushInitializer />
+
+          {/* 🛡️ 글로벌 Safe Mode 안심 시스템 */}
+          <GlobalSafeMode />
 
           {/* GA4 (구글 애널리틱스) */}
           <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} />

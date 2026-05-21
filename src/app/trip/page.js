@@ -44,6 +44,7 @@ function TripDetailContent() {
 
                 if (docSnap.exists()) {
                     setTripData(docSnap.data());
+                    localStorage.setItem('activeTripId', tripId);
                 } else {
                     console.error("일정 데이터가 DB에 없습니다.");
                     setError(true);

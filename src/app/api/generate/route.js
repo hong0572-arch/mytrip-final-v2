@@ -145,7 +145,10 @@ export async function POST(req) {
             "priceRange": "Price",
             "description": "Desc explaining the security/comfort level",
             "address": "Address",
-            "googleSearchQuery": "Name + City"
+            "googleSearchQuery": "Name + City",
+            "safetyScore": 9.8,
+            "isMainStreet": true,
+            "soloFriendly": true
           }
         ],
         "itinerary": [
