@@ -8,7 +8,7 @@ import AuthContext from "../components/AuthContext";
 // ✅ 환경 변수 및 설정
 const SITE_TITLE = process.env.NEXT_PUBLIC_OG_TITLE || "Trip Maker - 내 AI 여행 가이드";
 const SITE_DESC = process.env.NEXT_PUBLIC_OG_DESC || "일본, 중국, 동남아시아, 미국, 미주, 호주, 아프리카, 유럽 여행 코스 짜기 어렵고 귀찮다면? AI가 바로 즉시 당신만을 위한 여행 계획을 짜드립니다.";
-const SITE_IMAGE = process.env.NEXT_PUBLIC_OG_IMAGE || "https://mytrip2.pro/og-image.png";
+const SITE_IMAGE = process.env.NEXT_PUBLIC_OG_IMAGE || "https://mytrip2.pro/og-image.jpg";
 const GA_ID = "G-DC122J4LJL";
 
 // ✅ [PWA & Metadata] 설정
