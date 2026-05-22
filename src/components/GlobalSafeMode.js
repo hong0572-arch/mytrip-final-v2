@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldCheck, ShieldAlert, PhoneCall, Timer, X, Send, User, ChevronUp, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, PhoneCall, Timer, X, Send, User, ChevronUp, AlertTriangle, Siren, Shield, Heart, Sparkles } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -127,7 +127,12 @@ export default function GlobalSafeMode() {
             return triggerToast('먼저 비상 보호자 정보를 등록해 주세요! 🛡️');
         }
         
-        const seconds = duration * 60;
+        const parsedDuration = Number(duration);
+        if (!parsedDuration || parsedDuration <= 0) {
+            return triggerToast('올바른 귀가 시간을 설정해 주세요! ⏱️');
+        }
+        
+        const seconds = parsedDuration * 60;
         const endTime = Date.now() + seconds * 1000;
         
         localStorage.setItem('safeMode_active', 'true');
@@ -238,23 +243,55 @@ export default function GlobalSafeMode() {
                 </div>
             )}
 
-            {/* 2. 우측 하단 플로팅 안심 가드 버튼 */}
-            <div className="fixed bottom-24 right-5 z-[998] pointer-events-auto flex flex-col items-end gap-2.5">
+            {/* 2. 가변 위치 플로팅 안심 가드 버튼 (시그니처 디자인: 가디언 하트 오브) */}
+            <div 
+                id="safe-mode-float"
+                className="fixed top-[calc(50%+55px)] right-0 z-[998] pointer-events-auto flex flex-col items-end gap-2.5 transition-transform duration-500 ease-[cubic-bezier(0.3,1,0.3,1)] pr-4 sm:pr-6"
+            >
                 {isActive && (
-                    <div className="bg-emerald-500 text-white text-[9px] font-black px-2.5 py-1 rounded-lg shadow-md animate-pulse border border-emerald-400">
-                        보호 중
+                    <div className="bg-emerald-500 text-white text-[9px] font-black px-2.5 py-1 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse border border-emerald-400 tracking-wide">
+                        🛡️ 안심 귀가 보호 중
                     </div>
                 )}
                 <button
                     onClick={() => setIsOpen(true)}
-                    className={`w-14 h-14 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.3)] flex items-center justify-center border-2 border-white transition-all duration-300 hover:scale-105 active:scale-95 ${
-                        isActive 
-                            ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 animate-pulse text-white shadow-[0_0_20px_rgba(16,185,129,0.6)]' 
-                            : 'bg-gradient-to-br from-gray-700 to-gray-900 text-amber-400 hover:from-gray-800 hover:to-black'
-                    }`}
+                    className="relative group flex items-center justify-center transition-transform duration-300 hover:scale-105 active:scale-95 outline-none"
+                    style={{ width: '60px', height: '60px' }}
                     title="Safe Mode 설정"
                 >
-                    <ShieldCheck size={28} className={isActive ? 'animate-spin-slow' : ''} />
+                    {isActive ? (
+                        <>
+                            {/* [ACTIVE] 강력한 에메랄드 세이프티 존 */}
+                            <span className="absolute inset-0 rounded-full bg-emerald-400 opacity-50 animate-ping" style={{ animationDuration: '2s' }}></span>
+                            <span className="absolute -inset-1 rounded-full bg-gradient-to-tr from-emerald-300 via-teal-500 to-emerald-600 blur-md opacity-80 animate-pulse"></span>
+                            
+                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-50 to-white border-2 border-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.5)] z-10 flex items-center justify-center overflow-hidden">
+                                <div className="relative flex items-center justify-center">
+                                    <Shield size={34} className="text-emerald-100" fill="currentColor" />
+                                    <Heart size={16} className="text-emerald-500 absolute animate-pulse" fill="currentColor" />
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            {/* [INACTIVE] 시그니처 다크 오로라 글래스 오브 */}
+                            {/* 외부의 은은한 오로라 글로우 */}
+                            <span className="absolute -inset-2 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500 blur-lg opacity-40 group-hover:opacity-75 transition-opacity duration-500 animate-pulse"></span>
+                            
+                            {/* 메인 다크 글래스 바디 */}
+                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-gray-800 to-gray-950 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.6)] z-10 flex items-center justify-center overflow-hidden">
+                                {/* 상단 유리 반사광(Glassmorphism Highlight) */}
+                                <div className="absolute top-0 left-0 w-full h-[45%] bg-gradient-to-b from-white/15 to-transparent rounded-t-full"></div>
+                                
+                                {/* 시그니처 커스텀 아이콘: 투명한 방패 속 뛰는 하트와 반짝임 */}
+                                <div className="relative flex items-center justify-center">
+                                    <Shield size={32} className="text-indigo-500/40" strokeWidth={1.5} />
+                                    <Heart size={14} className="text-rose-500 absolute animate-pulse" fill="currentColor" />
+                                    <Sparkles size={12} className="text-indigo-300 absolute -top-1.5 -right-2 opacity-80" />
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </button>
             </div>
 
@@ -334,14 +371,14 @@ export default function GlobalSafeMode() {
                                         </div>
                                     ) : (
                                         <form onSubmit={handleRegisterGuardian} className="space-y-3">
-                                            <div className="flex gap-2">
+                                            <div className="flex flex-col gap-2">
                                                 <input
                                                     type="text"
                                                     placeholder="보호자 성함 (예: 엄마)"
                                                     value={guardianName}
                                                     onChange={(e) => setGuardianName(e.target.value)}
                                                     required
-                                                    className="flex-1 bg-white border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
+                                                    className="w-full bg-white border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
                                                 />
                                                 <input
                                                     type="tel"
@@ -349,7 +386,7 @@ export default function GlobalSafeMode() {
                                                     value={guardianPhone}
                                                     onChange={(e) => setGuardianPhone(e.target.value)}
                                                     required
-                                                    className="flex-1 bg-white border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
+                                                    className="w-full bg-white border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
                                                 />
                                             </div>
                                             <button
@@ -369,20 +406,33 @@ export default function GlobalSafeMode() {
                                         2단계. 안심 약속 귀가 시간 설정
                                     </h4>
                                     
-                                    <div className="grid grid-cols-4 gap-2">
-                                        {[10, 20, 30, 60].map((mins) => (
-                                            <button
-                                                key={mins}
-                                                onClick={() => setDuration(mins)}
-                                                className={`py-3.5 rounded-xl text-xs font-black border transition active:scale-95 ${
-                                                    duration === mins
-                                                        ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
-                                                        : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
-                                                }`}
-                                            >
-                                                {mins}분
-                                            </button>
-                                        ))}
+                                    <div className="flex flex-col gap-2.5">
+                                        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-100 transition shadow-sm">
+                                            <input 
+                                                type="number"
+                                                min="1"
+                                                value={duration}
+                                                onChange={(e) => setDuration(e.target.value ? Number(e.target.value) : '')}
+                                                className="flex-1 bg-transparent text-sm font-black text-gray-900 outline-none w-full"
+                                                placeholder="직접 시간 입력 (예: 45)"
+                                            />
+                                            <span className="text-xs font-bold text-gray-500 shrink-0">분 뒤 알림</span>
+                                        </div>
+                                        <div className="grid grid-cols-4 gap-2">
+                                            {[10, 20, 30, 60].map((mins) => (
+                                                <button
+                                                    key={mins}
+                                                    onClick={() => setDuration(mins)}
+                                                    className={`py-2 rounded-lg text-[11px] font-black border transition active:scale-95 ${
+                                                        duration === mins
+                                                            ? 'bg-indigo-50 border-indigo-500 text-indigo-700'
+                                                            : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                                                    }`}
+                                                >
+                                                    {mins}분
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                     <p className="text-[10px] text-gray-400 font-bold px-1 leading-relaxed">
                                         💡 밤 10시 이후 이동할 때, 설정한 시간 내에 무사 귀가를 인증하지 않으면 보호자 알림 및 동행 단톡방에 경보 시스템 메시지가 자동으로 올라갑니다.

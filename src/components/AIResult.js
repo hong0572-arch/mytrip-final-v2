@@ -89,6 +89,24 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const dialRef = useRef(null);
     const [selectedIndex, setSelectedIndex] = useState(0);
 
+    // ✨ 패널의 열림/닫힘 상태에 맞춰 전역에 있는 Safe Mode 플로팅 버튼의 위치를 동적으로 조정
+    useEffect(() => {
+        const updateSafeModePos = () => {
+            const btn = document.getElementById('safe-mode-float');
+            if (btn) {
+                if (isPanelOpen) {
+                    const offset = window.innerWidth < 640 ? 'calc(75vw + 10px)' : '330px';
+                    btn.style.transform = `translateX(-${offset})`;
+                } else {
+                    btn.style.transform = 'translateX(0)';
+                }
+            }
+        };
+        updateSafeModePos();
+        window.addEventListener('resize', updateSafeModePos);
+        return () => window.removeEventListener('resize', updateSafeModePos);
+    }, [isPanelOpen]);
+
     const handleSelectPlace = (idx) => {
         setSelectedIndex(idx);
         if (scrollContainerRef.current) {
@@ -928,13 +946,13 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     <h1 className="text-xl sm:text-2xl font-bold text-white drop-shadow-lg w-full pr-12 leading-tight">{tripPlan.tripTitle}</h1>
                 </div>
 
-                {/* Right Top Buttons */}
-                <div className="absolute top-8 right-5 z-50 pointer-events-auto flex flex-col gap-3">
-                    <button onClick={() => router.push('/mypage')} className="bg-white/20 backdrop-blur-md p-2.5 rounded-full shadow-lg text-white hover:bg-white hover:text-indigo-600 transition border border-white/30" title="마이페이지">
+                {/* Right Top Buttons - Unified Vertical Toolbar */}
+                <div className="absolute top-8 right-4 sm:right-6 z-50 pointer-events-auto flex flex-col items-center bg-black/40 backdrop-blur-xl border border-white/20 rounded-[32px] p-2 shadow-2xl gap-2">
+                    <button onClick={() => router.push('/mypage')} className="p-2.5 rounded-full text-white hover:bg-white/20 transition-colors" title="마이페이지">
                         <User size={20} />
                     </button>
-                    <button onClick={() => setShowInfoModal(true)} className="bg-white/20 backdrop-blur-md p-2.5 rounded-full shadow-lg text-white hover:bg-white hover:text-rose-500 transition animate-pulse border border-rose-400/50" title="여행 정보">
-                        <Sparkles size={20} className="text-rose-200" />
+                    <button onClick={() => setShowInfoModal(true)} className="p-2.5 rounded-full text-rose-300 hover:bg-white/20 transition-colors relative" title="여행 정보">
+                        <Sparkles size={20} className="animate-pulse" />
                     </button>
                     <button onClick={() => {
                         if (isEditMode && tripId) {
@@ -942,51 +960,51 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         } else {
                             setIsEditMode(!isEditMode);
                         }
-                    }} className={`backdrop-blur-md p-2.5 rounded-full shadow-lg transition border border-white/30 ${isEditMode ? 'bg-indigo-600 text-white' : 'bg-white/20 text-white hover:bg-white hover:text-indigo-600'}`}>
+                    }} className={`p-2.5 rounded-full transition-colors ${isEditMode ? 'bg-indigo-500 text-white shadow-lg' : 'text-white hover:bg-white/20'}`} title="일정 편집">
                         {loadingAction === 'save' ? <Loader2 className="animate-spin" size={20} /> : (isEditMode ? <Check size={20} /> : <Pencil size={20} />)}
                     </button>
 
-                    {/* Travel Mode Selector & AI Optimization Button */}
                     {!isEditMode && (
-                        <div className="flex flex-col gap-2 mt-4 items-center">
-                            <div className="flex flex-col gap-2 bg-white/20 backdrop-blur-md p-1.5 rounded-full border border-white/30">
-                                <button 
-                                    onClick={() => setTravelMode('DRIVING')}
-                                    className={`p-2 rounded-full transition ${travelMode === 'DRIVING' ? 'bg-indigo-600 text-white shadow-lg' : 'text-white hover:bg-white/20'}`}
-                                    title="자동차"
-                                >
-                                    <Car size={18} />
-                                </button>
-                                <button 
-                                    onClick={() => setTravelMode('WALKING')}
-                                    className={`p-2 rounded-full transition ${travelMode === 'WALKING' ? 'bg-emerald-600 text-white shadow-lg' : 'text-white hover:bg-white/20'}`}
-                                    title="도보"
-                                >
-                                    <Footprints size={18} />
-                                </button>
-                                <button 
-                                    onClick={() => setTravelMode('TRANSIT')}
-                                    className={`p-2 rounded-full transition ${travelMode === 'TRANSIT' ? 'bg-amber-500 text-white shadow-lg' : 'text-white hover:bg-white/20'}`}
-                                    title="대중교통"
-                                >
-                                    <Train size={18} />
-                                </button>
-                            </div>
-                            
-                            {/* ⚡ AI 동선 최적화 단축키 */}
+                        <>
+                            <div className="w-8 h-[1px] bg-white/20 my-1"></div>
+
+                            <button 
+                                onClick={() => setTravelMode('DRIVING')}
+                                className={`p-2 rounded-full transition-colors ${travelMode === 'DRIVING' ? 'bg-indigo-500 text-white shadow-md' : 'text-gray-300 hover:bg-white/20 hover:text-white'}`}
+                                title="자동차"
+                            >
+                                <Car size={18} />
+                            </button>
+                            <button 
+                                onClick={() => setTravelMode('WALKING')}
+                                className={`p-2 rounded-full transition-colors ${travelMode === 'WALKING' ? 'bg-emerald-500 text-white shadow-md' : 'text-gray-300 hover:bg-white/20 hover:text-white'}`}
+                                title="도보"
+                            >
+                                <Footprints size={18} />
+                            </button>
+                            <button 
+                                onClick={() => setTravelMode('TRANSIT')}
+                                className={`p-2 rounded-full transition-colors ${travelMode === 'TRANSIT' ? 'bg-amber-500 text-white shadow-md' : 'text-gray-300 hover:bg-white/20 hover:text-white'}`}
+                                title="대중교통"
+                            >
+                                <Train size={18} />
+                            </button>
+
+                            <div className="w-8 h-[1px] bg-white/20 my-1"></div>
+
                             <button
                                 onClick={handleOptimizeItineraryRoute}
                                 disabled={loadingAction === 'optimize'}
-                                className="w-10 h-10 bg-gradient-to-br from-violet-500 to-indigo-600 text-amber-300 rounded-full border-2 border-white shadow-2xl flex items-center justify-center transition hover:scale-105 active:scale-95 duration-200"
+                                className="p-2.5 bg-gradient-to-br from-violet-500 to-indigo-600 text-amber-300 rounded-full shadow-lg hover:shadow-indigo-500/50 transition-all hover:scale-110 active:scale-95 border border-white/20"
                                 title="AI 동선 자동 최적화"
                             >
                                 {loadingAction === 'optimize' ? (
-                                    <Loader2 className="animate-spin text-white" size={16} />
+                                    <Loader2 className="animate-spin text-white" size={20} />
                                 ) : (
-                                    <Wand2 size={16} />
+                                    <Wand2 size={20} />
                                 )}
                             </button>
-                        </div>
+                        </>
                     )}
                 </div>
                 {/* Right Sliding Panel */}
@@ -995,9 +1013,16 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         {/* Toggle Button */}
                         <button 
                             onClick={() => setIsPanelOpen(!isPanelOpen)}
-                            className="absolute top-1/2 -left-10 transform -translate-y-1/2 bg-white/95 backdrop-blur-md p-2 rounded-l-2xl shadow-[-5px_0_10px_rgba(0,0,0,0.1)] text-indigo-600 hover:text-indigo-800 transition"
+                            className={`absolute top-1/2 ${isPanelOpen ? '-left-10' : '-left-[76px]'} transform -translate-y-1/2 bg-white/95 backdrop-blur-md p-2 rounded-l-2xl shadow-[-8px_0_15px_rgba(0,0,0,0.15)] text-indigo-600 hover:text-indigo-800 transition-all duration-300 z-[60] flex items-center ${!isPanelOpen ? 'animate-pulse ring-2 ring-indigo-500/50' : ''}`}
                         >
-                            {isPanelOpen ? <ChevronRight size={24} /> : <ChevronLeft size={24} />}
+                            {isPanelOpen ? (
+                                <ChevronRight size={24} />
+                            ) : (
+                                <>
+                                    <ChevronLeft size={24} className="shrink-0" />
+                                    <span className="text-xs font-black pr-1.5 whitespace-nowrap">일정</span>
+                                </>
+                            )}
                         </button>
                         
                         {/* Panel Header */}
