@@ -22,6 +22,13 @@ export default function GlobalSafeMode() {
     
     const timerRef = useRef(null);
     const pulseRef = useRef(null);
+    
+    // 오디오 사이렌 관련 상태 및 참조
+    const [isSirenPlaying, setIsSirenPlaying] = useState(false);
+    const audioCtxRef = useRef(null);
+    const oscillatorRef = useRef(null);
+    const gainNodeRef = useRef(null);
+    const sirenIntervalRef = useRef(null);
 
     // 1. 유저 인증 상태 연동 및 초기 로컬스토리지 복구
     useEffect(() => {
@@ -120,6 +127,80 @@ export default function GlobalSafeMode() {
         setShowToast(true);
         setTimeout(() => setShowToast(false), 3000);
     };
+
+    // 웹 오디오 API를 이용한 강력한 사이렌 생성기
+    const toggleSiren = () => {
+        if (isSirenPlaying) {
+            // 사이렌 끄기
+            if (sirenIntervalRef.current) clearInterval(sirenIntervalRef.current);
+            if (oscillatorRef.current) {
+                try { oscillatorRef.current.stop(); } catch (e) {}
+                oscillatorRef.current.disconnect();
+            }
+            if (gainNodeRef.current) gainNodeRef.current.disconnect();
+            if (audioCtxRef.current) audioCtxRef.current.close();
+            
+            audioCtxRef.current = null;
+            oscillatorRef.current = null;
+            gainNodeRef.current = null;
+            setIsSirenPlaying(false);
+            triggerToast('🚨 사이렌이 중지되었습니다.');
+            return;
+        }
+
+        // 사이렌 켜기
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtxRef.current = new AudioContext();
+            oscillatorRef.current = audioCtxRef.current.createOscillator();
+            gainNodeRef.current = audioCtxRef.current.createGain();
+
+            // 소리 크기 설정
+            gainNodeRef.current.gain.value = 1.0; 
+            
+            // 오실레이터 설정 (Square 파형이 날카롭고 시끄러움)
+            oscillatorRef.current.type = 'square';
+            oscillatorRef.current.frequency.value = 750; // 기본 주파수
+            
+            oscillatorRef.current.connect(gainNodeRef.current);
+            gainNodeRef.current.connect(audioCtxRef.current.destination);
+            
+            oscillatorRef.current.start();
+            
+            // 사이렌 삐용삐용 효과 (주파수 교차)
+            let isHigh = false;
+            sirenIntervalRef.current = setInterval(() => {
+                if (oscillatorRef.current) {
+                    oscillatorRef.current.frequency.setValueAtTime(
+                        isHigh ? 750 : 1200, 
+                        audioCtxRef.current.currentTime
+                    );
+                }
+                isHigh = !isHigh;
+                triggerVibration(1); // 소리와 함께 진동
+            }, 300);
+
+            setIsSirenPlaying(true);
+            triggerToast('🚨 긴급 사이렌이 작동 중입니다!');
+            
+            // 자동으로 보호자에게 위치 전송
+            handleSendLocationMessage();
+        } catch (err) {
+            console.error("오디오 재생 실패:", err);
+            triggerToast('⚠️ 현재 기기 환경에서 사이렌 오디오를 재생할 수 없습니다.');
+        }
+    };
+
+    // 컴포넌트 언마운트 시 오디오 정리
+    useEffect(() => {
+        return () => {
+            if (sirenIntervalRef.current) clearInterval(sirenIntervalRef.current);
+            if (oscillatorRef.current) {
+                try { oscillatorRef.current.stop(); } catch(e){}
+            }
+            if (audioCtxRef.current) audioCtxRef.current.close();
+        };
+    }, []);
 
     // 4. Safe Mode 켜기
     const handleToggleOn = () => {
@@ -243,10 +324,10 @@ export default function GlobalSafeMode() {
                 </div>
             )}
 
-            {/* 2. 가변 위치 플로팅 안심 가드 버튼 (시그니처 디자인: 가디언 하트 오브) */}
+            {/* 2. 하단 중앙 플로팅 안심 가드 버튼 (시그니처 디자인: 가디언 하트 오브) */}
             <div 
                 id="safe-mode-float"
-                className="fixed top-[calc(50%+55px)] right-0 z-[998] pointer-events-auto flex flex-col items-end gap-2.5 transition-transform duration-500 ease-[cubic-bezier(0.3,1,0.3,1)] pr-4 sm:pr-6"
+                className="fixed bottom-[105px] left-1/2 -translate-x-1/2 z-[998] pointer-events-auto flex flex-col items-center gap-2.5 transition-transform duration-500 ease-[cubic-bezier(0.3,1,0.3,1)]"
             >
                 {isActive && (
                     <div className="bg-emerald-500 text-white text-[9px] font-black px-2.5 py-1 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse border border-emerald-400 tracking-wide">
@@ -276,18 +357,18 @@ export default function GlobalSafeMode() {
                         <>
                             {/* [INACTIVE] 시그니처 다크 오로라 글래스 오브 */}
                             {/* 외부의 은은한 오로라 글로우 */}
-                            <span className="absolute -inset-2 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500 blur-lg opacity-40 group-hover:opacity-75 transition-opacity duration-500 animate-pulse"></span>
+                            <span className="absolute -inset-2 rounded-full bg-gradient-to-r from-indigo-500 via-red-500 to-rose-500 blur-lg opacity-40 group-hover:opacity-75 transition-opacity duration-500 animate-pulse"></span>
                             
-                            {/* 메인 다크 글래스 바디 */}
-                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-gray-800 to-gray-950 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.6)] z-10 flex items-center justify-center overflow-hidden">
+                            {/* 메인 비비드 글래스 바디 */}
+                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500 via-red-500 to-pink-500 border border-white/30 shadow-[0_8px_32px_rgba(239,68,68,0.4)] z-10 flex items-center justify-center overflow-hidden">
                                 {/* 상단 유리 반사광(Glassmorphism Highlight) */}
-                                <div className="absolute top-0 left-0 w-full h-[45%] bg-gradient-to-b from-white/15 to-transparent rounded-t-full"></div>
+                                <div className="absolute top-0 left-0 w-full h-[45%] bg-gradient-to-b from-white/40 to-transparent rounded-t-full"></div>
                                 
-                                {/* 시그니처 커스텀 아이콘: 투명한 방패 속 뛰는 하트와 반짝임 */}
+                                {/* 시그니처 커스텀 아이콘: 흰색 방패 속 뛰는 하트와 반짝임 */}
                                 <div className="relative flex items-center justify-center">
-                                    <Shield size={32} className="text-indigo-500/40" strokeWidth={1.5} />
-                                    <Heart size={14} className="text-rose-500 absolute animate-pulse" fill="currentColor" />
-                                    <Sparkles size={12} className="text-indigo-300 absolute -top-1.5 -right-2 opacity-80" />
+                                    <Shield size={32} className="text-white/90" strokeWidth={1.5} />
+                                    <Heart size={14} className="text-white absolute animate-pulse" fill="currentColor" />
+                                    <Sparkles size={12} className="text-yellow-300 absolute -top-1.5 -right-2 opacity-90" />
                                 </div>
                             </div>
                         </>
@@ -333,8 +414,20 @@ export default function GlobalSafeMode() {
                                 {/* 안심 가드 액션 버튼들 */}
                                 <div className="space-y-3">
                                     <button
+                                        onClick={toggleSiren}
+                                        className={`w-full py-4.5 rounded-2xl font-black text-base shadow-lg flex items-center justify-center gap-2 transition active:scale-95 border-b-4 ${
+                                            isSirenPlaying 
+                                                ? 'bg-rose-600 text-white shadow-rose-600/40 hover:bg-rose-700 border-rose-800 animate-pulse' 
+                                                : 'bg-rose-500 text-white shadow-rose-500/30 hover:bg-rose-600 border-rose-700'
+                                        }`}
+                                    >
+                                        <Siren size={20} className={isSirenPlaying ? "animate-spin" : ""} />
+                                        {isSirenPlaying ? '🚨 사이렌 중지' : '🚨 위급 상황 사이렌 울리기'}
+                                    </button>
+
+                                    <button
                                         onClick={handleSendLocationMessage}
-                                        className="w-full py-4.5 bg-indigo-600 text-white rounded-2xl font-black text-base shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 hover:bg-indigo-700 transition active:scale-95"
+                                        className="w-full py-4.5 bg-indigo-600 text-white rounded-2xl font-black text-base shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 hover:bg-indigo-700 transition active:scale-95 border-b-4 border-indigo-800"
                                     >
                                         <Send size={18} /> 보호자에게 실시간 위치 전송
                                     </button>

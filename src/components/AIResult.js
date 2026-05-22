@@ -27,15 +27,15 @@ const getTripLink = (keyword, destination, language) => {
         .split(',')[0]            // 콤마 뒤의 상세 주소나 국가명 제거
         .replace(/프라이빗 예약|입장권|티켓|투어|Reservation|Ticket|Tour/gi, '') // 불필요한 단어 제거
         .trim();
-    
+
     // 정제 후 너무 짧아지면 원본을 사용하되 괄호만 제거
     if (cleanKeyword.length < 2) {
         cleanKeyword = keyword.replace(/\([^)]*\)/g, '').trim();
     }
 
-    const query = `${cleanKeyword}`.trim(); 
+    const query = `${cleanKeyword}`.trim();
     const encodedKeyword = encodeURIComponent(query);
-    
+
     // ✨ 제공해주신 링크(https://www.trip.com/t/ZNx7SJcMgU2)에서 추출한 트래킹 파라미터 적용
     // Allianceid: 7681311, SID: 287502125
     return `https://kr.trip.com/travel-guide/search/?keyword=${encodedKeyword}&locale=${language === 'en' ? 'en-XX' : 'ko-KR'}&Allianceid=7681311&SID=287502125`;
@@ -89,24 +89,6 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const dialRef = useRef(null);
     const [selectedIndex, setSelectedIndex] = useState(0);
 
-    // ✨ 패널의 열림/닫힘 상태에 맞춰 전역에 있는 Safe Mode 플로팅 버튼의 위치를 동적으로 조정
-    useEffect(() => {
-        const updateSafeModePos = () => {
-            const btn = document.getElementById('safe-mode-float');
-            if (btn) {
-                if (isPanelOpen) {
-                    const offset = window.innerWidth < 640 ? 'calc(75vw + 10px)' : '330px';
-                    btn.style.transform = `translateX(-${offset})`;
-                } else {
-                    btn.style.transform = 'translateX(0)';
-                }
-            }
-        };
-        updateSafeModePos();
-        window.addEventListener('resize', updateSafeModePos);
-        return () => window.removeEventListener('resize', updateSafeModePos);
-    }, [isPanelOpen]);
-
     const handleSelectPlace = (idx) => {
         setSelectedIndex(idx);
         if (scrollContainerRef.current) {
@@ -145,11 +127,11 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
         if (place.coordinates?.lat && place.coordinates?.lng) {
             googleMapRef.current.panTo(place.coordinates);
             if (googleMapRef.current.getZoom() < 15) googleMapRef.current.setZoom(16);
-            
+
             if (!infoWindowRef.current) {
                 infoWindowRef.current = new window.google.maps.InfoWindow();
             }
-            
+
             const contentString = `
                 <div style="padding: 10px; max-width: 250px; font-family: sans-serif;">
                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 4px;">
@@ -360,36 +342,36 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
             if (!window.google || !mapRef.current) return;
             if (!googleMapRef.current) {
                 const startLocation = tripPlan.itinerary[0]?.places[0]?.coordinates || { lat: 35.6895, lng: 139.6917 };
-                googleMapRef.current = new google.maps.Map(mapRef.current, { 
-                    center: startLocation, 
-                    zoom: 13, 
-                    disableDefaultUI: true, 
-                    zoomControl: true, 
-                    gestureHandling: 'greedy', 
-                    styles: [{ featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }] 
+                googleMapRef.current = new google.maps.Map(mapRef.current, {
+                    center: startLocation,
+                    zoom: 13,
+                    disableDefaultUI: true,
+                    zoomControl: true,
+                    gestureHandling: 'greedy',
+                    styles: [{ featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }]
                 });
             }
             const map = googleMapRef.current;
             const directionsService = new google.maps.DirectionsService();
 
-            markersRef.current.forEach(m => m.setMap(null)); 
+            markersRef.current.forEach(m => m.setMap(null));
             polylineRef.current.forEach(p => p.setMap(null));
-            markersRef.current = []; 
+            markersRef.current = [];
             polylineRef.current = [];
-            
+
             const bounds = new google.maps.LatLngBounds();
-            
+
             tripPlan.itinerary.forEach((dayItem, index) => {
                 const isActive = index === currentDayIdx; // ✨ 현재 보고 있는 날짜인지 확인
                 const dayColor = isActive ? DAY_COLORS[index % DAY_COLORS.length] : '#E5E7EB'; // 비활성일은 회색
                 const zIndexBase = isActive ? 1000 : 100; // 활성일 마커를 위로
-                
+
                 const validPlaces = dayItem.places.filter(p => p.coordinates?.lat && p.coordinates?.lng);
-                
+
                 validPlaces.forEach((place, placeIdx) => {
                     const pos = place.coordinates;
                     if (isActive) bounds.extend(pos); // ✨ 활성일 장소들만 기준으로 줌 조절
-                    
+
                     const pinSvg = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
                         <svg width="40" height="42" viewBox="0 0 40 42" xmlns="http://www.w3.org/2000/svg">
                             <path d="M20 0C11.164 0 4 7.164 4 16c0 10.667 16 24 16 24s16-13.333 16-24c0-8.836-7.164-16-16-16z" fill="${dayColor}" stroke="white" stroke-width="2"/>
@@ -397,24 +379,24 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         </svg>
                     `)}`;
 
-                    const marker = new google.maps.Marker({ 
-                        position: pos, 
-                        map, 
-                        icon: { 
+                    const marker = new google.maps.Marker({
+                        position: pos,
+                        map,
+                        icon: {
                             url: pinSvg,
                             scaledSize: isActive ? new google.maps.Size(36, 38) : new google.maps.Size(24, 26),
                             anchor: isActive ? new google.maps.Point(18, 38) : new google.maps.Point(12, 26),
                             labelOrigin: isActive ? new google.maps.Point(18, 15) : new google.maps.Point(12, 10)
-                        }, 
-                        label: { 
-                            text: (placeIdx + 1).toString(), 
-                            color: dayColor, 
-                            fontWeight: "900", 
-                            fontSize: isActive ? "13px" : "9px" 
-                        }, 
+                        },
+                        label: {
+                            text: (placeIdx + 1).toString(),
+                            color: dayColor,
+                            fontWeight: "900",
+                            fontSize: isActive ? "13px" : "9px"
+                        },
                         zIndex: zIndexBase + placeIdx,
                     });
-                    
+
                     marker.addListener('click', () => {
                         let fIdx = 0;
                         for (let i = 0; i < index; i++) fIdx += tripPlan.itinerary[i].places.length;
@@ -428,7 +410,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 if (validPlaces.length > 1) {
                     const strokeOpacity = isActive ? 0.8 : 0.3;
                     const strokeWeight = isActive ? 5 : 2;
-                    
+
                     // ✨ 도보 모드일 경우 점선(Dashed)으로 표시
                     const polylineOptions = {
                         geodesic: true,
@@ -448,7 +430,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         for (let i = 0; i < validPlaces.length - 1; i++) {
                             directionsService.route({
                                 origin: validPlaces[i].coordinates,
-                                destination: validPlaces[i+1].coordinates,
+                                destination: validPlaces[i + 1].coordinates,
                                 travelMode: google.maps.TravelMode.TRANSIT
                             }, (result, status) => {
                                 if (status === 'OK') {
@@ -489,22 +471,22 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         </svg>
                     `)}`;
 
-                    const marker = new google.maps.Marker({ 
-                        position: hotel.coordinates, 
-                        map, 
-                        icon: { 
+                    const marker = new google.maps.Marker({
+                        position: hotel.coordinates,
+                        map,
+                        icon: {
                             url: hotelSvg,
                             scaledSize: new google.maps.Size(32, 34),
                             anchor: new google.maps.Point(16, 34),
                             labelOrigin: new google.maps.Point(16, 14)
                         },
-                        label: { 
-                            text: "H", 
-                            color: "#111827", 
-                            fontWeight: "900", 
-                            fontSize: "12px" 
-                        }, 
-                        title: hotel.name, 
+                        label: {
+                            text: "H",
+                            color: "#111827",
+                            fontWeight: "900",
+                            fontSize: "12px"
+                        },
+                        title: hotel.name,
                         zIndex: 200,
                         animation: google.maps.Animation.DROP
                     });
@@ -580,14 +562,14 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const handleAddBudget = () => { const newPlan = { ...tripPlan }; if (!newPlan.budgetBreakdown) newPlan.budgetBreakdown = []; newPlan.budgetBreakdown.push("새 항목: 0원"); setTripPlan(newPlan); if (!tripId) setShareUrl(null); };
     const handleDeleteBudget = (index) => { const newPlan = { ...tripPlan }; newPlan.budgetBreakdown.splice(index, 1); setTripPlan(newPlan); if (!tripId) setShareUrl(null); };
     const handleEditChange = (dayIndex, placeIndex, field, value) => { const newPlan = { ...tripPlan }; newPlan.itinerary[dayIndex].places[placeIndex][field] = value; setTripPlan(newPlan); if (!tripId) setShareUrl(null); };
-    
+
     // ✨ 기존 저장된 여행 일정 업데이트 로직 추가
     const handleUpdateItinerary = async () => {
         if (!tripId) {
             setIsEditMode(false);
             return;
         }
-        
+
         setLoadingAction('save');
         try {
             const tripRef = doc(db, "trips", tripId);
@@ -617,7 +599,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const handleOptimizeItineraryRoute = async () => {
         if (!tripPlan || !tripPlan.itinerary) return;
         setLoadingAction('optimize');
-        
+
         try {
             const newPlan = { ...tripPlan };
             let totalOptimized = 0;
@@ -640,7 +622,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     unvisited.forEach((curr, idx) => {
                         const currLat = parseFloat(curr.coordinates?.lat || curr.lat || 0);
                         const currLng = parseFloat(curr.coordinates?.lng || curr.lng || 0);
-                        
+
                         // 단순 유클리드 거리 공식 계산 (소수점 좌표 연산이므로 유효함)
                         const distance = Math.pow(currLat - lastLat, 2) + Math.pow(currLng - lastLng, 2);
                         if (distance < minDistance) {
@@ -673,7 +655,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
             if (totalOptimized > 0) {
                 setTripPlan({ ...newPlan });
-                
+
                 // 만약 저장된 일정이 있으면 Firestore에도 즉시 자동 동기화 반영
                 if (tripId) {
                     const tripRef = doc(db, "trips", tripId);
@@ -688,7 +670,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 }
 
                 triggerCustomToast("⚡ AI 자동 동선 최적화 완료! 걷는 거리와 꼬인 동선이 34% 이상 감소되었습니다. 🎉");
-                
+
                 // 지도 포커싱 재지정 및 강제 렌더링 유도
                 setSelectedIndex(0);
             } else {
@@ -711,22 +693,22 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
         try {
             // ✨ Firebase는 undefined 값을 허용하지 않으므로 정제 작업 필요
             const sanitizedTripPlan = JSON.parse(JSON.stringify(tripPlan));
-            const saveData = { 
-                ...sanitizedTripPlan, 
-                contactInfo: userInfo?.contact || "정보 없음", 
-                isEdited: Boolean(isEditMode || tripPlan.isEdited), 
-                createdAt: serverTimestamp() 
+            const saveData = {
+                ...sanitizedTripPlan,
+                contactInfo: userInfo?.contact || "정보 없음",
+                isEdited: Boolean(isEditMode || tripPlan.isEdited),
+                createdAt: serverTimestamp()
             };
-            
+
             const docRef = await addDoc(collection(db, "shared_links"), saveData);
             const generatedUrl = `${window.location.origin}/share/${docRef.id}`;
             setShareUrl(generatedUrl);
             return generatedUrl;
-        } catch (e) { 
-            console.error("Save Error Details:", e); 
+        } catch (e) {
+            console.error("Save Error Details:", e);
             // 구체적인 에러 메시지를 포함하여 사용자에게 안내 (디버깅 지원)
-            alert(`공유 링크 생성 중 오류가 발생했습니다:\n${e.code || e.message || '알 수 없는 오류'}`); 
-            return null; 
+            alert(`공유 링크 생성 중 오류가 발생했습니다:\n${e.code || e.message || '알 수 없는 오류'}`);
+            return null;
         }
     };
 
@@ -767,14 +749,14 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
         if (url) text += `\n🔗 일정 상세 보기: ${url}`; return text;
     };
 
-    const handleKakaoConsult = () => { 
-        if (loadingAction) return; 
-        setLoadingAction('kakao'); 
-        
+    const handleKakaoConsult = () => {
+        if (loadingAction) return;
+        setLoadingAction('kakao');
+
         // ✨ 즉시 창을 열어 팝업 차단을 방지합니다.
         const chatUrl = 'http://pf.kakao.com/_xcJhrn/chat';
         const win = window.open(chatUrl, '_blank');
-        
+
         // 창이 정상적으로 열리지 않았을 경우 (브라우저 설정 등)
         if (!win || win.closed || typeof win.closed === 'undefined') {
             alert("팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요!");
@@ -783,18 +765,18 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
         }
 
         // ✨ 백그라운드에서 공유 링크 생성 및 복사
-        getOrSaveShareUrl().then(async (url) => { 
-            if (url) { 
-                try { 
-                    await navigator.clipboard.writeText(formatTripText(url)); 
+        getOrSaveShareUrl().then(async (url) => {
+            if (url) {
+                try {
+                    await navigator.clipboard.writeText(formatTripText(url));
                 } catch (clipErr) {
                     console.warn("Clipboard failed:", clipErr);
-                } 
-            } 
+                }
+            }
         }).catch(err => {
             console.error("Kakao consult async error:", err);
         }).finally(() => {
-            setLoadingAction(null); 
+            setLoadingAction(null);
         });
     };
     const handleShare = async () => { setLoadingAction('share'); const url = await getOrSaveShareUrl(); if (url) { const text = formatTripText(url); if (navigator.share) { try { await navigator.share({ title: tripPlan.tripTitle, text: text }); } catch (e) { } } else { try { await navigator.clipboard.writeText(text); alert("링크가 복사되었습니다!"); } catch (e) { } } } setLoadingAction(null); };
@@ -898,7 +880,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
         const destContext = tripPlan?.destination || userInfo?.destination || "";
         // 명확함을 위해 이름 + 여행지(도시)를 조합하여 검색
         const query = `${name} ${destContext}`.trim();
-        
+
         // hl 파라미터를 추가하여 현재 앱 언어(ko/en)에 맞는 지도가 뜨게 함
         window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}&hl=${language}`, '_blank');
     };
@@ -928,7 +910,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const destName = tripPlan.destination?.split('#')[0]?.trim() || "여행지";
 
     return (
-            <div className="fixed inset-0 w-full z-[100] bg-[#030712] flex items-center justify-center font-sans overflow-hidden selection:bg-indigo-500/30">
+        <div className="fixed inset-0 w-full z-[100] bg-[#030712] flex items-center justify-center font-sans overflow-hidden selection:bg-indigo-500/30">
             <div id={CAPTURE_ID} className="w-full max-w-[480px] h-full sm:h-[92vh] sm:rounded-[48px] bg-black relative shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col border border-white/10 ring-1 ring-white/5">
 
                 {/* Full screen Map */}
@@ -968,21 +950,21 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         <>
                             <div className="w-8 h-[1px] bg-white/20 my-1"></div>
 
-                            <button 
+                            <button
                                 onClick={() => setTravelMode('DRIVING')}
                                 className={`p-2 rounded-full transition-colors ${travelMode === 'DRIVING' ? 'bg-indigo-500 text-white shadow-md' : 'text-gray-300 hover:bg-white/20 hover:text-white'}`}
                                 title="자동차"
                             >
                                 <Car size={18} />
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setTravelMode('WALKING')}
                                 className={`p-2 rounded-full transition-colors ${travelMode === 'WALKING' ? 'bg-emerald-500 text-white shadow-md' : 'text-gray-300 hover:bg-white/20 hover:text-white'}`}
                                 title="도보"
                             >
                                 <Footprints size={18} />
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setTravelMode('TRANSIT')}
                                 className={`p-2 rounded-full transition-colors ${travelMode === 'TRANSIT' ? 'bg-amber-500 text-white shadow-md' : 'text-gray-300 hover:bg-white/20 hover:text-white'}`}
                                 title="대중교통"
@@ -1011,9 +993,9 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {!isEditMode && (
                     <div className={`absolute top-0 right-0 h-full w-[75%] sm:w-[320px] bg-white/95 backdrop-blur-xl shadow-[-10px_0_30px_rgba(0,0,0,0.3)] z-40 transition-transform duration-500 ease-[cubic-bezier(0.3,1,0.3,1)] flex flex-col ${isPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                         {/* Toggle Button */}
-                        <button 
+                        <button
                             onClick={() => setIsPanelOpen(!isPanelOpen)}
-                            className={`absolute top-1/2 ${isPanelOpen ? '-left-10' : '-left-[76px]'} transform -translate-y-1/2 bg-white/95 backdrop-blur-md p-2 rounded-l-2xl shadow-[-8px_0_15px_rgba(0,0,0,0.15)] text-indigo-600 hover:text-indigo-800 transition-all duration-300 z-[60] flex items-center ${!isPanelOpen ? 'animate-pulse ring-2 ring-indigo-500/50' : ''}`}
+                            className={`absolute bottom-61 ${isPanelOpen ? '-left-10' : '-left-[76px]'} bg-white/95 backdrop-blur-md p-2 rounded-l-2xl shadow-[-8px_0_15px_rgba(0,0,0,0.15)] text-indigo-600 hover:text-indigo-800 transition-all duration-300 z-[60] flex items-center ${!isPanelOpen ? 'animate-pulse ring-2 ring-indigo-500/50' : ''}`}
                         >
                             {isPanelOpen ? (
                                 <ChevronRight size={24} />
@@ -1024,7 +1006,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                 </>
                             )}
                         </button>
-                        
+
                         {/* Panel Header */}
                         <div className="p-5 border-b border-gray-100/50 pt-12 sm:pt-6">
                             <h2 className="text-xl font-black text-gray-800 leading-tight">{tripPlan.tripTitle}</h2>
@@ -1041,7 +1023,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                                 return (
                                     <React.Fragment key={i}>
-                                        <div 
+                                        <div
                                             data-index={i}
                                             onClick={() => handleSelectPlace(i)}
                                             className={`vertical-place-card relative p-4 rounded-2xl border-2 transition-all cursor-pointer ${isSelected ? 'border-indigo-500 bg-white shadow-md' : 'border-transparent bg-gray-50/80 hover:bg-white hover:border-gray-200'}`}
@@ -1089,47 +1071,47 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             <div key={dayIdx} className="mb-6">
                                 <h4 className="font-bold text-sm bg-gray-100 inline-block px-2 py-1 rounded text-gray-700 mb-2">Day {dayItem.day}</h4>
                                 <div className="space-y-3">
-                                {dayItem.places.map((place, placeIdx) => (
-                                    <div key={placeIdx} className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
-                                        <div className="flex gap-2 mb-2">
-                                            <input type="text" value={place.name} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'name', e.target.value)} className="flex-1 font-bold text-sm p-1.5 border-b border-indigo-200 outline-none bg-indigo-50/50 rounded-t" placeholder="장소명" />
-                                            <button onClick={() => handleUpdateLocation(dayIdx, placeIdx, place.name)} className="p-1.5 rounded bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"><Search size={14} /></button>
-                                        </div>
-                                        <textarea value={place.description} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'description', e.target.value)} className="w-full text-xs p-1.5 border border-gray-200 rounded bg-gray-50 h-12 resize-none mb-2" placeholder="설명을 입력해주세요" />
-                                        
-                                        {/* ✨ 일정별 예산/지출 입력 필드 고도화 (MyPage와 동기화) */}
-                                        <div className="space-y-2 mb-3">
-                                            <div className="flex items-center gap-2 bg-indigo-50/30 p-2 rounded-lg border border-indigo-100/50">
-                                                <Wallet size={12} className="text-indigo-500 shrink-0" />
-                                                <span className="text-[9px] font-black text-indigo-400 uppercase shrink-0 w-8">Exp</span>
-                                                <input 
-                                                    type="number" 
-                                                    value={place.expectedBudget || ""} 
-                                                    onChange={(e) => handleEditChange(dayIdx, placeIdx, 'expectedBudget', parseInt(e.target.value) || 0)} 
-                                                    placeholder="예상 경비 (원)" 
-                                                    className="flex-1 bg-transparent border-none outline-none text-[11px] font-bold text-gray-700 placeholder:text-gray-300"
-                                                />
+                                    {dayItem.places.map((place, placeIdx) => (
+                                        <div key={placeIdx} className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
+                                            <div className="flex gap-2 mb-2">
+                                                <input type="text" value={place.name} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'name', e.target.value)} className="flex-1 font-bold text-sm p-1.5 border-b border-indigo-200 outline-none bg-indigo-50/50 rounded-t" placeholder="장소명" />
+                                                <button onClick={() => handleUpdateLocation(dayIdx, placeIdx, place.name)} className="p-1.5 rounded bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"><Search size={14} /></button>
                                             </div>
-                                            <div className="flex items-center gap-2 bg-rose-50/30 p-2 rounded-lg border border-rose-100/50">
-                                                <Receipt size={12} className="text-rose-500 shrink-0" />
-                                                <span className="text-[9px] font-black text-rose-400 uppercase shrink-0 w-8">Act</span>
-                                                <input 
-                                                    type="number" 
-                                                    value={place.actualExpense || ""} 
-                                                    onChange={(e) => handleEditChange(dayIdx, placeIdx, 'actualExpense', parseInt(e.target.value) || 0)} 
-                                                    placeholder="실제 지출 (원)" 
-                                                    className="flex-1 bg-transparent border-none outline-none text-[11px] font-bold text-rose-700 placeholder:text-rose-300"
-                                                />
-                                            </div>
-                                        </div>
+                                            <textarea value={place.description} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'description', e.target.value)} className="w-full text-xs p-1.5 border border-gray-200 rounded bg-gray-50 h-12 resize-none mb-2" placeholder="설명을 입력해주세요" />
 
-                                        <div className="flex gap-2">
-                                            <button onClick={() => handleMovePlace(dayIdx, placeIdx, -1)} disabled={placeIdx === 0} className="flex-1 py-1 rounded bg-gray-50 flex justify-center disabled:opacity-30"><ArrowUp size={14} /></button>
-                                            <button onClick={() => handleMovePlace(dayIdx, placeIdx, 1)} disabled={placeIdx === dayItem.places.length - 1} className="flex-1 py-1 rounded bg-gray-50 flex justify-center disabled:opacity-30"><ArrowDown size={14} /></button>
-                                            <button onClick={() => handleDeletePlace(dayIdx, placeIdx)} className="flex-1 py-1 bg-red-50 text-red-500 rounded flex justify-center items-center"><Trash2 size={14} /></button>
+                                            {/* ✨ 일정별 예산/지출 입력 필드 고도화 (MyPage와 동기화) */}
+                                            <div className="space-y-2 mb-3">
+                                                <div className="flex items-center gap-2 bg-indigo-50/30 p-2 rounded-lg border border-indigo-100/50">
+                                                    <Wallet size={12} className="text-indigo-500 shrink-0" />
+                                                    <span className="text-[9px] font-black text-indigo-400 uppercase shrink-0 w-8">Exp</span>
+                                                    <input
+                                                        type="number"
+                                                        value={place.expectedBudget || ""}
+                                                        onChange={(e) => handleEditChange(dayIdx, placeIdx, 'expectedBudget', parseInt(e.target.value) || 0)}
+                                                        placeholder="예상 경비 (원)"
+                                                        className="flex-1 bg-transparent border-none outline-none text-[11px] font-bold text-gray-700 placeholder:text-gray-300"
+                                                    />
+                                                </div>
+                                                <div className="flex items-center gap-2 bg-rose-50/30 p-2 rounded-lg border border-rose-100/50">
+                                                    <Receipt size={12} className="text-rose-500 shrink-0" />
+                                                    <span className="text-[9px] font-black text-rose-400 uppercase shrink-0 w-8">Act</span>
+                                                    <input
+                                                        type="number"
+                                                        value={place.actualExpense || ""}
+                                                        onChange={(e) => handleEditChange(dayIdx, placeIdx, 'actualExpense', parseInt(e.target.value) || 0)}
+                                                        placeholder="실제 지출 (원)"
+                                                        className="flex-1 bg-transparent border-none outline-none text-[11px] font-bold text-rose-700 placeholder:text-rose-300"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="flex gap-2">
+                                                <button onClick={() => handleMovePlace(dayIdx, placeIdx, -1)} disabled={placeIdx === 0} className="flex-1 py-1 rounded bg-gray-50 flex justify-center disabled:opacity-30"><ArrowUp size={14} /></button>
+                                                <button onClick={() => handleMovePlace(dayIdx, placeIdx, 1)} disabled={placeIdx === dayItem.places.length - 1} className="flex-1 py-1 rounded bg-gray-50 flex justify-center disabled:opacity-30"><ArrowDown size={14} /></button>
+                                                <button onClick={() => handleDeletePlace(dayIdx, placeIdx)} className="flex-1 py-1 bg-red-50 text-red-500 rounded flex justify-center items-center"><Trash2 size={14} /></button>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
                                 </div>
                                 <button onClick={() => handleAddPlace(dayIdx)} className="w-full mt-3 py-2 border-2 border-dashed border-indigo-200 rounded-xl text-indigo-500 text-xs font-bold flex items-center justify-center gap-1 hover:bg-indigo-50"><Plus size={14} /> 장소 추가</button>
                             </div>
@@ -1160,9 +1142,9 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         <button onClick={handleKakaoConsult} className="flex flex-col items-center gap-1 p-2 w-[65px] text-yellow-400 hover:text-yellow-300 transition active:scale-95 text-center">
                             <MessageCircle size={22} /><span className="text-[10px] font-bold">카톡상담</span>
                         </button>
-                        
+
                         {/* 🏨 안전 안심 숙소 찾기 단축 버튼 */}
-                        <button 
+                        <button
                             onClick={() => { setInfoModalTab('hotels'); setShowInfoModal(true); }}
                             className="flex flex-col items-center gap-1 p-2 w-[65px] text-emerald-400 hover:text-emerald-300 transition active:scale-95 text-center"
                         >
@@ -1188,8 +1170,8 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             <button onClick={() => setShowInfoModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200">
                                 <X size={18} />
                             </button>
-                            <h2 className="text-xl font-black mb-4 pr-10 text-gray-800 flex items-center gap-2"><Sparkles className="text-rose-500" size={20}/> 여정 꿀팁 박스</h2>
-                            
+                            <h2 className="text-xl font-black mb-4 pr-10 text-gray-800 flex items-center gap-2"><Sparkles className="text-rose-500" size={20} /> 여정 꿀팁 박스</h2>
+
                             <div className="flex bg-gray-100 p-1 rounded-xl mb-4">
                                 <button onClick={() => setInfoModalTab('budget')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'budget' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500'}`}>예산</button>
                                 <button onClick={() => setInfoModalTab('hotels')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'hotels' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500'}`}>추천 숙소</button>
@@ -1205,7 +1187,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                         </div>
                                         {tripPlan.budgetBreakdown?.map((item, idx) => (
                                             <div key={idx} className="flex gap-2 items-center p-3 bg-white border border-gray-100 rounded-xl shadow-sm">
-                                                <div className="w-6 h-6 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center font-bold text-xs shrink-0">{idx+1}</div>
+                                                <div className="w-6 h-6 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center font-bold text-xs shrink-0">{idx + 1}</div>
                                                 <p className="flex-1 text-sm font-medium text-gray-700">{item}</p>
                                             </div>
                                         ))}
@@ -1224,7 +1206,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                         };
                                     });
 
-                                    const displayedHotels = safetyFilterActive 
+                                    const displayedHotels = safetyFilterActive
                                         ? processedHotels
                                             .filter(h => h.safetyScore >= 9.5 || h.isMainStreet || h.soloFriendly)
                                             .sort((a, b) => b.safetyScore - a.safetyScore)
@@ -1244,20 +1226,20 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                     </div>
                                                 </div>
                                                 <label className="relative inline-flex items-center cursor-pointer">
-                                                    <input 
-                                                        type="checkbox" 
-                                                        checked={safetyFilterActive} 
-                                                        onChange={(e) => setSafetyFilterActive(e.target.checked)} 
-                                                        className="sr-only peer" 
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={safetyFilterActive}
+                                                        onChange={(e) => setSafetyFilterActive(e.target.checked)}
+                                                        className="sr-only peer"
                                                     />
                                                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
                                                 </label>
                                             </div>
 
                                             {displayedHotels.length > 0 ? displayedHotels.map((hotel, idx) => (
-                                                <div 
-                                                    key={idx} 
-                                                    className="place-card bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative group cursor-pointer hover:border-indigo-500 hover:shadow-md transition-all duration-300" 
+                                                <div
+                                                    key={idx}
+                                                    className="place-card bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative group cursor-pointer hover:border-indigo-500 hover:shadow-md transition-all duration-300"
                                                     onClick={() => { const link = getTripLink(hotel.name, userInfo?.destination || "", language); window.open(link, '_blank'); }}
                                                 >
                                                     <div className="flex items-center justify-between gap-2 mb-2">
@@ -1286,10 +1268,10 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                     </div>
 
                                                     <p className="text-xs text-gray-500 leading-relaxed bg-gray-50 p-2.5 rounded-xl border border-gray-100">{hotel.description}</p>
-                                                    
+
                                                     <div className="mt-3 flex justify-end gap-3.5 border-t border-gray-100 pt-3">
-                                                        <a href={getTripLink(hotel.name, userInfo?.destination || "", language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-extrabold text-indigo-600 flex items-center gap-0.5 hover:underline">Trip.com 최저가 <ExternalLink size={12}/></a>
-                                                        <a href={getKlookLink(hotel.name, language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-extrabold text-orange-500 flex items-center gap-0.5 hover:underline">Klook 액티비티 <ExternalLink size={12}/></a>
+                                                        <a href={getTripLink(hotel.name, userInfo?.destination || "", language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-extrabold text-indigo-600 flex items-center gap-0.5 hover:underline">Trip.com 최저가 <ExternalLink size={12} /></a>
+                                                        <a href={getKlookLink(hotel.name, language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-extrabold text-orange-500 flex items-center gap-0.5 hover:underline">Klook 액티비티 <ExternalLink size={12} /></a>
                                                     </div>
                                                 </div>
                                             )) : (
