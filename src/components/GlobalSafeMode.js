@@ -264,13 +264,39 @@ export default function GlobalSafeMode() {
     const handleSendLocationMessage = async () => {
         if (typeof window === 'undefined') return;
 
-        // 가상 혹은 실제 위치 링크 생성
+        triggerToast('📍 현재 위치 정보를 가져오는 중입니다...');
+
+        const getPosition = () => {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error('Geolocation not supported'));
+                } else {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    });
+                }
+            });
+        };
+
+        let textMessage = '';
         const mapUrl = `https://mytrip2.pro/share/live_safemode`;
-        const textMessage = `🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n실시간 안심 위치 보기:\n${mapUrl}`;
+
+        try {
+            const position = await getPosition();
+            const { latitude, longitude } = position.coords;
+            const googleMapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+            
+            textMessage = `🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n\n📍 나의 정확한 현재 위치 (구글 지도):\n${googleMapsUrl}\n\n🛡️ 안심 위치 앱으로 보기:\n${mapUrl}`;
+        } catch (error) {
+            console.error("위치 정보 획득 실패:", error);
+            textMessage = `🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n\n(위치 접근이 제한되어 기본 링크만 전송합니다)\n🛡️ 안심 위치 보기:\n${mapUrl}`;
+        }
 
         try {
             await navigator.clipboard.writeText(textMessage);
-            triggerToast('📋 안심 공유 텍스트가 클립보드에 복사되었습니다! 보호자에게 카톡/문자로 붙여넣어 주세요.');
+            triggerToast('📋 실제 위치가 포함된 공유 텍스트가 복사되었습니다!');
             
             // 즉시 카카오톡이나 SMS 전송 창 연동
             const encodedMsg = encodeURIComponent(textMessage);
