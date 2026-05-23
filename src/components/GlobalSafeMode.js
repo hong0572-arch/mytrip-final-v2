@@ -281,17 +281,20 @@ export default function GlobalSafeMode() {
         };
 
         let textMessage = '';
-        const mapUrl = `https://mytrip2.pro/share/live_safemode`;
+        const baseUrl = `https://mytrip2.pro/share/live_safemode`;
+        const encodedName = encodeURIComponent(user?.displayName || '여행자');
 
         try {
             const position = await getPosition();
             const { latitude, longitude } = position.coords;
             const googleMapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+            const mapUrl = `${baseUrl}?lat=${latitude}&lng=${longitude}&name=${encodedName}`;
             
-            textMessage = `🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n\n📍 나의 정확한 현재 위치 (구글 지도):\n${googleMapsUrl}\n\n🛡️ 안심 위치 앱으로 보기:\n${mapUrl}`;
+            textMessage = `🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n\n📍 나의 정확한 현재 위치 (구글 지도):\n${googleMapsUrl}\n\n🛡️ 전용 안심 대시보드로 보기:\n${mapUrl}`;
         } catch (error) {
             console.error("위치 정보 획득 실패:", error);
-            textMessage = `🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n\n(위치 접근이 제한되어 기본 링크만 전송합니다)\n🛡️ 안심 위치 보기:\n${mapUrl}`;
+            const mapUrl = `${baseUrl}?name=${encodedName}`;
+            textMessage = `🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n\n(위치 접근이 제한되어 기본 링크만 전송합니다)\n🛡️ 전용 안심 대시보드로 보기:\n${mapUrl}`;
         }
 
         try {
