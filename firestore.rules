@@ -59,6 +59,11 @@ service cloud.firestore {
     match /shared_links/{docId} {
       allow read, write: if true;
     }
+    // 7. 🛡️ 안심 귀가 실시간 세션 (Safe Mode)
+    match /safemode_sessions/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if request.auth.uid == userId;
+    }
         
   }
 }

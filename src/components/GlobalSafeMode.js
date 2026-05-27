@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldCheck, ShieldAlert, PhoneCall, Timer, X, Send, User, ChevronUp, AlertTriangle, Siren, Shield, Heart, Sparkles } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, PhoneCall, Timer, X, Send, User, ChevronUp, AlertTriangle, Siren, Shield, Heart, Sparkles, Search, Loader2 } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc, getDocs, query, where, onSnapshot, deleteDoc } from 'firebase/firestore';
 
 export default function GlobalSafeMode() {
     const [user, setUser] = useState(null);
@@ -13,12 +13,23 @@ export default function GlobalSafeMode() {
     const [isActive, setIsActive] = useState(false);
     const [duration, setDuration] = useState(30); // 분 단위
     const [timeLeft, setTimeLeft] = useState(0); // 초 단위
+    const [guardianUserId, setGuardianUserId] = useState('');
     const [guardianName, setGuardianName] = useState('');
     const [guardianPhone, setGuardianPhone] = useState('');
     const [isRegistered, setIsRegistered] = useState(false);
     const [showTimerAlert, setShowTimerAlert] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
+
+    // 보호자 검색 및 등록 관련 상태
+    const [registerTab, setRegisterTab] = useState('search'); // 'search' or 'manual'
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [searchStatus, setSearchStatus] = useState('idle'); // 'idle', 'searching', 'result', 'no-result'
+
+    // 글로벌 타 가입자 보호 경보 상태
+    const [otherExpiredSession, setOtherExpiredSession] = useState(null);
+    const [isGuardianSirenPlaying, setIsGuardianSirenPlaying] = useState(false);
     
     const timerRef = useRef(null);
     const pulseRef = useRef(null);
@@ -30,6 +41,12 @@ export default function GlobalSafeMode() {
     const gainNodeRef = useRef(null);
     const sirenIntervalRef = useRef(null);
 
+    // 보호자 기기용 사이렌 참조
+    const guardianAudioCtxRef = useRef(null);
+    const guardianOscillatorRef = useRef(null);
+    const guardianGainNodeRef = useRef(null);
+    const guardianSirenIntervalRef = useRef(null);
+
     // 1. 유저 인증 상태 연동 및 초기 로컬스토리지 복구
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((currUser) => {
@@ -39,12 +56,14 @@ export default function GlobalSafeMode() {
         // 로컬스토리지로부터 값 읽어오기
         const savedActive = localStorage.getItem('safeMode_active') === 'true';
         const savedEndTime = localStorage.getItem('safeMode_endTime');
+        const savedGUserId = localStorage.getItem('safeMode_gUserId') || '';
         const savedGName = localStorage.getItem('safeMode_gName') || '';
         const savedGPhone = localStorage.getItem('safeMode_gPhone') || '';
         
+        setGuardianUserId(savedGUserId);
         setGuardianName(savedGName);
         setGuardianPhone(savedGPhone);
-        if (savedGName && savedGPhone) setIsRegistered(true);
+        if (savedGName) setIsRegistered(true);
 
         if (savedActive && savedEndTime) {
             const end = parseInt(savedEndTime);
@@ -61,7 +80,44 @@ export default function GlobalSafeMode() {
         return () => unsubscribe();
     }, []);
 
-    // 2. 타이머 틱 작동
+    // 2. [보호자용] 실시간 타 가입자 비상 모니터링 리스너
+    useEffect(() => {
+        if (!user) {
+            setOtherExpiredSession(null);
+            toggleGuardianSiren(false);
+            return;
+        }
+
+        // 자신이 보호자로 지정되어 있고, 상태가 'expired'인 세션을 실시간 감시
+        const q = query(
+            collection(db, "safemode_sessions"), 
+            where("guardianUserId", "==", user.uid),
+            where("status", "==", "expired")
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            if (!snapshot.empty) {
+                // 경보 중인 세션이 하나 이상 존재하면 첫 번째 세션을 등록하고 사이렌을 가동
+                const activeAlertDoc = snapshot.docs[0].data();
+                setOtherExpiredSession({
+                    id: snapshot.docs[0].id,
+                    ...activeAlertDoc
+                });
+                // 보호자가 사이렌이 재생 중이지 않다면 자동 재생 시도
+                toggleGuardianSiren(true);
+            } else {
+                setOtherExpiredSession(null);
+                toggleGuardianSiren(false);
+            }
+        });
+
+        return () => {
+            unsubscribe();
+            toggleGuardianSiren(false);
+        };
+    }, [user]);
+
+    // 3. 타이머 틱 작동
     useEffect(() => {
         if (isActive && timeLeft > 0) {
             timerRef.current = setInterval(() => {
@@ -87,7 +143,7 @@ export default function GlobalSafeMode() {
         return () => clearInterval(timerRef.current);
     }, [isActive, timeLeft]);
 
-    // 3. 타이머 만료 처리
+    // 4. 타이머 만료 처리
     const handleTimerExpire = async () => {
         setIsActive(false);
         localStorage.removeItem('safeMode_active');
@@ -95,6 +151,42 @@ export default function GlobalSafeMode() {
         
         setShowTimerAlert(true);
         triggerVibration(3);
+
+        // 🚨 타이머 만료 시 즉시 사이렌 자동 가동
+        if (!isSirenPlaying) {
+            toggleSiren(true);
+        }
+
+        // Firestore 세션 상태 업데이트 (expired)
+        try {
+            if (user) {
+                const sessionRef = doc(db, "safemode_sessions", user.uid);
+                await setDoc(sessionRef, {
+                    status: 'expired',
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+            }
+        } catch (err) {
+            console.error("세션 상태 만료 업데이트 실패:", err);
+        }
+
+        // 보호자에게 실시간 만료 경보 알림 전송 (앱 가입 보호자용)
+        if (guardianUserId) {
+            try {
+                await addDoc(collection(db, "match_requests"), {
+                    type: "safemode_expired",
+                    senderId: user.uid,
+                    senderName: user.displayName || '여행자',
+                    targetMateId: guardianUserId,
+                    targetMateName: guardianName,
+                    status: "pending",
+                    message: `🚨 [안심 귀가 경보] ${user.displayName || '여행자'}님의 안전 타이머가 완료되었습니다. 안전을 즉시 확인하세요!`,
+                    createdAt: serverTimestamp()
+                });
+            } catch (err) {
+                console.error("보호자 비상 알림 발송 실패:", err);
+            }
+        }
         
         // Firebase 동행인 채팅방으로 비상 메시지 전송 시도
         try {
@@ -113,6 +205,54 @@ export default function GlobalSafeMode() {
         }
     };
 
+    // 5. GPS 실시간 위치 추적 인터벌
+    useEffect(() => {
+        if (!isActive || !user) return;
+
+        const updateLocation = async () => {
+            if (typeof window !== 'undefined' && navigator.geolocation) {
+                // PC 브라우저나 건물 안 테스트를 위해 일반 정확도(enableHighAccuracy: false)로 획득을 시도합니다.
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        const { latitude, longitude } = position.coords;
+                        try {
+                            const sessionRef = doc(db, "safemode_sessions", user.uid);
+                            await setDoc(sessionRef, {
+                                location: { lat: latitude, lng: longitude },
+                                updatedAt: serverTimestamp()
+                            }, { merge: true });
+                            console.log("GPS Location updated:", latitude, longitude);
+                        } catch (err) {
+                            console.error("GPS Firestore 업데이트 실패:", err);
+                        }
+                    },
+                    async (error) => {
+                        console.warn(`GPS 위치 획득 실패 (코드: ${error.code}): ${error.message}`);
+                        
+                        // [테스트 폴백] 위치 권한이 없거나 획득 실패한 경우에도 로컬 테스트 차질 및 크래시를 방지하기 위해 가상 좌표를 기록합니다.
+                        try {
+                            const sessionRef = doc(db, "safemode_sessions", user.uid);
+                            await setDoc(sessionRef, {
+                                location: { lat: 37.5665, lng: 126.9780 }, // 서울 중심 좌표 폴백
+                                updatedAt: serverTimestamp(),
+                                isMockLocation: true
+                            }, { merge: true });
+                            console.log("💡 GPS 위치 획득 실패로 인해 테스트용 폴백 좌표(서울)가 세션에 기록되었습니다.");
+                        } catch (err) {
+                            console.error("폴백 위치 Firestore 업데이트 실패:", err);
+                        }
+                    },
+                    { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+                );
+            }
+        };
+
+        updateLocation(); // 최초 1회 즉시 실행
+        const locationInterval = setInterval(updateLocation, 15000); // 15초 주기
+
+        return () => clearInterval(locationInterval);
+    }, [isActive, user]);
+
     // 진동 효과 (모바일 웹 지원)
     const triggerVibration = (count = 1) => {
         if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
@@ -128,9 +268,11 @@ export default function GlobalSafeMode() {
         setTimeout(() => setShowToast(false), 3000);
     };
 
-    // 웹 오디오 API를 이용한 강력한 사이렌 생성기
-    const toggleSiren = () => {
-        if (isSirenPlaying) {
+    // 웹 오디오 API를 이용한 강력한 사이렌 생성기 (피호출자 기기용)
+    const toggleSiren = (forceState) => {
+        const targetState = typeof forceState === 'boolean' ? forceState : !isSirenPlaying;
+
+        if (!targetState) {
             // 사이렌 끄기
             if (sirenIntervalRef.current) clearInterval(sirenIntervalRef.current);
             if (oscillatorRef.current) {
@@ -148,6 +290,8 @@ export default function GlobalSafeMode() {
             return;
         }
 
+        if (isSirenPlaying) return; // 이미 실행 중이면 중복 실행 방지
+
         // 사이렌 켜기
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -158,7 +302,7 @@ export default function GlobalSafeMode() {
             // 소리 크기 설정
             gainNodeRef.current.gain.value = 1.0; 
             
-            // 오실레이터 설정 (Square 파형이 날카롭고 시끄러움)
+            // 오실레이터 설정 (Square 파형)
             oscillatorRef.current.type = 'square';
             oscillatorRef.current.frequency.value = 750; // 기본 주파수
             
@@ -191,6 +335,61 @@ export default function GlobalSafeMode() {
         }
     };
 
+    // 보호자 기기용 날카로운 톱니파 비상 경보 사이렌 생성기
+    const toggleGuardianSiren = (forceState) => {
+        const targetState = typeof forceState === 'boolean' ? forceState : !isGuardianSirenPlaying;
+
+        if (!targetState) {
+            if (guardianSirenIntervalRef.current) clearInterval(guardianSirenIntervalRef.current);
+            if (guardianOscillatorRef.current) {
+                try { guardianOscillatorRef.current.stop(); } catch (e) {}
+                guardianOscillatorRef.current.disconnect();
+            }
+            if (guardianGainNodeRef.current) guardianGainNodeRef.current.disconnect();
+            if (guardianAudioCtxRef.current) guardianAudioCtxRef.current.close();
+
+            guardianAudioCtxRef.current = null;
+            guardianOscillatorRef.current = null;
+            guardianGainNodeRef.current = null;
+            setIsGuardianSirenPlaying(false);
+            return;
+        }
+
+        if (isGuardianSirenPlaying) return;
+
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            guardianAudioCtxRef.current = new AudioContext();
+            guardianOscillatorRef.current = guardianAudioCtxRef.current.createOscillator();
+            guardianGainNodeRef.current = guardianAudioCtxRef.current.createGain();
+
+            guardianGainNodeRef.current.gain.value = 0.8;
+            guardianOscillatorRef.current.type = 'sawtooth'; // 톱니파
+            guardianOscillatorRef.current.frequency.value = 850;
+
+            guardianOscillatorRef.current.connect(guardianGainNodeRef.current);
+            guardianGainNodeRef.current.connect(guardianAudioCtxRef.current.destination);
+            
+            guardianOscillatorRef.current.start();
+
+            let isHigh = false;
+            guardianSirenIntervalRef.current = setInterval(() => {
+                if (guardianOscillatorRef.current) {
+                    guardianOscillatorRef.current.frequency.setValueAtTime(
+                        isHigh ? 850 : 1350,
+                        guardianAudioCtxRef.current.currentTime
+                    );
+                }
+                isHigh = !isHigh;
+                triggerVibration(2);
+            }, 250);
+
+            setIsGuardianSirenPlaying(true);
+        } catch (err) {
+            console.error("보호자 사이렌 재생 실패:", err);
+        }
+    };
+
     // 컴포넌트 언마운트 시 오디오 정리
     useEffect(() => {
         return () => {
@@ -199,12 +398,18 @@ export default function GlobalSafeMode() {
                 try { oscillatorRef.current.stop(); } catch(e){}
             }
             if (audioCtxRef.current) audioCtxRef.current.close();
+
+            if (guardianSirenIntervalRef.current) clearInterval(guardianSirenIntervalRef.current);
+            if (guardianOscillatorRef.current) {
+                try { guardianOscillatorRef.current.stop(); } catch(e){}
+            }
+            if (guardianAudioCtxRef.current) guardianAudioCtxRef.current.close();
         };
     }, []);
 
-    // 4. Safe Mode 켜기
-    const handleToggleOn = () => {
-        if (!guardianName.trim() || !guardianPhone.trim()) {
+    // 6. Safe Mode 켜기
+    const handleToggleOn = async () => {
+        if (!guardianName.trim()) {
             return triggerToast('먼저 비상 보호자 정보를 등록해 주세요! 🛡️');
         }
         
@@ -224,12 +429,51 @@ export default function GlobalSafeMode() {
         triggerToast('🟢 Safe Mode가 가동되었습니다. 보호 상태가 활성화됩니다!');
         triggerVibration(1);
 
-        // 커스텀 이벤트 전송 (AIResult 등에서 감지용)
+        // Firestore 실시간 보호 세션 시작
+        try {
+            const sessionRef = doc(db, "safemode_sessions", user.uid);
+            await setDoc(sessionRef, {
+                userId: user.uid,
+                userName: user.displayName || '여행자',
+                guardianUserId: guardianUserId || '',
+                guardianName: guardianName,
+                guardianPhone: guardianPhone || '',
+                status: 'active',
+                duration: parsedDuration,
+                endTime: endTime,
+                location: null,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+        } catch (err) {
+            console.error("보호 세션 문서 생성 실패:", err);
+        }
+
+        // 가입된 보호자에게 보호 시작 실시간 알림 발송
+        if (guardianUserId) {
+            try {
+                await addDoc(collection(db, "match_requests"), {
+                    type: "safemode_started",
+                    senderId: user.uid,
+                    senderName: user.displayName || '여행자',
+                    targetMateId: guardianUserId,
+                    targetMateName: guardianName,
+                    status: "pending",
+                    message: `🛡️ [Safe Mode] ${user.displayName || '여행자'}님이 안심 귀가 이동을 시작했습니다. 실시간 대시보드에서 지켜봐주세요!`,
+                    sessionUrl: `/share/live_safemode?userId=${user.uid}`,
+                    createdAt: serverTimestamp()
+                });
+            } catch (err) {
+                console.error("보호 시작 알림 발송 실패:", err);
+            }
+        }
+
+        // 커스텀 이벤트 전송
         window.dispatchEvent(new CustomEvent('safeModeChanged', { detail: { active: true, duration: seconds } }));
     };
 
-    // 5. Safe Mode 끄기 (안전 확인 완료)
-    const handleToggleOff = () => {
+    // 7. Safe Mode 끄기 (안전 확인 완료)
+    const handleToggleOff = async () => {
         localStorage.removeItem('safeMode_active');
         localStorage.removeItem('safeMode_endTime');
         
@@ -237,11 +481,43 @@ export default function GlobalSafeMode() {
         setTimeLeft(0);
         setShowTimerAlert(false);
         triggerToast('🛡️ 귀가 약속이 해제되었습니다. 안전한 복귀를 축하합니다!');
+
+        // 사이렌이 켜져 있었다면 중지
+        if (isSirenPlaying) {
+            toggleSiren(false);
+        }
+
+        // Firestore 실시간 보호 세션 종료 및 알림 발송
+        try {
+            if (user) {
+                const sessionRef = doc(db, "safemode_sessions", user.uid);
+                await deleteDoc(sessionRef);
+            }
+        } catch (err) {
+            console.error("보호 세션 삭제 실패:", err);
+        }
+
+        if (guardianUserId) {
+            try {
+                await addDoc(collection(db, "match_requests"), {
+                    type: "safemode_safe",
+                    senderId: user.uid,
+                    senderName: user.displayName || '여행자',
+                    targetMateId: guardianUserId,
+                    targetMateName: guardianName,
+                    status: "pending",
+                    message: `🛡️ [Safe Mode 완료] ${user.displayName || '여행자'}님이 안전하게 무사 귀가했습니다.`,
+                    createdAt: serverTimestamp()
+                });
+            } catch (err) {
+                console.error("보호 완료 알림 발송 실패:", err);
+            }
+        }
         
         window.dispatchEvent(new CustomEvent('safeModeChanged', { detail: { active: false } }));
     };
 
-    // 6. 보호자 연락처 등록
+    // 8. 보호자 연락처 수동 등록
     const handleRegisterGuardian = (e) => {
         e.preventDefault();
         if (!guardianName.trim() || !guardianPhone.trim()) return;
@@ -252,15 +528,83 @@ export default function GlobalSafeMode() {
         triggerToast('✅ 보호자 정보가 등록되었습니다.');
     };
 
+    // 앱 사용자 검색 함수
+    const handleSearchUser = async (e) => {
+        e.preventDefault();
+        if (!searchQuery.trim()) return;
+        setSearchStatus('searching');
+        try {
+            const usersRef = collection(db, "users");
+            const qEmail = query(usersRef, where("email", "==", searchQuery.trim()));
+            const qName = query(usersRef, where("name", "==", searchQuery.trim()));
+            const [emailSnap, nameSnap] = await Promise.all([getDocs(qEmail), getDocs(qName)]);
+            
+            const resultsMap = new Map();
+            emailSnap.forEach(doc => {
+                if (doc.id !== user.uid) resultsMap.set(doc.id, { id: doc.id, ...doc.data() });
+            });
+            nameSnap.forEach(doc => {
+                if (doc.id !== user.uid) resultsMap.set(doc.id, { id: doc.id, ...doc.data() });
+            });
+            
+            const results = Array.from(resultsMap.values());
+            setSearchResults(results);
+            setSearchStatus(results.length > 0 ? 'result' : 'no-result');
+        } catch (error) {
+            console.error("보호자 검색 실패:", error);
+            setSearchStatus('idle');
+        }
+    };
+
+    // 검색된 사용자 보호자로 선택
+    const handleSelectUserGuardian = async (targetUser) => {
+        const name = targetUser.name || targetUser.displayName || '보호자';
+        const phone = targetUser.phoneNumber || '';
+        
+        setGuardianUserId(targetUser.id);
+        setGuardianName(name);
+        setGuardianPhone(phone);
+        setIsRegistered(true);
+
+        localStorage.setItem('safeMode_gUserId', targetUser.id);
+        localStorage.setItem('safeMode_gName', name);
+        localStorage.setItem('safeMode_gPhone', phone);
+
+        // 보호자 등록 자동 알림 발송
+        try {
+            await addDoc(collection(db, "match_requests"), {
+                type: "safemode_guardian_registered",
+                senderId: user.uid,
+                senderName: user.displayName || '여행자',
+                targetMateId: targetUser.id,
+                targetMateName: name,
+                status: "pending",
+                message: `🛡️ [Safe Mode] ${user.displayName || '여행자'}님이 당신을 비상 보호자로 등록했습니다.`,
+                createdAt: serverTimestamp()
+            });
+            triggerToast(`✅ ${name}님을 비상 보호자로 등록하고 알림을 보냈습니다.`);
+        } catch (error) {
+            console.error("보호자 등록 알림 실패:", error);
+            triggerToast(`✅ 보호자 정보가 저장되었습니다.`);
+        }
+
+        // 검색 상태 리셋
+        setSearchQuery('');
+        setSearchResults([]);
+        setSearchStatus('idle');
+    };
+
     const handleResetGuardian = () => {
         setIsRegistered(false);
+        setGuardianUserId('');
         setGuardianName('');
         setGuardianPhone('');
+        localStorage.removeItem('safeMode_gUserId');
         localStorage.removeItem('safeMode_gName');
         localStorage.removeItem('safeMode_gPhone');
     };
 
-    // 7. 실시간 위치 문자 링크 공유 전송
+    // 9. 실시간 위치 문자 링크 공유 전송
     const handleSendLocationMessage = async () => {
         if (typeof window === 'undefined') return;
 
@@ -288,12 +632,12 @@ export default function GlobalSafeMode() {
             const position = await getPosition();
             const { latitude, longitude } = position.coords;
             const googleMapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
-            const mapUrl = `${baseUrl}?lat=${latitude}&lng=${longitude}&name=${encodedName}`;
+            const mapUrl = `${baseUrl}?lat=${latitude}&lng=${longitude}&name=${encodedName}&userId=${user?.uid || ''}`;
             
             textMessage = `🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n\n📍 나의 정확한 현재 위치 (구글 지도):\n${googleMapsUrl}\n\n🛡️ 전용 안심 대시보드로 보기:\n${mapUrl}`;
         } catch (error) {
             console.error("위치 정보 획득 실패:", error);
-            const mapUrl = `${baseUrl}?name=${encodedName}`;
+            const mapUrl = `${baseUrl}?name=${encodedName}&userId=${user?.uid || ''}`;
             textMessage = `🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n\n(위치 접근이 제한되어 기본 링크만 전송합니다)\n🛡️ 전용 안심 대시보드로 보기:\n${mapUrl}`;
         }
 
@@ -305,7 +649,7 @@ export default function GlobalSafeMode() {
             const encodedMsg = encodeURIComponent(textMessage);
             const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
             
-            if (isMobile) {
+            if (isMobile && guardianPhone) {
                 window.location.href = `sms:${guardianPhone}?body=${encodedMsg}`;
             } else {
                 window.open(`https://share.kakao.com/talk/friends/picker/link`, '_blank');
@@ -385,15 +729,12 @@ export default function GlobalSafeMode() {
                     ) : (
                         <>
                             {/* [INACTIVE] 시그니처 다크 오로라 글래스 오브 */}
-                            {/* 외부의 은은한 오로라 글로우 */}
                             <span className="absolute -inset-2 rounded-full bg-gradient-to-r from-indigo-500 via-red-500 to-rose-500 blur-lg opacity-40 group-hover:opacity-75 transition-opacity duration-500 animate-pulse"></span>
                             
                             {/* 메인 비비드 글래스 바디 */}
                             <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500 via-red-500 to-pink-500 border border-white/30 shadow-[0_8px_32px_rgba(239,68,68,0.4)] z-10 flex items-center justify-center overflow-hidden">
-                                {/* 상단 유리 반사광(Glassmorphism Highlight) */}
                                 <div className="absolute top-0 left-0 w-full h-[45%] bg-gradient-to-b from-white/40 to-transparent rounded-t-full"></div>
                                 
-                                {/* 시그니처 커스텀 아이콘: 흰색 방패 속 뛰는 하트와 반짝임 */}
                                 <div className="relative flex items-center justify-center">
                                     <Shield size={32} className="text-white/90" strokeWidth={1.5} />
                                     <Heart size={14} className="text-white absolute animate-pulse" fill="currentColor" />
@@ -436,14 +777,14 @@ export default function GlobalSafeMode() {
                                     </div>
                                     
                                     <div className="flex justify-center items-center gap-1.5 mt-3 text-xs font-bold text-emerald-700 bg-white/60 inline-flex px-3 py-1 rounded-full border border-emerald-200/50">
-                                        <User size={12} /> 보호자: {guardianName} ({guardianPhone})
+                                        <User size={12} /> 보호자: {guardianName} {guardianPhone && `(${guardianPhone})`}
                                     </div>
                                 </div>
 
                                 {/* 안심 가드 액션 버튼들 */}
                                 <div className="space-y-3">
                                     <button
-                                        onClick={toggleSiren}
+                                        onClick={() => toggleSiren()}
                                         className={`w-full py-4.5 rounded-2xl font-black text-base shadow-lg flex items-center justify-center gap-2 transition active:scale-95 border-b-4 ${
                                             isSirenPlaying 
                                                 ? 'bg-rose-600 text-white shadow-rose-600/40 hover:bg-rose-700 border-rose-800 animate-pulse' 
@@ -482,7 +823,8 @@ export default function GlobalSafeMode() {
                                         <div className="bg-white p-4 rounded-2xl border border-gray-100 flex justify-between items-center shadow-sm">
                                             <div>
                                                 <p className="text-sm font-black text-gray-800">{guardianName}</p>
-                                                <p className="text-xs font-bold text-gray-400 mt-0.5">{guardianPhone}</p>
+                                                {guardianPhone && <p className="text-xs font-bold text-gray-400 mt-0.5">{guardianPhone}</p>}
+                                                {guardianUserId && <span className="inline-block mt-1.5 text-[9px] font-black bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded">서비스 연동 회원</span>}
                                             </div>
                                             <button 
                                                 onClick={handleResetGuardian}
@@ -492,32 +834,107 @@ export default function GlobalSafeMode() {
                                             </button>
                                         </div>
                                     ) : (
-                                        <form onSubmit={handleRegisterGuardian} className="space-y-3">
-                                            <div className="flex flex-col gap-2">
-                                                <input
-                                                    type="text"
-                                                    placeholder="보호자 성함 (예: 엄마)"
-                                                    value={guardianName}
-                                                    onChange={(e) => setGuardianName(e.target.value)}
-                                                    required
-                                                    className="w-full bg-white border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
-                                                />
-                                                <input
-                                                    type="tel"
-                                                    placeholder="휴대폰 번호 (-없이 입력)"
-                                                    value={guardianPhone}
-                                                    onChange={(e) => setGuardianPhone(e.target.value)}
-                                                    required
-                                                    className="w-full bg-white border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
-                                                />
+                                        <div className="space-y-4">
+                                            {/* 탭 헤더 */}
+                                            <div className="flex border-b border-gray-200 pb-1">
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => setRegisterTab('search')} 
+                                                    className={`flex-1 pb-2 text-xs font-black text-center transition-all ${registerTab === 'search' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
+                                                >
+                                                    서비스 사용자 검색
+                                                </button>
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => setRegisterTab('manual')} 
+                                                    className={`flex-1 pb-2 text-xs font-black text-center transition-all ${registerTab === 'manual' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
+                                                >
+                                                    직접 연락처 입력
+                                                </button>
                                             </div>
-                                            <button
-                                                type="submit"
-                                                className="w-full py-3 bg-gray-900 text-white rounded-xl text-xs font-black shadow-md hover:bg-black transition"
-                                            >
-                                                비상 연락망 저장
-                                            </button>
-                                        </form>
+
+                                            {registerTab === 'search' ? (
+                                                <div className="space-y-3">
+                                                    <form onSubmit={handleSearchUser} className="flex gap-2">
+                                                        <div className="relative flex-1">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="가입자 이름 또는 이메일 검색"
+                                                                value={searchQuery}
+                                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                                required
+                                                                className="w-full bg-white border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 rounded-xl pl-9 pr-4 py-3 text-xs font-bold outline-none transition"
+                                                            />
+                                                            <Search size={14} className="text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                                        </div>
+                                                        <button
+                                                            type="submit"
+                                                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-xl text-xs font-black transition active:scale-95 shadow-sm"
+                                                        >
+                                                            검색
+                                                        </button>
+                                                    </form>
+
+                                                    {searchStatus === 'searching' && (
+                                                        <div className="flex justify-center py-4">
+                                                             <Loader2 className="animate-spin text-indigo-500" size={20} />
+                                                        </div>
+                                                    )}
+
+                                                    {searchStatus === 'result' && (
+                                                        <div className="max-h-40 overflow-y-auto space-y-2 bg-white border border-gray-100 p-2 rounded-xl custom-scrollbar shadow-inner">
+                                                            {searchResults.map((targetUser) => (
+                                                                <div 
+                                                                    key={targetUser.id} 
+                                                                    onClick={() => handleSelectUserGuardian(targetUser)}
+                                                                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-indigo-50 cursor-pointer transition border border-transparent hover:border-indigo-100"
+                                                                >
+                                                                    <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-black text-xs flex items-center justify-center uppercase shrink-0">
+                                                                        {(targetUser.name || targetUser.displayName || 'U').substring(0, 2)}
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="text-xs font-black text-gray-800 truncate">{targetUser.name || targetUser.displayName}</p>
+                                                                        <p className="text-[10px] font-bold text-gray-400 truncate">{targetUser.email}</p>
+                                                                    </div>
+                                                                    <span className="text-[9px] font-black bg-indigo-50 text-indigo-600 px-2 py-1 rounded">선택</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {searchStatus === 'no-result' && (
+                                                        <p className="text-center text-[11px] text-gray-400 font-bold py-4">일치하는 사용자를 찾지 못했습니다.</p>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <form onSubmit={handleRegisterGuardian} className="space-y-3">
+                                                    <div className="flex flex-col gap-2">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="보호자 성함 (예: 엄마)"
+                                                            value={guardianName}
+                                                            onChange={(e) => setGuardianName(e.target.value)}
+                                                            required
+                                                            className="w-full bg-white border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
+                                                        />
+                                                        <input
+                                                            type="tel"
+                                                            placeholder="휴대폰 번호 (-없이 입력)"
+                                                            value={guardianPhone}
+                                                            onChange={(e) => setGuardianPhone(e.target.value)}
+                                                            required
+                                                            className="w-full bg-white border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        type="submit"
+                                                        className="w-full py-3.5 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-black shadow-md transition active:scale-95"
+                                                    >
+                                                        비상 연락망 저장
+                                                    </button>
+                                                </form>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
 
@@ -600,7 +1017,42 @@ export default function GlobalSafeMode() {
                 </div>
             )}
 
-            {/* 5. 자체 프리미엄 토스트 피드백 */}
+            {/* 5. [글로벌] 피보호자 비상 만료 알림 카드 (보호자 시점) */}
+            {otherExpiredSession && (
+                <div className="fixed inset-0 z-[999999] flex items-center justify-center p-6 pointer-events-auto">
+                    <div className="absolute inset-0 bg-rose-950/90 backdrop-blur-lg animate-in fade-in duration-300"></div>
+                    <div className="bg-white w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-rose-600 ring-4 ring-rose-500/20">
+                        <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mb-4 animate-pulse shadow-md">
+                            <ShieldAlert size={36} />
+                        </div>
+                        <h3 className="text-xl font-black text-gray-900 mb-1 text-center">🚨 보호 대상 위험 경보!</h3>
+                        <p className="text-xs text-rose-600 font-black mb-3">Guardian Emergency Warning</p>
+                        <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed font-semibold">
+                            보호 대상자인 <span className="text-rose-600 font-black">{otherExpiredSession.userName}</span>님의<br />
+                            안심 귀가 예정 시간이 만료되었습니다!<br />
+                            신속히 연락을 시도하고 안전을 확인하세요.
+                        </p>
+                        <div className="w-full space-y-2">
+                            {otherExpiredSession.guardianPhone && (
+                                <a 
+                                    href={`tel:${otherExpiredSession.guardianPhone}`}
+                                    className="w-full py-4 rounded-2xl font-black text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2 active:scale-95 text-sm"
+                                >
+                                    <PhoneCall size={16} /> 대상자에게 전화하기
+                                </a>
+                            )}
+                            <a 
+                                href={`/share/live_safemode?userId=${otherExpiredSession.userId}`}
+                                className="w-full py-4 rounded-2xl font-black text-white bg-rose-600 hover:bg-rose-700 transition-colors flex items-center justify-center gap-2 active:scale-95 text-sm shadow-md"
+                            >
+                                <Shield size={16} /> 실시간 안심 지도 보기
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 6. 자체 프리미엄 토스트 피드백 */}
             {showToast && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[99999] w-[90%] max-w-[360px] animate-in slide-in-from-bottom duration-300">
                     <div className="bg-gray-900/95 backdrop-blur-md text-white px-4 py-3.5 rounded-2xl shadow-2xl border border-white/10 text-xs font-black text-center leading-relaxed">
