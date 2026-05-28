@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { ShieldCheck, ShieldAlert, PhoneCall, Timer, X, Send, User, ChevronUp, AlertTriangle, Siren, Shield, Heart, Sparkles, Search, Loader2 } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc, getDocs, query, where, onSnapshot, deleteDoc } from 'firebase/firestore';
@@ -692,27 +693,35 @@ export default function GlobalSafeMode() {
         <>
             {/* 1. 상단 다이내믹 세이프티 아일랜드 (배너) */}
             {isActive && (
-                <div className="fixed top-0 left-1/2 -translate-x-1/2 z-[9999] w-full max-w-[480px] px-4 pt-3 pointer-events-none animate-in slide-in-from-top-full duration-500">
-                    <div className="w-full bg-brand-success/90 backdrop-blur-md border border-brand-success/30 text-white rounded-2xl py-3 px-4 shadow-[0_8px_32px_rgba(76,201,240,0.3)] flex items-center justify-between pointer-events-auto ring-2 ring-brand-success/50">
-                        <div className="flex items-center gap-2.5">
-                            <span className="relative flex h-3.5 w-3.5 shrink-0">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-white"></span>
-                            </span>
-                            <span className="text-xs font-black tracking-wide uppercase text-brand-accent">🛡️ Safe Mode 실시간 보호 중</span>
+                <div className="fixed top-0 left-0 right-0 z-[9999] pointer-events-none flex justify-center px-4 pt-3 animate-in slide-in-from-top-full duration-500">
+                    <motion.div 
+                        drag
+                        dragMomentum={false}
+                        dragElastic={0.1}
+                        dragConstraints={{ left: -200, right: 200, top: 0, bottom: 650 }}
+                        className="w-full max-w-[480px] pointer-events-auto"
+                    >
+                        <div className="w-full bg-brand-success/90 backdrop-blur-md border border-brand-success/30 text-white rounded-2xl py-3 px-4 shadow-[0_8px_32px_rgba(76,201,240,0.3)] flex items-center justify-between ring-2 ring-brand-success/50 cursor-grab active:cursor-grabbing">
+                            <div className="flex items-center gap-2.5">
+                                <span className="relative flex h-3.5 w-3.5 shrink-0">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-white"></span>
+                                </span>
+                                <span className="text-xs font-black tracking-wide uppercase text-brand-accent">🛡️ Safe Mode 실시간 보호 중</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <span className="bg-black/30 font-black px-2.5 py-1 rounded-lg text-sm tabular-nums tracking-wider border border-white/10 text-white">
+                                    {formatTime(timeLeft)}
+                                </span>
+                                <button 
+                                    onClick={() => setIsOpen(true)}
+                                    className="bg-white text-brand-accent text-[10px] font-black px-3 py-1 rounded-lg hover:bg-brand-success/20 transition active:scale-95 shadow-sm"
+                                >
+                                    관리
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <span className="bg-black/30 font-black px-2.5 py-1 rounded-lg text-sm tabular-nums tracking-wider border border-white/10 text-white">
-                                {formatTime(timeLeft)}
-                            </span>
-                            <button 
-                                onClick={() => setIsOpen(true)}
-                                className="bg-white text-brand-accent text-[10px] font-black px-3 py-1 rounded-lg hover:bg-brand-success/20 transition active:scale-95 shadow-sm"
-                            >
-                                관리
-                            </button>
-                        </div>
-                    </div>
+                    </motion.div>
                 </div>
             )}
 

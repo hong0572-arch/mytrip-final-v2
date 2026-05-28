@@ -14,7 +14,7 @@ const GA_ID = "G-DC122J4LJL";
 
 // ✅ [PWA & Metadata] 설정
 export const viewport = {
-  themeColor: "#4f46e5",
+  themeColor: "#1E1E24",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
