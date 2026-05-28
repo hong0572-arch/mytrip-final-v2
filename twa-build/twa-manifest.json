@@ -20,7 +20,7 @@
     "alias": "tripmaker"
   },
   "appVersionName": "2.8",
-  "appVersionCode": 12,
+  "appVersionCode": 15,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://mytrip2.pro/manifest.json",
