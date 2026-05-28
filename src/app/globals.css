@@ -8,12 +8,10 @@
 @tailwind utilities;
 
 :root {
-  --background: #F9F9F9;
-  --foreground: #171717;
-  --brand-gradient: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%);
-  /* Placeholder for Orange-Pink-Purple */
-  /* Better gradient based on description: Orange -> Pink -> Purple */
-  --brand-gradient-main: linear-gradient(to right, #FF8C42, #FF4B8B, #8B4BFF);
+  --background: #F4F5F7; /* A안 뉴트럴 백그라운드 */
+  --foreground: #1E1E24; /* A안 차콜 텍스트 */
+  --brand-gradient: linear-gradient(135deg, #FF6B35 0%, #FF2E93 50%, #7209B7 100%);
+  --brand-gradient-main: linear-gradient(135deg, #FF6B35 0%, #FF2E93 50%, #7209B7 100%);
 }
 
 @theme inline {
@@ -21,9 +19,16 @@
   --color-foreground: var(--foreground);
   --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
 
-  --color-brand-start: #FF8C42;
-  --color-brand-middle: #FF4B8B;
-  --color-brand-end: #8B4BFF;
+  --color-brand-start: #FF6B35;
+  --color-brand-middle: #FF2E93;
+  --color-brand-end: #7209B7;
+
+  /* A안 브랜드 및 시스템 토큰 확장 */
+  --color-brand-primary: #FF6B35;
+  --color-brand-secondary: #FF2E93;
+  --color-brand-accent: #7209B7;
+  --color-brand-success: #4CC9F0;
+  --color-brand-danger: #F72585;
 }
 
 body {

@@ -129,7 +129,7 @@ const translations = {
         label_where: "어디로 안심 여행을 떠날까요?", label_when: "언제 떠나세요?", placeholder_dest: "예: 혼자 조용히 쉬고 싶어 (음성 가능)", placeholder_date: "날짜 선택 (최대 30일)",
         label_companion: "동행자", label_budget: "1인 예산", label_people: "인원", label_contact: "연락처 (필수)", placeholder_contact: "카톡ID 또는 이메일",
         label_request: "추가 요청사항 (안전 등)", placeholder_request: "예: 여성 혼자 가기 안전한 곳으로 추천해주세요.",
-        btn_generate: "✨ 안심 여행 일정 만들기!", btn_luxury_off: "👑 럭셔리 여행 체험하기", btn_luxury_on: "💎 VIP 플랜 생성",
+        btn_generate: "✨ 여행 일정 만들기!", btn_luxury_off: "👑 럭셔리 여행 체험하기", btn_luxury_on: "💎 VIP 플랜 생성",
         msg_loading: "AI가 가장 안전한 여행을 설계하고 있어요...", msg_listening: "듣고 있어요...",
     },
     en: {
@@ -138,7 +138,7 @@ const translations = {
         label_where: "Where would you like to travel safely?", label_when: "When do you leave?", placeholder_dest: "e.g. Quiet rest in Kyoto", placeholder_date: "Select dates (Max 30 days)",
         label_companion: "Companion", label_budget: "Budget (per person)", label_people: "Travelers", label_contact: "Contact (Required)", placeholder_contact: "Email or Messenger ID",
         label_request: "Special Requests (Safety, etc.)", placeholder_request: "ex: Recommend safe places for solo female travelers.",
-        btn_generate: "✨ Create my safe trip!", btn_luxury_off: "👑 Try Luxury Mode", btn_luxury_on: "💎 Create VIP Plan",
+        btn_generate: "✨ Create my trip!", btn_luxury_off: "👑 Try Luxury Mode", btn_luxury_on: "💎 Create VIP Plan",
         msg_loading: "AI is designing your safest trip...", msg_listening: "Listening...",
     }
 };
@@ -237,7 +237,7 @@ export default function Home() {
                 const firestoreTrips = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 // ✨ Firestore 데이터와 기본 고화질 추천 상품 통합
                 setRecommendedTrips([...RECOMMENDED_TRIPS, ...firestoreTrips].filter((v, i, a) => a.findIndex(t => t.id === v.id) === i));
-            } catch (error) { 
+            } catch (error) {
                 console.error("추천 여행 로딩 실패:", error);
                 setRecommendedTrips(RECOMMENDED_TRIPS); // 실패 시 기본 데이터 로드
             }
@@ -251,15 +251,15 @@ export default function Home() {
         const timer = setInterval(() => setBgIndex((prev) => (prev + 1) % backgroundImages.length), 5000);
         const checkStandalone = () => { setIsStandalone(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true); };
         checkStandalone();
-        const handleAppInstalled = async () => { 
-            setIsStandalone(true); 
-            setDeferredPrompt(null); 
+        const handleAppInstalled = async () => {
+            setIsStandalone(true);
+            setDeferredPrompt(null);
             // 앱 설치 직후 알림 권한을 자동으로 요청 (설치 버튼 클릭 직후라 브라우저가 차단하지 않을 확률이 높음)
             if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted') {
                 try {
                     await Notification.requestPermission();
                     console.log('앱 설치 시 알림 권한을 요청했습니다.');
-                } catch(e) {
+                } catch (e) {
                     console.error('알림 권한 요청 실패:', e);
                 }
             }
@@ -272,7 +272,7 @@ export default function Home() {
         const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
             if (unsubscribeTrips) { unsubscribeTrips(); unsubscribeTrips = null; }
-            
+
             if (currentUser) {
                 // ✨ [추가] FCM 토큰이 있고 유저가 있으면 DB에 업데이트 (푸시 알림용)
                 if (token) {
@@ -598,7 +598,7 @@ export default function Home() {
                             <button onClick={() => setShowNicknameModal(false)} className="absolute top-4 right-4 p-2 text-gray-400"><X size={20} /></button>
                             <h3 className="text-xl font-black text-center text-gray-800 mb-2">닉네임 설정</h3>
                             <input type="text" placeholder="예: 냥프로123" value={nicknameInput} onChange={(e) => setNicknameInput(e.target.value)} className="w-full px-4 py-4 bg-gray-50 border rounded-2xl outline-none font-bold text-center text-lg mb-4" />
-                            <button onClick={handleCompleteSignUp} className="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold text-lg rounded-2xl active:scale-95">가입 완료 ✨</button>
+                            <button onClick={handleCompleteSignUp} className="w-full py-4 bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold text-lg rounded-2xl active:scale-95">가입 완료 ✨</button>
                         </motion.div>
                     </motion.div>
                 )}
@@ -612,7 +612,7 @@ export default function Home() {
                             <button onClick={() => setShowLoginModal(false)} className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition"><X size={24} /></button>
                             <div className="mb-6 flex justify-center"><CatMascot width={100} /></div>
                             <h3 className="text-2xl font-black text-gray-800 mb-2">반가워요! 🐾</h3>
-                            <p className="text-sm text-gray-500 mb-8 leading-relaxed">어떤 방식으로 로그인을 도와드릴까요?<br />지금 시작하면 <span className="text-rose-500 font-bold">1,000P</span>를 드려요!</p>
+                            <p className="text-sm text-gray-500 mb-8 leading-relaxed">어떤 방식으로 로그인을 도와드릴까요?<br />지금 시작하면 <span className="text-brand-secondary font-bold">1,000P</span>를 드려요!</p>
 
                             <div className="space-y-3">
                                 <button onClick={handleKakaoLogin} className="w-full py-4 bg-[#FEE500] text-[#3c1e1e] font-bold rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition shadow-sm">
@@ -634,10 +634,10 @@ export default function Home() {
                         <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl relative">
                             <button onClick={() => setManualAirport({ show: false, trip: null, searchStr: "", error: "" })} className="absolute top-4 right-4 p-2 text-gray-400"><X size={20} /></button>
                             <h3 className="text-xl font-black text-center text-gray-800 mb-2">도착 공항 직접 입력</h3>
-                            <p className="text-xs text-center text-gray-500 mb-4 font-bold text-rose-500">'{manualAirport.trip?.destination}' 공항을 입력해주세요.</p>
+                            <p className="text-xs text-center text-gray-500 mb-4 font-bold text-brand-danger">'{manualAirport.trip?.destination}' 공항을 입력해주세요.</p>
                             <input type="text" placeholder="예: 발리, DPS" value={manualAirport.searchStr} onChange={(e) => setManualAirport({ ...manualAirport, searchStr: e.target.value, error: "" })} className="w-full px-4 py-4 bg-gray-50 border rounded-2xl outline-none text-center font-bold" />
-                            {manualAirport.error && <p className="text-[10px] text-rose-500 text-center mt-2">{manualAirport.error}</p>}
-                            <button onClick={handleManualSubmit} className="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl mt-4">검색 및 적용</button>
+                            {manualAirport.error && <p className="text-[10px] text-brand-danger text-center mt-2">{manualAirport.error}</p>}
+                            <button onClick={handleManualSubmit} className="w-full py-4 bg-brand-accent text-white font-bold rounded-2xl mt-4">검색 및 적용</button>
                         </motion.div>
                     </motion.div>
                 )}
@@ -667,14 +667,14 @@ export default function Home() {
                     <img src="/logo1.png" alt="Logo" className="h-8 w-auto object-contain" />
                     <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
                         <div className="flex bg-white/80 backdrop-blur-sm p-1 rounded-full text-[10px] font-black shadow-sm border border-white/50">
-                            <button 
-                                onClick={() => setLanguage('ko')} 
+                            <button
+                                onClick={() => setLanguage('ko')}
                                 className={`px-3 py-1.5 rounded-full transition-all duration-300 ${language === 'ko' ? 'bg-white text-gray-800 shadow-xs' : 'text-gray-400 hover:text-gray-600'}`}
                             >
                                 한국어
                             </button>
-                            <button 
-                                onClick={() => setLanguage('en')} 
+                            <button
+                                onClick={() => setLanguage('en')}
                                 className={`px-3 py-1.5 rounded-full transition-all duration-300 ${language === 'en' ? 'bg-white text-gray-800 shadow-xs' : 'text-gray-400 hover:text-gray-600'}`}
                             >
                                 English
@@ -689,7 +689,7 @@ export default function Home() {
                         ) : (
                             <button
                                 onClick={() => setShowLoginModal(true)} // ✨ 모달 오픈
-                                className="px-5 py-2.5 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-sm shadow-lg shadow-rose-500/30 active:scale-95 transition-all"
+                                className="px-5 py-2.5 rounded-full bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold text-sm shadow-lg shadow-brand-secondary/20 active:scale-95 transition-all"
                             >
                                 로그인
                             </button>
@@ -700,7 +700,7 @@ export default function Home() {
                 <div className="flex-1 overflow-y-auto scrollbar-hide pt-2 pb-32">
                     {/* 상단 배너 — 냥프로 인사 → 여행 소식 자동 전환 */}
                     <div className="mb-8 mt-6 px-2">
-                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative bg-gradient-to-br from-white to-rose-50/80 rounded-[1.5rem] p-5 border border-white shadow-lg overflow-hidden min-h-[160px]">
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative bg-gradient-to-br from-white to-brand-primary/5 rounded-[1.5rem] p-5 border border-white shadow-lg overflow-hidden min-h-[160px]">
                             <AnimatePresence mode="wait">
                                 {!showBannerNews ? (
                                     <motion.div
@@ -718,8 +718,8 @@ export default function Home() {
                                         <div className="text-left">
                                             <h2 className="text-3xl sm:text-4xl font-black leading-tight break-keep">
                                                 <span className="block text-gray-700 text-lg font-bold mb-1 opacity-80">{translations[language].title_pre}</span>
-                                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-800 via-indigo-800 to-gray-800">{translations[language].title_main}</span>🪄<br />
-                                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF5A5F] via-rose-500 to-amber-500">{translations[language].title_sub}</span>
+                                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-800 via-brand-accent to-gray-800">{translations[language].title_main}</span>🪄<br />
+                                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary via-brand-secondary to-brand-accent">{translations[language].title_sub}</span>
                                             </h2>
                                         </div>
                                     </motion.div>
@@ -741,7 +741,7 @@ export default function Home() {
                     <div className="sticky top-2 z-30 bg-white/90 backdrop-blur-md mx-4 p-1.5 rounded-[1.25rem] shadow-xl border border-white/40 flex mb-8 gap-1">
                         <button onClick={() => setActiveTab('create')} className="relative flex-1 py-3.5 outline-none transition-all duration-300">
                             {activeTab === 'create' && (
-                                <motion.div layoutId="activeTab" className="absolute inset-0 bg-rose-500 rounded-xl shadow-lg shadow-rose-200" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
+                                <motion.div layoutId="activeTab" className="absolute inset-0 bg-brand-primary rounded-xl shadow-lg shadow-brand-primary/20" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
                             )}
                             <span className={`relative z-10 text-sm font-black transition-colors duration-300 ${activeTab === 'create' ? 'text-white' : 'text-gray-400'}`}>
                                 {translations[language].tab_schedule}
@@ -749,7 +749,7 @@ export default function Home() {
                         </button>
                         <button onClick={() => setActiveTab('flights')} className="relative flex-1 py-3.5 outline-none transition-all duration-300">
                             {activeTab === 'flights' && (
-                                <motion.div layoutId="activeTab" className="absolute inset-0 bg-indigo-500 rounded-xl shadow-lg shadow-indigo-200" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
+                                <motion.div layoutId="activeTab" className="absolute inset-0 bg-brand-accent rounded-xl shadow-lg shadow-brand-accent/20" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
                             )}
                             <span className={`relative z-10 text-sm font-black transition-colors duration-300 ${activeTab === 'flights' ? 'text-white' : 'text-gray-400'}`}>
                                 {translations[language].tab_myflight}
@@ -764,12 +764,12 @@ export default function Home() {
                                 <div className="bg-white/95 p-6 rounded-[2rem] shadow-2xl border border-white">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-2">
-                                            <label className="flex items-center gap-2 text-sm font-bold text-gray-500"><Sparkles size={16} className="text-[#FF5A5F]" /> {translations[language].label_where}</label>
-                                            <button onClick={fetchUserLocation} disabled={isLocationLoading} className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-full transition-all active:scale-95 flex items-center justify-center">
+                                            <label className="flex items-center gap-2 text-sm font-bold text-gray-500"><Sparkles size={16} className="text-brand-primary" /> {translations[language].label_where}</label>
+                                            <button onClick={fetchUserLocation} disabled={isLocationLoading} className="p-1.5 text-brand-primary hover:bg-brand-primary/10 rounded-full transition-all active:scale-95 flex items-center justify-center">
                                                 {isLocationLoading ? <RefreshCw size={14} className="animate-spin" /> : <MapPin size={18} />}
                                             </button>
                                         </div>
-                                        <button onClick={() => handleVoiceInput('destination')} className={`p-2 rounded-full ${listeningField === 'destination' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={16} /></button>
+                                        <button onClick={() => handleVoiceInput('destination')} className={`p-2 rounded-full ${listeningField === 'destination' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={16} /></button>
                                     </div>
                                     <div className="flex bg-gray-100 p-1.5 rounded-2xl mb-5 gap-1.5 shadow-inner">
                                         {['auto', 'domestic', 'international', 'daytrip'].map(type => (
@@ -791,7 +791,7 @@ export default function Home() {
                                                         request: prev.request.replace(', 당일치기 여행', '').replace('당일치기 여행', '').trim()
                                                     }));
                                                 }
-                                            }} className={`flex-1 text-xs sm:text-sm font-black py-3.5 rounded-xl transition-all duration-300 ${formData.regionType === type ? 'bg-white text-rose-500 shadow-md scale-[1.02]' : 'text-gray-500 hover:bg-white/50'}`}>
+                                            }} className={`flex-1 text-xs sm:text-sm font-black py-3.5 rounded-xl transition-all duration-300 ${formData.regionType === type ? 'bg-white text-brand-primary shadow-md scale-[1.02]' : 'text-gray-500 hover:bg-white/50'}`}>
                                                 {type === 'auto' ? '🤖 AI 알아서' : type === 'domestic' ? '🇰🇷 국내만' : type === 'international' ? '✈️ 해외로' : '🌞 당일여행'}
                                             </button>
                                         ))}
@@ -801,7 +801,7 @@ export default function Home() {
                                     </div>
                                     <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-50">
                                         {QUICK_TAGS.map((tag, idx) => (
-                                            <button key={idx} onClick={() => setFormData(prev => ({ ...prev, destination: prev.destination ? `${prev.destination}, ${cleanTagText(tag)}` : cleanTagText(tag) }))} className="bg-gray-50 border border-gray-100 text-gray-600 px-3 py-1.5 rounded-xl text-[12px] font-bold transition hover:bg-rose-50 active:scale-95">{tag}</button>
+                                            <button key={idx} onClick={() => setFormData(prev => ({ ...prev, destination: prev.destination ? `${prev.destination}, ${cleanTagText(tag)}` : cleanTagText(tag) }))} className="bg-gray-50 border border-gray-100 text-gray-600 px-3 py-1.5 rounded-xl text-[12px] font-bold transition hover:bg-brand-primary/10 active:scale-95">{tag}</button>
                                         ))}
                                     </div>
                                 </div>
@@ -809,8 +809,8 @@ export default function Home() {
                                 {/* 날짜/인원/예산 (원본 유지) */}
                                 <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
                                     <div className="flex items-center justify-between mb-2">
-                                        <label className="flex items-center gap-2 text-sm font-bold text-gray-500"><Calendar size={16} className="text-[#FF5A5F]" /> {translations[language].label_when}</label>
-                                        <button onClick={() => handleVoiceInput('date')} className={`p-2 rounded-full ${listeningField === 'date' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={16} /></button>
+                                        <label className="flex items-center gap-2 text-sm font-bold text-gray-500"><Calendar size={16} className="text-brand-primary" /> {translations[language].label_when}</label>
+                                        <button onClick={() => handleVoiceInput('date')} className={`p-2 rounded-full ${listeningField === 'date' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={16} /></button>
                                     </div>
                                     <DatePicker selectsRange={true} startDate={startDate} endDate={endDate} onChange={handleDateChange} minDate={new Date()} locale={ko} dateFormat="yyyy.MM.dd" placeholderText={translations[language].placeholder_date} className="w-full text-lg font-bold bg-transparent outline-none cursor-pointer" wrapperClassName="w-full" />
                                 </div>
@@ -818,11 +818,11 @@ export default function Home() {
                                 <div>
                                     <div className="flex items-center justify-between mb-2">
                                         <label className="text-sm font-bold text-gray-600 block px-1">{translations[language].label_companion}</label>
-                                        <button onClick={() => handleVoiceInput('companion')} className={`p-1.5 rounded-full ${listeningField === 'companion' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={14} /></button>
+                                        <button onClick={() => handleVoiceInput('companion')} className={`p-1.5 rounded-full ${listeningField === 'companion' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={14} /></button>
                                     </div>
                                     <div className="grid grid-cols-5 gap-2">
                                         {companionOptions.map((opt) => (
-                                            <button key={opt.id} onClick={() => setFormData({ ...formData, companion: opt.id })} className={`flex flex-col items-center justify-center py-3 rounded-2xl transition-all gap-1 ${formData.companion === opt.id ? 'bg-[#FF5A5F] text-white shadow-md scale-105' : 'bg-gray-50 text-gray-400'}`}>
+                                            <button key={opt.id} onClick={() => setFormData({ ...formData, companion: opt.id })} className={`flex flex-col items-center justify-center py-3 rounded-2xl transition-all gap-1 ${formData.companion === opt.id ? 'bg-brand-primary text-white shadow-md scale-105' : 'bg-gray-50 text-gray-400'}`}>
                                                 {opt.icon} <span className="text-[10px] break-keep">{language === 'en' ? opt.id : opt.label}</span>
                                             </button>
                                         ))}
@@ -840,25 +840,25 @@ export default function Home() {
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-1 mb-1">
                                                     <label className="text-xs font-bold text-gray-500 flex items-center gap-1"><Wallet size={12} /> {translations[language].label_budget}</label>
-                                                    <button onClick={() => handleVoiceInput('budget')} className={`p-1 rounded-full ${listeningField === 'budget' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={12} /></button>
+                                                    <button onClick={() => handleVoiceInput('budget')} className={`p-1 rounded-full ${listeningField === 'budget' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={12} /></button>
                                                 </div>
                                                 <div className="flex items-end gap-1 mb-2">
-                                                    <span className="text-xl font-bold text-[#FF5A5F]">{formData.budget.toLocaleString()}</span>
+                                                    <span className="text-xl font-bold text-brand-primary">{formData.budget.toLocaleString()}</span>
                                                     <span className="text-sm text-gray-400">{language === 'en' ? '0,000 KRW' : '만원'}</span>
                                                 </div>
-                                                <input type="range" name="budget" min="50" max="1000" step="10" value={formData.budget} onChange={handleInputChange} className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#FF5A5F]" />
+                                                <input type="range" name="budget" min="50" max="1000" step="10" value={formData.budget} onChange={handleInputChange} className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-primary" />
                                             </div>
                                         )}
                                         <div className="w-[1px] h-10 bg-gray-100"></div>
                                         <div className="flex flex-col items-center">
                                             <div className="flex items-center gap-1 mb-1">
                                                 <label className="text-xs font-bold text-gray-500">{translations[language].label_people}</label>
-                                                <button onClick={() => handleVoiceInput('people')} className={`p-1 rounded-full ${listeningField === 'people' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={12} /></button>
+                                                <button onClick={() => handleVoiceInput('people')} className={`p-1 rounded-full ${listeningField === 'people' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={12} /></button>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <button onClick={() => updatePeople(-1)} className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 font-bold">-</button>
                                                 <span className="font-bold text-gray-800 w-4 text-center">{formData.people}</span>
-                                                <button onClick={() => updatePeople(1)} className="w-8 h-8 rounded-full bg-[#FF5A5F] text-white font-bold">+</button>
+                                                <button onClick={() => updatePeople(1)} className="w-8 h-8 rounded-full bg-brand-primary text-white font-bold">+</button>
                                             </div>
                                         </div>
                                     </div>
@@ -867,11 +867,11 @@ export default function Home() {
                                 <div>
                                     <div className="flex items-center gap-2 mb-2">
                                         <label className="text-sm font-bold text-gray-600 px-1">여행 스타일</label>
-                                        <button onClick={() => handleVoiceInput('tourType')} className={`p-1.5 rounded-full ${listeningField === 'tourType' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={14} /></button>
+                                        <button onClick={() => handleVoiceInput('tourType')} className={`p-1.5 rounded-full ${listeningField === 'tourType' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={14} /></button>
                                     </div>
                                     <div className="grid grid-cols-3 gap-2 mb-3">
                                         {tourOptions.map((option) => (
-                                            <button key={option.id} onClick={() => setFormData({ ...formData, tourType: option.id })} className={`py-3 px-2 rounded-2xl border transition-all flex flex-col items-center text-center ${formData.tourType === option.id ? 'bg-white border-[#FF5A5F] text-[#FF5A5F] shadow-md ring-1 ring-[#FF5A5F]' : 'bg-white border-gray-100 text-gray-400'}`}>
+                                            <button key={option.id} onClick={() => setFormData({ ...formData, tourType: option.id })} className={`py-3 px-2 rounded-2xl border transition-all flex flex-col items-center text-center ${formData.tourType === option.id ? 'bg-white border-brand-primary text-brand-primary shadow-md ring-1 ring-brand-primary' : 'bg-white border-gray-100 text-gray-400'}`}>
                                                 <span className="font-bold text-sm mb-1">{option.label}</span>
                                                 <span className="text-[10px] opacity-70">{option.desc}</span>
                                             </button>
@@ -885,7 +885,7 @@ export default function Home() {
                                 <div className="bg-white p-4 rounded-2xl border border-gray-200">
                                     <div className="flex items-center justify-between mb-2">
                                         <label className="text-xs font-bold text-gray-400 flex items-center gap-1"><MessageSquare size={12} /> {translations[language].label_request}</label>
-                                        <button onClick={() => handleVoiceInput('request')} className={`p-1.5 rounded-full ${listeningField === 'request' ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={14} /></button>
+                                        <button onClick={() => handleVoiceInput('request')} className={`p-1.5 rounded-full ${listeningField === 'request' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={14} /></button>
                                     </div>
                                     <textarea name="request" value={formData.request} onChange={handleInputChange} placeholder={listeningField === 'request' ? translations[language].msg_listening : translations[language].placeholder_request} className="w-full text-sm font-medium outline-none text-gray-800 resize-none h-32 bg-transparent leading-relaxed" />
                                 </div>
@@ -901,11 +901,11 @@ export default function Home() {
                                             <motion.div key={trip.id} whileTap={{ scale: 0.98 }} onClick={() => handleRecommendedClick(trip)} className="min-w-[180px] h-[260px] rounded-[1.75rem] relative overflow-hidden shadow-2xl cursor-pointer group shrink-0 border border-white/10">
                                                 <img src={trip.img} alt={trip.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                                                
+
                                                 {/* 배지 표시 */}
                                                 <div className="absolute top-3 left-3 flex gap-1">
-                                                    {trip.isHot && <span className="bg-rose-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">HOT</span>}
-                                                    {trip.isPremium && <span className="bg-indigo-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">PREMIUM</span>}
+                                                    {trip.isHot && <span className="bg-brand-danger text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">HOT</span>}
+                                                    {trip.isPremium && <span className="bg-brand-accent text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">PREMIUM</span>}
                                                 </div>
 
                                                 <div className="absolute bottom-0 left-0 right-0 p-5 text-left">
@@ -918,22 +918,22 @@ export default function Home() {
                                     </div>
                                 </div>
 
-                                <div className="bg-indigo-50 p-4 rounded-3xl border border-indigo-100">
-                                    <h3 className="font-bold text-indigo-900 text-lg flex items-center gap-2 mb-4"><Plane className="text-indigo-600" size={20} /> {translations[language].tab_flight}</h3>
+                                <div className="bg-brand-primary/5 p-4 rounded-3xl border border-brand-primary/10">
+                                    <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2 mb-4"><Plane className="text-brand-primary" size={20} /> {translations[language].tab_flight}</h3>
                                     {mySchedules.length > 0 ? (
                                         <div className="space-y-3">
                                             {mySchedules.map((item) => (
-                                                <motion.div key={item.id} whileTap={{ scale: 0.98 }} onClick={() => handleTripClick(item)} className="bg-white p-4 rounded-2xl border border-indigo-100 shadow-sm cursor-pointer hover:border-indigo-300 transition-all relative group overflow-hidden">
-                                                    <button onClick={(e) => handleDeleteTrip(e, item.id, item.destination || item.title)} className="absolute top-4 right-4 z-20 p-2 bg-gray-50 rounded-full text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
+                                                <motion.div key={item.id} whileTap={{ scale: 0.98 }} onClick={() => handleTripClick(item)} className="bg-white p-4 rounded-2xl border border-brand-primary/10 shadow-sm cursor-pointer hover:border-brand-primary/30 transition-all relative group overflow-hidden">
+                                                    <button onClick={(e) => handleDeleteTrip(e, item.id, item.destination || item.title)} className="absolute top-4 right-4 z-20 p-2 bg-gray-50 rounded-full text-gray-400 hover:text-brand-danger opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
                                                     <div className="flex justify-between items-center">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-xl shrink-0">✈️</div>
+                                                            <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center text-xl shrink-0">✈️</div>
                                                             <div>
                                                                 <h4 className="font-bold text-gray-800 text-sm truncate">{item.destination || item.title} 여행</h4>
                                                                 <div className="text-[10px] text-gray-500 flex items-center gap-1"><span>{item.startDate || "날짜 미정"}</span>{item.iata && <span className="bg-gray-100 px-1.5 rounded text-gray-400 font-medium">{item.iata}</span>}</div>
                                                             </div>
                                                         </div>
-                                                        <ChevronRight className="text-gray-300 group-hover:text-indigo-500 transition-colors" size={20} />
+                                                        <ChevronRight className="text-gray-300 group-hover:text-brand-primary transition-colors" size={20} />
                                                     </div>
                                                 </motion.div>
                                             ))}
@@ -963,18 +963,18 @@ export default function Home() {
                                         <div key={flight.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 relative">
                                             <div className="flex justify-between items-start mb-4">
                                                 <div className="flex items-center gap-2"><span className="font-bold text-sm text-gray-700">{flight.carrierCode}</span></div>
-                                                <div className="text-right"><span className="block text-lg font-black text-indigo-600">{flight.price.toLocaleString()}원~</span></div>
+                                                <div className="text-right"><span className="block text-lg font-black text-brand-primary">{flight.price.toLocaleString()}원~</span></div>
                                             </div>
                                             <div className="flex gap-2 mt-4">
                                                 <button onClick={() => window.open(flight.linkTripMobile || flight.linkTrip || flight.linkGlobal, '_blank')} className="flex-1 py-3 bg-[#2467F5] text-white font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all text-sm sm:text-base">Trip.com 최저가</button>
-                                                <button onClick={() => window.open(flight.linkGlobal, '_blank')} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all text-sm sm:text-base">Aviasales 예약</button>
+                                                <button onClick={() => window.open(flight.linkGlobal, '_blank')} className="flex-1 py-3 bg-brand-accent text-white font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all text-sm sm:text-base">Aviasales 예약</button>
                                             </div>
                                         </div>
                                     ))
                                 ) : (
                                     <div className="text-center py-16 text-gray-400 flex flex-col items-center">
                                         <p className="font-bold mb-2">검색된 항공권이 없습니다.</p>
-                                        <button onClick={() => { const t = selectedTrip; setSelectedTrip(null); setManualAirport({ show: true, trip: t, searchStr: "", error: "" }); }} className="px-4 py-2 bg-indigo-50 text-indigo-600 font-bold rounded-xl mt-4">공항 직접 검색하기</button>
+                                        <button onClick={() => { const t = selectedTrip; setSelectedTrip(null); setManualAirport({ show: true, trip: t, searchStr: "", error: "" }); }} className="px-4 py-2 bg-brand-primary/10 text-brand-primary font-bold rounded-xl mt-4">공항 직접 검색하기</button>
                                     </div>
                                 )}
                             </div>
@@ -985,7 +985,7 @@ export default function Home() {
                 {/* 하단 생성 버튼 */}
                 {activeTab === 'create' && (
                     <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-white via-white/95 to-transparent z-30">
-                        <button onClick={generatePlan} disabled={loading} onMouseEnter={() => setIsButtonHovered(true)} onMouseLeave={() => setIsButtonHovered(false)} className={`w-full py-4 rounded-2xl font-bold text-xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-95 ${isLuxury ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white" : "bg-gradient-to-r from-[#FF5A5F] to-[#FF3D43] text-white"}`}>
+                        <button onClick={generatePlan} disabled={loading} onMouseEnter={() => setIsButtonHovered(true)} onMouseLeave={() => setIsButtonHovered(false)} className={`w-full py-4 rounded-2xl font-bold text-xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-95 ${isLuxury ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white" : "bg-gradient-to-r from-brand-primary to-brand-secondary text-white"}`}>
                             {loading ? <><Sparkles className="animate-spin" size={24} /> {loadingText}</> : translations[language].btn_generate}
                         </button>
                     </div>

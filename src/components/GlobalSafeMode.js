@@ -641,6 +641,25 @@ export default function GlobalSafeMode() {
             textMessage = `🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n\n(위치 접근이 제한되어 기본 링크만 전송합니다)\n🛡️ 전용 안심 대시보드로 보기:\n${mapUrl}`;
         }
 
+        // 가입된 보호자에게 실시간 위치 공유 인앱 알림 추가 발송
+        if (guardianUserId) {
+            try {
+                await addDoc(collection(db, "match_requests"), {
+                    type: "safemode_location_share",
+                    senderId: user.uid,
+                    senderName: user.displayName || '여행자',
+                    targetMateId: guardianUserId,
+                    targetMateName: guardianName,
+                    status: "pending",
+                    message: `📍 [Safe Mode 위치 전송] ${user.displayName || '여행자'}님이 실시간 위치 정보를 전송했습니다.`,
+                    sessionUrl: `/share/live_safemode?userId=${user.uid}`,
+                    createdAt: serverTimestamp()
+                });
+            } catch (err) {
+                console.error("보호자 위치 전송 알림 실패:", err);
+            }
+        }
+
         try {
             await navigator.clipboard.writeText(textMessage);
             triggerToast('📋 실제 위치가 포함된 공유 텍스트가 복사되었습니다!');
@@ -674,21 +693,21 @@ export default function GlobalSafeMode() {
             {/* 1. 상단 다이내믹 세이프티 아일랜드 (배너) */}
             {isActive && (
                 <div className="fixed top-0 left-1/2 -translate-x-1/2 z-[9999] w-full max-w-[480px] px-4 pt-3 pointer-events-none animate-in slide-in-from-top-full duration-500">
-                    <div className="w-full bg-emerald-500/90 backdrop-blur-md border border-emerald-400/30 text-white rounded-2xl py-3 px-4 shadow-[0_8px_32px_rgba(16,185,129,0.3)] flex items-center justify-between pointer-events-auto ring-2 ring-emerald-400/50">
+                    <div className="w-full bg-brand-success/90 backdrop-blur-md border border-brand-success/30 text-white rounded-2xl py-3 px-4 shadow-[0_8px_32px_rgba(76,201,240,0.3)] flex items-center justify-between pointer-events-auto ring-2 ring-brand-success/50">
                         <div className="flex items-center gap-2.5">
                             <span className="relative flex h-3.5 w-3.5 shrink-0">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-white"></span>
                             </span>
-                            <span className="text-xs font-black tracking-wide uppercase">🛡️ Safe Mode 실시간 보호 중</span>
+                            <span className="text-xs font-black tracking-wide uppercase text-brand-accent">🛡️ Safe Mode 실시간 보호 중</span>
                         </div>
                         <div className="flex items-center gap-3">
-                            <span className="bg-black/30 font-black px-2.5 py-1 rounded-lg text-sm tabular-nums tracking-wider border border-white/10">
+                            <span className="bg-black/30 font-black px-2.5 py-1 rounded-lg text-sm tabular-nums tracking-wider border border-white/10 text-white">
                                 {formatTime(timeLeft)}
                             </span>
                             <button 
                                 onClick={() => setIsOpen(true)}
-                                className="bg-white text-emerald-700 text-[10px] font-black px-3 py-1 rounded-lg hover:bg-emerald-50 transition active:scale-95 shadow-sm"
+                                className="bg-white text-brand-accent text-[10px] font-black px-3 py-1 rounded-lg hover:bg-brand-success/20 transition active:scale-95 shadow-sm"
                             >
                                 관리
                             </button>
@@ -703,7 +722,7 @@ export default function GlobalSafeMode() {
                 className="fixed bottom-[105px] left-1/2 -translate-x-1/2 z-[998] pointer-events-auto flex flex-col items-center gap-2.5 transition-transform duration-500 ease-[cubic-bezier(0.3,1,0.3,1)]"
             >
                 {isActive && (
-                    <div className="bg-emerald-500 text-white text-[9px] font-black px-2.5 py-1 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse border border-emerald-400 tracking-wide">
+                    <div className="bg-brand-success text-brand-accent text-[9px] font-black px-2.5 py-1 rounded-lg shadow-[0_0_15px_rgba(76,201,240,0.5)] animate-pulse border border-brand-success tracking-wide">
                         🛡️ 안심 귀가 보호 중
                     </div>
                 )}
@@ -715,24 +734,24 @@ export default function GlobalSafeMode() {
                 >
                     {isActive ? (
                         <>
-                            {/* [ACTIVE] 강력한 에메랄드 세이프티 존 */}
-                            <span className="absolute inset-0 rounded-full bg-emerald-400 opacity-50 animate-ping" style={{ animationDuration: '2s' }}></span>
-                            <span className="absolute -inset-1 rounded-full bg-gradient-to-tr from-emerald-300 via-teal-500 to-emerald-600 blur-md opacity-80 animate-pulse"></span>
+                            {/* [ACTIVE] 강력한 스카이 사이언 세이프티 존 */}
+                            <span className="absolute inset-0 rounded-full bg-brand-success opacity-50 animate-ping" style={{ animationDuration: '2s' }}></span>
+                            <span className="absolute -inset-1 rounded-full bg-gradient-to-tr from-brand-success via-brand-primary to-brand-secondary blur-md opacity-80 animate-pulse"></span>
                             
-                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-50 to-white border-2 border-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.5)] z-10 flex items-center justify-center overflow-hidden">
+                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-brand-success/10 to-white border-2 border-brand-success shadow-[0_0_25px_rgba(76,201,240,0.5)] z-10 flex items-center justify-center overflow-hidden">
                                 <div className="relative flex items-center justify-center">
-                                    <Shield size={34} className="text-emerald-100" fill="currentColor" />
-                                    <Heart size={16} className="text-emerald-500 absolute animate-pulse" fill="currentColor" />
+                                    <Shield size={34} className="text-brand-success/25" fill="currentColor" />
+                                    <Heart size={16} className="text-brand-secondary absolute animate-pulse" fill="currentColor" />
                                 </div>
                             </div>
                         </>
                     ) : (
                         <>
                             {/* [INACTIVE] 시그니처 다크 오로라 글래스 오브 */}
-                            <span className="absolute -inset-2 rounded-full bg-gradient-to-r from-indigo-500 via-red-500 to-rose-500 blur-lg opacity-40 group-hover:opacity-75 transition-opacity duration-500 animate-pulse"></span>
+                            <span className="absolute -inset-2 rounded-full bg-gradient-to-r from-brand-primary via-brand-secondary to-brand-accent blur-lg opacity-40 group-hover:opacity-75 transition-opacity duration-500 animate-pulse"></span>
                             
                             {/* 메인 비비드 글래스 바디 */}
-                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500 via-red-500 to-pink-500 border border-white/30 shadow-[0_8px_32px_rgba(239,68,68,0.4)] z-10 flex items-center justify-center overflow-hidden">
+                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-brand-primary via-brand-secondary to-brand-accent border border-white/30 shadow-[0_8px_32px_rgba(255,107,53,0.4)] z-10 flex items-center justify-center overflow-hidden">
                                 <div className="absolute top-0 left-0 w-full h-[45%] bg-gradient-to-b from-white/40 to-transparent rounded-t-full"></div>
                                 
                                 <div className="relative flex items-center justify-center">
@@ -756,7 +775,7 @@ export default function GlobalSafeMode() {
                         <div className="flex justify-between items-start mb-6">
                             <div>
                                 <h3 className="text-2xl font-black text-gray-900 flex items-center gap-2">
-                                    <ShieldCheck className={isActive ? 'text-emerald-500' : 'text-indigo-600'} size={26} />
+                                    <ShieldCheck className={isActive ? 'text-brand-success' : 'text-brand-primary'} size={26} />
                                     Safe Mode
                                 </h3>
                                 <p className="text-xs text-gray-500 font-bold mt-1">1인 & 여성 안심 귀가 스마트 타이머</p>
@@ -770,13 +789,13 @@ export default function GlobalSafeMode() {
                         {isActive ? (
                             <div className="space-y-5">
                                 {/* 카운트다운 써클 카드 */}
-                                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-6 rounded-[28px] border border-emerald-100 text-center relative overflow-hidden shadow-inner">
-                                    <span className="text-[10px] font-black uppercase text-emerald-600 tracking-widest block mb-2">실시간 안심 보호 진행 중</span>
-                                    <div className="text-4xl sm:text-5xl font-black text-emerald-800 tracking-wider tabular-nums font-mono">
+                                <div className="bg-gradient-to-br from-brand-success/10 to-brand-success/20 p-6 rounded-[28px] border border-brand-success/30 text-center relative overflow-hidden shadow-inner">
+                                    <span className="text-[10px] font-black uppercase text-brand-accent tracking-widest block mb-2">실시간 안심 보호 진행 중</span>
+                                    <div className="text-4xl sm:text-5xl font-black text-brand-accent tracking-wider tabular-nums font-mono">
                                         {formatTime(timeLeft)}
                                     </div>
                                     
-                                    <div className="flex justify-center items-center gap-1.5 mt-3 text-xs font-bold text-emerald-700 bg-white/60 inline-flex px-3 py-1 rounded-full border border-emerald-200/50">
+                                    <div className="flex justify-center items-center gap-1.5 mt-3 text-xs font-bold text-brand-accent bg-white/60 inline-flex px-3 py-1 rounded-full border border-brand-accent/20">
                                         <User size={12} /> 보호자: {guardianName} {guardianPhone && `(${guardianPhone})`}
                                     </div>
                                 </div>
@@ -787,8 +806,8 @@ export default function GlobalSafeMode() {
                                         onClick={() => toggleSiren()}
                                         className={`w-full py-4.5 rounded-2xl font-black text-base shadow-lg flex items-center justify-center gap-2 transition active:scale-95 border-b-4 ${
                                             isSirenPlaying 
-                                                ? 'bg-rose-600 text-white shadow-rose-600/40 hover:bg-rose-700 border-rose-800 animate-pulse' 
-                                                : 'bg-rose-500 text-white shadow-rose-500/30 hover:bg-rose-600 border-rose-700'
+                                                ? 'bg-brand-danger text-white shadow-brand-danger/40 hover:bg-brand-danger/90 border-brand-danger/80 animate-pulse' 
+                                                : 'bg-brand-danger/90 text-white shadow-brand-danger/30 hover:bg-brand-danger border-brand-danger/80'
                                         }`}
                                     >
                                         <Siren size={20} className={isSirenPlaying ? "animate-spin" : ""} />
@@ -797,14 +816,14 @@ export default function GlobalSafeMode() {
 
                                     <button
                                         onClick={handleSendLocationMessage}
-                                        className="w-full py-4.5 bg-indigo-600 text-white rounded-2xl font-black text-base shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 hover:bg-indigo-700 transition active:scale-95 border-b-4 border-indigo-800"
+                                        className="w-full py-4.5 bg-brand-primary text-white rounded-2xl font-black text-base shadow-lg shadow-brand-primary/30 flex items-center justify-center gap-2 hover:bg-brand-primary/95 transition active:scale-95 border-b-4 border-brand-primary/80"
                                     >
                                         <Send size={18} /> 보호자에게 실시간 위치 전송
                                     </button>
                                     
                                     <button
                                         onClick={handleToggleOff}
-                                        className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-black text-base shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 hover:bg-emerald-600 transition active:scale-95 border-b-4 border-emerald-700"
+                                        className="w-full py-4 bg-brand-success text-brand-accent rounded-2xl font-black text-base shadow-lg shadow-brand-success/20 flex items-center justify-center gap-2 hover:bg-brand-success/95 transition active:scale-95 border-b-4 border-brand-success/80"
                                     >
                                         🛡️ 귀가 완료 (타이머 끄기)
                                     </button>
@@ -815,7 +834,7 @@ export default function GlobalSafeMode() {
                                 {/* 보호자 등록 구역 */}
                                 <div className="bg-gray-50 p-5 rounded-[28px] border border-gray-200/60">
                                     <h4 className="text-sm font-black text-gray-800 mb-3 flex items-center gap-1.5">
-                                        <PhoneCall size={16} className="text-indigo-500" />
+                                        <PhoneCall size={16} className="text-brand-primary" />
                                         1단계. 비상 안심 연락망 등록
                                     </h4>
 
@@ -824,11 +843,11 @@ export default function GlobalSafeMode() {
                                             <div>
                                                 <p className="text-sm font-black text-gray-800">{guardianName}</p>
                                                 {guardianPhone && <p className="text-xs font-bold text-gray-400 mt-0.5">{guardianPhone}</p>}
-                                                {guardianUserId && <span className="inline-block mt-1.5 text-[9px] font-black bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded">서비스 연동 회원</span>}
+                                                {guardianUserId && <span className="inline-block mt-1.5 text-[9px] font-black bg-brand-primary/10 text-brand-primary px-2 py-0.5 rounded">서비스 연동 회원</span>}
                                             </div>
                                             <button 
                                                 onClick={handleResetGuardian}
-                                                className="text-xs font-bold text-rose-500 bg-rose-50 hover:bg-rose-100 px-3 py-2 rounded-lg transition"
+                                                className="text-xs font-bold text-brand-danger bg-brand-danger/10 hover:bg-brand-danger/20 px-3 py-2 rounded-lg transition"
                                             >
                                                 수정
                                             </button>
@@ -840,14 +859,14 @@ export default function GlobalSafeMode() {
                                                 <button 
                                                     type="button" 
                                                     onClick={() => setRegisterTab('search')} 
-                                                    className={`flex-1 pb-2 text-xs font-black text-center transition-all ${registerTab === 'search' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
+                                                    className={`flex-1 pb-2 text-xs font-black text-center transition-all ${registerTab === 'search' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-400 hover:text-gray-600'}`}
                                                 >
                                                     서비스 사용자 검색
                                                 </button>
                                                 <button 
                                                     type="button" 
                                                     onClick={() => setRegisterTab('manual')} 
-                                                    className={`flex-1 pb-2 text-xs font-black text-center transition-all ${registerTab === 'manual' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
+                                                    className={`flex-1 pb-2 text-xs font-black text-center transition-all ${registerTab === 'manual' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-400 hover:text-gray-600'}`}
                                                 >
                                                     직접 연락처 입력
                                                 </button>
@@ -863,13 +882,13 @@ export default function GlobalSafeMode() {
                                                                 value={searchQuery}
                                                                 onChange={(e) => setSearchQuery(e.target.value)}
                                                                 required
-                                                                className="w-full bg-white border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 rounded-xl pl-9 pr-4 py-3 text-xs font-bold outline-none transition"
+                                                                className="w-full bg-white border border-gray-200 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/20 rounded-xl pl-9 pr-4 py-3 text-xs font-bold outline-none transition"
                                                             />
                                                             <Search size={14} className="text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                                                         </div>
                                                         <button
                                                             type="submit"
-                                                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-xl text-xs font-black transition active:scale-95 shadow-sm"
+                                                            className="bg-brand-primary hover:bg-brand-primary/90 text-white px-4 py-3 rounded-xl text-xs font-black transition active:scale-95 shadow-sm"
                                                         >
                                                             검색
                                                         </button>
@@ -877,7 +896,7 @@ export default function GlobalSafeMode() {
 
                                                     {searchStatus === 'searching' && (
                                                         <div className="flex justify-center py-4">
-                                                             <Loader2 className="animate-spin text-indigo-500" size={20} />
+                                                             <Loader2 className="animate-spin text-brand-primary" size={20} />
                                                         </div>
                                                     )}
 
@@ -887,16 +906,16 @@ export default function GlobalSafeMode() {
                                                                 <div 
                                                                     key={targetUser.id} 
                                                                     onClick={() => handleSelectUserGuardian(targetUser)}
-                                                                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-indigo-50 cursor-pointer transition border border-transparent hover:border-indigo-100"
+                                                                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-brand-primary/10 cursor-pointer transition border border-transparent hover:border-brand-primary/20"
                                                                 >
-                                                                    <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-black text-xs flex items-center justify-center uppercase shrink-0">
+                                                                    <div className="w-8 h-8 rounded-full bg-brand-primary/10 text-brand-primary font-black text-xs flex items-center justify-center uppercase shrink-0">
                                                                         {(targetUser.name || targetUser.displayName || 'U').substring(0, 2)}
                                                                     </div>
                                                                     <div className="flex-1 min-w-0">
                                                                         <p className="text-xs font-black text-gray-800 truncate">{targetUser.name || targetUser.displayName}</p>
                                                                         <p className="text-[10px] font-bold text-gray-400 truncate">{targetUser.email}</p>
                                                                     </div>
-                                                                    <span className="text-[9px] font-black bg-indigo-50 text-indigo-600 px-2 py-1 rounded">선택</span>
+                                                                    <span className="text-[9px] font-black bg-brand-primary/10 text-brand-primary px-2 py-1 rounded">선택</span>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -915,7 +934,7 @@ export default function GlobalSafeMode() {
                                                             value={guardianName}
                                                             onChange={(e) => setGuardianName(e.target.value)}
                                                             required
-                                                            className="w-full bg-white border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
+                                                            className="w-full bg-white border border-gray-200 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/20 rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
                                                         />
                                                         <input
                                                             type="tel"
@@ -923,12 +942,12 @@ export default function GlobalSafeMode() {
                                                             value={guardianPhone}
                                                             onChange={(e) => setGuardianPhone(e.target.value)}
                                                             required
-                                                            className="w-full bg-white border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
+                                                            className="w-full bg-white border border-gray-200 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/20 rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
                                                         />
                                                     </div>
                                                     <button
                                                         type="submit"
-                                                        className="w-full py-3.5 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-black shadow-md transition active:scale-95"
+                                                        className="w-full py-3.5 bg-brand-accent hover:bg-brand-accent/90 text-white rounded-xl text-xs font-black shadow-md transition active:scale-95"
                                                     >
                                                         비상 연락망 저장
                                                     </button>
@@ -941,30 +960,30 @@ export default function GlobalSafeMode() {
                                 {/* 타이머 설정 */}
                                 <div className="space-y-3">
                                     <h4 className="text-sm font-black text-gray-800 flex items-center gap-1.5 px-1">
-                                        <Timer size={16} className="text-indigo-500" />
+                                        <Timer size={16} className="text-brand-primary" />
                                         2단계. 안심 약속 귀가 시간 설정
                                     </h4>
                                     
                                     <div className="flex flex-col gap-2.5">
-                                        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-100 transition shadow-sm">
+                                        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus-within:border-brand-primary focus-within:ring-1 focus-within:ring-brand-primary/20 transition shadow-sm">
                                             <input 
                                                 type="number"
                                                 min="1"
                                                 value={duration}
                                                 onChange={(e) => setDuration(e.target.value ? Number(e.target.value) : '')}
                                                 className="flex-1 bg-transparent text-sm font-black text-gray-900 outline-none w-full"
-                                                placeholder="직접 시간 입력 (예: 45)"
+                                                placeholder="직접 시간 입력 (예: 120)"
                                             />
                                             <span className="text-xs font-bold text-gray-500 shrink-0">분 뒤 알림</span>
                                         </div>
                                         <div className="grid grid-cols-4 gap-2">
-                                            {[10, 20, 30, 60].map((mins) => (
+                                            {[10, 30, 60, 120].map((mins) => (
                                                 <button
                                                     key={mins}
                                                     onClick={() => setDuration(mins)}
                                                     className={`py-2 rounded-lg text-[11px] font-black border transition active:scale-95 ${
                                                         duration === mins
-                                                            ? 'bg-indigo-50 border-indigo-500 text-indigo-700'
+                                                            ? 'bg-brand-primary/10 border-brand-primary text-brand-primary'
                                                             : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
                                                     }`}
                                                 >
@@ -981,9 +1000,9 @@ export default function GlobalSafeMode() {
                                 {/* 활성화 버튼 */}
                                 <button
                                     onClick={handleToggleOn}
-                                    className="w-full py-4.5 bg-gradient-to-r from-gray-900 to-indigo-950 text-white rounded-2xl font-black text-base shadow-xl hover:from-black hover:to-indigo-900 transition flex items-center justify-center gap-2 border-b-4 border-indigo-900 active:scale-95"
+                                    className="w-full py-4.5 bg-gradient-to-r from-brand-primary via-brand-secondary to-brand-accent text-white rounded-2xl font-black text-base shadow-xl hover:opacity-90 transition flex items-center justify-center gap-2 border-b-4 border-brand-accent active:scale-95"
                                 >
-                                    <ShieldCheck size={20} className="text-amber-400 animate-pulse" />
+                                    <ShieldCheck size={20} className="text-white animate-pulse" />
                                     Safe Mode 실시간 보호 시작
                                 </button>
                             </div>
@@ -995,21 +1014,21 @@ export default function GlobalSafeMode() {
             {/* 4. 타이머 강제 만료 비상 알림 카드 */}
             {showTimerAlert && (
                 <div className="fixed inset-0 z-[99999] flex items-center justify-center p-6 pointer-events-auto">
-                    <div className="absolute inset-0 bg-red-950/80 backdrop-blur-md animate-in fade-in duration-300"></div>
-                    <div className="bg-white w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-red-500">
-                        <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center text-red-500 mb-4 animate-bounce shadow-md">
+                    <div className="absolute inset-0 bg-brand-danger/85 backdrop-blur-md animate-in fade-in duration-300"></div>
+                    <div className="bg-white w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-brand-danger">
+                        <div className="w-16 h-16 bg-brand-danger/10 rounded-2xl flex items-center justify-center text-brand-danger mb-4 animate-bounce shadow-md">
                             <AlertTriangle size={36} />
                         </div>
                         <h3 className="text-xl font-black text-gray-900 mb-1 text-center">🚨 귀가 안심 타이머 만료!</h3>
-                        <p className="text-xs text-red-500 font-black mb-3">Emergency Alert Triggered</p>
+                        <p className="text-xs text-brand-danger font-black mb-3">Emergency Alert Triggered</p>
                         <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed font-semibold">
                             지정한 귀가 예정 약속 시간이 끝났습니다.<br />
                             무사히 도착하셨다면 꼭 해제 버튼을 눌러주세요.<br />
-                            <span className="text-red-600 font-bold block mt-2">(현재 비상 경보가 채팅방에 올라갔습니다)</span>
+                            <span className="text-brand-danger font-bold block mt-2">(현재 비상 경보가 채팅방에 올라갔습니다)</span>
                         </p>
                         <button 
                             onClick={handleToggleOff} 
-                            className="w-full py-4.5 rounded-2xl font-black text-white bg-red-500 hover:bg-red-600 transition-colors shadow-lg active:scale-95 text-base border-b-4 border-red-700"
+                            className="w-full py-4.5 rounded-2xl font-black text-white bg-brand-danger hover:bg-brand-danger/90 transition-colors shadow-lg active:scale-95 text-base border-b-4 border-brand-danger/80"
                         >
                             🛡️ 무사 도착 해제 (경보 끄기)
                         </button>
@@ -1020,15 +1039,15 @@ export default function GlobalSafeMode() {
             {/* 5. [글로벌] 피보호자 비상 만료 알림 카드 (보호자 시점) */}
             {otherExpiredSession && (
                 <div className="fixed inset-0 z-[999999] flex items-center justify-center p-6 pointer-events-auto">
-                    <div className="absolute inset-0 bg-rose-950/90 backdrop-blur-lg animate-in fade-in duration-300"></div>
-                    <div className="bg-white w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-rose-600 ring-4 ring-rose-500/20">
-                        <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mb-4 animate-pulse shadow-md">
+                    <div className="absolute inset-0 bg-brand-danger/90 backdrop-blur-lg animate-in fade-in duration-300"></div>
+                    <div className="bg-white w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-brand-danger ring-4 ring-brand-danger/20">
+                        <div className="w-16 h-16 bg-brand-danger/10 text-brand-danger rounded-2xl flex items-center justify-center mb-4 animate-pulse shadow-md">
                             <ShieldAlert size={36} />
                         </div>
                         <h3 className="text-xl font-black text-gray-900 mb-1 text-center">🚨 보호 대상 위험 경보!</h3>
-                        <p className="text-xs text-rose-600 font-black mb-3">Guardian Emergency Warning</p>
+                        <p className="text-xs text-brand-danger font-black mb-3">Guardian Emergency Warning</p>
                         <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed font-semibold">
-                            보호 대상자인 <span className="text-rose-600 font-black">{otherExpiredSession.userName}</span>님의<br />
+                            보호 대상자인 <span className="text-brand-danger font-black">{otherExpiredSession.userName}</span>님의<br />
                             안심 귀가 예정 시간이 만료되었습니다!<br />
                             신속히 연락을 시도하고 안전을 확인하세요.
                         </p>
@@ -1036,14 +1055,14 @@ export default function GlobalSafeMode() {
                             {otherExpiredSession.guardianPhone && (
                                 <a 
                                     href={`tel:${otherExpiredSession.guardianPhone}`}
-                                    className="w-full py-4 rounded-2xl font-black text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2 active:scale-95 text-sm"
+                                    className="w-full py-4 rounded-2xl font-black text-brand-primary bg-brand-primary/10 hover:bg-brand-primary/20 transition-colors flex items-center justify-center gap-2 active:scale-95 text-sm"
                                 >
                                     <PhoneCall size={16} /> 대상자에게 전화하기
                                 </a>
                             )}
                             <a 
                                 href={`/share/live_safemode?userId=${otherExpiredSession.userId}`}
-                                className="w-full py-4 rounded-2xl font-black text-white bg-rose-600 hover:bg-rose-700 transition-colors flex items-center justify-center gap-2 active:scale-95 text-sm shadow-md"
+                                className="w-full py-4 rounded-2xl font-black text-white bg-brand-danger hover:bg-brand-danger/90 transition-colors flex items-center justify-center gap-2 active:scale-95 text-sm shadow-md"
                             >
                                 <Shield size={16} /> 실시간 안심 지도 보기
                             </a>

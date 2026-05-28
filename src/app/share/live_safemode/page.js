@@ -2,7 +2,7 @@
 
 import React, { Suspense, useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ShieldCheck, MapPin, AlertTriangle, Phone, Siren, Volume2, Shield } from 'lucide-react';
+import { ShieldCheck, MapPin, AlertTriangle, Phone, Siren, Volume2, Shield, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import { db } from '../../../lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -151,26 +151,26 @@ function GuardianDashboardContent() {
                 <div className="w-full max-w-md mb-4 animate-in fade-in duration-300">
                     <button 
                         onClick={handleEnableAudio}
-                        className="w-full bg-indigo-50 border border-indigo-200 text-indigo-700 py-3.5 px-4 rounded-2xl flex items-center justify-between text-xs font-black shadow-sm active:scale-98 transition"
+                        className="w-full bg-brand-primary/10 border border-brand-primary/20 text-brand-primary py-3.5 px-4 rounded-2xl flex items-center justify-between text-xs font-black shadow-sm active:scale-98 transition"
                     >
                         <div className="flex items-center gap-2 text-left">
                             <Volume2 size={18} className="animate-bounce shrink-0" />
                             <div>
                                 <p>음성 안내 경보 및 사이렌 활성화</p>
-                                <p className="text-[10px] text-indigo-500/80 mt-0.5 font-bold">비상 상황 시 즉각적인 경보음을 듣기 위해 클릭해 주세요.</p>
+                                <p className="text-[10px] text-brand-primary/80 mt-0.5 font-bold">비상 상황 시 즉각적인 경보음을 듣기 위해 클릭해 주세요.</p>
                             </div>
                         </div>
-                        <span className="bg-indigo-600 text-white px-2.5 py-1 rounded-lg text-[10px]">켬</span>
+                        <span className="bg-brand-primary text-white px-2.5 py-1 rounded-lg text-[10px]">켬</span>
                     </button>
                 </div>
             )}
 
-            <div className={`w-full max-w-md bg-white rounded-[32px] shadow-2xl overflow-hidden transition-all duration-500 border-2 ${isExpired ? 'border-red-500 shadow-red-200 ring-4 ring-red-500/10' : 'border-transparent'}`}>
+            <div className={`w-full max-w-md bg-white rounded-[32px] shadow-2xl overflow-hidden transition-all duration-500 border-2 ${isExpired ? 'border-brand-danger shadow-brand-danger/20 ring-4 ring-brand-danger/10' : 'border-transparent'}`}>
                 {/* 헤더 구역 */}
-                <div className={`p-8 text-center relative overflow-hidden transition-colors duration-500 ${isExpired ? 'bg-gradient-to-br from-red-600 via-rose-600 to-red-800' : 'bg-gradient-to-br from-indigo-600 via-purple-600 to-rose-500'}`}>
+                <div className={`p-8 text-center relative overflow-hidden transition-colors duration-500 ${isExpired ? 'bg-gradient-to-br from-brand-danger to-brand-danger/80' : 'bg-gradient-to-br from-brand-primary via-brand-secondary to-brand-accent'}`}>
                     <div className="absolute top-0 left-0 w-full h-full bg-[url('/noise.png')] opacity-20 mix-blend-overlay"></div>
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-lg animate-pulse ${isExpired ? 'bg-white/20 text-white' : 'bg-white/20 text-white'}`}>
+                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-lg animate-pulse bg-white/20 text-white`}>
                             {isExpired ? <ShieldAlert size={48} /> : <ShieldCheck size={48} />}
                         </div>
                         <h1 className="text-2xl font-black text-white mb-2 tracking-tight">
@@ -191,7 +191,7 @@ function GuardianDashboardContent() {
                     {/* 실시간 위치 */}
                     <div>
                         <h2 className="text-lg font-black text-gray-900 mb-4 flex items-center gap-2">
-                            <MapPin className="text-indigo-500" /> 마지막 확인된 위치
+                            <MapPin className="text-brand-primary" /> 마지막 확인된 위치
                         </h2>
                         
                         {hasLocation ? (
@@ -214,29 +214,29 @@ function GuardianDashboardContent() {
                                         href={mapUrl} 
                                         target="_blank" 
                                         rel="noreferrer"
-                                        className="text-xs font-black text-indigo-600 bg-indigo-50 px-4 py-2 rounded-xl hover:bg-indigo-100 transition"
+                                        className="text-xs font-black text-brand-primary bg-brand-primary/10 px-4 py-2 rounded-xl hover:bg-brand-primary/20 transition"
                                     >
                                         구글 지도로 크게 보기
                                     </a>
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-rose-50 p-6 rounded-2xl border border-rose-100 text-center">
-                                <AlertTriangle size={32} className="text-rose-400 mx-auto mb-3" />
-                                <p className="text-sm font-black text-rose-800 mb-1">위치 정보를 불러올 수 없습니다</p>
-                                <p className="text-xs text-rose-600/80 font-bold">기기의 위치 설정이 꺼져있거나, 통신 상태가 불안정할 수 있습니다.</p>
+                            <div className="bg-brand-danger/10 p-6 rounded-2xl border border-brand-danger/20 text-center">
+                                <AlertTriangle size={32} className="text-brand-danger/60 mx-auto mb-3 animate-pulse" />
+                                <p className="text-sm font-black text-brand-danger mb-1">위치 정보를 불러올 수 없습니다</p>
+                                <p className="text-xs text-brand-danger/80 font-bold">기기의 위치 설정이 꺼져있거나, 통신 상태가 불안정할 수 있습니다.</p>
                             </div>
                         )}
                     </div>
 
                     {/* 보호자 행동 지침 */}
-                    <div className={`rounded-2xl p-6 border transition-colors duration-500 ${isExpired ? 'bg-red-50 border-red-100 text-red-900' : 'bg-amber-50 border-amber-100 text-amber-900'}`}>
+                    <div className={`rounded-2xl p-6 border transition-colors duration-500 ${isExpired ? 'bg-brand-danger/10 border-brand-danger/20 text-brand-danger' : 'bg-amber-50 border-amber-100 text-amber-900'}`}>
                         <h3 className="font-black mb-2 flex items-center gap-2 text-sm">
                             <AlertTriangle size={16} /> 
                             {isExpired ? '⚠️ [긴급 지침] 즉시 조치를 권장합니다' : '보호자 행동 지침'}
                         </h3>
                         {isExpired ? (
-                            <ul className="text-xs font-bold text-red-800/80 space-y-2 leading-relaxed">
+                            <ul className="text-xs font-bold text-brand-danger/80 space-y-2 leading-relaxed">
                                 <li>• 여행자님이 직접 설정한 귀가 약속 시간이 만료되었습니다.</li>
                                 <li>• 신속하게 전화를 걸어 여행자의 현재 위치와 안전을 확인해 주세요.</li>
                                 <li>• 통화가 불가능하거나 현장 확인이 곤란한 경우, 즉시 경찰(112) 또는 주변 구조대에 신고해 주세요.</li>
@@ -253,7 +253,7 @@ function GuardianDashboardContent() {
 
                 {/* 하단 푸터 */}
                 <div className="bg-gray-50 p-6 text-center border-t border-gray-100">
-                    <Link href="/" className="text-xs font-bold text-gray-400 hover:text-indigo-500 transition">
+                    <Link href="/" className="text-xs font-bold text-gray-400 hover:text-brand-primary transition">
                         TripMaker 서비스 메인으로 가기
                     </Link>
                 </div>
@@ -262,12 +262,12 @@ function GuardianDashboardContent() {
             {/* 보호자 기기 비상 사이렌 소리 알림 팝업 오버레이 */}
             {isExpired && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[99999] w-[90%] max-w-[360px] animate-in slide-in-from-bottom duration-300">
-                    <div className="bg-red-600 text-white p-4.5 rounded-2xl shadow-2xl flex items-center justify-between gap-3 border border-red-500">
+                    <div className="bg-brand-danger text-white p-4.5 rounded-2xl shadow-2xl flex items-center justify-between gap-3 border border-brand-danger/80">
                         <div className="flex items-center gap-2.5">
                             <Siren size={20} className="animate-spin text-white" />
                             <div className="text-left">
                                 <p className="text-xs font-black">🚨 긴급 비상 경고 사이렌 작동 중!</p>
-                                <p className="text-[10px] text-red-100 font-bold mt-0.5">{name}님의 보호 시간이 만료되었습니다.</p>
+                                <p className="text-[10px] text-white/80 font-bold mt-0.5">{name}님의 보호 시간이 만료되었습니다.</p>
                             </div>
                         </div>
                         <button 
@@ -285,7 +285,7 @@ function GuardianDashboardContent() {
 
 export default function GuardianDashboard() {
     return (
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-indigo-500 font-black">Loading Dashboard...</div>}>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-brand-primary font-black">Loading Dashboard...</div>}>
             <GuardianDashboardContent />
         </Suspense>
     );
