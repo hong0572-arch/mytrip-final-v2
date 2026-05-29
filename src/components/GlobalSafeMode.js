@@ -715,16 +715,6 @@ export default function GlobalSafeMode() {
             await navigator.clipboard.writeText(textMessage);
             triggerToast('📋 실제 위치가 포함된 공유 텍스트가 복사되었습니다!');
             setShowLocationSentModal(true); // 위치 전송 완료 모달 가동
-            
-            // 즉시 카카오톡이나 SMS 전송 창 연동
-            const encodedMsg = encodeURIComponent(textMessage);
-            const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
-            
-            if (isMobile && guardianPhone) {
-                window.location.href = `sms:${guardianPhone}?body=${encodedMsg}`;
-            } else {
-                window.open(`https://share.kakao.com/talk/friends/picker/link`, '_blank');
-            }
         } catch (err) {
             triggerToast('공유 텍스트 생성 실패');
         }
