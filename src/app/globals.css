@@ -10,8 +10,8 @@
 :root {
   --background: #F4F5F7; /* A안 뉴트럴 백그라운드 */
   --foreground: #1E1E24; /* A안 차콜 텍스트 */
-  --brand-gradient: linear-gradient(135deg, #0F766E 0%, #0284C7 50%, #FF6F61 100%);
-  --brand-gradient-main: linear-gradient(135deg, #0F766E 0%, #0284C7 50%, #FF6F61 100%);
+  --brand-gradient: linear-gradient(135deg, #16A34A 0%, #2563EB 50%, #FF6F61 100%);
+  --brand-gradient-main: linear-gradient(135deg, #16A34A 0%, #2563EB 50%, #FF6F61 100%);
 }
 
 @theme inline {
@@ -19,13 +19,13 @@
   --color-foreground: var(--foreground);
   --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
 
-  --color-brand-start: #0F766E;
-  --color-brand-middle: #0284C7;
+  --color-brand-start: #16A34A;
+  --color-brand-middle: #2563EB;
   --color-brand-end: #FF6F61;
 
   /* 하이브리드 브랜드 및 시스템 토큰 확장 */
-  --color-brand-primary: #0F766E;
-  --color-brand-secondary: #0284C7;
+  --color-brand-primary: #16A34A;
+  --color-brand-secondary: #2563EB;
   --color-brand-accent: #FF6F61;
   --color-brand-success: #34D399;
   --color-brand-danger: #F43F5E;
