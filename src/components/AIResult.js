@@ -921,7 +921,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {/* Top Overlay */}
                 <div className="absolute top-0 left-0 w-full p-6 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none z-10 flex flex-col items-start pt-10 sm:pt-6">
                     {theme && (
-                        <span className="px-2 py-1 bg-rose-500 text-white text-xs font-black rounded-lg mb-2 shadow-sm">
+                        <span className="px-2 py-1 bg-brand-primary text-white text-xs font-black rounded-lg mb-2 shadow-sm">
                             {theme}
                         </span>
                     )}
@@ -933,7 +933,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     <button onClick={() => router.push('/mypage')} className="p-2.5 rounded-full text-white hover:bg-white/20 transition-colors" title="마이페이지">
                         <User size={20} />
                     </button>
-                    <button onClick={() => setShowInfoModal(true)} className="p-2.5 rounded-full text-rose-300 hover:bg-white/20 transition-colors relative" title="여행 정보">
+                    <button onClick={() => setShowInfoModal(true)} className="p-2.5 rounded-full text-brand-accent hover:bg-white/20 transition-colors relative" title="여행 정보">
                         <Sparkles size={20} className="animate-pulse" />
                     </button>
                     <button onClick={() => {
@@ -1081,9 +1081,9 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                                             {/* ✨ 일정별 예산/지출 입력 필드 고도화 (MyPage와 동기화) */}
                                             <div className="space-y-2 mb-3">
-                                                <div className="flex items-center gap-2 bg-indigo-50/30 p-2 rounded-lg border border-indigo-100/50">
-                                                    <Wallet size={12} className="text-indigo-500 shrink-0" />
-                                                    <span className="text-[9px] font-black text-indigo-400 uppercase shrink-0 w-8">Exp</span>
+                                                <div className="flex items-center gap-2 bg-brand-secondary/5 p-2 rounded-lg border border-brand-secondary/20">
+                                                    <Wallet size={12} className="text-brand-secondary shrink-0" />
+                                                    <span className="text-[9px] font-black text-brand-secondary/80 uppercase shrink-0 w-8">Exp</span>
                                                     <input
                                                         type="number"
                                                         value={place.expectedBudget || ""}
@@ -1092,15 +1092,15 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                         className="flex-1 bg-transparent border-none outline-none text-[11px] font-bold text-gray-700 placeholder:text-gray-300"
                                                     />
                                                 </div>
-                                                <div className="flex items-center gap-2 bg-rose-50/30 p-2 rounded-lg border border-rose-100/50">
-                                                    <Receipt size={12} className="text-rose-500 shrink-0" />
-                                                    <span className="text-[9px] font-black text-rose-400 uppercase shrink-0 w-8">Act</span>
+                                                <div className="flex items-center gap-2 bg-brand-danger/5 p-2 rounded-lg border border-brand-danger/20">
+                                                    <Receipt size={12} className="text-brand-danger shrink-0" />
+                                                    <span className="text-[9px] font-black text-brand-danger/80 uppercase shrink-0 w-8">Act</span>
                                                     <input
                                                         type="number"
                                                         value={place.actualExpense || ""}
                                                         onChange={(e) => handleEditChange(dayIdx, placeIdx, 'actualExpense', parseInt(e.target.value) || 0)}
                                                         placeholder="실제 지출 (원)"
-                                                        className="flex-1 bg-transparent border-none outline-none text-[11px] font-bold text-rose-700 placeholder:text-rose-300"
+                                                        className="flex-1 bg-transparent border-none outline-none text-[11px] font-bold text-brand-danger placeholder:text-brand-danger/40"
                                                     />
                                                 </div>
                                             </div>
@@ -1113,7 +1113,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                         </div>
                                     ))}
                                 </div>
-                                <button onClick={() => handleAddPlace(dayIdx)} className="w-full mt-3 py-2 border-2 border-dashed border-indigo-200 rounded-xl text-indigo-500 text-xs font-bold flex items-center justify-center gap-1 hover:bg-indigo-50"><Plus size={14} /> 장소 추가</button>
+                                <button onClick={() => handleAddPlace(dayIdx)} className="w-full mt-3 py-2 border-2 border-dashed border-brand-primary/20 rounded-xl text-brand-primary text-xs font-bold flex items-center justify-center gap-1 hover:bg-brand-primary/5"><Plus size={14} /> 장소 추가</button>
                             </div>
                         ))}
                     </div>
@@ -1136,7 +1136,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {/* Floating Bottom Navigation */}
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] sm:w-[85%] z-50 pointer-events-auto">
                     <nav className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-[32px] py-2 px-2 flex justify-around items-center">
-                        <button onClick={handleReset} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-rose-400 transition active:scale-95">
+                        <button onClick={handleReset} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-brand-accent transition active:scale-95">
                             <Home size={22} /><span className="text-[10px] font-bold">홈으로</span>
                         </button>
                         <button onClick={handleKakaoConsult} className="flex flex-col items-center gap-1 p-2 w-[65px] text-yellow-400 hover:text-yellow-300 transition active:scale-95 text-center">
@@ -1152,7 +1152,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             <span className="text-[10px] font-bold">숙소찾기</span>
                         </button>
 
-                        <button onClick={handleShare} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-indigo-400 transition active:scale-95">
+                        <button onClick={handleShare} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-brand-secondary transition active:scale-95">
                             <Share2 size={22} /><span className="text-[10px] font-bold">공유하기</span>
                         </button>
                         <button onClick={handleDownloadPDF} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-blue-400 transition active:scale-95 relative">
@@ -1170,24 +1170,24 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             <button onClick={() => setShowInfoModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200">
                                 <X size={18} />
                             </button>
-                            <h2 className="text-xl font-black mb-4 pr-10 text-gray-800 flex items-center gap-2"><Sparkles className="text-rose-500" size={20} /> 여정 꿀팁 박스</h2>
+                            <h2 className="text-xl font-black mb-4 pr-10 text-gray-800 flex items-center gap-2"><Sparkles className="text-brand-accent" size={20} /> 여정 꿀팁 박스</h2>
 
                             <div className="flex bg-gray-100 p-1 rounded-xl mb-4">
-                                <button onClick={() => setInfoModalTab('budget')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'budget' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500'}`}>예산</button>
-                                <button onClick={() => setInfoModalTab('hotels')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'hotels' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500'}`}>추천 숙소</button>
-                                <button onClick={() => setInfoModalTab('tips')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'tips' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500'}`}>팁 & 날씨</button>
+                                <button onClick={() => setInfoModalTab('budget')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'budget' ? 'bg-white text-brand-primary shadow-sm' : 'text-gray-500'}`}>예산</button>
+                                <button onClick={() => setInfoModalTab('hotels')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'hotels' ? 'bg-white text-brand-primary shadow-sm' : 'text-gray-500'}`}>추천 숙소</button>
+                                <button onClick={() => setInfoModalTab('tips')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'tips' ? 'bg-white text-brand-primary shadow-sm' : 'text-gray-500'}`}>팁 & 날씨</button>
                             </div>
 
                             <div className="flex-1 overflow-y-auto custom-scrollbar pb-6">
                                 {infoModalTab === 'budget' && (
                                     <div className="space-y-3">
-                                        <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex justify-between items-center mb-4">
-                                            <span className="font-bold text-indigo-800">총 예상 비용</span>
-                                            <span className="font-black text-indigo-600 text-lg">{estimatedCost || "예산 정보 없음"}</span>
+                                        <div className="bg-brand-primary/5 p-4 rounded-xl border border-brand-primary/10 flex justify-between items-center mb-4">
+                                            <span className="font-bold text-brand-primary">총 예상 비용</span>
+                                            <span className="font-black text-brand-primary text-lg">{estimatedCost || "예산 정보 없음"}</span>
                                         </div>
                                         {tripPlan.budgetBreakdown?.map((item, idx) => (
                                             <div key={idx} className="flex gap-2 items-center p-3 bg-white border border-gray-100 rounded-xl shadow-sm">
-                                                <div className="w-6 h-6 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center font-bold text-xs shrink-0">{idx + 1}</div>
+                                                <div className="w-6 h-6 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold text-xs shrink-0">{idx + 1}</div>
                                                 <p className="flex-1 text-sm font-medium text-gray-700">{item}</p>
                                             </div>
                                         ))}
@@ -1244,10 +1244,10 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                 >
                                                     <div className="flex items-center justify-between gap-2 mb-2">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md">추천 {idx + 1}</span>
-                                                            <h4 className="font-bold text-sm sm:text-base text-gray-800 group-hover:text-indigo-600 transition-colors">{hotel.name}</h4>
+                                                            <span className="bg-brand-primary text-white text-[9px] font-black px-1.5 py-0.5 rounded-md">추천 {idx + 1}</span>
+                                                            <h4 className="font-bold text-sm sm:text-base text-gray-800 group-hover:text-brand-primary transition-colors">{hotel.name}</h4>
                                                         </div>
-                                                        <span className="text-xs text-indigo-600 font-bold bg-indigo-50 px-2.5 py-1 rounded-full shrink-0">{hotel.priceRange}</span>
+                                                        <span className="text-xs text-brand-primary font-bold bg-brand-primary/10 px-2.5 py-1 rounded-full shrink-0">{hotel.priceRange}</span>
                                                     </div>
 
                                                     {/* 🌟 안전 마이크로 배지 그룹 */}
@@ -1270,7 +1270,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                     <p className="text-xs text-gray-500 leading-relaxed bg-gray-50 p-2.5 rounded-xl border border-gray-100">{hotel.description}</p>
 
                                                     <div className="mt-3 flex justify-end gap-3.5 border-t border-gray-100 pt-3">
-                                                        <a href={getTripLink(hotel.name, userInfo?.destination || "", language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-extrabold text-indigo-600 flex items-center gap-0.5 hover:underline">Trip.com 최저가 <ExternalLink size={12} /></a>
+                                                        <a href={getTripLink(hotel.name, userInfo?.destination || "", language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-extrabold text-brand-primary flex items-center gap-0.5 hover:underline">Trip.com 최저가 <ExternalLink size={12} /></a>
                                                         <a href={getKlookLink(hotel.name, language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-extrabold text-orange-500 flex items-center gap-0.5 hover:underline">Klook 액티비티 <ExternalLink size={12} /></a>
                                                     </div>
                                                 </div>
@@ -1325,7 +1325,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         <div className="bg-white/90 backdrop-blur-2xl w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl animate-in zoom-in-95">
                             <button onClick={() => setShowMatchModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500"><X size={18} /></button>
                             <div className="text-center mb-6 mt-2">
-                                <div className="w-16 h-16 bg-linear-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30 animate-bounce"><Sparkles size={32} className="text-white" /></div>
+                                <div className="w-16 h-16 bg-gradient-to-tr from-brand-primary to-brand-secondary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-primary/30 animate-bounce"><Sparkles size={32} className="text-white" /></div>
                                 <h3 className="text-xl font-black text-gray-900 mb-1">여행 메이트 추천</h3>
                                 <p className="text-sm text-gray-500 font-bold">비슷한 성향의 여행자를 찾았어요!</p>
                             </div>
@@ -1336,10 +1336,10 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                     realMates.map(mate => (
                                         <div key={mate.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
                                             <div className="flex items-center gap-3">
-                                                <img src={mate.profileImgBase64 || "https://i.pravatar.cc/150?u=" + mate.id} className="w-12 h-12 rounded-full object-cover border-2 border-indigo-50" />
+                                                <img src={mate.profileImgBase64 || "https://i.pravatar.cc/150?u=" + mate.id} className="w-12 h-12 rounded-full object-cover border-2 border-brand-primary/20" />
                                                 <div><p className="font-bold text-gray-900">{mate.name}</p><p className="text-[10px] text-gray-400 font-bold truncate max-w-[120px]">{mate.bio || "반가워요!"}</p></div>
                                             </div>
-                                            <button onClick={() => handleRequestRealMate(mate)} className="bg-indigo-50 text-indigo-600 w-10 h-10 rounded-full flex items-center justify-center hover:bg-indigo-600 hover:text-white transition"><Send size={16} /></button>
+                                            <button onClick={() => handleRequestRealMate(mate)} className="bg-brand-primary/10 text-brand-primary w-10 h-10 rounded-full flex items-center justify-center hover:bg-brand-primary hover:text-white transition"><Send size={16} /></button>
                                         </div>
                                     ))
                                 )}
@@ -1364,12 +1364,12 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     <div className="absolute inset-0 z-70 flex items-center justify-center p-6">
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowResetConfirm(false)}></div>
                         <div className="bg-white w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95">
-                            <div className="w-16 h-16 bg-rose-100 rounded-2xl flex items-center justify-center text-rose-500 mb-4 shadow-sm"><RotateCcw size={32} /></div>
+                            <div className="w-16 h-16 bg-brand-danger/10 rounded-2xl flex items-center justify-center text-brand-danger mb-4 shadow-sm"><RotateCcw size={32} /></div>
                             <h3 className="text-xl font-black text-gray-900 mb-2 text-center">새로운 여행 시작</h3>
                             <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed">초기 화면으로 돌아가서<br />새로운 여행 일정을 계획하시겠습니까?</p>
                             <div className="flex gap-3 w-full">
                                 <button onClick={() => setShowResetConfirm(false)} className="flex-1 py-4 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">취소</button>
-                                <button onClick={confirmReset} className="flex-1 py-4 rounded-xl font-bold text-white bg-rose-500 hover:bg-rose-600 transition-colors shadow-md">확인</button>
+                                <button onClick={confirmReset} className="flex-1 py-4 rounded-xl font-bold text-white bg-brand-danger hover:bg-brand-danger/90 transition-colors shadow-md">확인</button>
                             </div>
                         </div>
                     </div>
@@ -1384,9 +1384,9 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             <div className="w-16 h-16 bg-linear-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg"><Save size={32} /></div>
                             <h3 className="text-xl font-black text-gray-900 mb-1">일정을 저장할까요?</h3>
                             <p className="text-sm text-gray-500 mb-6 text-center">저장된 일정은 마이페이지에서<br />수정할 수 있어요.</p>
-                            <div onClick={() => setShareToFeed(!shareToFeed)} className={`w-full p-4 rounded-xl border-2 flex items-center gap-3 cursor-pointer transition-all mb-6 ${shareToFeed ? 'border-rose-500 bg-rose-50' : 'border-gray-200 bg-gray-50'}`}>
-                                <div className={`w-6 h-6 rounded-md flex items-center justify-center ${shareToFeed ? 'bg-rose-500 text-white' : 'bg-gray-300'}`}><Check size={16} strokeWidth={3} /></div>
-                                <div className="text-left flex-1"><p className={`text-sm font-bold ${shareToFeed ? 'text-rose-600' : 'text-gray-600'}`}>여행자 피드 공유 (100P 적립)</p><p className="text-[10px] text-gray-400">다른 여행자들에게 영감을 주세요!</p></div>
+                            <div onClick={() => setShareToFeed(!shareToFeed)} className={`w-full p-4 rounded-xl border-2 flex items-center gap-3 cursor-pointer transition-all mb-6 ${shareToFeed ? 'border-brand-primary bg-brand-primary/5' : 'border-gray-200 bg-gray-50'}`}>
+                                <div className={`w-6 h-6 rounded-md flex items-center justify-center ${shareToFeed ? 'bg-brand-primary text-white' : 'bg-gray-300'}`}><Check size={16} strokeWidth={3} /></div>
+                                <div className="text-left flex-1"><p className={`text-sm font-bold ${shareToFeed ? 'text-brand-primary' : 'text-gray-600'}`}>여행자 피드 공유 (100P 적립)</p><p className="text-[10px] text-gray-400">다른 여행자들에게 영감을 주세요!</p></div>
                             </div>
                             <button onClick={executeSave} disabled={isSaving} className="w-full bg-gray-900 text-white font-bold text-lg py-4 rounded-2xl shadow-xl hover:bg-black transition">{isSaving ? <Loader2 className="animate-spin" size={20} /> : "저장 완료"}</button>
                         </div>
@@ -1399,12 +1399,12 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {tripPlan && (
                     <>
                         <div className="pdf-item text-center border-b-2 border-black pb-5 mb-8">
-                            {theme && <span style={{ display: 'inline-block', backgroundColor: '#f43f5e', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>{theme}</span>}
+                            {theme && <span style={{ display: 'inline-block', backgroundColor: '#0F766E', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>{theme}</span>}
                             <h1 className="text-3xl font-bold mb-2">{tripPlan.tripTitle}</h1>
                             <p className="text-gray-500"> 여행 계획서 by Trip Maker</p>
                         </div>
                         <div className="pdf-item mb-8">
-                            <h2 className="text-xl font-bold border-l-4 border-indigo-600 pl-3 mb-4">1. 여행 개요 및 예산</h2>
+                            <h2 className="text-xl font-bold border-l-4 border-brand-primary pl-3 mb-4">1. 여행 개요 및 예산</h2>
                             <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
                                 <ul className="space-y-2">
                                     <li className="flex"><span className="font-bold w-24">총 예상 비용:</span> {estimatedCost}</li>
@@ -1418,11 +1418,11 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             </div>
                         </div>
                         <div className="mb-8">
-                            <h2 className="pdf-item text-xl font-bold border-l-4 border-indigo-600 pl-3 mb-4">2. 상세 일정</h2>
+                            <h2 className="pdf-item text-xl font-bold border-l-4 border-brand-primary pl-3 mb-4">2. 상세 일정</h2>
                             {tripPlan.itinerary?.map((day, idx) => (
                                 <div key={idx} className="mb-6">
                                     <div className="pdf-item mb-3">
-                                        <h3 className="font-bold text-lg bg-indigo-50 px-3 py-1 rounded inline-block text-indigo-800">
+                                        <h3 className="font-bold text-lg bg-brand-primary/10 px-3 py-1 rounded inline-block text-brand-primary">
                                             Day {day.day} <span className="text-sm font-normal text-gray-500 ml-2">{day.date}</span>
                                         </h3>
                                     </div>
@@ -1432,17 +1432,17 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                 <div className="flex justify-between items-start">
                                                     <div style={{ width: '100%' }}>
                                                         <h4 className="font-bold text-gray-800 text-base">
-                                                            <span className="text-rose-500 mr-2">{place.order}.</span>
+                                                            <span className="text-brand-primary mr-2">{place.order}.</span>
                                                             {place.name}
                                                         </h4>
                                                         {place.budget && (
-                                                            <div style={{ marginTop: '5px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 'bold', color: '#4f46e5' }}>
+                                                            <div style={{ marginTop: '5px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 'bold', color: '#0F766E' }}>
                                                                 💰 예산: {place.budget}
                                                             </div>
                                                         )}
                                                         <p className="text-xs text-gray-500 mt-1">{place.description}</p>
                                                         {place.reason && (
-                                                            <div style={{ marginTop: '8px', padding: '8px', backgroundColor: '#fff1f2', borderRadius: '8px', fontSize: '11px', color: '#881337', border: '1px solid #ffe4e6' }}>
+                                                            <div style={{ marginTop: '8px', padding: '8px', backgroundColor: '#ecfeff', borderRadius: '8px', fontSize: '11px', color: '#0891b2', border: '1px solid #cffafe' }}>
                                                                 <strong>💡 AI 추천 이유:</strong> {place.reason}
                                                             </div>
                                                         )}
@@ -1455,7 +1455,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             ))}
                         </div>
                         <div className="pdf-item">
-                            <h2 className="text-xl font-bold border-l-4 border-indigo-600 pl-3 mb-4">3. 여행 정보</h2>
+                            <h2 className="text-xl font-bold border-l-4 border-brand-primary pl-3 mb-4">3. 여행 정보</h2>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="border p-4 rounded-lg">
                                     <h4 className="font-bold mb-2">☀️ 날씨 정보</h4>

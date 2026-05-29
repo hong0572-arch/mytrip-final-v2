@@ -41,3 +41,13 @@ yarn-error.log*
 next-env.d.ts
 
 /app/
+
+# Android/Gradle/Bubblewrap build files
+/twa-build/.gradle/
+/twa-build/build/
+/twa-build/app/build/
+/twa-build/build.ps1
+/twa-build/manifest-checksum.txt
+/twa-build/android.keystore
+android.keystore
+.vscode/

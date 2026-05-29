@@ -116,7 +116,7 @@ function TripDetailContent() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white">
-                <Loader2 className="animate-spin mb-4 text-rose-500" size={48} />
+                <Loader2 className="animate-spin mb-4 text-brand-primary" size={48} />
                 <h2 className="text-xl font-bold animate-pulse">일정을 불러오는 중...</h2>
             </div>
         );
@@ -133,7 +133,7 @@ function TripDetailContent() {
                     <h2 className="text-2xl font-black mb-2">일정을 찾을 수 없어요</h2>
                     <button
                         onClick={() => router.push('/mypage')}
-                        className="w-full mt-6 py-4 bg-rose-500 text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2"
+                        className="w-full mt-6 py-4 bg-brand-primary text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2"
                     >
                         <ArrowLeft size={18} /> 마이페이지로 돌아가기
                     </button>
@@ -148,7 +148,7 @@ function TripDetailContent() {
             <div className="absolute top-6 left-6 z-40 pointer-events-auto sm:top-10 sm:left-10">
                 <button
                     onClick={() => router.push('/mypage')}
-                    className="bg-white/90 backdrop-blur-md p-3 rounded-full shadow-lg text-gray-800 hover:bg-white hover:text-rose-500 transition-colors"
+                    className="bg-white/90 backdrop-blur-md p-3 rounded-full shadow-lg text-gray-800 hover:bg-white hover:text-brand-primary transition-colors"
                 >
                     <ArrowLeft size={24} strokeWidth={2.5} />
                 </button>
@@ -159,7 +159,7 @@ function TripDetailContent() {
                 <div className="fixed bottom-44 right-6 z-[110] sm:bottom-44 sm:right-10 pointer-events-auto">
                     <button
                         onClick={() => setShowChat(true)}
-                        className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full shadow-[0_8px_30px_rgba(79,70,229,0.4)] flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-all border-2 border-white"
+                        className="w-16 h-16 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-full shadow-[0_8px_30px_rgba(15,118,110,0.4)] flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-all border-2 border-white"
                         title="동행자 채팅방 열기"
                     >
                         <MessageCircle size={30} className="drop-shadow-sm" />
@@ -175,7 +175,7 @@ function TripDetailContent() {
                         <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between shrink-0 bg-white/90 backdrop-blur-md z-20">
                             <div>
                                 <h3 className="font-black text-xl text-gray-900 flex items-center gap-2">
-                                    <MessageCircle className="text-indigo-500" size={22} />
+                                    <MessageCircle className="text-brand-primary" size={22} />
                                     동행자 라운지
                                 </h3>
                                 <p className="text-xs text-gray-500 font-bold mt-0.5">{tripData.destination || "여행"} 워크스페이스</p>
@@ -187,7 +187,7 @@ function TripDetailContent() {
                             {messages.length === 0 ? (
                                 <div className="m-auto text-center text-gray-400">
                                     <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-                                        <MessageCircle size={32} className="text-indigo-200" />
+                                        <MessageCircle size={32} className="text-brand-primary/40" />
                                     </div>
                                     <p className="text-base font-bold text-gray-600 mb-1">첫 메시지를 보내보세요!</p>
                                     <p className="text-xs">동행자들과 일정이나 맛집에 대해 이야기해봐요.</p>
@@ -205,7 +205,7 @@ function TripDetailContent() {
                                             )}
                                             <div className={`max-w-[75%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                                                 {!isMe && showAvatar && <span className="text-[11px] text-gray-500 font-bold mb-1 ml-1">{msg.senderName}</span>}
-                                                <div className={`px-4 py-3 text-[15px] font-medium leading-relaxed ${isMe ? 'bg-indigo-600 text-white rounded-2xl rounded-br-sm shadow-md shadow-indigo-600/20' : 'bg-white border border-gray-100 text-gray-800 rounded-2xl rounded-bl-sm shadow-sm'}`}>
+                                                <div className={`px-4 py-3 text-[15px] font-medium leading-relaxed ${isMe ? 'bg-brand-primary text-white rounded-2xl rounded-br-sm shadow-md shadow-brand-primary/20' : 'bg-white border border-gray-100 text-gray-800 rounded-2xl rounded-bl-sm shadow-sm'}`}>
                                                     {msg.text}
                                                 </div>
                                                 <span className="text-[10px] text-gray-400 mt-1 mx-1 font-bold">
@@ -226,12 +226,12 @@ function TripDetailContent() {
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}
                                     placeholder="따뜻한 인사로 대화를 시작해보세요!"
-                                    className="flex-1 bg-gray-100 border-transparent focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100 rounded-full px-5 py-4 text-[15px] font-medium outline-none transition shadow-inner"
+                                    className="flex-1 bg-gray-100 border-transparent focus:border-brand-primary/40 focus:bg-white focus:ring-2 focus:ring-brand-primary/10 rounded-full px-5 py-4 text-[15px] font-medium outline-none transition shadow-inner"
                                 />
                                 <button
                                     type="submit"
                                     disabled={!newMessage.trim()}
-                                    className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-lg active:scale-95 disabled:bg-gray-300 disabled:shadow-none transition shrink-0"
+                                    className="w-12 h-12 bg-brand-primary text-white rounded-full flex items-center justify-center shadow-lg active:scale-95 disabled:bg-gray-300 disabled:shadow-none transition shrink-0"
                                 >
                                     <Send size={20} className="ml-1 -mt-0.5" />
                                 </button>
@@ -257,7 +257,7 @@ export default function TripDetailPage() {
     return (
         <Suspense fallback={
             <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-                <Loader2 className="animate-spin text-rose-500" size={48} />
+                <Loader2 className="animate-spin text-brand-primary" size={48} />
             </div>
         }>
             <TripDetailContent />

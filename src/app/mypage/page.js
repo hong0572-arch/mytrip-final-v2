@@ -438,7 +438,7 @@ export default function MyPage() {
                                     <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </div>
                                 <p className="text-sm font-black text-gray-800 px-2 pb-1 truncate">{item.title}</p>
-                                <button onClick={() => deleteVault(item.id)} className="absolute top-4 right-4 w-8 h-8 bg-white/90 backdrop-blur-md rounded-full text-rose-500 flex items-center justify-center shadow-lg transform scale-0 group-hover:scale-100 transition-all"><Trash2 size={16} strokeWidth={2.5} /></button>
+                                <button onClick={() => deleteVault(item.id)} className="absolute top-4 right-4 w-8 h-8 bg-white/90 backdrop-blur-md rounded-full text-brand-danger flex items-center justify-center shadow-lg transform scale-0 group-hover:scale-100 transition-all"><Trash2 size={16} strokeWidth={2.5} /></button>
                             </div>
                         ))}
                     </div>
@@ -1048,7 +1048,7 @@ export default function MyPage() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-900 relative">
                 <div className="text-center relative z-10">
-                    <Loader2 className="animate-spin text-rose-500 mb-4 mx-auto" size={40} />
+                    <Loader2 className="animate-spin text-brand-primary mb-4 mx-auto" size={40} />
                     <p className="text-white font-bold animate-pulse">동기화 중입니다...</p>
                 </div>
             </div>
@@ -1070,7 +1070,7 @@ export default function MyPage() {
                 <button onClick={() => setShowSearchModal(true)} className="text-gray-900 bg-white/50 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/80"><Search size={22} strokeWidth={2.5} /></button>
             </header>
             <div className="px-3 pt-4 pb-6">
-                <div className="inline-flex items-center gap-1.5 bg-rose-500/10 text-rose-700 text-xs font-black tracking-wide mb-2 px-3 py-1.5 rounded-full backdrop-blur-md border border-rose-500/20 shadow-sm break-keep whitespace-nowrap"><Sparkles size={14} className="fill-rose-600" /> AI TRIPS & WORKSPACE</div>
+                <div className="inline-flex items-center gap-1.5 bg-brand-primary/10 text-brand-primary text-xs font-black tracking-wide mb-2 px-3 py-1.5 rounded-full backdrop-blur-md border border-brand-primary/20 shadow-sm break-keep whitespace-nowrap"><Sparkles size={14} className="fill-brand-primary" /> AI TRIPS & WORKSPACE</div>
                 <h2 className="text-3xl font-black text-gray-900 tracking-tight break-keep whitespace-nowrap">다가오는<br />여행 일정</h2>
             </div>
             <main className="px-3 space-y-6 pb-6">
@@ -1087,10 +1087,10 @@ export default function MyPage() {
                                 <div className="h-40 bg-cover bg-center relative" style={{ backgroundImage: `url('https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(safeDest)}&zoom=11&size=600x300&maptype=roadmap&markers=color:red%7C${encodeURIComponent(safeDest)}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}')`, backgroundColor: '#e5e7eb' }}>
                                     <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold tracking-wider shadow-lg border border-white/20 break-keep whitespace-nowrap">{calculateDDay(trip.startDate)}</div>
                                     <div className="absolute top-4 left-4 flex gap-2">
-                                        <button onClick={(e) => handleDeleteTrip(e, trip.id, trip.destination)} className="text-white bg-black/40 hover:bg-rose-500 p-2.5 rounded-full backdrop-blur-md transition shadow-md z-10 shrink-0" title="일정 삭제"><Trash2 size={16} strokeWidth={2.5} /></button>
+                                        <button onClick={(e) => handleDeleteTrip(e, trip.id, trip.destination)} className="text-white bg-black/40 hover:bg-brand-danger p-2.5 rounded-full backdrop-blur-md transition shadow-md z-10 shrink-0" title="일정 삭제"><Trash2 size={16} strokeWidth={2.5} /></button>
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); handleToggleDDayNotify(trip); }} 
-                                            className={`p-2.5 rounded-full backdrop-blur-md transition shadow-md z-10 shrink-0 border ${userData?.dDayTripId === trip.id ? 'bg-rose-500 text-white border-rose-400' : 'bg-black/40 text-white border-white/20 hover:bg-white/20'}`}
+                                            className={`p-2.5 rounded-full backdrop-blur-md transition shadow-md z-10 shrink-0 border ${userData?.dDayTripId === trip.id ? 'bg-brand-primary text-white border-brand-primary' : 'bg-black/40 text-white border-white/20 hover:bg-white/20'}`}
                                             title={userData?.dDayTripId === trip.id ? "D-Day 알림 해제" : "D-Day 알림 설정"}
                                         >
                                             <BellRing size={16} strokeWidth={2.5} className={userData?.dDayTripId === trip.id ? "animate-bounce" : ""} />
@@ -1100,7 +1100,7 @@ export default function MyPage() {
                                 <div className="p-5">
                                     <div className="flex justify-between items-start mb-1">
                                         <h3 className="text-[24px] font-black text-gray-900 break-keep">{trip.destination || "여행지"}</h3>
-                                        <div className="flex items-center gap-1.5 text-rose-600/70 bg-rose-50/60 px-2 py-1 rounded-lg mt-1 shrink-0"><Plane size={16} strokeWidth={2.5} /><Bed size={16} strokeWidth={2.5} /><Utensils size={16} strokeWidth={2.5} /></div>
+                                        <div className="flex items-center gap-1.5 text-brand-primary/70 bg-brand-primary/5 px-2 py-1 rounded-lg mt-1 shrink-0"><Plane size={16} strokeWidth={2.5} /><Bed size={16} strokeWidth={2.5} /><Utensils size={16} strokeWidth={2.5} /></div>
                                     </div>
                                     <p className="text-gray-600 text-sm font-semibold mb-4 break-keep whitespace-nowrap">{formatTripDate(trip.startDate, trip.endDate, trip.duration)}</p>
                                     <div className="flex items-center justify-between bg-gray-50/80 p-3 rounded-[16px] mb-5 border border-gray-100 shadow-inner">
@@ -1130,7 +1130,7 @@ export default function MyPage() {
                     })
                 )}
                 <GlassCard className="mt-6 p-5 flex items-center justify-between cursor-pointer hover:bg-white/80 transition group active:scale-[0.98]" onClick={() => router.push('/?mode=new')}>
-                    <div className="flex items-center gap-4"><div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-orange-400 text-white rounded-full flex items-center justify-center shadow-lg shadow-rose-500/30 group-hover:scale-110 transition-transform shrink-0"><Plus size={24} strokeWidth={3} /></div><div className="overflow-hidden"><h4 className="font-bold text-gray-900 text-base mb-0.5 break-keep whitespace-nowrap truncate w-full">새로운 일정 만들기</h4><p className="text-xs text-gray-500 font-medium break-keep whitespace-nowrap">AI가 취향에 맞게 짜드려요</p></div></div><ChevronRight size={20} className="text-gray-300 group-hover:text-gray-600 transition shrink-0" />
+                    <div className="flex items-center gap-4"><div className="w-12 h-12 bg-gradient-to-br from-brand-primary to-brand-secondary text-white rounded-full flex items-center justify-center shadow-lg shadow-brand-primary/30 group-hover:scale-110 transition-transform shrink-0"><Plus size={24} strokeWidth={3} /></div><div className="overflow-hidden"><h4 className="font-bold text-gray-900 text-base mb-0.5 break-keep whitespace-nowrap truncate w-full">새로운 일정 만들기</h4><p className="text-xs text-gray-500 font-medium break-keep whitespace-nowrap">AI가 취향에 맞게 짜드려요</p></div></div><ChevronRight size={20} className="text-gray-300 group-hover:text-gray-600 transition shrink-0" />
                 </GlassCard>
             </main>
         </div>
@@ -1140,12 +1140,12 @@ export default function MyPage() {
         <div className="animate-in fade-in duration-500">
             <header className="flex justify-between items-center px-3 pt-12 pb-4 sticky top-0 z-40 bg-gradient-to-b from-white/60 to-transparent backdrop-blur-md border-b border-white/30">
                 <div onClick={openProfileModal} className="flex items-center gap-3 cursor-pointer group hover:bg-white/40 p-2 -ml-2 rounded-2xl transition w-full pr-4 overflow-hidden">
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-rose-100 to-pink-100 text-rose-600 flex items-center justify-center overflow-hidden border-2 border-white shadow-md shrink-0">
+                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 text-brand-primary flex items-center justify-center overflow-hidden border-2 border-white shadow-md shrink-0">
                         {previewImage || user?.photoURL ? (<img src={previewImage || user?.photoURL} alt="Profile" className="w-full h-full object-cover" />) : (<User size={20} />)}
                     </div>
                     <div className="overflow-hidden">
                         <h1 className="text-lg font-black text-gray-900 flex items-center gap-1 drop-shadow-sm break-keep whitespace-nowrap truncate w-full">
-                            {userData?.name || user?.displayName || "여행자"} <ChevronRight size={16} className="text-gray-600 group-hover:text-rose-600 transition shrink-0" />
+                            {userData?.name || user?.displayName || "여행자"} <ChevronRight size={16} className="text-gray-600 group-hover:text-brand-primary transition shrink-0" />
                         </h1>
                         <div className="text-[10px] text-gray-800 font-bold mt-0.5 flex gap-1">
                             {userData?.travelTags?.length > 0 ? userData.travelTags.slice(0, 2).map((tag, i) => <span key={i} className="bg-white/60 backdrop-blur-sm border border-white/50 px-2 py-0.5 rounded-full shadow-sm break-keep whitespace-nowrap">{tag}</span>) : <span className="text-gray-600 bg-white/50 backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm break-keep whitespace-nowrap"><Edit3 size={10} className="shrink-0" /> 프로필 꾸미기</span>}
@@ -1156,21 +1156,21 @@ export default function MyPage() {
                     <button onClick={() => setShowSearchModal(true)} className="bg-white/50 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/80"><Search size={20} /></button>
                     <div onClick={() => setShowInboxModal(true)} className="relative bg-white/50 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/80 cursor-pointer">
                         <Bell size={20} />
-                        {matchRequests.filter(r => r.status === 'pending').length > 0 && (<span className="absolute top-1 right-1 w-2.5 h-2.5 bg-gradient-to-r from-rose-400 to-pink-500 rounded-full border-2 border-white animate-pulse"></span>)}
+                        {matchRequests.filter(r => r.status === 'pending').length > 0 && (<span className="absolute top-1 right-1 w-2.5 h-2.5 bg-brand-accent rounded-full border-2 border-white animate-pulse"></span>)}
                     </div>
                 </div>
             </header>
 
             <div className="px-3 pt-2 space-y-6 pb-8">
-                <div onClick={() => setShowInboxModal(true)} className="bg-white/60 backdrop-blur-xl border border-rose-200 shadow-lg shadow-rose-500/10 rounded-[20px] p-5 flex items-center justify-between cursor-pointer hover:bg-white/80 transition active:scale-95">
+                <div onClick={() => setShowInboxModal(true)} className="bg-white/60 backdrop-blur-xl border border-brand-primary/20 shadow-lg shadow-brand-primary/5 rounded-[20px] p-5 flex items-center justify-between cursor-pointer hover:bg-white/80 transition active:scale-95">
                     <div className="flex items-center gap-4 w-full pr-4 overflow-hidden">
                         <div className="relative shrink-0">
-                            <div className="w-12 h-12 bg-gradient-to-br from-rose-400 to-pink-500 rounded-full flex items-center justify-center text-white shadow-md"><Inbox size={22} strokeWidth={2.5} /></div>
+                            <div className="w-12 h-12 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-full flex items-center justify-center text-white shadow-md"><Inbox size={22} strokeWidth={2.5} /></div>
                             {matchRequests.filter(r => r.status === 'pending').length > 0 && (<div className="absolute -top-1 -right-1 bg-gray-900 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">{matchRequests.filter(r => r.status === 'pending').length}</div>)}
                         </div>
                         <div className="overflow-hidden"><h3 className="font-black text-gray-900 text-lg mb-0.5 break-keep whitespace-nowrap truncate w-full">내 동행 요청함</h3><p className="text-xs text-gray-600 font-medium break-keep whitespace-nowrap truncate w-full">{matchRequests.filter(r => r.status === 'pending').length > 0 ? `새로운 요청이 도착했어요!` : `아직 주고받은 찌르기가 없어요.`}</p></div>
                     </div>
-                    <ChevronRight size={20} className="text-rose-400 shrink-0" />
+                    <ChevronRight size={20} className="text-brand-primary/60 shrink-0" />
                 </div>
 
                 <section className="mb-8">
@@ -1196,7 +1196,7 @@ export default function MyPage() {
                                             <div className="overflow-hidden">
                                                 <div className="flex items-center gap-1.5 mb-1">
                                                     <span className="font-bold text-gray-900 text-base break-keep whitespace-nowrap truncate max-w-[100px] sm:max-w-[150px]">{mate.name}</span>
-                                                    <span className="text-[10px] bg-rose-500 text-white px-2 py-0.5 rounded-full font-bold shrink-0">{randomMatch}% 일치</span>
+                                                    <span className="text-[10px] bg-brand-accent text-white px-2 py-0.5 rounded-full font-bold shrink-0">{randomMatch}% 일치</span>
                                                 </div>
                                                 <p className="text-xs text-gray-400 font-medium truncate w-full">
                                                     {mate.travelTags && mate.travelTags.length > 0 ? mate.travelTags.join(' · ') : (mate.bio || "새로운 여행자입니다 👋")}
@@ -1230,7 +1230,7 @@ export default function MyPage() {
                             </button>
                             <button
                                 onClick={() => { setFeedSort('popular'); setFeedLimit(5); }}
-                                className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 ${feedSort === 'popular' ? 'bg-rose-500 text-white shadow-md' : 'text-gray-500 hover:text-rose-500'}`}
+                                className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 ${feedSort === 'popular' ? 'bg-brand-primary text-white shadow-md' : 'text-gray-500 hover:text-brand-primary'}`}
                             >
                                 <Sparkles size={12} /> 인기순
                             </button>
@@ -1249,11 +1249,11 @@ export default function MyPage() {
                                         <div key={feed.id} className="bg-white/80 backdrop-blur-xl border border-white/60 rounded-[32px] overflow-hidden shadow-lg">
                                             {/* 기존 피드 헤더 */}
                                             <div className="p-4 flex items-center justify-between">
-                                                <div className="flex items-center gap-3 w-full pr-4 overflow-hidden"><img src={feed.avatar || "https://i.pravatar.cc/150?u=default"} alt="avatar" className="w-11 h-11 rounded-full border-2 border-rose-100 object-cover shrink-0" /><div className="overflow-hidden"><div className="flex items-center gap-2 mb-0.5"><span className="font-bold text-gray-900 text-[15px] truncate max-w-[100px] sm:max-w-[150px]">{feed.author}</span></div><p className="text-[11px] text-gray-500 font-medium break-keep whitespace-nowrap">{feed.createdAt ? new Date(feed.createdAt.seconds * 1000).toLocaleDateString() : '방금 전'}</p></div></div>
+                                                <div className="flex items-center gap-3 w-full pr-4 overflow-hidden"><img src={feed.avatar || "https://i.pravatar.cc/150?u=default"} alt="avatar" className="w-11 h-11 rounded-full border-2 border-brand-primary/10 object-cover shrink-0" /><div className="overflow-hidden"><div className="flex items-center gap-2 mb-0.5"><span className="font-bold text-gray-900 text-[15px] truncate max-w-[100px] sm:max-w-[150px]">{feed.author}</span></div><p className="text-[11px] text-gray-500 font-medium break-keep whitespace-nowrap">{feed.createdAt ? new Date(feed.createdAt.seconds * 1000).toLocaleDateString() : '방금 전'}</p></div></div>
                                                 {isMyFeed && (
                                                     <div className="flex items-center gap-1 shrink-0">
                                                         <button onClick={() => openEditFeedModal(feed)} className="text-gray-400 hover:text-indigo-500 p-2 transition" title="피드 수정"><Edit3 size={18} /></button>
-                                                        <button onClick={() => handleDeleteFeed(feed)} className="text-gray-400 hover:text-rose-500 p-2 transition" title="피드 삭제"><Trash2 size={18} /></button>
+                                                        <button onClick={() => handleDeleteFeed(feed)} className="text-gray-400 hover:text-brand-danger p-2 transition" title="피드 삭제"><Trash2 size={18} /></button>
                                                     </div>
                                                 )}
                                             </div>
@@ -1265,7 +1265,7 @@ export default function MyPage() {
                                             <div className="p-5">
                                                 <div className="flex items-center justify-between mb-4">
                                                     <div className="flex items-center gap-4 shrink-0">
-                                                        <button onClick={() => handleToggleLike(feed)} className={`transition-transform active:scale-75 ${isLiked ? 'text-rose-500' : 'text-gray-800'}`}><Heart size={28} className={isLiked ? "fill-rose-500" : ""} /></button>
+                                                        <button onClick={() => handleToggleLike(feed)} className={`transition-transform active:scale-75 ${isLiked ? 'text-brand-danger' : 'text-gray-800'}`}><Heart size={28} className={isLiked ? "fill-brand-danger" : ""} /></button>
                                                         <button onClick={() => openCommentModal(feed)} className="text-gray-800 hover:text-gray-500 transition relative">
                                                             <MessageCircleIcon size={28} />
                                                             {feed.commentCount > 0 && <span className="absolute -top-1 -right-1 bg-indigo-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{feed.commentCount}</span>}
@@ -1422,7 +1422,7 @@ export default function MyPage() {
                                                     <div className="flex justify-between items-end text-xs font-black mb-3">
                                                         <div className="flex flex-col gap-0.5">
                                                             <span className="text-gray-400 text-[10px] uppercase tracking-widest">Available Balance</span>
-                                                            <span className={`text-lg font-black tracking-tight ${isGroup ? "text-rose-500" : "text-indigo-600"}`}>{savedAmount.toLocaleString()}원</span>
+                                                            <span className={`text-lg font-black tracking-tight ${isGroup ? "text-brand-primary" : "text-indigo-600"}`}>{savedAmount.toLocaleString()}원</span>
                                                         </div>
                                                         <div className="flex flex-col items-end gap-0.5">
                                                             <span className="text-gray-400 text-[10px] uppercase tracking-widest">Progress</span>
@@ -1431,7 +1431,7 @@ export default function MyPage() {
                                                     </div>
                                                     
                                                     <div className="h-3 w-full bg-gray-200/50 rounded-full overflow-hidden mb-4 p-0.5 border border-gray-100">
-                                                        <div className={`h-full rounded-full transition-all duration-1000 ease-out relative ${isGroup ? "bg-linear-to-r from-rose-500 to-rose-300" : "bg-linear-to-r from-indigo-600 to-indigo-400"}`} style={{ width: `${percent}%` }}>
+                                                        <div className={`h-full rounded-full transition-all duration-1000 ease-out relative ${isGroup ? "bg-gradient-to-r from-brand-primary to-brand-secondary" : "bg-linear-to-r from-indigo-600 to-indigo-400"}`} style={{ width: `${percent}%` }}>
                                                             {percent > 5 && <div className="absolute top-0 right-0 w-4 h-full bg-white/30 blur-xs"></div>}
                                                         </div>
                                                     </div>
@@ -1455,7 +1455,7 @@ export default function MyPage() {
                                                             </div>
                                                             <div className="flex gap-2">
                                                                 <button onClick={() => openBudgetModal(trip)} className="text-[11px] font-black bg-white border border-gray-200 text-gray-800 px-3.5 py-2.5 rounded-xl shadow-xs hover:bg-gray-50 active:scale-95 transition-all flex items-center gap-1.5 break-keep whitespace-nowrap">
-                                                                    <Plus size={14} className="text-rose-500 shrink-0" /> 지출 추가
+                                                                    <Plus size={14} className="text-brand-primary shrink-0" /> 지출 추가
                                                                 </button>
                                                                 <button onClick={() => { setSelectedTrip(trip); setShowGroupManageModal(true); }} className={`text-[11px] font-black px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all active:scale-95 ${isHost ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200' : 'bg-white border border-gray-200 text-gray-800 hover:bg-gray-50 shadow-gray-100'}`}>
                                                                     {isHost ? <><Settings size={14} className="shrink-0" /> 관리</> : <><Wallet size={14} className="shrink-0" /> 입금</>}
@@ -1519,7 +1519,7 @@ export default function MyPage() {
     };
 
     return (
-        <div className="min-h-screen relative font-sans selection:bg-rose-100 overflow-x-hidden flex justify-center">
+        <div className="min-h-screen relative font-sans selection:bg-brand-primary/20 overflow-x-hidden flex justify-center">
             <div className="fixed inset-0 z-[-2]"><img src={BACKGROUND_IMAGE} alt="background" className="w-full h-full object-cover" /></div>
             <div className="fixed inset-0 z-[-1] bg-white/40 backdrop-blur-[20px]"></div>
 
@@ -1534,9 +1534,9 @@ export default function MyPage() {
 
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-[570px] px-6 z-50">
                     <nav className="bg-white/70 backdrop-blur-2xl border border-white/50 shadow-[0_20px_40px_rgba(0,0,0,0.1)] rounded-[32px] px-2 py-2.5 flex justify-around items-center">
-                        <button onClick={() => router.push('/?mode=new')} className="flex flex-col items-center gap-1 p-2 w-[70px] text-gray-500 hover:text-rose-600 transition"><HomeIcon size={24} strokeWidth={2} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">홈</span></button>
-                        <button onClick={() => setActiveTab('social')} className={`flex flex-col items-center gap-1 p-2 w-[70px] transition ${activeTab === 'social' ? 'text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-pink-500 scale-110' : 'text-gray-500 hover:text-rose-600'}`}><Users size={24} strokeWidth={activeTab === 'social' ? 2.5 : 2} className={activeTab === 'social' ? 'text-rose-500' : ''} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">동행</span></button>
-                        <button onClick={() => setActiveTab('schedule')} className={`flex flex-col items-center gap-1 p-2 w-[70px] transition ${activeTab === 'schedule' ? 'text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-pink-500 scale-110' : 'text-gray-500 hover:text-rose-600'}`}><Calendar size={24} strokeWidth={activeTab === 'schedule' ? 2.5 : 2} className={activeTab === 'schedule' ? 'text-rose-500' : ''} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">일정</span></button>
+                        <button onClick={() => router.push('/?mode=new')} className="flex flex-col items-center gap-1 p-2 w-[70px] text-gray-500 hover:text-brand-primary transition"><HomeIcon size={24} strokeWidth={2} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">홈</span></button>
+                        <button onClick={() => setActiveTab('social')} className={`flex flex-col items-center gap-1 p-2 w-[70px] transition ${activeTab === 'social' ? 'text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary scale-110' : 'text-gray-500 hover:text-brand-primary'}`}><Users size={24} strokeWidth={activeTab === 'social' ? 2.5 : 2} className={activeTab === 'social' ? 'text-brand-primary' : ''} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">동행</span></button>
+                        <button onClick={() => setActiveTab('schedule')} className={`flex flex-col items-center gap-1 p-2 w-[70px] transition ${activeTab === 'schedule' ? 'text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary scale-110' : 'text-gray-500 hover:text-brand-primary'}`}><Calendar size={24} strokeWidth={activeTab === 'schedule' ? 2.5 : 2} className={activeTab === 'schedule' ? 'text-brand-primary' : ''} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">일정</span></button>
                         <button onClick={() => setActiveTab('wallet')} className={`flex flex-col items-center gap-1 p-2 w-[70px] transition ${activeTab === 'wallet' ? 'text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 scale-110' : 'text-gray-500 hover:text-indigo-600'}`}><Wallet size={24} strokeWidth={activeTab === 'wallet' ? 2.5 : 2} className={activeTab === 'wallet' ? 'text-indigo-500' : ''} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">트립머니</span></button>
                         <button onClick={() => setActiveTab('vault')} className={`flex flex-col items-center gap-1 p-2 w-[70px] transition ${activeTab === 'vault' ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500 scale-110' : 'text-gray-500 hover:text-emerald-600'}`}><Box size={24} strokeWidth={activeTab === 'vault' ? 2.5 : 2} className={activeTab === 'vault' ? 'text-emerald-500' : ''} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">보관함</span></button>
                     </nav>
@@ -1562,7 +1562,7 @@ export default function MyPage() {
                                         return (
                                             <div key={item.id} className="flex justify-between items-center bg-white p-4 rounded-[20px] border border-gray-100 shadow-sm">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isPositive ? 'bg-indigo-50 text-indigo-500' : 'bg-rose-50 text-rose-500'}`}>
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isPositive ? 'bg-indigo-50 text-indigo-500' : 'bg-brand-danger/10 text-brand-danger'}`}>
                                                         <Receipt size={18} />
                                                     </div>
                                                     <div>
@@ -1570,7 +1570,7 @@ export default function MyPage() {
                                                         <p className="text-[10px] text-gray-400 font-bold break-keep whitespace-nowrap">{item.createdAt ? new Date(item.createdAt.seconds * 1000).toLocaleDateString() : "방금"}</p>
                                                     </div>
                                                 </div>
-                                                <span className={`font-black shrink-0 break-keep whitespace-nowrap ${isPositive ? 'text-indigo-600' : 'text-rose-500'}`}>
+                                                <span className={`font-black shrink-0 break-keep whitespace-nowrap ${isPositive ? 'text-indigo-600' : 'text-brand-danger'}`}>
                                                     {isPositive ? '+' : ''}{item.amount.toLocaleString()} 원
                                                 </span>
                                             </div>
@@ -1616,7 +1616,7 @@ export default function MyPage() {
                             <section>
                                 <div className="flex justify-between items-center mb-3">
                                     <h4 className="font-black text-gray-900 text-base break-keep whitespace-nowrap">멤버 입금 현황</h4>
-                                    {selectedTrip.hostId === user?.uid && <span className="text-[10px] bg-rose-100 text-rose-600 px-2 py-1 rounded font-bold shrink-0 break-keep whitespace-nowrap">내가 방장 👑</span>}
+                                    {selectedTrip.hostId === user?.uid && <span className="text-[10px] bg-brand-accent/10 text-brand-accent px-2 py-1 rounded font-bold shrink-0 break-keep whitespace-nowrap">내가 방장 👑</span>}
                                 </div>
                                 <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-4">
                                     {selectedTrip.hostId === user?.uid && (
@@ -1630,9 +1630,9 @@ export default function MyPage() {
                                             </div>
                                             <button 
                                                 onClick={handleRequestDeposit} 
-                                                className="w-full mt-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 font-black text-xs py-3.5 rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all break-keep whitespace-nowrap"
+                                                className="w-full mt-2 bg-brand-primary/5 hover:bg-brand-primary/10 text-brand-primary border border-brand-primary/10 font-black text-xs py-3.5 rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all break-keep whitespace-nowrap"
                                             >
-                                                <BellRing size={14} className="shrink-0 text-rose-500" /> 
+                                                <BellRing size={14} className="shrink-0 text-brand-primary" /> 
                                                 {selectedTrip.targetTotalCost || parseCost(selectedTrip.estimatedCost) ? (
                                                     `${Math.ceil((selectedTrip.targetTotalCost || parseCost(selectedTrip.estimatedCost)) / (selectedTrip.membersInfo?.length || 1)).toLocaleString()}원씩 N빵 입금 알림 보내기`
                                                 ) : (
@@ -1678,7 +1678,7 @@ export default function MyPage() {
                                                         ) : (
                                                             <button 
                                                                 onClick={() => handleIndividualRequestDeposit(m)}
-                                                                className="text-[10px] font-black bg-rose-50 text-rose-500 border border-rose-100 px-2.5 py-1.5 rounded-xl hover:bg-rose-100 active:scale-95 transition-all shrink-0 break-keep whitespace-nowrap"
+                                                                className="text-[10px] font-black bg-brand-primary/5 text-brand-primary border border-brand-primary/10 px-2.5 py-1.5 rounded-xl hover:bg-brand-primary/10 active:scale-95 transition-all shrink-0 break-keep whitespace-nowrap"
                                                             >
                                                                 요청
                                                             </button>
@@ -1748,7 +1748,7 @@ export default function MyPage() {
                                              </button>
                                          </div>
                                         {tripExchangeAmount > 0 && (
-                                            <p className="text-[10px] text-rose-500 font-bold mt-2 text-right break-keep whitespace-nowrap">모임통장에서 -{Math.floor(tripExchangeAmount * CURRENCY_RATES[tripExchangeCurrency]).toLocaleString()} KRW 차감</p>
+                                            <p className="text-[10px] text-brand-primary font-bold mt-2 text-right break-keep whitespace-nowrap">모임통장에서 -{Math.floor(tripExchangeAmount * CURRENCY_RATES[tripExchangeCurrency]).toLocaleString()} KRW 차감</p>
                                         )}
                                     </div>
                                 </section>
@@ -1758,7 +1758,7 @@ export default function MyPage() {
                                 <Receipt size={18} className="shrink-0" /> 이 여행의 상세 지출(가계부) 보기
                             </button>
 
-                            <button onClick={(e) => { setShowGroupManageModal(false); handleDeleteTrip(e, selectedTrip.id, selectedTrip.destination || "여행"); }} className="w-full bg-rose-50 border border-rose-100 text-rose-500 font-bold py-4 rounded-2xl shadow-sm hover:bg-rose-100 transition flex items-center justify-center gap-2 break-keep whitespace-nowrap">
+                            <button onClick={(e) => { setShowGroupManageModal(false); handleDeleteTrip(e, selectedTrip.id, selectedTrip.destination || "여행"); }} className="w-full bg-brand-danger/5 border border-brand-danger/10 text-brand-danger font-bold py-4 rounded-2xl shadow-sm hover:bg-brand-danger/10 transition flex items-center justify-center gap-2 break-keep whitespace-nowrap">
                                 <Trash2 size={18} className="shrink-0" /> 이 일정 삭제하기
                             </button>
                         </div>
@@ -1772,7 +1772,7 @@ export default function MyPage() {
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowInboxModal(false)}></div>
                     <div className="bg-white/90 backdrop-blur-2xl border border-white/60 w-full max-w-md h-[85vh] sm:h-[600px] rounded-t-[40px] sm:rounded-[40px] p-8 flex flex-col relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl">
                         <div className="flex items-center justify-between mb-6 shrink-0">
-                            <h3 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2 break-keep whitespace-nowrap"><Inbox size={24} className="text-rose-500" /> 내 동행 요청함</h3>
+                            <h3 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2 break-keep whitespace-nowrap"><Inbox size={24} className="text-brand-primary" /> 내 동행 요청함</h3>
                             <button onClick={() => setShowInboxModal(false)} className="w-10 h-10 bg-gray-200/50 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition shrink-0"><X size={20} strokeWidth={2.5} /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto pb-4 custom-scrollbar">
@@ -1833,9 +1833,9 @@ export default function MyPage() {
                                         }
 
                                         return (
-                                            <div key={req.id} className={`border rounded-[20px] p-5 shadow-sm transition-all ${isCompleted ? 'bg-gray-100 border-gray-200 opacity-80' : 'bg-white/80 border-rose-100'}`}>
+                                            <div key={req.id} className={`border rounded-[20px] p-5 shadow-sm transition-all ${isCompleted ? 'bg-gray-100 border-gray-200 opacity-80' : 'bg-white/80 border-brand-primary/20'}`}>
                                                 <div className="flex justify-between items-center mb-3 border-b border-gray-100 pb-3">
-                                                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-md break-keep whitespace-nowrap ${isCompleted ? 'bg-gray-200 text-gray-500' : (isWorkspaceInvite && !isSender ? 'bg-indigo-100 text-indigo-600' : 'bg-rose-100 text-rose-600')}`}>
+                                                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-md break-keep whitespace-nowrap ${isCompleted ? 'bg-gray-200 text-gray-500' : (isWorkspaceInvite && !isSender ? 'bg-indigo-100 text-indigo-600' : 'bg-brand-primary/10 text-brand-primary')}`}>
                                                         {isSender ? '내가 보낸 요청' : (isWorkspaceInvite ? '초대장 도착! 💌' : '받은 요청')}
                                                     </span>
                                                     <span className="text-[10px] text-gray-400 font-medium break-keep whitespace-nowrap">{req.createdAt ? new Date(req.createdAt.seconds * 1000).toLocaleDateString() : '방금 전'}</span>
@@ -1858,7 +1858,7 @@ export default function MyPage() {
                                                             <div className="flex-1 bg-gray-200 text-gray-500 py-3 rounded-xl text-xs font-bold cursor-default flex items-center justify-center gap-1 break-keep whitespace-nowrap">
                                                                 {isAccepted ? <><Check size={14} className="shrink-0" /> {req.type === 'deposit_request' ? '송금 완료' : '수락 완료'}</> : <><X size={14} className="shrink-0" /> 거절됨</>}
                                                             </div>
-                                                            <button onClick={() => handleDeleteRequest(req.id)} className="bg-gray-200 text-gray-500 px-4 py-3 rounded-xl hover:bg-rose-100 hover:text-rose-500 transition active:scale-95 shrink-0" title="내역 삭제">
+                                                            <button onClick={() => handleDeleteRequest(req.id)} className="bg-gray-200 text-gray-500 px-4 py-3 rounded-xl hover:bg-brand-danger/10 hover:text-brand-danger transition active:scale-95 shrink-0" title="내역 삭제">
                                                                 <Trash2 size={16} />
                                                             </button>
                                                         </>
@@ -1875,7 +1875,7 @@ export default function MyPage() {
                                                             ) : req.type === "deposit_request" ? (
                                                                 <button onClick={() => handlePayDeposit(req)} className="flex-1 bg-gray-900 text-white py-3 rounded-xl text-xs font-bold shadow-md flex items-center justify-center gap-1.5 hover:bg-black transition active:scale-95 break-keep whitespace-nowrap"><Wallet size={14} className="shrink-0" /> {req.amount?.toLocaleString()}원 송금하기</button>
                                                             ) : (
-                                                                <button onClick={() => handleAcceptRequest(req.id)} className="flex-1 bg-gradient-to-r from-rose-500 to-pink-600 text-white py-3 rounded-xl text-xs font-bold shadow-md hover:from-rose-600 hover:to-pink-700 transition active:scale-95 break-keep whitespace-nowrap">수락 및 채팅</button>
+                                                                <button onClick={() => handleAcceptRequest(req.id)} className="flex-1 bg-gradient-to-r from-brand-primary to-brand-secondary text-white py-3 rounded-xl text-xs font-bold shadow-md hover:from-brand-primary/95 hover:to-brand-secondary/95 transition active:scale-95 break-keep whitespace-nowrap">수락 및 채팅</button>
                                                             )}
                                                         </>
                                                     )}
@@ -1967,7 +1967,7 @@ export default function MyPage() {
                         <div className="flex items-center justify-between mb-8"><h3 className="text-2xl font-black text-gray-900 tracking-tight break-keep whitespace-nowrap">메이트 검색</h3><button onClick={closeSearchModal} className="w-10 h-10 bg-gray-200/50 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition shrink-0"><X size={20} strokeWidth={2.5} /></button></div>
                         <form onSubmit={handleSearchUser} className="relative mb-6"><div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-gray-400"><Search size={22} strokeWidth={2.5} /></div><input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="정확한 이름 또는 이메일 검색" className="w-full bg-white/60 border border-gray-200 text-gray-900 placeholder-gray-400 font-bold text-lg rounded-[20px] py-5 pl-14 pr-5 outline-none focus:ring-2 focus:ring-gray-900 transition shadow-sm" autoFocus /></form>
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
-                            {searchStatus === 'idle' && (<div className="text-center py-20 flex flex-col items-center justify-center h-full"><div className="w-20 h-20 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center text-rose-400 mb-6"><Users size={40} /></div><p className="text-gray-500 font-bold text-lg mb-2 break-keep whitespace-nowrap">실제 가입된 회원을 검색해보세요!</p></div>)}
+                            {searchStatus === 'idle' && (<div className="text-center py-20 flex flex-col items-center justify-center h-full"><div className="w-20 h-20 bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 rounded-full flex items-center justify-center text-brand-primary/60 mb-6"><Users size={40} /></div><p className="text-gray-500 font-bold text-lg mb-2 break-keep whitespace-nowrap">실제 가입된 회원을 검색해보세요!</p></div>)}
                             {searchStatus === 'loading' && (<div className="flex flex-col items-center justify-center h-full py-20 text-gray-400"><Loader2 className="animate-spin mb-4" size={40} /><p className="font-bold text-lg break-keep whitespace-nowrap">회원 검색 중...</p></div>)}
                             {searchStatus === 'result' && (
                                 <div className="animate-in fade-in duration-300 space-y-3">
@@ -2025,13 +2025,13 @@ export default function MyPage() {
                         <div className="flex flex-col items-center justify-center mb-8">
                             <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleImageChange} />
                             <div onClick={() => fileInputRef.current.click()} className="relative cursor-pointer group mb-3">
-                                <div className="w-28 h-28 rounded-full bg-gradient-to-br from-rose-100 to-pink-100 text-rose-500 flex items-center justify-center overflow-hidden border-[4px] border-white shadow-xl group-hover:scale-105 transition-transform">{previewImage || user?.photoURL ? (<img src={previewImage || user?.photoURL} alt="Profile" className="w-full h-full object-cover" />) : (<User size={48} strokeWidth={2} />)}</div>
-                                <div className="absolute bottom-0 right-0 w-10 h-10 bg-gradient-to-br from-slate-800 to-gray-900 text-white rounded-full flex items-center justify-center shadow-lg border-[3px] border-white group-hover:from-rose-500 group-hover:to-pink-600 transition-all"><Camera size={18} /></div>
+                                <div className="w-28 h-28 rounded-full bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 text-brand-primary flex items-center justify-center overflow-hidden border-[4px] border-white shadow-xl group-hover:scale-105 transition-transform">{previewImage || user?.photoURL ? (<img src={previewImage || user?.photoURL} alt="Profile" className="w-full h-full object-cover" />) : (<User size={48} strokeWidth={2} />)}</div>
+                                <div className="absolute bottom-0 right-0 w-10 h-10 bg-gradient-to-br from-slate-800 to-gray-900 text-white rounded-full flex items-center justify-center shadow-lg border-[3px] border-white group-hover:from-brand-primary group-hover:to-brand-secondary transition-all"><Camera size={18} /></div>
                             </div>
                         </div>
                         <div className="space-y-6 flex-1">
-                            <div><label className="block text-xs font-bold text-gray-500 mb-2 pl-1 uppercase tracking-wider break-keep whitespace-nowrap">Nickname</label><input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="멋진 닉네임을 입력해주세요" className="w-full bg-white/50 border border-gray-200 px-5 py-4 rounded-[20px] font-bold text-gray-900 outline-none focus:ring-2 focus:ring-rose-400 transition shadow-sm" /></div>
-                            <div><label className="block text-xs font-bold text-gray-500 mb-2 pl-1 uppercase tracking-wider break-keep whitespace-nowrap">Bio</label><input type="text" value={editBio} onChange={(e) => setEditBio(e.target.value)} placeholder="예: 낯선 골목길을 걷는 걸 좋아해요!" className="w-full bg-white/50 border border-gray-200 px-5 py-4 rounded-[20px] text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-rose-400 transition shadow-sm" /></div>
+                            <div><label className="block text-xs font-bold text-gray-500 mb-2 pl-1 uppercase tracking-wider break-keep whitespace-nowrap">Nickname</label><input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="멋진 닉네임을 입력해주세요" className="w-full bg-white/50 border border-gray-200 px-5 py-4 rounded-[20px] font-bold text-gray-900 outline-none focus:ring-2 focus:ring-brand-primary transition shadow-sm" /></div>
+                            <div><label className="block text-xs font-bold text-gray-500 mb-2 pl-1 uppercase tracking-wider break-keep whitespace-nowrap">Bio</label><input type="text" value={editBio} onChange={(e) => setEditBio(e.target.value)} placeholder="예: 낯선 골목길을 걷는 걸 좋아해요!" className="w-full bg-white/50 border border-gray-200 px-5 py-4 rounded-[20px] text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-brand-primary transition shadow-sm" /></div>
                             <div>
                                 <div className="flex items-center justify-between mb-3 pl-1"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider break-keep whitespace-nowrap">Travel Style (Max 3)</label><span className="text-[11px] text-gray-900 font-black bg-gray-100 px-2 py-1 rounded-full shrink-0">{selectedTags.length} / 3</span></div>
                                 <div className="flex flex-wrap gap-2.5">
@@ -2043,7 +2043,7 @@ export default function MyPage() {
                             </div>
                         </div>
                         <div className="mt-10 mb-4 shrink-0">
-                            <button onClick={handleSaveProfile} disabled={isSaving} className="w-full bg-gradient-to-r from-rose-500 to-pink-600 text-white font-black text-lg py-5 rounded-[20px] hover:from-rose-600 hover:to-pink-700 active:scale-[0.98] transition flex items-center justify-center gap-2 shadow-[0_10px_20px_rgba(244,63,94,0.3)] disabled:from-gray-300 disabled:to-gray-400 disabled:shadow-none break-keep whitespace-nowrap">
+                            <button onClick={handleSaveProfile} disabled={isSaving} className="w-full bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-black text-lg py-5 rounded-[20px] hover:from-brand-primary/95 hover:to-brand-secondary/95 active:scale-[0.98] transition flex items-center justify-center gap-2 shadow-[0_10px_20px_rgba(15,118,110,0.3)] disabled:from-gray-300 disabled:to-gray-400 disabled:shadow-none break-keep whitespace-nowrap">
                                 {isSaving ? <Loader2 className="animate-spin shrink-0" size={22} /> : <Check size={22} strokeWidth={3} className="shrink-0" />} 프로필 저장 완료
                             </button>
                             <button onClick={handleLogout} className="w-full mt-4 py-3 text-sm font-bold text-gray-400 hover:text-gray-600 flex items-center justify-center gap-1.5 transition active:scale-95 break-keep whitespace-nowrap"><LogOut size={16} className="shrink-0" /> 로그아웃</button>
@@ -2196,10 +2196,10 @@ export default function MyPage() {
                                 <div className="bg-white rounded-[24px] p-5 shadow-sm border border-gray-100 flex flex-col justify-between">
                                     <div>
                                         <p className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">현재 총 지출</p>
-                                        <h2 className="text-xl font-black text-rose-500 tracking-tight">{(totalSpent || 0).toLocaleString()} <span className="text-[10px] text-gray-400 font-bold">원</span></h2>
+                                        <h2 className="text-xl font-black text-brand-primary tracking-tight">{(totalSpent || 0).toLocaleString()} <span className="text-[10px] text-gray-400 font-bold">원</span></h2>
                                     </div>
                                     <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden mt-3">
-                                        <div className="h-full bg-rose-500 transition-all duration-1000" style={{ width: `${Math.min((totalSpent / (selectedTrip.targetTotalCost || 1)) * 100, 100)}%` }}></div>
+                                        <div className="h-full bg-brand-primary transition-all duration-1000" style={{ width: `${Math.min((totalSpent / (selectedTrip.targetTotalCost || 1)) * 100, 100)}%` }}></div>
                                     </div>
                                 </div>
                             </div>
@@ -2254,14 +2254,14 @@ export default function MyPage() {
                                                             const isExceeded = actual > expected && expected > 0;
                                                             
                                                             return (
-                                                                <div key={pIdx} className={`p-4 rounded-2xl border transition-all hover:border-indigo-100 shadow-xs bg-white ${isExceeded ? 'border-rose-200 bg-rose-50/30' : 'border-gray-100'}`}>
+                                                                <div key={pIdx} className={`p-4 rounded-2xl border transition-all hover:border-indigo-100 shadow-xs bg-white ${isExceeded ? 'border-brand-danger/20 bg-brand-danger/5' : 'border-gray-100'}`}>
                                                                     <div className="flex items-center justify-between gap-3 mb-3">
                                                                         <div className="flex items-center gap-3 overflow-hidden">
-                                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-[10px] shrink-0 border ${isExceeded ? 'bg-rose-50 text-rose-500 border-rose-100' : 'bg-indigo-50 text-indigo-500 border-indigo-100'}`}>{pIdx + 1}</div>
+                                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-[10px] shrink-0 border ${isExceeded ? 'bg-brand-danger/10 text-brand-danger border-brand-danger/20' : 'bg-indigo-50 text-indigo-500 border-indigo-100'}`}>{pIdx + 1}</div>
                                                                             <p className="font-bold text-gray-900 text-sm truncate">{place.name}</p>
                                                                         </div>
                                                                         {isExceeded && (
-                                                                            <span className="text-[10px] text-rose-500 font-black shrink-0 flex items-center gap-0.5 bg-rose-100/50 px-2 py-0.5 rounded-full animate-bounce">
+                                                                            <span className="text-[10px] text-brand-danger font-black shrink-0 flex items-center gap-0.5 bg-brand-danger/10 px-2 py-0.5 rounded-full animate-bounce">
                                                                                 ⚠️ 초과 (+{(actual - expected).toLocaleString()}원)
                                                                             </span>
                                                                         )}
@@ -2278,13 +2278,13 @@ export default function MyPage() {
                                                                             />
                                                                         </div>
                                                                         <div className="relative group text-right">
-                                                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase pointer-events-none group-focus-within:text-rose-500">Act</div>
+                                                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase pointer-events-none group-focus-within:text-brand-primary">Act</div>
                                                                             <input 
                                                                                 type="number" 
                                                                                 value={place.actualExpense || ''} 
                                                                                 onChange={(e) => handleUpdateItemBudget(dIdx, pIdx, 'actualExpense', e.target.value)}
                                                                                 placeholder="0" 
-                                                                                className={`w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-black outline-none focus:ring-2 focus:bg-white transition ${isExceeded ? 'text-rose-600 focus:ring-rose-500 font-black' : 'text-gray-950 focus:ring-indigo-400 font-medium'}`}
+                                                                                className={`w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-black outline-none focus:ring-2 focus:bg-white transition ${isExceeded ? 'text-brand-primary focus:ring-rose-500 font-black' : 'text-gray-950 focus:ring-indigo-400 font-medium'}`}
                                                                             />
                                                                         </div>
                                                                     </div>
@@ -2311,7 +2311,7 @@ export default function MyPage() {
                                         <div className="text-center py-10 text-gray-300 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200"><p className="text-[11px] font-bold break-keep">등록된 공통 지출 내역이 없습니다.</p></div>
                                     ) : (
                                         expenses.map(exp => (
-                                            <div key={exp.id} className="flex justify-between items-center bg-white p-4 rounded-2xl border border-gray-50 shadow-xs group hover:border-rose-100 transition">
+                                            <div key={exp.id} className="flex justify-between items-center bg-white p-4 rounded-2xl border border-gray-50 shadow-xs group hover:border-brand-primary/20 transition">
                                                 <div className="flex items-center gap-3 overflow-hidden pr-2">
                                                     <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 shrink-0">{exp.category === "환전" ? <RefreshCw size={18} /> : <Receipt size={18} />}</div>
                                                     <div className="overflow-hidden">
@@ -2320,8 +2320,8 @@ export default function MyPage() {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-3 shrink-0">
-                                                    <span className="font-black text-rose-500 text-sm">-{exp.amount.toLocaleString()} <span className="text-[9px] font-normal text-gray-400">{exp.currency}</span></span>
-                                                    <button onClick={() => handleDeleteExpense(exp)} className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-400 opacity-0 group-hover:opacity-100 hover:bg-rose-500 hover:text-white transition shrink-0"><Trash2 size={14} /></button>
+                                                    <span className="font-black text-brand-primary text-sm">-{exp.amount.toLocaleString()} <span className="text-[9px] font-normal text-gray-400">{exp.currency}</span></span>
+                                                    <button onClick={() => handleDeleteExpense(exp)} className="w-8 h-8 rounded-full bg-brand-primary/5 flex items-center justify-center text-brand-primary/80 opacity-0 group-hover:opacity-100 hover:bg-brand-primary hover:text-white transition shrink-0"><Trash2 size={14} /></button>
                                                 </div>
                                             </div>
                                         ))
@@ -2354,7 +2354,7 @@ export default function MyPage() {
                                     <div className="flex items-center gap-3 mb-6"><span className="text-4xl font-black text-gray-900 shrink-0">{selectedCurrency === 'USD' ? '$' : selectedCurrency === 'JPY' ? '¥' : '€'}</span><input type="number" value={exchangeAmount} onChange={(e) => setExchangeAmount(e.target.value)} placeholder="0" className="w-full bg-transparent text-5xl font-black text-gray-900 outline-none placeholder-gray-300 tracking-tighter" autoFocus /></div>
                                     {exchangeAmount > 0 && (<div className="pt-5 border-t border-gray-200 animate-in fade-in duration-300"><div className="flex justify-between items-center mb-2"><span className="text-sm text-gray-500 font-bold break-keep whitespace-nowrap">예상 결제 금액</span><span className="text-base font-black text-gray-900 break-keep whitespace-nowrap">{Math.floor(exchangeAmount * CURRENCY_RATES[selectedCurrency]).toLocaleString()} 원</span></div><div className="flex justify-between items-center"><span className="text-sm text-gray-500 font-bold break-keep whitespace-nowrap">적용 환율</span><span className="text-sm font-bold text-gray-500 break-keep whitespace-nowrap">{CURRENCY_RATES[selectedCurrency]}</span></div></div>)}
                                 </div>
-                                <button onClick={() => setExchangeStep('loading')} disabled={!exchangeAmount} className={`w-full font-black text-lg py-5 rounded-[20px] transition flex items-center justify-center gap-2 break-keep whitespace-nowrap ${exchangeAmount ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white shadow-xl shadow-rose-500/30 hover:from-rose-600 hover:to-pink-700 active:scale-[0.98]' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}><ArrowRightLeft size={20} strokeWidth={3} className="shrink-0" /> 환전하기</button>
+                                <button onClick={() => setExchangeStep('loading')} disabled={!exchangeAmount} className={`w-full font-black text-lg py-5 rounded-[20px] transition flex items-center justify-center gap-2 break-keep whitespace-nowrap ${exchangeAmount ? 'bg-gradient-to-r from-brand-primary to-brand-secondary text-white shadow-xl shadow-brand-primary/20 hover:from-brand-primary/95 hover:to-brand-secondary/95 active:scale-[0.98]' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}><ArrowRightLeft size={20} strokeWidth={3} className="shrink-0" /> 환전하기</button>
                             </div>
                         )}
                         {exchangeStep === 'loading' && (<div className="py-20 flex flex-col items-center justify-center text-center"><div className="animate-spin rounded-full h-14 w-14 border-4 border-gray-200 border-t-emerald-500 mb-6 shrink-0"></div><h3 className="text-xl font-bold text-gray-900 break-keep whitespace-nowrap">환전 중...</h3></div>)}
@@ -2406,7 +2406,7 @@ export default function MyPage() {
 
                                             {/* 첫 번째 사진이 아닐 때만 삭제 버튼 표시 */}
                                             {idx !== 0 && (
-                                                <button onClick={() => handleRemoveImage(idx)} className="absolute top-2 right-2 w-6 h-6 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-rose-500">
+                                                <button onClick={() => handleRemoveImage(idx)} className="absolute top-2 right-2 w-6 h-6 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-brand-primary">
                                                     <X size={14} strokeWidth={3} />
                                                 </button>
                                             )}
@@ -2541,7 +2541,7 @@ export default function MyPage() {
                         <div className={`
                             backdrop-blur-xl border border-white/40 shadow-2xl rounded-[24px] p-4 flex items-center gap-3
                             ${toast.type === 'success' ? 'bg-emerald-500/90 text-white' : 
-                              toast.type === 'error' ? 'bg-rose-500/90 text-white' : 
+                              toast.type === 'error' ? 'bg-brand-primary/90 text-white' : 
                               'bg-gray-900/80 text-white'}
                         `}>
                             <div className="bg-white/20 p-2 rounded-full shrink-0">

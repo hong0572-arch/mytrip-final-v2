@@ -74,7 +74,7 @@ export default function SplashScreen({ onFinish }) {
             {/* 3. 하단 로딩 바 */}
             <div className="absolute bottom-12 w-48 h-1.5 bg-black/30 rounded-full overflow-hidden z-10 backdrop-blur-sm">
                 <motion.div
-                    className="h-full bg-gradient-to-r from-[#FF5A5F] to-rose-400"
+                    className="h-full bg-gradient-to-r from-brand-primary to-brand-secondary"
                     initial={{ width: "0%" }}
                     animate={{ width: "100%" }}
                     transition={{ duration: 3.0, ease: "easeInOut" }}

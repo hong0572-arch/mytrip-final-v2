@@ -105,7 +105,7 @@ export default function TravelNews({ language = 'ko' }) {
                 <p className="text-sm text-gray-400 font-medium">
                     {error ? '소식을 불러오지 못했어요 😿' : '새로운 소식이 없어요'}
                 </p>
-                <button onClick={fetchNews} className="mt-2 text-xs text-rose-500 font-bold flex items-center gap-1 mx-auto">
+                <button onClick={fetchNews} className="mt-2 text-xs text-brand-primary font-bold flex items-center gap-1 mx-auto">
                     <RefreshCw size={12} /> 다시 시도
                 </button>
             </div>
@@ -117,15 +117,15 @@ export default function TravelNews({ language = 'ko' }) {
             {/* 헤더 */}
             <div className="flex items-center justify-between mb-3 px-1">
                 <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-gradient-to-br from-rose-500 to-amber-500 rounded-lg flex items-center justify-center">
+                    <div className="w-6 h-6 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-lg flex items-center justify-center">
                         <Sparkles size={13} className="text-white" />
                     </div>
                     <span className="text-sm font-black text-gray-800">
                         {language === 'en' ? 'Travel News' : '여행 새소식'}
                     </span>
                     <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-secondary opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-primary"></span>
                     </span>
                 </div>
                 <button 
@@ -216,7 +216,7 @@ export default function TravelNews({ language = 'ko' }) {
                             onClick={() => setCurrentSlide(idx)}
                             className={`h-1 rounded-full transition-all duration-300 ${
                                 idx === currentSlide 
-                                    ? 'w-4 bg-rose-500' 
+                                    ? 'w-4 bg-brand-primary' 
                                     : 'w-1.5 bg-gray-200'
                             }`}
                         />

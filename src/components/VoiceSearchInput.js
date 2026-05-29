@@ -62,8 +62,8 @@ export default function VoiceSearchInput() {
                 placeholder={isListening ? "듣고 있어요... 말씀하세요! 🎤" : "국가 또는 도시 입력 (예: 오사카)"}
                 className={`w-full p-4 pr-12 rounded-2xl border-2 outline-none transition-all duration-300
           ${isListening
-                        ? 'border-rose-500 ring-2 ring-rose-200 bg-rose-50 text-gray-900 placeholder-rose-400'
-                        : 'border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200'
+                        ? 'border-brand-primary ring-2 ring-brand-primary/20 bg-brand-primary/5 text-gray-900 placeholder-brand-primary/50'
+                        : 'border-gray-200 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20'
                     }
         `}
             />
@@ -75,8 +75,8 @@ export default function VoiceSearchInput() {
                     disabled={isListening}
                     className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all 
             ${isListening
-                            ? 'bg-rose-500 text-white animate-pulse scale-110 shadow-lg'
-                            : 'text-gray-400 hover:text-indigo-600 hover:bg-gray-100'
+                            ? 'bg-brand-primary text-white animate-pulse scale-110 shadow-lg'
+                            : 'text-gray-400 hover:text-brand-primary hover:bg-gray-100'
                         }
           `}
                     title="음성으로 입력하기"

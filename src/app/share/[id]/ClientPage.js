@@ -51,7 +51,7 @@ export default function ShareDetailPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white">
-                <Loader2 className="animate-spin mb-4 text-rose-500" size={48} />
+                <Loader2 className="animate-spin mb-4 text-brand-primary" size={48} />
                 <h2 className="text-xl font-bold animate-pulse">친구의 멋진 일정을 불러오는 중...</h2>
             </div>
         );
@@ -71,7 +71,7 @@ export default function ShareDetailPage() {
                     </p>
                     <button
                         onClick={() => router.push('/')}
-                        className="w-full py-4 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition"
+                        className="w-full py-4 bg-gradient-to-r from-brand-primary to-brand-secondary text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition"
                     >
                         <Home size={18} /> 나만의 여행 만들기
                     </button>
@@ -87,7 +87,7 @@ export default function ShareDetailPage() {
             <div className="absolute top-6 left-6 z-50 pointer-events-auto sm:top-10 sm:left-10">
                 <button
                     onClick={() => router.push('/')}
-                    className="bg-white/90 backdrop-blur-md px-4 py-2.5 rounded-full shadow-lg text-indigo-600 font-bold hover:bg-indigo-50 hover:text-indigo-700 transition-colors flex items-center gap-2"
+                    className="bg-white/90 backdrop-blur-md px-4 py-2.5 rounded-full shadow-lg text-brand-primary font-bold hover:bg-brand-primary/10 transition-colors flex items-center gap-2"
                 >
                     <Home size={18} strokeWidth={2.5} />
                     <span className="text-sm">나도 AI로 여행 짜기</span>
