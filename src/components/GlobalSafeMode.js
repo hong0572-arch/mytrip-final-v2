@@ -19,6 +19,7 @@ export default function GlobalSafeMode() {
     const [guardianPhone, setGuardianPhone] = useState('');
     const [isRegistered, setIsRegistered] = useState(false);
     const [showTimerAlert, setShowTimerAlert] = useState(false);
+    const [showLocationSentModal, setShowLocationSentModal] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
 
@@ -287,6 +288,21 @@ export default function GlobalSafeMode() {
             oscillatorRef.current = null;
             gainNodeRef.current = null;
             setIsSirenPlaying(false);
+
+            // 만약 Safe Mode 세션이 활성화 중이라면 상태를 다시 'active'로 복구
+            if (isActive && user) {
+                try {
+                    const sessionRef = doc(db, "safemode_sessions", user.uid);
+                    setDoc(sessionRef, {
+                        status: 'active',
+                        updatedAt: serverTimestamp()
+                    }, { merge: true });
+                } catch (err) {
+                    console.error("세션 상태 복구 실패:", err);
+                }
+            }
+            setShowTimerAlert(false);
+
             triggerToast('🚨 사이렌이 중지되었습니다.');
             return;
         }
@@ -328,6 +344,40 @@ export default function GlobalSafeMode() {
             setIsSirenPlaying(true);
             triggerToast('🚨 긴급 사이렌이 작동 중입니다!');
             
+            // 🚨 수동 사이렌 작동 시에도 비상 모달창 노출 및 Firestore 세션 상태 동기화
+            setShowTimerAlert(true);
+            triggerVibration(3);
+
+            if (user) {
+                try {
+                    const sessionRef = doc(db, "safemode_sessions", user.uid);
+                    setDoc(sessionRef, {
+                        status: 'expired', // 'expired' 상태로 변경하여 보호자 대시보드 경보 및 전역 리스너 작동 유도
+                        updatedAt: serverTimestamp()
+                    }, { merge: true });
+                } catch (err) {
+                    console.error("세션 상태 비상 업데이트 실패:", err);
+                }
+            }
+
+            // 보호자에게 수동 사이렌 경보 알림 전송 (앱 가입 보호자용)
+            if (guardianUserId) {
+                try {
+                    addDoc(collection(db, "match_requests"), {
+                        type: "safemode_expired",
+                        senderId: user.uid,
+                        senderName: user.displayName || '여행자',
+                        targetMateId: guardianUserId,
+                        targetMateName: guardianName,
+                        status: "pending",
+                        message: `🚨 [긴급 호출] ${user.displayName || '여행자'}님이 긴급 사이렌을 작동시켰습니다. 신속히 안전을 확인하세요!`,
+                        createdAt: serverTimestamp()
+                    });
+                } catch (err) {
+                    console.error("보호자 긴급 알림 전송 실패:", err);
+                }
+            }
+
             // 자동으로 보호자에게 위치 전송
             handleSendLocationMessage();
         } catch (err) {
@@ -653,7 +703,7 @@ export default function GlobalSafeMode() {
                     targetMateName: guardianName,
                     status: "pending",
                     message: `📍 [Safe Mode 위치 전송] ${user.displayName || '여행자'}님이 실시간 위치 정보를 전송했습니다.`,
-                    sessionUrl: `/share/live_safemode?userId=${user.uid}`,
+                    sessionUrl: `/mypage?openInbox=true`,
                     createdAt: serverTimestamp()
                 });
             } catch (err) {
@@ -664,6 +714,7 @@ export default function GlobalSafeMode() {
         try {
             await navigator.clipboard.writeText(textMessage);
             triggerToast('📋 실제 위치가 포함된 공유 텍스트가 복사되었습니다!');
+            setShowLocationSentModal(true); // 위치 전송 완료 모달 가동
             
             // 즉시 카카오톡이나 SMS 전송 창 연동
             const encodedMsg = encodeURIComponent(textMessage);
@@ -1020,7 +1071,7 @@ export default function GlobalSafeMode() {
                 </div>
             )}
 
-            {/* 4. 타이머 강제 만료 비상 알림 카드 */}
+            {/* 4. 타이머 강제 만료 또는 수동 비상 경보 알림 카드 */}
             {showTimerAlert && (
                 <div className="fixed inset-0 z-[99999] flex items-center justify-center p-6 pointer-events-auto">
                     <div className="absolute inset-0 bg-brand-danger/85 backdrop-blur-md animate-in fade-in duration-300"></div>
@@ -1028,18 +1079,56 @@ export default function GlobalSafeMode() {
                         <div className="w-16 h-16 bg-brand-danger/10 rounded-2xl flex items-center justify-center text-brand-danger mb-4 animate-bounce shadow-md">
                             <AlertTriangle size={36} />
                         </div>
-                        <h3 className="text-xl font-black text-gray-900 mb-1 text-center">🚨 귀가 안심 타이머 만료!</h3>
+                        <h3 className="text-xl font-black text-gray-900 mb-1 text-center">
+                            {isSirenPlaying && timeLeft > 0 ? "🚨 긴급 비상 사이렌 가동!" : "🚨 귀가 안심 타이머 만료!"}
+                        </h3>
                         <p className="text-xs text-brand-danger font-black mb-3">Emergency Alert Triggered</p>
                         <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed font-semibold">
-                            지정한 귀가 예정 약속 시간이 끝났습니다.<br />
-                            무사히 도착하셨다면 꼭 해제 버튼을 눌러주세요.<br />
-                            <span className="text-brand-danger font-bold block mt-2">(현재 비상 경보가 채팅방에 올라갔습니다)</span>
+                            {isSirenPlaying && timeLeft > 0 ? (
+                                <>
+                                    사용자 작동으로 비상 경보 사이렌이 실행되었습니다.<br />
+                                    위험 상황이 해결되었다면 경보를 해제해 주세요.<br />
+                                    <span className="text-brand-danger font-bold block mt-2">(현재 보호자 앱에 비상 알림이 연동되었습니다)</span>
+                                </>
+                            ) : (
+                                <>
+                                    지정한 귀가 예정 약속 시간이 끝났습니다.<br />
+                                    무사히 도착하셨다면 꼭 해제 버튼을 눌러주세요.<br />
+                                    <span className="text-brand-danger font-bold block mt-2">(현재 비상 경보가 채팅방에 올라갔습니다)</span>
+                                </>
+                            )}
                         </p>
                         <button 
                             onClick={handleToggleOff} 
                             className="w-full py-4.5 rounded-2xl font-black text-white bg-brand-danger hover:bg-brand-danger/90 transition-colors shadow-lg active:scale-95 text-base border-b-4 border-brand-danger/80"
                         >
                             🛡️ 무사 도착 해제 (경보 끄기)
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* 4.5. 실시간 위치 전송 완료 모달 */}
+            {showLocationSentModal && (
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center p-6 pointer-events-auto">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowLocationSentModal(false)}></div>
+                    <div className="bg-white w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-brand-primary">
+                        <div className="w-16 h-16 bg-brand-primary/10 rounded-2xl flex items-center justify-center text-brand-primary mb-4 animate-bounce shadow-md">
+                            <Send size={28} className="translate-x-0.5" />
+                        </div>
+                        <h3 className="text-xl font-black text-gray-900 mb-1 text-center">📍 실시간 위치 전송 완료</h3>
+                        <p className="text-xs text-brand-primary font-black mb-3">Location Shared Successfully</p>
+                        <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed font-semibold font-bold">
+                            보호자에게 실시간 위치 알림을 전송했으며,<br />
+                            위치 텍스트가 클립보드에 복사되었습니다.<br />
+                            상대방이 알림을 누르면 즉시 동행 요청함에서<br />
+                            위치를 지도 상으로 관제할 수 있습니다.
+                        </p>
+                        <button 
+                            onClick={() => setShowLocationSentModal(false)} 
+                            className="w-full py-4.5 rounded-2xl font-black text-white bg-brand-primary hover:bg-brand-primary/90 transition-colors shadow-lg active:scale-95 text-base border-b-4 border-brand-primary/80"
+                        >
+                            확인
                         </button>
                     </div>
                 </div>

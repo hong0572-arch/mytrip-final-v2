@@ -305,6 +305,19 @@ export default function MyPage() {
         fetchRecommended();
     }, [user]);
 
+    // ✨ 쿼리 스트링 openInbox=true 감지 시 내 동행 요청함(Inbox) 자동 팝업
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('openInbox') === 'true') {
+                setShowInboxModal(true);
+                // 주소창에서 openInbox 파라미터 깔끔하게 제거
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, '', newUrl);
+            }
+        }
+    }, []);
+
     // ✨ [핵심 수정] 인증 감시 및 로딩 해제 로직
     useEffect(() => {
         let unsubscribeUser, unsubscribeTrips, unsubscribeMatches, unsubscribeFeeds, unsubscribePoints;
