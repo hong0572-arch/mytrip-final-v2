@@ -769,9 +769,27 @@ export default function Home() {
                                                 {isLocationLoading ? <RefreshCw size={14} className="animate-spin" /> : <MapPin size={18} />}
                                             </button>
                                         </div>
-                                        <button onClick={() => handleVoiceInput('destination')} className={`p-2 rounded-full ${listeningField === 'destination' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={16} /></button>
                                     </div>
-                                    <div className="flex bg-gray-100 p-1.5 rounded-2xl mb-5 gap-1.5 shadow-inner">
+                                    {/* 네이버/다음 스타일의 프리미엄 통합 검색바 */}
+                                    <div className="relative flex items-center bg-white border-2 border-brand-primary rounded-full px-5 py-3.5 shadow-[0_4px_16px_rgba(22,163,74,0.06)] focus-within:shadow-[0_4px_20px_rgba(22,163,74,0.18)] focus-within:border-brand-primary transition-all duration-300 gap-3 mb-4">
+                                        <Search size={20} className="text-brand-primary shrink-0" />
+                                        <input 
+                                            type="text" 
+                                            name="destination" 
+                                            value={formData.destination} 
+                                            onChange={handleInputChange} 
+                                            placeholder={listeningField === 'destination' ? translations[language].msg_listening : translations[language].placeholder_dest} 
+                                            className="w-full text-base sm:text-lg font-black text-gray-800 bg-transparent outline-none pr-2 placeholder:text-gray-400" 
+                                        />
+                                        <button 
+                                            type="button" 
+                                            onClick={() => handleVoiceInput('destination')} 
+                                            className={`p-2 rounded-full transition-all shrink-0 hover:bg-gray-100 active:scale-95 ${listeningField === 'destination' ? 'bg-brand-secondary text-white animate-pulse' : 'text-gray-400'}`}
+                                        >
+                                            <Mic size={18} />
+                                        </button>
+                                    </div>
+                                    <div className="flex bg-gray-100 p-1.5 rounded-2xl mb-4 gap-1.5 shadow-inner">
                                         {['auto', 'domestic', 'international', 'daytrip'].map(type => (
                                             <button key={type} onClick={() => {
                                                 if (type === 'daytrip') {
@@ -795,9 +813,6 @@ export default function Home() {
                                                 {type === 'auto' ? '🤖 AI 알아서' : type === 'domestic' ? '🇰🇷 국내만' : type === 'international' ? '✈️ 해외로' : '🌞 당일여행'}
                                             </button>
                                         ))}
-                                    </div>
-                                    <div className="relative">
-                                        <input type="text" name="destination" value={formData.destination} onChange={handleInputChange} placeholder={listeningField === 'destination' ? translations[language].msg_listening : translations[language].placeholder_dest} className="w-full text-xl font-bold text-gray-800 bg-transparent outline-none mb-4 pr-4" />
                                     </div>
                                     <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-50">
                                         {QUICK_TAGS.map((tag, idx) => (
