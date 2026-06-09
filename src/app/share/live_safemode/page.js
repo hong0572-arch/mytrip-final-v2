@@ -25,55 +25,8 @@ function GuardianDashboardContent() {
     const gainNodeRef = useRef(null);
     const sirenIntervalRef = useRef(null);
 
-    // 1. Firestore 실시간 세션 구독
-    useEffect(() => {
-        if (!userId) return;
-
-        const sessionRef = doc(db, "safemode_sessions", userId);
-        const unsubscribe = onSnapshot(sessionRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                setSessionData(data);
-                console.log("실시간 보호 세션 갱신:", data);
-            } else {
-                setSessionData(null);
-                console.log("실시간 보호 세션 해제(안전 귀가 완료)");
-            }
-        }, (err) => {
-            console.error("세션 구독 오류:", err);
-        });
-
-        return () => unsubscribe();
-    }, [userId]);
-
-    // 2. 실시간 세션의 만료(status === 'expired') 감지 및 사이렌 자동 재생 제어
-    useEffect(() => {
-        if (sessionData && sessionData.status === 'expired') {
-            if (userInteracted && !isSirenPlaying) {
-                // 사용자가 상호작용했고, 아직 사이렌이 울리지 않는 경우 자동 시작
-                toggleSiren(true);
-            }
-        } else {
-            // 안전해졌거나 세션이 만료 해제(삭제)되었을 경우 사이렌 강제 끄기
-            if (isSirenPlaying) {
-                toggleSiren(false);
-            }
-        }
-    }, [sessionData, userInteracted, isSirenPlaying]);
-
-    // 컴포넌트 언마운트 시 오디오 해제
-    useEffect(() => {
-        return () => {
-            if (sirenIntervalRef.current) clearInterval(sirenIntervalRef.current);
-            if (oscillatorRef.current) {
-                try { oscillatorRef.current.stop(); } catch(e){}
-            }
-            if (audioCtxRef.current) audioCtxRef.current.close();
-        };
-    }, []);
-
     // 보호자 사이렌 오디오 재생 제어 함수
-    const toggleSiren = (forceState) => {
+    function toggleSiren(forceState) {
         const targetState = typeof forceState === 'boolean' ? forceState : !isSirenPlaying;
 
         if (!targetState) {
@@ -124,7 +77,60 @@ function GuardianDashboardContent() {
         } catch (err) {
             console.error("보호자 사이렌 작동 실패:", err);
         }
-    };
+    }
+
+    // 1. Firestore 실시간 세션 구독
+    useEffect(() => {
+        if (!userId) return;
+
+        const sessionRef = doc(db, "safemode_sessions", userId);
+        const unsubscribe = onSnapshot(sessionRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                setSessionData(data);
+                console.log("실시간 보호 세션 갱신:", data);
+            } else {
+                setSessionData(null);
+                console.log("실시간 보호 세션 해제(안전 귀가 완료)");
+            }
+        }, (err) => {
+            console.error("세션 구독 오류:", err);
+        });
+
+        return () => unsubscribe();
+    }, [userId]);
+
+    // 2. 실시간 세션의 만료(status === 'expired') 감지 및 사이렌 자동 재생 제어
+    useEffect(() => {
+        let timer;
+        if (sessionData && sessionData.status === 'expired') {
+            if (userInteracted && !isSirenPlaying) {
+                // 사용자가 상호작용했고, 아직 사이렌이 울리지 않는 경우 자동 시작
+                timer = setTimeout(() => toggleSiren(true), 0);
+            }
+        } else {
+            // 안전해졌거나 세션이 만료 해제(삭제)되었을 경우 사이렌 강제 끄기
+            if (isSirenPlaying) {
+                timer = setTimeout(() => toggleSiren(false), 0);
+            }
+        }
+        return () => {
+            if (timer) clearTimeout(timer);
+        };
+    }, [sessionData, userInteracted, isSirenPlaying]);
+
+    // 컴포넌트 언마운트 시 오디오 해제
+    useEffect(() => {
+        return () => {
+            if (sirenIntervalRef.current) clearInterval(sirenIntervalRef.current);
+            if (oscillatorRef.current) {
+                try { oscillatorRef.current.stop(); } catch(e){}
+            }
+            if (audioCtxRef.current) audioCtxRef.current.close();
+        };
+    }, []);
+
+
 
     // 브라우저 Autoplay 보안 제약 해제를 위한 클릭 상호작용
     const handleEnableAudio = () => {

@@ -1827,7 +1827,7 @@ export default function MyPage() {
                                                         </div>
                                                     </div>
                                                     <div className="p-3 rounded-xl border border-brand-primary/10 bg-brand-primary/5 text-xs font-medium mb-4 italic break-keep text-gray-700">
-                                                        "{req.message}"
+                                                        &quot;{req.message}&quot;
                                                     </div>
                                                     <div className="flex gap-2">
                                                         {req.senderId && (
@@ -1863,7 +1863,7 @@ export default function MyPage() {
                                                     </div>
                                                 </div>
                                                 <div className={`p-3 rounded-xl border text-xs font-medium mb-4 italic break-keep ${isCompleted ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-gray-50 border-gray-100 text-gray-600'}`}>
-                                                    "{req.message}"
+                                                    &quot;{req.message}&quot;
                                                 </div>
                                                 <div className="flex gap-2">
                                                     {isCompleted ? (

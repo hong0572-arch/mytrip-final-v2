@@ -49,229 +49,27 @@ export default function GlobalSafeMode() {
     const guardianGainNodeRef = useRef(null);
     const guardianSirenIntervalRef = useRef(null);
 
-    // 1. 유저 인증 상태 연동 및 초기 로컬스토리지 복구
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((currUser) => {
-            setUser(currUser);
-        });
-
-        // 로컬스토리지로부터 값 읽어오기
-        const savedActive = localStorage.getItem('safeMode_active') === 'true';
-        const savedEndTime = localStorage.getItem('safeMode_endTime');
-        const savedGUserId = localStorage.getItem('safeMode_gUserId') || '';
-        const savedGName = localStorage.getItem('safeMode_gName') || '';
-        const savedGPhone = localStorage.getItem('safeMode_gPhone') || '';
-        
-        setGuardianUserId(savedGUserId);
-        setGuardianName(savedGName);
-        setGuardianPhone(savedGPhone);
-        if (savedGName) setIsRegistered(true);
-
-        if (savedActive && savedEndTime) {
-            const end = parseInt(savedEndTime);
-            const now = Date.now();
-            if (end > now) {
-                setIsActive(true);
-                setTimeLeft(Math.floor((end - now) / 1000));
-            } else {
-                localStorage.removeItem('safeMode_active');
-                localStorage.removeItem('safeMode_endTime');
-            }
-        }
-
-        return () => unsubscribe();
-    }, []);
-
-    // 2. [보호자용] 실시간 타 가입자 비상 모니터링 리스너
-    useEffect(() => {
-        if (!user) {
-            setOtherExpiredSession(null);
-            toggleGuardianSiren(false);
-            return;
-        }
-
-        // 자신이 보호자로 지정되어 있고, 상태가 'expired'인 세션을 실시간 감시
-        const q = query(
-            collection(db, "safemode_sessions"), 
-            where("guardianUserId", "==", user.uid),
-            where("status", "==", "expired")
-        );
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            if (!snapshot.empty) {
-                // 경보 중인 세션이 하나 이상 존재하면 첫 번째 세션을 등록하고 사이렌을 가동
-                const activeAlertDoc = snapshot.docs[0].data();
-                setOtherExpiredSession({
-                    id: snapshot.docs[0].id,
-                    ...activeAlertDoc
-                });
-                // 보호자가 사이렌이 재생 중이지 않다면 자동 재생 시도
-                toggleGuardianSiren(true);
-            } else {
-                setOtherExpiredSession(null);
-                toggleGuardianSiren(false);
-            }
-        });
-
-        return () => {
-            unsubscribe();
-            toggleGuardianSiren(false);
-        };
-    }, [user]);
-
-    // 3. 타이머 틱 작동
-    useEffect(() => {
-        if (isActive && timeLeft > 0) {
-            timerRef.current = setInterval(() => {
-                setTimeLeft((prev) => {
-                    if (prev <= 1) {
-                        clearInterval(timerRef.current);
-                        handleTimerExpire();
-                        return 0;
-                    }
-                    // 로컬스토리지 마이너 동기화
-                    const savedEndTime = localStorage.getItem('safeMode_endTime');
-                    if (savedEndTime) {
-                        const remaining = Math.max(0, Math.floor((parseInt(savedEndTime) - Date.now()) / 1000));
-                        return remaining;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-        } else if (!isActive) {
-            clearInterval(timerRef.current);
-        }
-
-        return () => clearInterval(timerRef.current);
-    }, [isActive, timeLeft]);
-
-    // 4. 타이머 만료 처리
-    const handleTimerExpire = async () => {
-        setIsActive(false);
-        localStorage.removeItem('safeMode_active');
-        localStorage.removeItem('safeMode_endTime');
-        
-        setShowTimerAlert(true);
-        triggerVibration(3);
-
-        // 🚨 타이머 만료 시 즉시 사이렌 자동 가동
-        if (!isSirenPlaying) {
-            toggleSiren(true);
-        }
-
-        // Firestore 세션 상태 업데이트 (expired)
-        try {
-            if (user) {
-                const sessionRef = doc(db, "safemode_sessions", user.uid);
-                await setDoc(sessionRef, {
-                    status: 'expired',
-                    updatedAt: serverTimestamp()
-                }, { merge: true });
-            }
-        } catch (err) {
-            console.error("세션 상태 만료 업데이트 실패:", err);
-        }
-
-        // 보호자에게 실시간 만료 경보 알림 전송 (앱 가입 보호자용)
-        if (guardianUserId) {
-            try {
-                await addDoc(collection(db, "match_requests"), {
-                    type: "safemode_expired",
-                    senderId: user.uid,
-                    senderName: user.displayName || '여행자',
-                    targetMateId: guardianUserId,
-                    targetMateName: guardianName,
-                    status: "pending",
-                    message: `🚨 [안심 귀가 경보] ${user.displayName || '여행자'}님의 안전 타이머가 완료되었습니다. 안전을 즉시 확인하세요!`,
-                    createdAt: serverTimestamp()
-                });
-            } catch (err) {
-                console.error("보호자 비상 알림 발송 실패:", err);
-            }
-        }
-        
-        // Firebase 동행인 채팅방으로 비상 메시지 전송 시도
-        try {
-            const activeTripId = localStorage.getItem('activeTripId');
-            if (activeTripId && user) {
-                await addDoc(collection(db, "trips", activeTripId, "messages"), {
-                    text: `🚨 [안심 귀가 알림] ${user.displayName || '여행자'}님의 Safe Mode 안심 귀가 약속 타이머가 만료되었습니다! 안전을 확인해 주세요. 🚨`,
-                    senderId: 'system_safemode',
-                    senderName: '🛡️ Safe Mode 시스템',
-                    senderAvatar: '/logo.png',
-                    createdAt: serverTimestamp()
-                });
-            }
-        } catch (err) {
-            console.error("비상 메시지 자동 송출 실패:", err);
-        }
-    };
-
-    // 5. GPS 실시간 위치 추적 인터벌
-    useEffect(() => {
-        if (!isActive || !user) return;
-
-        const updateLocation = async () => {
-            if (typeof window !== 'undefined' && navigator.geolocation) {
-                // PC 브라우저나 건물 안 테스트를 위해 일반 정확도(enableHighAccuracy: false)로 획득을 시도합니다.
-                navigator.geolocation.getCurrentPosition(
-                    async (position) => {
-                        const { latitude, longitude } = position.coords;
-                        try {
-                            const sessionRef = doc(db, "safemode_sessions", user.uid);
-                            await setDoc(sessionRef, {
-                                location: { lat: latitude, lng: longitude },
-                                updatedAt: serverTimestamp()
-                            }, { merge: true });
-                            console.log("GPS Location updated:", latitude, longitude);
-                        } catch (err) {
-                            console.error("GPS Firestore 업데이트 실패:", err);
-                        }
-                    },
-                    async (error) => {
-                        console.warn(`GPS 위치 획득 실패 (코드: ${error.code}): ${error.message}`);
-                        
-                        // [테스트 폴백] 위치 권한이 없거나 획득 실패한 경우에도 로컬 테스트 차질 및 크래시를 방지하기 위해 가상 좌표를 기록합니다.
-                        try {
-                            const sessionRef = doc(db, "safemode_sessions", user.uid);
-                            await setDoc(sessionRef, {
-                                location: { lat: 37.5665, lng: 126.9780 }, // 서울 중심 좌표 폴백
-                                updatedAt: serverTimestamp(),
-                                isMockLocation: true
-                            }, { merge: true });
-                            console.log("💡 GPS 위치 획득 실패로 인해 테스트용 폴백 좌표(서울)가 세션에 기록되었습니다.");
-                        } catch (err) {
-                            console.error("폴백 위치 Firestore 업데이트 실패:", err);
-                        }
-                    },
-                    { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
-                );
-            }
-        };
-
-        updateLocation(); // 최초 1회 즉시 실행
-        const locationInterval = setInterval(updateLocation, 15000); // 15초 주기
-
-        return () => clearInterval(locationInterval);
-    }, [isActive, user]);
+    // ==========================================
+    // HOISTED HELPER FUNCTIONS (DEFINED BEFORE USE)
+    // ==========================================
 
     // 진동 효과 (모바일 웹 지원)
-    const triggerVibration = (count = 1) => {
+    function triggerVibration(count = 1) {
         if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
             const pattern = Array(count).fill([200, 100]).flat();
             window.navigator.vibrate(pattern);
         }
-    };
+    }
 
     // 토스트 알림 표시
-    const triggerToast = (msg) => {
+    function triggerToast(msg) {
         setToastMessage(msg);
         setShowToast(true);
         setTimeout(() => setShowToast(false), 3000);
-    };
+    }
 
     // 웹 오디오 API를 이용한 강력한 사이렌 생성기 (피호출자 기기용)
-    const toggleSiren = (forceState) => {
+    function toggleSiren(forceState) {
         const targetState = typeof forceState === 'boolean' ? forceState : !isSirenPlaying;
 
         if (!targetState) {
@@ -384,10 +182,10 @@ export default function GlobalSafeMode() {
             console.error("오디오 재생 실패:", err);
             triggerToast('⚠️ 현재 기기 환경에서 사이렌 오디오를 재생할 수 없습니다.');
         }
-    };
+    }
 
     // 보호자 기기용 날카로운 톱니파 비상 경보 사이렌 생성기
-    const toggleGuardianSiren = (forceState) => {
+    function toggleGuardianSiren(forceState) {
         const targetState = typeof forceState === 'boolean' ? forceState : !isGuardianSirenPlaying;
 
         if (!targetState) {
@@ -439,7 +237,296 @@ export default function GlobalSafeMode() {
         } catch (err) {
             console.error("보호자 사이렌 재생 실패:", err);
         }
-    };
+    }
+
+    // 타이머 만료 처리
+    async function handleTimerExpire() {
+        setIsActive(false);
+        localStorage.removeItem('safeMode_active');
+        localStorage.removeItem('safeMode_endTime');
+        
+        setShowTimerAlert(true);
+        triggerVibration(3);
+
+        // 🚨 타이머 만료 시 즉시 사이렌 자동 가동
+        if (!isSirenPlaying) {
+            toggleSiren(true);
+        }
+
+        // Firestore 세션 상태 업데이트 (expired)
+        try {
+            if (user) {
+                const sessionRef = doc(db, "safemode_sessions", user.uid);
+                await setDoc(sessionRef, {
+                    status: 'expired',
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+            }
+        } catch (err) {
+            console.error("세션 상태 만료 업데이트 실패:", err);
+        }
+
+        // 보호자에게 실시간 만료 경보 알림 전송 (앱 가입 보호자용)
+        if (guardianUserId) {
+            try {
+                await addDoc(collection(db, "match_requests"), {
+                    type: "safemode_expired",
+                    senderId: user.uid,
+                    senderName: user.displayName || '여행자',
+                    targetMateId: guardianUserId,
+                    targetMateName: guardianName,
+                    status: "pending",
+                    message: `🚨 [안심 귀가 경보] ${user.displayName || '여행자'}님의 안전 타이머가 완료되었습니다. 안전을 즉시 확인하세요!`,
+                    createdAt: serverTimestamp()
+                });
+            } catch (err) {
+                console.error("보호자 비상 알림 발송 실패:", err);
+            }
+        }
+        
+        // Firebase 동행인 채팅방으로 비상 메시지 전송 시도
+        try {
+            const activeTripId = localStorage.getItem('activeTripId');
+            if (activeTripId && user) {
+                await addDoc(collection(db, "trips", activeTripId, "messages"), {
+                    text: `🚨 [안심 귀가 알림] ${user.displayName || '여행자'}님의 Safe Mode 안심 귀가 약속 타이머가 만료되었습니다! 안전을 확인해 주세요. 🚨`,
+                    senderId: 'system_safemode',
+                    senderName: '🛡️ Safe Mode 시스템',
+                    senderAvatar: '/logo.png',
+                    createdAt: serverTimestamp()
+                });
+            }
+        } catch (err) {
+            console.error("비상 메시지 자동 송출 실패:", err);
+        }
+    }
+
+    // 실시간 위치 문자 링크 공유 전송
+    async function handleSendLocationMessage() {
+        if (typeof window === 'undefined') return;
+
+        triggerToast('📍 현재 위치 정보를 가져오는 중입니다...');
+
+        const getPosition = () => {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error('Geolocation not supported'));
+                } else {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    });
+                }
+            });
+        };
+
+        let textMessage = '';
+        const baseUrl = `https://tripmaker.tips/share/live_safemode`;
+        const encodedName = encodeURIComponent(user?.displayName || '여행자');
+
+        try {
+            const position = await getPosition();
+            const { latitude, longitude } = position.coords;
+            const googleMapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+            const mapUrl = `${baseUrl}?lat=${latitude}&lng=${longitude}&name=${encodedName}&userId=${user?.uid || ''}`;
+            
+            textMessage = `🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n\n📍 나의 정확한 현재 위치 (구글 지도):\n${googleMapsUrl}\n\n🛡️ 전용 안심 대시보드로 보기:\n${mapUrl}`;
+        } catch (error) {
+            console.error("위치 정보 획득 실패:", error);
+            const mapUrl = `${baseUrl}?name=${encodedName}&userId=${user?.uid || ''}`;
+            textMessage = `🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n\n(위치 접근이 제한되어 기본 링크만 전송합니다)\n🛡️ 전용 안심 대시보드로 보기:\n${mapUrl}`;
+        }
+
+        // 가입된 보호자에게 실시간 위치 공유 인앱 알림 추가 발송
+        if (guardianUserId) {
+            try {
+                await addDoc(collection(db, "match_requests"), {
+                    type: "safemode_location_share",
+                    senderId: user.uid,
+                    senderName: user.displayName || '여행자',
+                    targetMateId: guardianUserId,
+                    targetMateName: guardianName,
+                    status: "pending",
+                    message: `📍 [Safe Mode 위치 전송] ${user.displayName || '여행자'}님이 실시간 위치 정보를 전송했습니다.`,
+                    sessionUrl: `/mypage?openInbox=true`,
+                    createdAt: serverTimestamp()
+                });
+            } catch (err) {
+                console.error("보호자 위치 전송 알림 실패:", err);
+            }
+        }
+
+        try {
+            await navigator.clipboard.writeText(textMessage);
+            triggerToast('📋 실제 위치가 포함된 공유 텍스트가 복사되었습니다!');
+            setShowLocationSentModal(true); // 위치 전송 완료 모달 가동
+        } catch (err) {
+            triggerToast('공유 텍스트 생성 실패');
+        }
+    }
+
+    // 1. 유저 인증 상태 연동 및 초기 로컬스토리지 복구
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged((currUser) => {
+            setUser(currUser);
+        });
+
+        // 로컬스토리지로부터 값 읽어오기
+        const savedActive = localStorage.getItem('safeMode_active') === 'true';
+        const savedEndTime = localStorage.getItem('safeMode_endTime');
+        const savedGUserId = localStorage.getItem('safeMode_gUserId') || '';
+        const savedGName = localStorage.getItem('safeMode_gName') || '';
+        const savedGPhone = localStorage.getItem('safeMode_gPhone') || '';
+        
+        const timer = setTimeout(() => {
+            setGuardianUserId(savedGUserId);
+            setGuardianName(savedGName);
+            setGuardianPhone(savedGPhone);
+            if (savedGName) setIsRegistered(true);
+
+            if (savedActive && savedEndTime) {
+                const end = parseInt(savedEndTime);
+                const now = Date.now();
+                if (end > now) {
+                    setIsActive(true);
+                    setTimeLeft(Math.floor((end - now) / 1000));
+                } else {
+                    localStorage.removeItem('safeMode_active');
+                    localStorage.removeItem('safeMode_endTime');
+                }
+            }
+        }, 0);
+
+        return () => {
+            unsubscribe();
+            clearTimeout(timer);
+        };
+    }, []);
+
+    // 2. [보호자용] 실시간 타 가입자 비상 모니터링 리스너
+    useEffect(() => {
+        let unsubscribe;
+        
+        const initListener = () => {
+            if (!user) {
+                setOtherExpiredSession(null);
+                toggleGuardianSiren(false);
+                return;
+            }
+
+            // 자신이 보호자로 지정되어 있고, 상태가 'expired'인 세션을 실시간 감시
+            const q = query(
+                collection(db, "safemode_sessions"), 
+                where("guardianUserId", "==", user.uid),
+                where("status", "==", "expired")
+            );
+
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                if (!snapshot.empty) {
+                    // 경보 중인 세션이 하나 이상 존재하면 첫 번째 세션을 등록하고 사이렌을 가동
+                    const activeAlertDoc = snapshot.docs[0].data();
+                    setOtherExpiredSession({
+                        id: snapshot.docs[0].id,
+                        ...activeAlertDoc
+                    });
+                    // 보호자가 사이렌이 재생 중이지 않다면 자동 재생 시도
+                    toggleGuardianSiren(true);
+                } else {
+                    setOtherExpiredSession(null);
+                    toggleGuardianSiren(false);
+                }
+            });
+        };
+
+        const timer = setTimeout(initListener, 0);
+
+        return () => {
+            clearTimeout(timer);
+            if (unsubscribe) unsubscribe();
+            toggleGuardianSiren(false);
+        };
+    }, [user]);
+
+    // 3. 타이머 틱 작동
+    useEffect(() => {
+        if (isActive && timeLeft > 0) {
+            timerRef.current = setInterval(() => {
+                setTimeLeft((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(timerRef.current);
+                        handleTimerExpire();
+                        return 0;
+                    }
+                    // 로컬스토리지 마이너 동기화
+                    const savedEndTime = localStorage.getItem('safeMode_endTime');
+                    if (savedEndTime) {
+                        const remaining = Math.max(0, Math.floor((parseInt(savedEndTime) - Date.now()) / 1000));
+                        return remaining;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        } else if (!isActive) {
+            clearInterval(timerRef.current);
+        }
+
+        return () => clearInterval(timerRef.current);
+    }, [isActive, timeLeft]);
+
+
+
+    // 5. GPS 실시간 위치 추적 인터벌
+    useEffect(() => {
+        if (!isActive || !user) return;
+
+        const updateLocation = async () => {
+            if (typeof window !== 'undefined' && navigator.geolocation) {
+                // PC 브라우저나 건물 안 테스트를 위해 일반 정확도(enableHighAccuracy: false)로 획득을 시도합니다.
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        const { latitude, longitude } = position.coords;
+                        try {
+                            const sessionRef = doc(db, "safemode_sessions", user.uid);
+                            await setDoc(sessionRef, {
+                                location: { lat: latitude, lng: longitude },
+                                updatedAt: serverTimestamp()
+                            }, { merge: true });
+                            console.log("GPS Location updated:", latitude, longitude);
+                        } catch (err) {
+                            console.error("GPS Firestore 업데이트 실패:", err);
+                        }
+                    },
+                    async (error) => {
+                        console.warn(`GPS 위치 획득 실패 (코드: ${error.code}): ${error.message}`);
+                        
+                        // [테스트 폴백] 위치 권한이 없거나 획득 실패한 경우에도 로컬 테스트 차질 및 크래시를 방지하기 위해 가상 좌표를 기록합니다.
+                        try {
+                            const sessionRef = doc(db, "safemode_sessions", user.uid);
+                            await setDoc(sessionRef, {
+                                location: { lat: 37.5665, lng: 126.9780 }, // 서울 중심 좌표 폴백
+                                updatedAt: serverTimestamp(),
+                                isMockLocation: true
+                            }, { merge: true });
+                            console.log("💡 GPS 위치 획득 실패로 인해 테스트용 폴백 좌표(서울)가 세션에 기록되었습니다.");
+                        } catch (err) {
+                            console.error("폴백 위치 Firestore 업데이트 실패:", err);
+                        }
+                    },
+                    { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+                );
+            }
+        };
+
+        updateLocation(); // 최초 1회 즉시 실행
+        const locationInterval = setInterval(updateLocation, 15000); // 15초 주기
+
+        return () => clearInterval(locationInterval);
+    }, [isActive, user]);
+
+;
+
+
 
     // 컴포넌트 언마운트 시 오디오 정리
     useEffect(() => {
@@ -655,70 +742,7 @@ export default function GlobalSafeMode() {
         localStorage.removeItem('safeMode_gPhone');
     };
 
-    // 9. 실시간 위치 문자 링크 공유 전송
-    const handleSendLocationMessage = async () => {
-        if (typeof window === 'undefined') return;
 
-        triggerToast('📍 현재 위치 정보를 가져오는 중입니다...');
-
-        const getPosition = () => {
-            return new Promise((resolve, reject) => {
-                if (!navigator.geolocation) {
-                    reject(new Error('Geolocation not supported'));
-                } else {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, {
-                        enableHighAccuracy: true,
-                        timeout: 5000,
-                        maximumAge: 0
-                    });
-                }
-            });
-        };
-
-        let textMessage = '';
-        const baseUrl = `https://mytrip2.pro/share/live_safemode`;
-        const encodedName = encodeURIComponent(user?.displayName || '여행자');
-
-        try {
-            const position = await getPosition();
-            const { latitude, longitude } = position.coords;
-            const googleMapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
-            const mapUrl = `${baseUrl}?lat=${latitude}&lng=${longitude}&name=${encodedName}&userId=${user?.uid || ''}`;
-            
-            textMessage = `🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n\n📍 나의 정확한 현재 위치 (구글 지도):\n${googleMapsUrl}\n\n🛡️ 전용 안심 대시보드로 보기:\n${mapUrl}`;
-        } catch (error) {
-            console.error("위치 정보 획득 실패:", error);
-            const mapUrl = `${baseUrl}?name=${encodedName}&userId=${user?.uid || ''}`;
-            textMessage = `🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n\n(위치 접근이 제한되어 기본 링크만 전송합니다)\n🛡️ 전용 안심 대시보드로 보기:\n${mapUrl}`;
-        }
-
-        // 가입된 보호자에게 실시간 위치 공유 인앱 알림 추가 발송
-        if (guardianUserId) {
-            try {
-                await addDoc(collection(db, "match_requests"), {
-                    type: "safemode_location_share",
-                    senderId: user.uid,
-                    senderName: user.displayName || '여행자',
-                    targetMateId: guardianUserId,
-                    targetMateName: guardianName,
-                    status: "pending",
-                    message: `📍 [Safe Mode 위치 전송] ${user.displayName || '여행자'}님이 실시간 위치 정보를 전송했습니다.`,
-                    sessionUrl: `/mypage?openInbox=true`,
-                    createdAt: serverTimestamp()
-                });
-            } catch (err) {
-                console.error("보호자 위치 전송 알림 실패:", err);
-            }
-        }
-
-        try {
-            await navigator.clipboard.writeText(textMessage);
-            triggerToast('📋 실제 위치가 포함된 공유 텍스트가 복사되었습니다!');
-            setShowLocationSentModal(true); // 위치 전송 완료 모달 가동
-        } catch (err) {
-            triggerToast('공유 텍스트 생성 실패');
-        }
-    };
 
     // 포맷 도우미
     const formatTime = (secs) => {

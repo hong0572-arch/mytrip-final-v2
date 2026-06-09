@@ -1,7 +1,7 @@
 export const dynamic = "force-static";
 
 export default function sitemap() {
-    const baseUrl = 'https://mytrip2.pro';
+    const baseUrl = 'https://tripmaker.tips';
 
     return [
         {

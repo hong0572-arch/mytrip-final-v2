@@ -139,7 +139,7 @@ export default function JoinTripPage() {
                             <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Destination</p><p className="font-black text-gray-900 text-base flex items-center gap-1"><MapPin size={16} className="text-brand-primary" /> {safeDest}</p></div>
                             <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Date</p><p className="font-black text-gray-900 text-sm flex items-center gap-1"><Calendar size={16} className="text-brand-secondary" /> {tripData.startDate}</p></div>
                         </div>
-                        <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 mb-8 relative"><div className="absolute -top-3 left-4 text-2xl">💬</div><p className="text-sm font-bold text-gray-600 text-center leading-relaxed pt-2">"저랑 같이 이 일정 보면서<br />설레는 여행 준비 해볼래요?"</p></div>
+                        <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 mb-8 relative"><div className="absolute -top-3 left-4 text-2xl">💬</div><p className="text-sm font-bold text-gray-600 text-center leading-relaxed pt-2">&quot;저랑 같이 이 일정 보면서<br />설레는 여행 준비 해볼래요?&quot;</p></div>
 
                         {!user ? (
                             <button onClick={handleLogin} className="w-full bg-gray-900 hover:bg-black text-white font-black text-lg py-4 rounded-2xl shadow-xl transition active:scale-95 flex items-center justify-center gap-2"><LogIn size={20} /> 3초만에 로그인하고 수락하기</button>

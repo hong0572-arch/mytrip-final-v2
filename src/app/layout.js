@@ -9,7 +9,7 @@ import GlobalSafeMode from '../components/GlobalSafeMode';
 // ✅ 환경 변수 및 설정
 const SITE_TITLE = process.env.NEXT_PUBLIC_OG_TITLE || "Trip Maker - 내 AI 여행 가이드";
 const SITE_DESC = process.env.NEXT_PUBLIC_OG_DESC || "일본, 중국, 동남아시아, 미국, 미주, 호주, 아프리카, 유럽 여행 코스 짜기 어렵고 귀찮다면? AI가 바로 즉시 당신만을 위한 여행 계획을 짜드립니다.";
-const SITE_IMAGE = process.env.NEXT_PUBLIC_OG_IMAGE || "https://mytrip2.pro/og-image.jpg";
+const SITE_IMAGE = process.env.NEXT_PUBLIC_OG_IMAGE || "https://tripmaker.tips/og-image.jpg";
 const GA_ID = "G-DC122J4LJL";
 
 // ✅ [PWA & Metadata] 설정
@@ -23,7 +23,7 @@ export const viewport = {
 };
 
 export const metadata = {
-  metadataBase: new URL('https://mytrip2.pro'),
+  metadataBase: new URL('https://tripmaker.tips'),
   title: {
     default: SITE_TITLE,
     template: `%s | Trip Maker`
@@ -36,10 +36,10 @@ export const metadata = {
   manifest: "/manifest.json",
   icons: { icon: "/icon-192.png", apple: "/icon-192.png" },
   alternates: {
-    canonical: 'https://mytrip2.pro',
+    canonical: 'https://tripmaker.tips',
     languages: {
-      'ko-KR': 'https://mytrip2.pro',
-      'en-US': 'https://mytrip2.pro/?lang=en',
+      'ko-KR': 'https://tripmaker.tips',
+      'en-US': 'https://tripmaker.tips/?lang=en',
     },
   },
   keywords: ["AI Trip Maker", "AI 여행 계획", "AI 여행 코스", "AI 여행 일정", "여행 일정 짜기", "여행 코스", "AI 여행 코스", "트립메이커", "Trip Maker", "유럽 여행 코스", "아프리카 여행 코스",
@@ -48,7 +48,7 @@ export const metadata = {
   openGraph: {
     title: SITE_TITLE,
     description: SITE_DESC,
-    url: "https://mytrip2.pro",
+    url: "https://tripmaker.tips",
     siteName: "Trip Maker",
     images: [{ url: SITE_IMAGE, width: 1200, height: 630, alt: "Trip Maker AI Travel Guide" }],
     locale: "ko_KR",
@@ -125,7 +125,7 @@ export default function RootLayout({ children }) {
                   "ratingCount": "1024"
                 },
                 "description": SITE_DESC,
-                "url": "https://mytrip2.pro",
+                "url": "https://tripmaker.tips",
                 "author": {
                   "@type": "Organization",
                   "name": "Trip Maker Team"

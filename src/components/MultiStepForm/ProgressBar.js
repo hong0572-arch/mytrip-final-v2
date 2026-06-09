@@ -2,12 +2,7 @@
 
 import { motion } from "framer-motion";
 
-interface ProgressBarProps {
-    currentStep: number;
-    totalSteps: number;
-}
-
-export default function ProgressBar({ currentStep, totalSteps }: ProgressBarProps) {
+export default function ProgressBar({ currentStep, totalSteps }) {
     const progress = (currentStep / totalSteps) * 100;
 
     return (

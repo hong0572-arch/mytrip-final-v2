@@ -634,7 +634,7 @@ export default function Home() {
                         <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl relative">
                             <button onClick={() => setManualAirport({ show: false, trip: null, searchStr: "", error: "" })} className="absolute top-4 right-4 p-2 text-gray-400"><X size={20} /></button>
                             <h3 className="text-xl font-black text-center text-gray-800 mb-2">도착 공항 직접 입력</h3>
-                            <p className="text-xs text-center text-gray-500 mb-4 font-bold text-brand-danger">'{manualAirport.trip?.destination}' 공항을 입력해주세요.</p>
+                            <p className="text-xs text-center text-gray-500 mb-4 font-bold text-brand-danger">&apos;{manualAirport.trip?.destination}&apos; 공항을 입력해주세요.</p>
                             <input type="text" placeholder="예: 발리, DPS" value={manualAirport.searchStr} onChange={(e) => setManualAirport({ ...manualAirport, searchStr: e.target.value, error: "" })} className="w-full px-4 py-4 bg-gray-50 border rounded-2xl outline-none text-center font-bold" />
                             {manualAirport.error && <p className="text-[10px] text-brand-danger text-center mt-2">{manualAirport.error}</p>}
                             <button onClick={handleManualSubmit} className="w-full py-4 bg-brand-accent text-white font-bold rounded-2xl mt-4">검색 및 적용</button>

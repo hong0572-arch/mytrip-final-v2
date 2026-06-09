@@ -2,7 +2,7 @@ export default function PrivacyPage() {
     return (
         <div className="max-w-3xl mx-auto p-8 text-gray-800 font-sans leading-relaxed">
             <h1 className="text-3xl font-bold mb-6">개인정보처리방침</h1>
-            <p className="mb-4"><strong>Trip Maker</strong>(이하 '서비스')는 이용자의 개인정보를 중요시하며, '개인정보 보호법'을 준수하고 있습니다.</p>
+            <p className="mb-4"><strong>Trip Maker</strong>{"(이하 '서비스')는 이용자의 개인정보를 중요시하며, '개인정보 보호법'을 준수하고 있습니다."}</p>
 
             <h2 className="text-xl font-bold mt-8 mb-2">1. 수집하는 개인정보 항목</h2>
             <ul className="list-disc pl-5 mb-4">

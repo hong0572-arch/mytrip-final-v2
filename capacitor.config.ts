@@ -11,8 +11,8 @@ const config: any = {
 
     // 구글 로그인 및 외부 서비스 연동을 위한 허용 도메인
     allowNavigation: [
-      "mytrip2.pro",
-      "*.mytrip2.pro",
+      "tripmaker.tips",
+      "*.tripmaker.tips",
       "*.firebaseapp.com",
       "*.google.com",
       "accounts.google.com"

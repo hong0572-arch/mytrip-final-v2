@@ -11,18 +11,8 @@ export default function AuthButton() {
     const [user, setUser] = useState(null);
     const router = useRouter(); // 이동 도구
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
-            if (currentUser) {
-                checkUserWallet(currentUser);
-            }
-        });
-        return () => unsubscribe();
-    }, []);
-
     // 💰 지갑 확인 및 생성 (1000P 지급 로직 포함)
-    const checkUserWallet = async (user) => {
+    async function checkUserWallet(user) {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
 
@@ -36,7 +26,17 @@ export default function AuthButton() {
             });
             // 신규 가입 시 알림은 선택 사항 (너무 자주 뜨면 귀찮으니 제거하거나 유지)
         }
-    };
+    }
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+            if (currentUser) {
+                checkUserWallet(currentUser);
+            }
+        });
+        return () => unsubscribe();
+    }, []);
 
     const handleLogin = async () => {
         const provider = new GoogleAuthProvider();

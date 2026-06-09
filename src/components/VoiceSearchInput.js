@@ -11,7 +11,8 @@ export default function VoiceSearchInput() {
     useEffect(() => {
         if (typeof window !== 'undefined' &&
             (window.SpeechRecognition || window.webkitSpeechRecognition)) {
-            setIsSupported(true);
+            const timer = setTimeout(() => setIsSupported(true), 0);
+            return () => clearTimeout(timer);
         }
     }, []);
 

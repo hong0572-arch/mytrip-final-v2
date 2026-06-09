@@ -80,7 +80,7 @@ export default function GuidePage() {
                             <div className="space-y-3 text-gray-600 text-sm leading-relaxed">
                                 <p className="flex items-start gap-2">
                                     <CheckCircle size={16} className="text-brand-primary/80 mt-0.5 shrink-0" />
-                                    <span><span className="font-bold text-gray-800">"어디로 가세요?"</span> 입력창에 도시 이름만 넣으세요. (예: 오사카, 다낭, 파리)</span>
+                                    <span><span className="font-bold text-gray-800">&quot;어디로 가세요?&quot;</span> 입력창에 도시 이름만 넣으세요. (예: 오사카, 다낭, 파리)</span>
                                 </p>
                                 <p className="flex items-start gap-2">
                                     <CheckCircle size={16} className="text-brand-primary/80 mt-0.5 shrink-0" />
@@ -139,7 +139,7 @@ export default function GuidePage() {
                                 <p>매번 검색해서 들어오지 마세요. 🙅‍♂️</p>
                                 <div className="bg-gray-100 p-4 rounded-xl">
                                     <p className="font-bold text-gray-800 mb-1">📲 설치 방법</p>
-                                    <p className="text-xs">브라우저 메뉴에서 <span className="font-bold text-brand-secondary">'홈 화면에 추가'</span> 또는 <span className="font-bold text-brand-secondary">'앱 설치'</span>를 누르세요.</p>
+                                    <p className="text-xs">브라우저 메뉴에서 <span className="font-bold text-brand-secondary">&apos;홈 화면에 추가&apos;</span> 또는 <span className="font-bold text-brand-secondary">&apos;앱 설치&apos;</span>를 누르세요.</p>
                                 </div>
                                 <p className="text-xs text-gray-500">
                                     스마트폰 바탕화면에 아이콘이 생겨 언제든 1초 만에 접속할 수 있습니다.

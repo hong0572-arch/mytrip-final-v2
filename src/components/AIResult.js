@@ -1221,7 +1221,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                         <ShieldCheck size={20} />
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs font-black text-gray-800">🛡️ 여성 & 솔로 '안전 최우선' 필터</p>
+                                                        <p className="text-xs font-black text-gray-800">{"🛡️ 여성 & 솔로 '안전 최우선' 필터"}</p>
                                                         <p className="text-[10px] text-gray-500 font-bold mt-0.5">대로변·번화가 인접성 및 실시간 치안 우수 숙소 큐레이션</p>
                                                     </div>
                                                 </div>

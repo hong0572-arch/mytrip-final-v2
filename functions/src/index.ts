@@ -108,15 +108,15 @@ export const sendDailyDDayPush = onSchedule("0 * * * *", async (event) => {
         token: fcmToken,
         webpush: {
           notification: {
-            icon: "https://mytrip2.pro/icon-512.png", // 아이콘 고화질로 교체
+            icon: "https://tripmaker.tips/icon-512.png", // 아이콘 고화질로 교체
             image: randomImage, // 안드로이드 알림창 하단에 크게 표시되는 배너 이미지
-            badge: "https://mytrip2.pro/icon-192.png", // 상태바에 작게 표시되는 아이콘
-            click_action: "https://mytrip2.pro/mypage",
+            badge: "https://tripmaker.tips/icon-192.png", // 상태바에 작게 표시되는 아이콘
+            click_action: "https://tripmaker.tips/mypage",
             requireInteraction: true, // 알림이 자동으로 사라지지 않고 유지되도록 설정
             vibrate: [200, 100, 200]
           },
           fcmOptions: {
-            link: "https://mytrip2.pro/mypage"
+            link: "https://tripmaker.tips/mypage"
           }
         },
       };

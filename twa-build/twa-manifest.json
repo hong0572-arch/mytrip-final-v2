@@ -1,6 +1,6 @@
 {
   "packageId": "pro.mytrip2.twa",
-  "host": "mytrip2.pro",
+  "host": "tripmaker.tips",
   "name": "Trip Maker AI",
   "launcherName": "트립메이커 AI",
   "display": "standalone",
@@ -13,7 +13,7 @@
   "backgroundColor": "#FFFFFF",
   "enableNotifications": true,
   "startUrl": "/",
-  "iconUrl": "https://mytrip2.pro/icon-512.png",
+  "iconUrl": "https://tripmaker.tips/icon-512.png",
   "splashScreenFadeOutDuration": 200,
   "signingKey": {
     "path": "C:\\Users\\iwing\\.antigravity\\mytrip-final\\android.keystore",
@@ -23,7 +23,7 @@
   "appVersionCode": 15,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
-  "webManifestUrl": "https://mytrip2.pro/manifest.json",
+  "webManifestUrl": "https://tripmaker.tips/manifest.json",
   "fallbackType": "customtabs",
   "features": {
     "locationDelegation": {
@@ -36,7 +36,7 @@
   "enableSiteSettingsShortcut": true,
   "isChromeOSOnly": false,
   "isMetaQuest": false,
-  "fullScopeUrl": "https://mytrip2.pro/",
+  "fullScopeUrl": "https://tripmaker.tips/",
   "minSdkVersion": 21,
   "orientation": "portrait-primary",
   "fingerprints": [],
