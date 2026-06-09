@@ -5,6 +5,7 @@ export default function robots() {
         rules: {
             userAgent: '*',
             allow: '/',
+            disallow: ['/admin', '/api/', '/join/', '/share/live_safemode'],
         },
         sitemap: 'https://tripmaker.tips/sitemap.xml',
     }

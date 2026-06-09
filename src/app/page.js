@@ -220,6 +220,22 @@ export default function Home() {
         themes: [], request: "", regionType: "auto",
     });
 
+    // ✅ 언어/위치(GEO) SEO 자동 감지
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            const queryLang = params.get("lang");
+            if (queryLang === "en" || queryLang === "ko") {
+                setLanguage(queryLang);
+            } else {
+                const browserLang = navigator.language || navigator.userLanguage;
+                if (browserLang && browserLang.toLowerCase().startsWith("en")) {
+                    setLanguage("en");
+                }
+            }
+        }
+    }, []);
+
     // --- Effect 로직 (원본 100% 유지) ---
     useEffect(() => {
         if (!loading) return;

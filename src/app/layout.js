@@ -38,6 +38,7 @@ export const metadata = {
   alternates: {
     canonical: 'https://tripmaker.tips',
     languages: {
+      'x-default': 'https://tripmaker.tips',
       'ko-KR': 'https://tripmaker.tips',
       'en-US': 'https://tripmaker.tips/?lang=en',
     },
@@ -52,6 +53,7 @@ export const metadata = {
     siteName: "Trip Maker",
     images: [{ url: SITE_IMAGE, width: 1200, height: 630, alt: "Trip Maker AI Travel Guide" }],
     locale: "ko_KR",
+    alternateLocale: ["en_US"],
     type: "website",
   },
   twitter: {
