@@ -678,20 +678,19 @@ export default function Home() {
 
             {/* 메인 박스 — 독립형 플로팅 카드 UI로 변경 (배경 투명화) */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[560px] h-full sm:h-[95vh] bg-transparent sm:rounded-[35px] overflow-hidden relative flex flex-col z-10">
-                {/* 헤더 — 투명하게 유지하여 배경 노출 */}
                 <div className="px-4 pt-6 pb-2 shrink-0 flex justify-between items-center bg-transparent z-20">
                     <img src="/logo1.png" alt="Logo" className="h-8 w-auto object-contain" />
-                    <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
-                        <div className="flex bg-white/80 backdrop-blur-sm p-1 rounded-full text-[10px] font-black shadow-sm border border-white/50">
+                    <div className="z-50 flex items-center gap-1.5 sm:gap-2">
+                        <div className="flex bg-white/80 backdrop-blur-sm p-0.5 rounded-full text-[9px] font-black shadow-sm border border-white/50 shrink-0">
                             <button
                                 onClick={() => setLanguage('ko')}
-                                className={`px-3 py-1.5 rounded-full transition-all duration-300 ${language === 'ko' ? 'bg-white text-gray-800 shadow-xs' : 'text-gray-400 hover:text-gray-600'}`}
+                                className={`px-2 py-1 rounded-full transition-all duration-300 ${language === 'ko' ? 'bg-white text-gray-800 shadow-xs' : 'text-gray-400 hover:text-gray-600'}`}
                             >
                                 한국어
                             </button>
                             <button
                                 onClick={() => setLanguage('en')}
-                                className={`px-3 py-1.5 rounded-full transition-all duration-300 ${language === 'en' ? 'bg-white text-gray-800 shadow-xs' : 'text-gray-400 hover:text-gray-600'}`}
+                                className={`px-2 py-1 rounded-full transition-all duration-300 ${language === 'en' ? 'bg-white text-gray-800 shadow-xs' : 'text-gray-400 hover:text-gray-600'}`}
                             >
                                 English
                             </button>
