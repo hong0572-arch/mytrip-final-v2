@@ -21,6 +21,8 @@ import {
     Gem, Calculator, Target, RefreshCw, Landmark, BellRing, BrainCircuit, Link as LinkIcon, History, Copy, ChevronLeft, Box
 } from 'lucide-react';
 import TravelQuiz from '../../components/TravelQuiz';
+import TripCoach from '../../components/TripCoach';
+
 
 
 
@@ -305,13 +307,19 @@ export default function MyPage() {
         fetchRecommended();
     }, [user]);
 
-    // ✨ 쿼리 스트링 openInbox=true 감지 시 내 동행 요청함(Inbox) 자동 팝업
+    // ✨ 쿼리 스트링 openInbox=true 및 tab 감지
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
             if (params.get('openInbox') === 'true') {
                 setShowInboxModal(true);
-                // 주소창에서 openInbox 파라미터 깔끔하게 제거
+            }
+            const tabParam = params.get('tab');
+            if (tabParam && ['schedule', 'social', 'coach', 'wallet', 'vault'].includes(tabParam)) {
+                setActiveTab(tabParam);
+            }
+            // 주소창에서 파라미터들 깔끔하게 제거
+            if (params.toString()) {
                 const newUrl = window.location.pathname;
                 window.history.replaceState({}, '', newUrl);
             }
@@ -1072,21 +1080,73 @@ export default function MyPage() {
         <div onClick={onClick} className={`bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgba(0,0,0,0.05)] rounded-[20px] ${className}`}>{children}</div>
     );
 
-
+    const renderCoach = () => (
+        <TripCoach
+            itineraries={itineraries}
+            userData={userData}
+            onShowToast={showToast}
+            language="ko"
+        />
+    );
 
     // --- UI 렌더 시작 ---
     const renderSchedule = () => (
         <div className="animate-in fade-in duration-500">
             <header className="flex justify-between items-center px-3 pt-12 pb-4 sticky top-0 z-40 bg-gradient-to-b from-white/60 to-transparent backdrop-blur-md border-b border-white/30">
                 <button onClick={() => router.push('/?mode=new')} className="text-gray-900 bg-white/50 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/80"><ArrowLeft size={22} strokeWidth={2.5} /></button>
-                <h1 className="text-lg font-black text-gray-900 tracking-tight break-keep whitespace-nowrap">내 여행 일정</h1>
+                <h1 className="text-lg font-black text-gray-900 tracking-tight break-keep whitespace-nowrap">트립허브 (Trip Hub)</h1>
                 <button onClick={() => setShowSearchModal(true)} className="text-gray-900 bg-white/50 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/80"><Search size={22} strokeWidth={2.5} /></button>
             </header>
             <div className="px-3 pt-4 pb-6">
                 <div className="inline-flex items-center gap-1.5 bg-brand-primary/10 text-brand-primary text-xs font-black tracking-wide mb-2 px-3 py-1.5 rounded-full backdrop-blur-md border border-brand-primary/20 shadow-sm break-keep whitespace-nowrap"><Sparkles size={14} className="fill-brand-primary" /> AI TRIPS & WORKSPACE</div>
-                <h2 className="text-3xl font-black text-gray-900 tracking-tight break-keep whitespace-nowrap">다가오는<br />여행 일정</h2>
+                <h2 className="text-3xl font-black text-gray-900 tracking-tight break-keep whitespace-nowrap">나의 여행 일정</h2>
             </div>
             <main className="px-3 space-y-6 pb-6">
+                {/* 🌟 진행 중이거나 가장 가까운 활성 여행에 대한 액티브 컨트롤 타워 */}
+                {(() => {
+                    const activeTrip = itineraries.find(t => calculateDDayNum(t.startDate) >= 0) || itineraries[0];
+                    if (!activeTrip) return null;
+                    return (
+                        <GlassCard className="p-5 bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900 text-white border-white/10 shadow-xl overflow-hidden relative group rounded-[28px] mb-2">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                            <div className="relative z-10 flex flex-col gap-4">
+                                <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-black bg-brand-primary/20 text-brand-primary border border-brand-primary/30 px-2.5 py-1 rounded-full uppercase tracking-wider">{calculateDDay(activeTrip.startDate)}</span>
+                                        <span className="text-[10px] text-gray-400 font-bold">진행 중인 여행 정보</span>
+                                    </div>
+                                    <span className="text-[20px] font-black">{activeTrip.icon || '✈️'}</span>
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-black text-white leading-tight">{activeTrip.destination || activeTrip.title}</h3>
+                                    <p className="text-xs text-gray-400 font-semibold mt-1">{formatTripDate(activeTrip.startDate, activeTrip.endDate, activeTrip.duration)}</p>
+                                </div>
+                                
+                                {/* 퀵 바로가기 그리드 */}
+                                <div className="grid grid-cols-4 gap-2 pt-3 border-t border-white/10 mt-1">
+                                    <button onClick={() => setActiveTab('coach')} className="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white/5 hover:bg-white/10 transition border border-white/5 active:scale-95 cursor-pointer">
+                                        <Sparkles size={18} className="text-brand-secondary" />
+                                        <span className="text-[10px] font-black text-gray-300">트립코치</span>
+                                    </button>
+                                    <button onClick={() => setActiveTab('social')} className="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white/5 hover:bg-white/10 transition border border-white/5 active:scale-95 cursor-pointer">
+                                        <Users size={18} className="text-brand-primary" />
+                                        <span className="text-[10px] font-black text-gray-300">동행매칭</span>
+                                    </button>
+                                    <button onClick={() => setActiveTab('wallet')} className="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white/5 hover:bg-white/10 transition border border-white/5 active:scale-95 cursor-pointer">
+                                        <Wallet size={18} className="text-indigo-400" />
+                                        <span className="text-[10px] font-black text-gray-300">트립머니</span>
+                                    </button>
+                                    <button onClick={() => setActiveTab('vault')} className="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white/5 hover:bg-white/10 transition border border-white/5 active:scale-95 cursor-pointer">
+                                        <Box size={18} className="text-emerald-400" />
+                                        <span className="text-[10px] font-black text-gray-300">보관함</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </GlassCard>
+                    );
+                })()}
+
+                {/* 🌟 다가오는 여행 목록 */}
                 {itineraries.length === 0 ? (
                     <GlassCard className="text-center py-12 text-gray-500 font-medium"><p>다가오는 여행이 없습니다.</p></GlassCard>
                 ) : (
@@ -1541,17 +1601,19 @@ export default function MyPage() {
                 <div className="pb-32 flex-1 overflow-y-auto custom-scrollbar">
                     {activeTab === 'schedule' && renderSchedule()}
                     {activeTab === 'social' && renderSocial()}
+                    {activeTab === 'coach' && renderCoach()}
                     {activeTab === 'wallet' && renderWallet()}
                     {activeTab === 'vault' && renderVault()}
                 </div>
 
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-[570px] px-6 z-50">
                     <nav className="bg-white/70 backdrop-blur-2xl border border-white/50 shadow-[0_20px_40px_rgba(0,0,0,0.1)] rounded-[32px] px-2 py-2.5 flex justify-around items-center">
-                        <button onClick={() => router.push('/?mode=new')} className="flex flex-col items-center gap-1 p-2 w-[70px] text-gray-500 hover:text-brand-primary transition"><HomeIcon size={24} strokeWidth={2} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">홈</span></button>
-                        <button onClick={() => setActiveTab('social')} className={`flex flex-col items-center gap-1 p-2 w-[70px] transition ${activeTab === 'social' ? 'text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary scale-110' : 'text-gray-500 hover:text-brand-primary'}`}><Users size={24} strokeWidth={activeTab === 'social' ? 2.5 : 2} className={activeTab === 'social' ? 'text-brand-primary' : ''} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">동행</span></button>
-                        <button onClick={() => setActiveTab('schedule')} className={`flex flex-col items-center gap-1 p-2 w-[70px] transition ${activeTab === 'schedule' ? 'text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary scale-110' : 'text-gray-500 hover:text-brand-primary'}`}><Calendar size={24} strokeWidth={activeTab === 'schedule' ? 2.5 : 2} className={activeTab === 'schedule' ? 'text-brand-primary' : ''} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">일정</span></button>
-                        <button onClick={() => setActiveTab('wallet')} className={`flex flex-col items-center gap-1 p-2 w-[70px] transition ${activeTab === 'wallet' ? 'text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 scale-110' : 'text-gray-500 hover:text-indigo-600'}`}><Wallet size={24} strokeWidth={activeTab === 'wallet' ? 2.5 : 2} className={activeTab === 'wallet' ? 'text-indigo-500' : ''} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">트립머니</span></button>
-                        <button onClick={() => setActiveTab('vault')} className={`flex flex-col items-center gap-1 p-2 w-[70px] transition ${activeTab === 'vault' ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500 scale-110' : 'text-gray-500 hover:text-emerald-600'}`}><Box size={24} strokeWidth={activeTab === 'vault' ? 2.5 : 2} className={activeTab === 'vault' ? 'text-emerald-500' : ''} /><span className="text-[10px] font-bold break-keep whitespace-nowrap">보관함</span></button>
+                        <button onClick={() => router.push('/?mode=new')} className="flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] text-gray-500 hover:text-brand-primary transition"><HomeIcon size={24} strokeWidth={2} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">홈</span></button>
+                        <button onClick={() => setActiveTab('social')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'social' ? 'text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary scale-110' : 'text-gray-500 hover:text-brand-primary'}`}><Users size={24} strokeWidth={activeTab === 'social' ? 2.5 : 2} className={activeTab === 'social' ? 'text-brand-primary' : ''} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">동행</span></button>
+                        <button onClick={() => setActiveTab('schedule')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'schedule' ? 'text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary scale-110' : 'text-gray-500 hover:text-brand-primary'}`}><Calendar size={24} strokeWidth={activeTab === 'schedule' ? 2.5 : 2} className={activeTab === 'schedule' ? 'text-brand-primary' : ''} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">일정</span></button>
+                        <button onClick={() => setActiveTab('coach')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'coach' ? 'text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary scale-110' : 'text-gray-500 hover:text-brand-primary'}`}><Sparkles size={24} strokeWidth={activeTab === 'coach' ? 2.5 : 2} className={activeTab === 'coach' ? 'text-brand-primary' : ''} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">코치</span></button>
+                        <button onClick={() => setActiveTab('wallet')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'wallet' ? 'text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 scale-110' : 'text-gray-500 hover:text-indigo-600'}`}><Wallet size={24} strokeWidth={activeTab === 'wallet' ? 2.5 : 2} className={activeTab === 'wallet' ? 'text-indigo-500' : ''} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">트립머니</span></button>
+                        <button onClick={() => setActiveTab('vault')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'vault' ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500 scale-110' : 'text-gray-500 hover:text-emerald-600'}`}><Box size={24} strokeWidth={activeTab === 'vault' ? 2.5 : 2} className={activeTab === 'vault' ? 'text-emerald-500' : ''} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">보관함</span></button>
                     </nav>
                 </div>
             </div>

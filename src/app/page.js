@@ -21,7 +21,7 @@ import {
     MapPin, Calendar, Wallet, User, Sparkles, Users, Compass, Heart, Baby, Briefcase,
     Crown, Download, X, LogIn, Search, Mic, MessageSquare, ExternalLink, Bell, BellRing,
     RefreshCw, TrendingDown, Plane, CheckCircle, ArrowRight, Clock, ChevronRight,
-    ArrowLeftRight, Trash2, Globe
+    ArrowLeftRight, Trash2, Globe, Home as HomeIcon, Box
 } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -1071,6 +1071,22 @@ export default function Home() {
                     </div>
                 )}
             </motion.div>
+
+            {/* 전역 하단 네비게이션바 (로그인 유저 기준) */}
+            {(user || session) && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-[570px] px-6 z-50 animate-fadeIn">
+                    <nav className="bg-white/70 backdrop-blur-2xl border border-white/50 shadow-[0_20px_40px_rgba(0,0,0,0.1)] rounded-[32px] px-2 py-2.5 flex justify-around items-center">
+                        <button onClick={() => {
+                            if (activeTab !== 'create') setActiveTab('create');
+                        }} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'create' ? 'text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary scale-110' : 'text-gray-500 hover:text-brand-primary'}`}><HomeIcon size={24} strokeWidth={activeTab === 'create' ? 2.5 : 2} className={activeTab === 'create' ? 'text-brand-primary' : ''} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">홈</span></button>
+                        <button onClick={() => router.push('/mypage?tab=social')} className="flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] text-gray-500 hover:text-brand-primary transition"><Users size={24} strokeWidth={2} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">동행</span></button>
+                        <button onClick={() => router.push('/mypage?tab=schedule')} className="flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] text-gray-500 hover:text-brand-primary transition"><Calendar size={24} strokeWidth={2} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">일정</span></button>
+                        <button onClick={() => router.push('/mypage?tab=coach')} className="flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] text-gray-500 hover:text-brand-primary transition"><Sparkles size={24} strokeWidth={2} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">코치</span></button>
+                        <button onClick={() => router.push('/mypage?tab=wallet')} className="flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] text-gray-500 hover:text-brand-primary transition"><Wallet size={24} strokeWidth={2} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">트립머니</span></button>
+                        <button onClick={() => router.push('/mypage?tab=vault')} className="flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] text-gray-500 hover:text-brand-primary transition"><Box size={24} strokeWidth={2} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">보관함</span></button>
+                    </nav>
+                </div>
+            )}
 
             <style jsx global>{`
                 .custom-scrollbar::-webkit-scrollbar { height: 8px; }

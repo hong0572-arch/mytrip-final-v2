@@ -27,7 +27,7 @@ const nextConfig = {
 
   // ✨ 정적 내보내기 설정 (배포 환경에 따라 선택적으로 사용)
   // Vercel에서는 주석 처리해도 되지만, Capacitor/TWA 정적 빌드가 필요할 경우 켭니다.
-  // output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
+  output: 'export',
 
   // 모든 환경 변수 유지
   env: {
