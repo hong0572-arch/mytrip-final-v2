@@ -10,11 +10,13 @@ const PortraitOnly = () => {
     useEffect(() => {
         if (typeof window !== "undefined") {
             const savedLang = localStorage.getItem('language') || 'ko';
-            setLanguage(savedLang);
+            const normalizedLang = (savedLang === 'en' || savedLang === 'ko') ? savedLang : 'ko';
+            setLanguage(normalizedLang);
 
             const handleLangChange = () => {
                 const updatedLang = localStorage.getItem('language') || 'ko';
-                setLanguage(updatedLang);
+                const normalizedUpdatedLang = (updatedLang === 'en' || updatedLang === 'ko') ? updatedLang : 'ko';
+                setLanguage(normalizedUpdatedLang);
             };
             window.addEventListener('languageChanged', handleLangChange);
             

@@ -2,7 +2,7 @@
 
 // --- 라이브러리 및 설정 Import ---
 import { signIn, signOut, useSession } from "next-auth/react"; // Kakao Login용
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
