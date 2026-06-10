@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { ko } from 'date-fns/locale';
+import { ko, enUS } from 'date-fns/locale';
 
 // Firebase
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
@@ -48,17 +48,17 @@ const backgroundImages = [
 ];
 
 const tourOptions = [
-    { id: '자유여행', label: '자유여행', desc: '내 맘대로 자유롭게' },
-    { id: '소그룹', label: '소그룹 투어', desc: '우리끼리 편안하게' },
-    { id: '패키지', label: '세미 패키지', desc: '핵심만 쏙쏙' },
+    { id: '자유여행', label: '자유여행', enLabel: 'Solo/Free', desc: '내 맘대로 자유롭게', enDesc: 'Travel at my own pace' },
+    { id: '소그룹', label: '소그룹 투어', enLabel: 'Small Group', desc: '우리끼리 편안하게', enDesc: 'Cozy and comfortable' },
+    { id: '패키지', label: '세미 패키지', enLabel: 'Semi-Package', desc: '핵심만 쏙쏙', enDesc: 'Core highlights only' },
 ];
 
 const companionOptions = [
-    { id: '혼자', label: '나홀로', icon: <User size={20} /> },
-    { id: '연인', label: '연인', icon: <Heart size={20} /> },
-    { id: '친구', label: '친구', icon: <Users size={20} /> },
-    { id: '가족', label: '가족', icon: <Baby size={20} /> },
-    { id: '비즈니스', label: '출장', icon: <Briefcase size={20} /> },
+    { id: '혼자', label: '나홀로', enLabel: 'Solo', icon: <User size={20} /> },
+    { id: '연인', label: '연인', enLabel: 'Couple', icon: <Heart size={20} /> },
+    { id: '친구', label: '친구', enLabel: 'Friends', icon: <Users size={20} /> },
+    { id: '가족', label: '가족', enLabel: 'Family', icon: <Baby size={20} /> },
+    { id: '비즈니스', label: '출장', enLabel: 'Business', icon: <Briefcase size={20} /> },
 ];
 
 const QUICK_TAGS = [
@@ -66,60 +66,24 @@ const QUICK_TAGS = [
     "🚢 럭셔리 크루즈 여행", "🚶‍♂️ 계획없는 여유로운 산책", "👨‍👩‍👧‍👦 부모님 맞춤 효도여행", "🎒 돈 아끼는 짠내투어"
 ];
 
-const cleanTagText = (tag) => tag.replace(/[^가-힣\s]/g, '').trim();
+const QUICK_TAGS_EN = [
+    "🌿 Post-resignation zoning out", "🍜 Local spots over tourist traps", "🙅‍♂️ Skip crowded places",
+    "🚢 Luxury cruise trip", "🚶‍♂️ Plan-free relaxing stroll", "👨‍👩‍👧‍👦 Custom trip for parents", "🎒 Budget-saving penny-pincher tour"
+];
 
-const CITY_TO_IATA = {
-    "인천": "ICN", "Incheon": "ICN", "서울": "ICN", "Seoul": "ICN", "김포": "GMP", "Gimpo": "GMP",
-    "부산": "PUS", "Busan": "PUS", "김해": "PUS", "제주": "CJU", "Jeju": "CJU", "대구": "TAE", "Daegu": "TAE",
-    "청주": "CJJ", "Cheongju": "CJJ", "오사카": "KIX", "Osaka": "KIX", "간사이": "KIX", "도쿄": "NRT", "Tokyo": "NRT",
-    "나리타": "NRT", "하네다": "HND", "후쿠오카": "FUK", "Fukuoka": "FUK", "삿포로": "CTS", "Sapporo": "CTS",
-    "치토세": "CTS", "홋카이도": "CTS", "오키나와": "OKA", "Okinawa": "OKA", "나하": "OKA", "나고야": "NGO", "Nagoya": "NGO",
-    "교토": "KIX", "Kyoto": "KIX", "홍콩": "HKG", "Hong Kong": "HKG", "마카오": "MFM", "Macau": "MFM",
-    "타이베이": "TPE", "Taipei": "TPE", "대만": "TPE", "Taiwan": "TPE", "가오슝": "KHH", "Kaohsiung": "KHH",
-    "상하이": "PVG", "Shanghai": "PVG", "푸동": "PVG", "베이징": "PEK", "Beijing": "PEK", "북경": "PEK",
-    "칭다오": "TAO", "Qingdao": "TAO", "다낭": "DAD", "Danang": "DAD", "Da Nang": "DAD", "나트랑": "CXR",
-    "Nha Trang": "CXR", "하노이": "HAN", "Hanoi": "HAN", "호치민": "SGN", "Ho Chi Minh": "SGN", "사이공": "SGN",
-    "푸꾸옥": "PQC", "Phu Quoc": "PQC", "베트남": "DAD", "방콕": "BKK", "Bangkok": "BKK", "수완나품": "BKK",
-    "치앙마이": "CNX", "Chiang Mai": "CNX", "푸켓": "HKT", "Phuket": "HKT", "태국": "BKK", "세부": "CEB", "Cebu": "CEB",
-    "보홀": "TAG", "Bohol": "TAG", "마닐라": "MNL", "Manila": "MNL", "보라카이": "KLO", "Boracay": "KLO",
-    "칼리보": "KLO", "필리핀": "CEB", "싱가포르": "SIN", "Singapore": "SIN", "발리": "DPS", "Bali": "DPS",
-    "덴파사르": "DPS", "자카르타": "CGK", "Jakarta": "CGK", "코타키나발루": "BKI", "Kota Kinabalu": "BKI",
-    "쿠알라룸푸르": "KUL", "Kuala Lumpur": "KUL", "파리": "CDG", "Paris": "CDG", "니스": "NCE", "Nice": "NCE",
-    "남부 프랑스": "NCE", "South France": "NCE", "마르세유": "MRS", "Marseille": "MRS", "Marseilles": "MRS",
-    "리옹": "LYS", "Lyon": "LYS", "프랑스": "CDG", "France": "CDG", "로마": "FCO", "Rome": "FCO", "Roma": "FCO",
-    "밀라노": "MXP", "Milan": "MXP", "Milano": "MXP", "베네치아": "VCE", "Venice": "VCE", "Venezia": "VCE",
-    "피렌체": "FLR", "Florence": "FLR", "Firenze": "FLR", "나폴리": "NAP", "Naples": "NAP", "Napoli": "NAP",
-    "이탈리아": "FCO", "Italy": "FCO", "바르셀로나": "BCN", "Barcelona": "BCN", "마드리드": "MAD", "Madrid": "MAD",
-    "세비야": "SVQ", "Seville": "SVQ", "스페인": "MAD", "Spain": "MAD", "그라나다": "GRX", "Granada": "GRX",
-    "리스본": "LIS", "Lisbon": "LIS", "포르투": "OPO", "Porto": "OPO", "런던": "LHR", "London": "LHR",
-    "히드로": "LHR", "영국": "LHR", "UK": "LHR", "맨체스터": "MAN", "Manchester": "MAN", "에든버러": "EDI",
-    "Edinburgh": "EDI", "프랑크푸르트": "FRA", "Frankfurt": "FRA", "뮌헨": "MUC", "Munich": "MUC",
-    "베를린": "BER", "Berlin": "BER", "취리히": "ZRH", "Zurich": "ZRH", "제네바": "GVA", "Geneva": "GVA",
-    "인터라켄": "ZRH", "Interlaken": "ZRH", "스위스": "ZRH", "Switzerland": "ZRH", "암스테르담": "AMS",
-    "Amsterdam": "AMS", "네덜란드": "AMS", "브뤼셀": "BRU", "Brussels": "BRU", "벨기에": "BRU",
-    "프라하": "PRG", "Prague": "PRG", "체코": "PRG", "비엔나": "VIE", "Vienna": "VIE", "오스트리아": "VIE",
-    "부다페스트": "BUD", "Budapest": "BUD", "헝가리": "BUD", "동유럽": "PRG", "이스탄불": "IST", "Istanbul": "IST",
-    "튀르키예": "IST", "터키": "IST", "아테네": "ATH", "Athens": "ATH", "그리스": "ATH", "산토리니": "JTR",
-    "Santorini": "JTR", "자그레브": "ZAG", "Zagreb": "ZAG", "크로아티아": "ZAG", "뉴욕": "JFK", "New York": "JFK",
-    "로스앤젤레스": "LAX", "Los Angeles": "LAX", "LA": "LAX", "엘에이": "LAX", "샌프란시스코": "SFO",
-    "San Francisco": "SFO", "라스베이거스": "LAS", "Las Vegas": "LAS", "시애틀": "SEA", "Seattle": "SEA",
-    "하와이": "HNL", "Hawaii": "HNL", "호놀룰루": "HNL", "괌": "GUM", "Guam": "GUM", "사이판": "SPN",
-    "Saipan": "SPN", "밴쿠버": "YVR", "Vancouver": "YVR", "캐나다": "YVR", "토론토": "YYZ", "Toronto": "YYZ",
-    "칸쿤": "CUN", "Cancun": "CUN", "시드니": "SYD", "Sydney": "SYD", "호주": "SYD", "멜버른": "MEL",
-    "Melbourne": "MEL", "브리즈번": "BNE", "Brisbane": "BNE", "오클랜드": "AKL", "Auckland": "AKL",
-    "뉴질랜드": "AKL", "두바이": "DXB", "Dubai": "DXB", "아부다비": "AUH", "Abu Dhabi": "AUH",
-    "리야드": "RUH", "Riyadh": "RUH", "사우디": "RUH", "쿠웨이트": "KWI", "Kuwait": "KWI", "제다": "JED",
-    "Jeddah": "JED", "도하": "DOH", "Doha": "DOH", "카이로": "CAI", "Cairo": "CAI", "이집트": "CAI",
-    "케이프타운": "CPT", "Cape Town": "CPT", "남아공": "CPT", "요하네스버그": "JNB", "Johannesburg": "JNB",
-    "카사블랑카": "CMN", "Casablanca": "CMN", "모로코": "CMN"
+const cleanTagText = (tag, lang) => {
+    if (lang === 'en') {
+        return tag.replace(/[^a-zA-Z\s]/g, '').trim();
+    }
+    return tag.replace(/[^가-힣\s]/g, '').trim();
 };
 
 const RECOMMENDED_TRIPS = [
-    { id: 'rec-tokyo', city: "도쿄", title: "🍱 도쿄 미식 & 쇼핑 투어", img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=600&auto=format&fit=crop", desc: "도심 속 미식과 트렌디한 스트릿", isHot: true },
-    { id: 'rec-bali', city: "발리", title: "🌿 우붓 정글 휴양 & 요가", img: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=600&auto=format&fit=crop", desc: "완벽한 휴식을 위한 지상낙원", isPremium: true },
-    { id: 'rec-zrh', city: "취리히", title: "🏔️ 만년설과 알프스 기차 여행", img: "https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?q=80&w=600&auto=format&fit=crop", desc: "그림 같은 대자연 속으로", isPremium: true },
-    { id: 'rec-hkg', city: "홍콩", title: "🏮 화려한 야경과 딤섬 투어", img: "https://images.unsplash.com/photo-1506158669146-619067262a00?q=80&w=600&auto=format&fit=crop", desc: "동양의 진주, 잠들지 않는 도시", isHot: true },
-    { id: 'rec-han', city: "하노이", title: "☕ 베트남 올드쿼터 산책", img: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=600&auto=format&fit=crop", desc: "진한 커피향과 정겨운 풍경" },
+    { id: 'rec-tokyo', city: "도쿄", enCity: "Tokyo", title: "🍱 도쿄 미식 & 쇼핑 투어", enTitle: "🍱 Tokyo Gourmet & Shopping Tour", img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=600&auto=format&fit=crop", desc: "도심 속 미식과 트렌디한 스트릿", enDesc: "Urban gourmet and trendy streets", isHot: true },
+    { id: 'rec-bali', city: "발리", enCity: "Bali", title: "🌿 우붓 정글 휴양 & 요가", enTitle: "🌿 Ubud Jungle Retreat & Yoga", img: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=600&auto=format&fit=crop", desc: "완벽한 휴식을 위한 지상낙원", enDesc: "A paradise for perfect relaxation", isPremium: true },
+    { id: 'rec-zrh', city: "취리히", enCity: "Zurich", title: "🏔️ 만년설과 알프스 기차 여행", enTitle: "🏔️ Snow Caps & Alpine Train Tour", img: "https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?q=80&w=600&auto=format&fit=crop", desc: "그림 같은 대자연 속으로", enDesc: "Into the picturesque nature", isPremium: true },
+    { id: 'rec-hkg', city: "홍콩", enCity: "Hong Kong", title: "🏮 화려한 야경과 딤섬 투어", enTitle: "🏮 Stunning Night Views & Dim Sum Tour", img: "https://images.unsplash.com/photo-1506158669146-619067262a00?q=80&w=600&auto=format&fit=crop", desc: "동양의 진주, 잠들지 않는 도시", enDesc: "Pearl of the Orient, the city that never sleeps", isHot: true },
+    { id: 'rec-han', city: "하노이", enCity: "Hanoi", title: "☕ 베트남 올드쿼터 산책", enTitle: "☕ Vietnam Old Quarter Stroll", img: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=600&auto=format&fit=crop", desc: "진한 커피향과 정겨운 풍경", enDesc: "Rich coffee aroma and cozy streets" },
 ];
 
 const translations = {
@@ -131,6 +95,30 @@ const translations = {
         label_request: "추가 요청사항 (안전 등)", placeholder_request: "예: 여성 혼자 가기 안전한 곳으로 추천해주세요.",
         btn_generate: "✨ 여행 일정 만들기!", btn_luxury_off: "👑 럭셔리 여행 체험하기", btn_luxury_on: "💎 VIP 플랜 생성",
         msg_loading: "AI가 가장 안전한 여행을 설계하고 있어요...", msg_listening: "듣고 있어요...",
+        label_style: "여행 스타일",
+        region_auto: "🤖 AI 알아서", region_domestic: "🇰🇷 국내만", region_international: "✈️ 해외로", region_daytrip: "🌞 당일여행",
+        btn_login: "로그인",
+        modal_nickname_title: "닉네임 설정",
+        modal_nickname_placeholder: "예: 냥프로123",
+        modal_nickname_btn: "가입 완료 ✨",
+        modal_login_title: "반가워요! 🐾",
+        modal_login_desc: "어떤 방식으로 로그인을 도와드릴까요?\n지금 시작하면 1,000P를 드려요!",
+        modal_login_kakao: "카카오로 계속하기",
+        modal_login_google: "구글로 계속하기",
+        modal_airport_title: "도착 공항 직접 입력",
+        modal_airport_desc: "'{destination}' 공항을 입력해주세요.",
+        modal_airport_placeholder: "예: 발리, DPS",
+        modal_airport_error: "공항을 찾을 수 없습니다.",
+        modal_airport_btn: "검색 및 적용",
+        flight_title: "항공권",
+        flight_btn_trip: "Trip.com 최저가",
+        flight_btn_avia: "Aviasales 예약",
+        flight_empty: "검색된 항공권이 없습니다.",
+        flight_empty_btn: "공항 직접 검색하기",
+        schedule_empty: "참여중인 일정이 없어요. 일정을 먼저 만들어보세요!",
+        schedule_trip_suffix: "여행",
+        schedule_departs: "출발",
+        schedule_tbd: "날짜 미정"
     },
     en: {
         title_pre: "Trip Maker,", title_main: "Meow AI", title_sub: "Safe & Worry-free Trip",
@@ -138,8 +126,32 @@ const translations = {
         label_where: "Where would you like to travel safely?", label_when: "When do you leave?", placeholder_dest: "e.g. Quiet rest in Kyoto", placeholder_date: "Select dates (Max 30 days)",
         label_companion: "Companion", label_budget: "Budget (per person)", label_people: "Travelers", label_contact: "Contact (Required)", placeholder_contact: "Email or Messenger ID",
         label_request: "Special Requests (Safety, etc.)", placeholder_request: "ex: Recommend safe places for solo female travelers.",
-        btn_generate: "✨ Create my trip!", btn_luxury_off: "👑 Try Luxury Mode", btn_luxury_on: "💎 Create VIP Plan",
-        msg_loading: "AI is designing your safest trip...", msg_listening: "Listening...",
+        btn_generate: "✨ Create my trip!", msg_loading: "AI is designing your safest trip...", msg_listening: "Listening...",
+        btn_luxury_off: "👑 Try Luxury Mode", btn_luxury_on: "💎 Create VIP Plan",
+        label_style: "Travel Style",
+        region_auto: "🤖 AI Auto", region_domestic: "🇰🇷 Domestic", region_international: "✈️ International", region_daytrip: "🌞 Day Trip",
+        btn_login: "Login",
+        modal_nickname_title: "Set Nickname",
+        modal_nickname_placeholder: "e.g. MeowPro123",
+        modal_nickname_btn: "Complete Sign Up ✨",
+        modal_login_title: "Welcome! 🐾",
+        modal_login_desc: "How would you like to sign in?\nGet 1,000P instantly!",
+        modal_login_kakao: "Continue with Kakao",
+        modal_login_google: "Continue with Google",
+        modal_airport_title: "Enter Arrival Airport",
+        modal_airport_desc: "Please enter the airport for '{destination}'.",
+        modal_airport_placeholder: "e.g. Bali, DPS",
+        modal_airport_error: "Airport not found.",
+        modal_airport_btn: "Search & Apply",
+        flight_title: "Flights",
+        flight_btn_trip: "Trip.com Best Deal",
+        flight_btn_avia: "Aviasales Booking",
+        flight_empty: "No flights found.",
+        flight_empty_btn: "Search Airport Manually",
+        schedule_empty: "No upcoming trips. Let's create one first!",
+        schedule_trip_suffix: "Trip",
+        schedule_departs: "Departs",
+        schedule_tbd: "TBD"
     }
 };
 
@@ -228,22 +240,37 @@ export default function Home() {
             if (queryLang === "en" || queryLang === "ko") {
                 setLanguage(queryLang);
             } else {
-                const browserLang = navigator.language || navigator.userLanguage;
-                if (browserLang && browserLang.toLowerCase().startsWith("en")) {
-                    setLanguage("en");
+                const savedLang = localStorage.getItem('language');
+                if (savedLang === 'en' || savedLang === 'ko') {
+                    setLanguage(savedLang);
+                } else {
+                    const browserLang = navigator.language || navigator.userLanguage;
+                    if (browserLang && browserLang.toLowerCase().startsWith("en")) {
+                        setLanguage("en");
+                    }
                 }
             }
         }
     }, []);
 
+    // ✅ 언어 상태 변화 감지 및 localStorage 동기화 + 이벤트 전송
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            localStorage.setItem('language', language);
+            window.dispatchEvent(new Event('languageChanged'));
+        }
+    }, [language]);
+
     // --- Effect 로직 (원본 100% 유지) ---
     useEffect(() => {
         if (!loading) return;
         const messages = ["AI가 여행지를 분석하고 있어요... 🧐", "최적의 항공권을 찾고 있습니다... ✈️", "현지 맛집 리스트를 훑어보는 중... 🍜", "동선을 최적화하고 있어요... 🗺️", "가성비 좋은 숙소를 찾고 있습니다... 🏨", "거의 다 됐습니다! 냥냥! 🐾"];
-        let index = 0; setLoadingText(messages[0]);
-        const interval = setInterval(() => { index = (index + 1) % messages.length; setLoadingText(messages[index]); }, 3000);
+        const messagesEn = ["AI is analyzing the destination... 🧐", "Searching for the best flights... ✈️", "Scanning local restaurants... 🍜", "Optimizing the routes... 🗺️", "Finding budget-friendly stays... 🏨", "Almost done! Meow! 🐾"];
+        const activeMessages = language === 'en' ? messagesEn : messages;
+        let index = 0; setLoadingText(activeMessages[0]);
+        const interval = setInterval(() => { index = (index + 1) % activeMessages.length; setLoadingText(activeMessages[index]); }, 3000);
         return () => clearInterval(interval);
-    }, [loading]);
+    }, [loading, language]);
 
     useEffect(() => {
         const fetchRecommendations = async () => {
@@ -319,7 +346,7 @@ export default function Home() {
                     setMySchedules(snapshot.docs.map(doc => {
                         const data = doc.data(); let iataCode = null;
                         Object.keys(CITY_TO_IATA).forEach(city => { if (data.destination?.includes(city)) iataCode = CITY_TO_IATA[city]; });
-                        return { id: doc.id, title: data.destination || "나의 여행", subtitle: data.startDate ? `${data.startDate} 출발` : "날짜 미정", icon: "✈️", iata: iataCode, ...data };
+                        return { id: doc.id, title: data.destination || (language === 'en' ? "My Trip" : "나의 여행"), subtitle: data.startDate ? (language === 'en' ? `Departs ${data.startDate}` : `${data.startDate} 출발`) : (language === 'en' ? "TBD" : "날짜 미정"), icon: "✈️", iata: iataCode, ...data };
                     }));
                 });
             } else { setMySchedules([]); }
@@ -347,7 +374,7 @@ export default function Home() {
                                 const payload = JSON.parse(atob(session.firebaseToken.split('.')[1]));
                                 debugInfo = `\n[디버그]\n발급자: ${payload.iss}\n프로젝트: ${payload.aud}`;
                             } catch (e) { }
-                            alert("Firebase 토큰 로그인 에러: " + (err.code || "unknown") + " / " + (err.message || err) + debugInfo + "\n\n오손된 세션을 초기화합니다. 다시 로그인해주세요!");
+                            alert(language === "en" ? "Firebase Token Login Error: " + (err.code || "unknown") + " / " + (err.message || err) + debugInfo + "\n\nResetting session. Please log in again!" : "Firebase 토큰 로그인 에러: " + (err.code || "unknown") + " / " + (err.message || err) + debugInfo + "\n\n오손된 세션을 초기화합니다. 다시 로그인해주세요!");
                             signOut({ redirect: false });
                         });
                 } else {
@@ -360,7 +387,7 @@ export default function Home() {
             } else {
                 // 구형 세션 캐시 제거 유도
                 console.warn("Firebase Token 누락. 카카오 세션을 초기화합니다.");
-                alert("구형 세션 충돌 오류 (Token Missing). 세션을 초기화했습니다. 다시 로그인 버튼을 눌러주세요!");
+                alert(language === "en" ? "Session conflict error (Token Missing). Session initialized. Please click the Login button again!" : "구형 세션 충돌 오류 (Token Missing). 세션을 초기화했습니다. 다시 로그인 버튼을 눌러주세요!");
                 signOut({ redirect: false });
             }
         }
@@ -370,7 +397,7 @@ export default function Home() {
     const handleGoogleLogin = async () => {
         setShowLoginModal(false);
         setLoading(true);
-        setLoadingText("구글 계정 연결 중... 🔐");
+        setLoadingText(language === "en" ? "Connecting Google account... 🔐" : "구글 계정 연결 중... 🔐");
         try {
             const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform();
             if (isNative) {
@@ -383,7 +410,7 @@ export default function Home() {
             }
         } catch (error) {
             console.error("구글 로그인 에러:", error); setLoading(false);
-            if (!error.message?.includes('12501')) alert("로그인 중 문제가 발생했습니다: " + error.message);
+            if (!error.message?.includes('12501')) alert(language === "en" ? "An error occurred during login: " + error.message : "로그인 중 문제가 발생했습니다: " + error.message);
         }
     };
 
@@ -394,7 +421,7 @@ export default function Home() {
 
     // --- 기존 핸들러 로직 (원본 100% 유지) ---
     const handleCompleteSignUp = async () => {
-        if (!nicknameInput.trim()) { alert("닉네임을 입력해주세요!"); return; }
+        if (!nicknameInput.trim()) { alert(language === "en" ? "Please enter a nickname!" : "닉네임을 입력해주세요!"); return; }
         if (!auth.currentUser) return;
         try {
             await updateProfile(auth.currentUser, { displayName: nicknameInput });
@@ -402,13 +429,13 @@ export default function Home() {
                 uid: auth.currentUser.uid, email: auth.currentUser.email, name: nicknameInput, photoURL: auth.currentUser.photoURL, points: 1000, createdAt: serverTimestamp()
             });
             setShowNicknameModal(false); router.push('/mypage');
-        } catch (error) { alert("가입 처리 중 문제가 발생했습니다."); }
+        } catch (error) { alert(language === "en" ? "An error occurred during registration." : "가입 처리 중 문제가 발생했습니다."); }
     };
 
     const handleDeleteTrip = async (e, tripId, destination) => {
         e.stopPropagation();
-        if (!confirm(`'${destination}' 일정을 삭제하시겠습니까?`)) return;
-        try { if (user) await deleteDoc(doc(db, "trips", tripId)); } catch (error) { alert("삭제 오류 발생"); }
+        if (!confirm(language === "en" ? `Are you sure you want to delete the itinerary for '${destination}'?` : `'${destination}' 일정을 삭제하시겠습니까?`)) return;
+        try { if (user) await deleteDoc(doc(db, "trips", tripId)); } catch (error) { alert(language === "en" ? "An error occurred during deletion." : "삭제 오류 발생"); }
     };
 
     const parseSpokenDate = (text) => {
@@ -431,7 +458,7 @@ export default function Home() {
     const VOICE_SEQUENCE = ['destination', 'date', 'companion', 'budget', 'people', 'tourType', 'request'];
     const handleVoiceInput = (targetField) => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) { alert("현재 브라우저는 음성 인식을 지원하지 않습니다. 크롬(Chrome)이나 사파리(Safari)를 권장합니다!"); return; }
+        if (!SpeechRecognition) { alert(language === "en" ? "Your browser does not support speech recognition. Chrome or Safari is recommended!" : "현재 브라우저는 음성 인식을 지원하지 않습니다. 크롬(Chrome)이나 사파리(Safari)를 권장합니다!"); return; }
         const recognition = new SpeechRecognition();
         recognition.lang = language === 'en' ? 'en-US' : 'ko-KR';
         setListeningField(targetField);
@@ -467,7 +494,17 @@ export default function Home() {
             const currentIndex = VOICE_SEQUENCE.indexOf(targetField);
             if (currentIndex !== -1 && currentIndex < VOICE_SEQUENCE.length - 1) {
                 const nextField = VOICE_SEQUENCE[currentIndex + 1];
-                setTimeout(() => { if (confirm(`다음 '${nextField}' 단계로 넘어갈까요?`)) handleVoiceInput(nextField); }, 500);
+                const fieldNames = {
+                    destination: language === 'en' ? 'destination' : '목적지',
+                    date: language === 'en' ? 'dates' : '날짜',
+                    companion: language === 'en' ? 'companion' : '동행자',
+                    budget: language === 'en' ? 'budget' : '예산',
+                    people: language === 'en' ? 'travelers' : '인원',
+                    tourType: language === 'en' ? 'travel style' : '여행 스타일',
+                    request: language === 'en' ? 'requests' : '요청사항'
+                };
+                const nextFieldName = fieldNames[nextField] || nextField;
+                setTimeout(() => { if (confirm(language === 'en' ? `Would you like to proceed to the next step '${nextFieldName}'?` : `다음 '${nextFieldName}' 단계로 넘어갈까요?`)) handleVoiceInput(nextField); }, 500);
             }
         };
         recognition.start();
@@ -506,7 +543,7 @@ export default function Home() {
         if (resolvedCode) {
             const trip = manualAirport.trip; setManualAirport({ show: false, trip: null, searchStr: "", error: "" });
             proceedFlightSearch(trip, resolvedCode, resolvedCode);
-        } else { setManualAirport(prev => ({ ...prev, error: "공항을 찾을 수 없습니다." })); }
+        } else { setManualAirport(prev => ({ ...prev, error: translations[language].modal_airport_error })); }
     };
 
     const toggleLuxuryMode = () => { setIsLuxury(!isLuxury); setFormData(prev => ({ ...prev, hotelType: !isLuxury ? "5성급 스위트룸/풀빌라" : "호텔" })); };
@@ -539,7 +576,7 @@ export default function Home() {
     // 📍 현재 위치 가져오기 (OpenStreetMap Nominatim 사용)
     const fetchUserLocation = () => {
         if (!navigator.geolocation) {
-            alert("브라우저가 위치 정보를 지원하지 않습니다.");
+            alert(language === "en" ? "Your browser does not support location services." : "브라우저가 위치 정보를 지원하지 않습니다.");
             return;
         }
         setIsLocationLoading(true);
@@ -560,14 +597,14 @@ export default function Home() {
             }
         }, (err) => {
             console.error("위치 획득 실패:", err);
-            alert("위치 정보를 가져올 수 없습니다. 권한을 확인해주세요.");
+            alert(language === "en" ? "Unable to retrieve location. Please check your permissions." : "위치 정보를 가져올 수 없습니다. 권한을 확인해주세요.");
             setIsLocationLoading(false);
         });
     };
 
     const generatePlan = async () => {
-        if (!formData.destination) { alert("어떤 여행을 원하시는지 알려주세요!"); return; }
-        if (!formData.startDate || !formData.endDate) { alert("날짜를 선택해주세요!"); return; }
+        if (!formData.destination) { alert(language === "en" ? "Please tell us where you want to travel!" : "어떤 여행을 원하시는지 알려주세요!"); return; }
+        if (!formData.startDate || !formData.endDate) { alert(language === "en" ? "Please select your travel dates!" : "날짜를 선택해주세요!"); return; }
         setLoading(true);
 
         // 현재 시간 및 날짜 체크 (오늘일 경우 시간 전달)
@@ -592,8 +629,8 @@ export default function Home() {
                 data.result.arrivalIata = inCode || data.result.arrivalIata;
                 data.result.departureIata = outCode || data.result.departureIata;
                 setResult(data.result);
-            } else alert("생성 실패: " + data.error);
-        } catch (error) { alert("서버 오류"); } finally { setLoading(false); }
+            } else alert(language === "en" ? "Generation failed: " + data.error : "생성 실패: " + data.error);
+        } catch (error) { alert(language === "en" ? "Server Error" : "서버 오류"); } finally { setLoading(false); }
     };
 
     const handleRecommendedClick = (trip) => { router.push(`/share/${trip.id}`); };
@@ -604,7 +641,7 @@ export default function Home() {
     return (
         <div className="h-dvh w-full flex justify-center items-center bg-gray-900 sm:p-4 font-sans relative overflow-hidden">
             {/* 스플래시 */}
-            <AnimatePresence>{showSplash && <SplashScreen onFinish={() => { setShowSplash(false); sessionStorage.setItem('hasShownSplash', 'true'); }} />}</AnimatePresence>
+            <AnimatePresence>{showSplash && <SplashScreen language={language} onFinish={() => { setShowSplash(false); sessionStorage.setItem('hasShownSplash', 'true'); }} />}</AnimatePresence>
 
             {/* 닉네임 설정 모달 */}
             <AnimatePresence>
@@ -612,9 +649,9 @@ export default function Home() {
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
                         <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl relative">
                             <button onClick={() => setShowNicknameModal(false)} className="absolute top-4 right-4 p-2 text-gray-400"><X size={20} /></button>
-                            <h3 className="text-xl font-black text-center text-gray-800 mb-2">닉네임 설정</h3>
-                            <input type="text" placeholder="예: 냥프로123" value={nicknameInput} onChange={(e) => setNicknameInput(e.target.value)} className="w-full px-4 py-4 bg-gray-50 border rounded-2xl outline-none font-bold text-center text-lg mb-4" />
-                            <button onClick={handleCompleteSignUp} className="w-full py-4 bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold text-lg rounded-2xl active:scale-95">가입 완료 ✨</button>
+                            <h3 className="text-xl font-black text-center text-gray-800 mb-2">{translations[language].modal_nickname_title}</h3>
+                            <input type="text" placeholder={translations[language].modal_nickname_placeholder} value={nicknameInput} onChange={(e) => setNicknameInput(e.target.value)} className="w-full px-4 py-4 bg-gray-50 border rounded-2xl outline-none font-bold text-center text-lg mb-4" />
+                            <button onClick={handleCompleteSignUp} className="w-full py-4 bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold text-lg rounded-2xl active:scale-95">{translations[language].modal_nickname_btn}</button>
                         </motion.div>
                     </motion.div>
                 )}
@@ -627,15 +664,17 @@ export default function Home() {
                         <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-[32px] p-8 w-full max-w-sm shadow-2xl relative text-center">
                             <button onClick={() => setShowLoginModal(false)} className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition"><X size={24} /></button>
                             <div className="mb-6 flex justify-center"><CatMascot width={100} /></div>
-                            <h3 className="text-2xl font-black text-gray-800 mb-2">반가워요! 🐾</h3>
-                            <p className="text-sm text-gray-500 mb-8 leading-relaxed">어떤 방식으로 로그인을 도와드릴까요?<br />지금 시작하면 <span className="text-brand-secondary font-bold">1,000P</span>를 드려요!</p>
+                            <h3 className="text-2xl font-black text-gray-800 mb-2">{translations[language].modal_login_title}</h3>
+                            <p className="text-sm text-gray-500 mb-8 leading-relaxed">
+                                {translations[language].modal_login_desc.split('\n').map((line, i) => <React.Fragment key={i}>{line}<br /></React.Fragment>)}
+                            </p>
 
                             <div className="space-y-3">
                                 <button onClick={handleKakaoLogin} className="w-full py-4 bg-[#FEE500] text-[#3c1e1e] font-bold rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition shadow-sm">
-                                    <MessageSquare size={20} fill="#3c1e1e" /> 카카오로 계속하기
+                                    <MessageSquare size={20} fill="#3c1e1e" /> {translations[language].modal_login_kakao}
                                 </button>
                                 <button onClick={handleGoogleLogin} className="w-full py-4 bg-white border border-gray-200 text-gray-700 font-bold rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition shadow-sm">
-                                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" /> 구글로 계속하기
+                                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" /> {translations[language].modal_login_google}
                                 </button>
                             </div>
                         </motion.div>
@@ -649,11 +688,11 @@ export default function Home() {
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
                         <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl relative">
                             <button onClick={() => setManualAirport({ show: false, trip: null, searchStr: "", error: "" })} className="absolute top-4 right-4 p-2 text-gray-400"><X size={20} /></button>
-                            <h3 className="text-xl font-black text-center text-gray-800 mb-2">도착 공항 직접 입력</h3>
-                            <p className="text-xs text-center text-gray-500 mb-4 font-bold text-brand-danger">&apos;{manualAirport.trip?.destination}&apos; 공항을 입력해주세요.</p>
-                            <input type="text" placeholder="예: 발리, DPS" value={manualAirport.searchStr} onChange={(e) => setManualAirport({ ...manualAirport, searchStr: e.target.value, error: "" })} className="w-full px-4 py-4 bg-gray-50 border rounded-2xl outline-none text-center font-bold" />
+                            <h3 className="text-xl font-black text-center text-gray-800 mb-2">{translations[language].modal_airport_title}</h3>
+                            <p className="text-xs text-center text-gray-500 mb-4 font-bold text-brand-danger">{translations[language].modal_airport_desc.replace('{destination}', manualAirport.trip?.destination)}</p>
+                            <input type="text" placeholder={translations[language].modal_airport_placeholder} value={manualAirport.searchStr} onChange={(e) => setManualAirport({ ...manualAirport, searchStr: e.target.value, error: "" })} className="w-full px-4 py-4 bg-gray-50 border rounded-2xl outline-none text-center font-bold" />
                             {manualAirport.error && <p className="text-[10px] text-brand-danger text-center mt-2">{manualAirport.error}</p>}
-                            <button onClick={handleManualSubmit} className="w-full py-4 bg-brand-accent text-white font-bold rounded-2xl mt-4">검색 및 적용</button>
+                            <button onClick={handleManualSubmit} className="w-full py-4 bg-brand-accent text-white font-bold rounded-2xl mt-4">{translations[language].modal_airport_btn}</button>
                         </motion.div>
                     </motion.div>
                 )}
@@ -706,7 +745,7 @@ export default function Home() {
                                 onClick={() => setShowLoginModal(true)} // ✨ 모달 오픈
                                 className="px-5 py-2.5 rounded-full bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold text-sm shadow-lg shadow-brand-secondary/20 active:scale-95 transition-all"
                             >
-                                로그인
+                                {translations[language].btn_login}
                             </button>
                         )}
                     </div>
@@ -815,23 +854,23 @@ export default function Home() {
                                                         regionType: 'daytrip',
                                                         startDate: baseDate.toISOString().split('T')[0],
                                                         endDate: baseDate.toISOString().split('T')[0],
-                                                        request: prev.request ? (prev.request.includes('당일치기') ? prev.request : `${prev.request}, 당일치기 여행`) : '당일치기 여행'
+                                                        request: prev.request ? (prev.request.includes('당일치기') || prev.request.includes('day trip') ? prev.request : `${prev.request}, ${language === 'en' ? 'day trip' : '당일치기 여행'}`) : (language === 'en' ? 'day trip' : '당일치기 여행')
                                                     }));
                                                 } else {
                                                     setFormData(prev => ({
                                                         ...prev,
                                                         regionType: type,
-                                                        request: prev.request.replace(', 당일치기 여행', '').replace('당일치기 여행', '').trim()
+                                                        request: prev.request.replace(', 당일치기 여행', '').replace('당일치기 여행', '').replace(', day trip', '').replace('day trip', '').trim()
                                                     }));
                                                 }
                                             }} className={`flex-1 text-xs sm:text-sm font-black py-3.5 rounded-xl transition-all duration-300 ${formData.regionType === type ? 'bg-white text-brand-primary shadow-md scale-[1.02]' : 'text-gray-500 hover:bg-white/50'}`}>
-                                                {type === 'auto' ? '🤖 AI 알아서' : type === 'domestic' ? '🇰🇷 국내만' : type === 'international' ? '✈️ 해외로' : '🌞 당일여행'}
+                                                {type === 'auto' ? translations[language].region_auto : type === 'domestic' ? translations[language].region_domestic : type === 'international' ? translations[language].region_international : translations[language].region_daytrip}
                                             </button>
                                         ))}
                                     </div>
                                     <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-50">
-                                        {QUICK_TAGS.map((tag, idx) => (
-                                            <button key={idx} onClick={() => setFormData(prev => ({ ...prev, destination: prev.destination ? `${prev.destination}, ${cleanTagText(tag)}` : cleanTagText(tag) }))} className="bg-gray-50 border border-gray-100 text-gray-600 px-3 py-1.5 rounded-xl text-[12px] font-bold transition hover:bg-brand-primary/10 active:scale-95">{tag}</button>
+                                        {(language === 'en' ? QUICK_TAGS_EN : QUICK_TAGS).map((tag, idx) => (
+                                            <button key={idx} onClick={() => setFormData(prev => ({ ...prev, destination: prev.destination ? `${prev.destination}, ${cleanTagText(tag, language)}` : cleanTagText(tag, language) }))} className="bg-gray-50 border border-gray-100 text-gray-600 px-3 py-1.5 rounded-xl text-[12px] font-bold transition hover:bg-brand-primary/10 active:scale-95">{tag}</button>
                                         ))}
                                     </div>
                                 </div>
@@ -842,7 +881,7 @@ export default function Home() {
                                         <label className="flex items-center gap-2 text-sm font-bold text-gray-500"><Calendar size={16} className="text-brand-primary" /> {translations[language].label_when}</label>
                                         <button onClick={() => handleVoiceInput('date')} className={`p-2 rounded-full ${listeningField === 'date' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={16} /></button>
                                     </div>
-                                    <DatePicker selectsRange={true} startDate={startDate} endDate={endDate} onChange={handleDateChange} minDate={new Date()} locale={ko} dateFormat="yyyy.MM.dd" placeholderText={translations[language].placeholder_date} className="w-full text-lg font-bold bg-transparent outline-none cursor-pointer" wrapperClassName="w-full" />
+                                    <DatePicker selectsRange={true} startDate={startDate} endDate={endDate} onChange={handleDateChange} minDate={new Date()} locale={language === 'en' ? enUS : ko} dateFormat="yyyy.MM.dd" placeholderText={translations[language].placeholder_date} className="w-full text-lg font-bold bg-transparent outline-none cursor-pointer" wrapperClassName="w-full" />
                                 </div>
 
                                 <div>
@@ -853,7 +892,7 @@ export default function Home() {
                                     <div className="grid grid-cols-5 gap-2">
                                         {companionOptions.map((opt) => (
                                             <button key={opt.id} onClick={() => setFormData({ ...formData, companion: opt.id })} className={`flex flex-col items-center justify-center py-3 rounded-2xl transition-all gap-1 ${formData.companion === opt.id ? 'bg-brand-primary text-white shadow-md scale-105' : 'bg-gray-50 text-gray-400'}`}>
-                                                {opt.icon} <span className="text-[10px] break-keep">{language === 'en' ? opt.id : opt.label}</span>
+                                                {opt.icon} <span className="text-[10px] break-keep">{language === 'en' ? opt.enLabel : opt.label}</span>
                                             </button>
                                         ))}
                                     </div>
@@ -873,8 +912,10 @@ export default function Home() {
                                                     <button onClick={() => handleVoiceInput('budget')} className={`p-1 rounded-full ${listeningField === 'budget' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={12} /></button>
                                                 </div>
                                                 <div className="flex items-end gap-1 mb-2">
-                                                    <span className="text-xl font-bold text-brand-primary">{formData.budget.toLocaleString()}</span>
-                                                    <span className="text-sm text-gray-400">{language === 'en' ? '0,000 KRW' : '만원'}</span>
+                                                    <span className="text-xl font-bold text-brand-primary">
+                                                        {language === 'en' ? (formData.budget * 10000).toLocaleString() : formData.budget.toLocaleString()}
+                                                    </span>
+                                                    <span className="text-sm text-gray-400">{language === 'en' ? ' KRW' : '만원'}</span>
                                                 </div>
                                                 <input type="range" name="budget" min="50" max="1000" step="10" value={formData.budget} onChange={handleInputChange} className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-primary" />
                                             </div>
@@ -896,14 +937,14 @@ export default function Home() {
 
                                 <div>
                                     <div className="flex items-center gap-2 mb-2">
-                                        <label className="text-sm font-bold text-gray-600 px-1">여행 스타일</label>
+                                        <label className="text-sm font-bold text-gray-600 px-1">{translations[language].label_style}</label>
                                         <button onClick={() => handleVoiceInput('tourType')} className={`p-1.5 rounded-full ${listeningField === 'tourType' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={14} /></button>
                                     </div>
                                     <div className="grid grid-cols-3 gap-2 mb-3">
                                         {tourOptions.map((option) => (
                                             <button key={option.id} onClick={() => setFormData({ ...formData, tourType: option.id })} className={`py-3 px-2 rounded-2xl border transition-all flex flex-col items-center text-center ${formData.tourType === option.id ? 'bg-white border-brand-primary text-brand-primary shadow-md ring-1 ring-brand-primary' : 'bg-white border-gray-100 text-gray-400'}`}>
-                                                <span className="font-bold text-sm mb-1">{option.label}</span>
-                                                <span className="text-[10px] opacity-70">{option.desc}</span>
+                                                <span className="font-bold text-sm mb-1">{language === 'en' ? option.enLabel : option.label}</span>
+                                                <span className="text-[10px] opacity-70">{language === 'en' ? option.enDesc : option.desc}</span>
                                             </button>
                                         ))}
                                     </div>
@@ -939,9 +980,9 @@ export default function Home() {
                                                 </div>
 
                                                 <div className="absolute bottom-0 left-0 right-0 p-5 text-left">
-                                                    <span className="text-[10px] font-black text-amber-400 mb-1.5 block uppercase tracking-wider">{trip.city}</span>
-                                                    <h4 className="text-white font-bold text-base leading-snug mb-1.5 line-clamp-2">{trip.title}</h4>
-                                                    <p className="text-[10px] text-gray-300 font-medium line-clamp-2 opacity-80 leading-relaxed">{trip.desc || "냥프로 전용 일정"}</p>
+                                                    <span className="text-[10px] font-black text-amber-400 mb-1.5 block uppercase tracking-wider">{language === 'en' ? (trip.enCity || trip.city) : trip.city}</span>
+                                                    <h4 className="text-white font-bold text-base leading-snug mb-1.5 line-clamp-2">{language === 'en' ? (trip.enTitle || trip.title) : trip.title}</h4>
+                                                    <p className="text-[10px] text-gray-300 font-medium line-clamp-2 opacity-80 leading-relaxed">{language === 'en' ? (trip.enDesc || trip.desc || "Meow Pro Special") : (trip.desc || "냥프로 전용 일정")}</p>
                                                 </div>
                                             </motion.div>
                                         ))}
@@ -959,8 +1000,13 @@ export default function Home() {
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center text-xl shrink-0">✈️</div>
                                                             <div>
-                                                                <h4 className="font-bold text-gray-800 text-sm truncate">{item.destination || item.title} 여행</h4>
-                                                                <div className="text-[10px] text-gray-500 flex items-center gap-1"><span>{item.startDate || "날짜 미정"}</span>{item.iata && <span className="bg-gray-100 px-1.5 rounded text-gray-400 font-medium">{item.iata}</span>}</div>
+                                                                <h4 className="font-bold text-gray-800 text-sm truncate">
+                                                                    {language === 'en' ? `Trip to ${item.destination || item.title}` : `${item.destination || item.title} 여행`}
+                                                                </h4>
+                                                                <div className="text-[10px] text-gray-500 flex items-center gap-1">
+                                                                    <span>{item.startDate || translations[language].schedule_tbd}</span>
+                                                                    {item.iata && <span className="bg-gray-100 px-1.5 rounded text-gray-400 font-medium">{item.iata}</span>}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <ChevronRight className="text-gray-300 group-hover:text-brand-primary transition-colors" size={20} />
@@ -969,7 +1015,7 @@ export default function Home() {
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="text-center py-8 text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200"><p className="text-xs">참여중인 일정이 없어요. 일정을 먼저 만들어보세요!</p></div>
+                                        <div className="text-center py-8 text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200"><p className="text-xs">{translations[language].schedule_empty}</p></div>
                                     )}
                                 </div>
                             </div>
@@ -983,7 +1029,7 @@ export default function Home() {
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 bg-gray-100 flex flex-col">
                             <div className="bg-white px-5 py-4 flex items-center gap-3 shadow-sm z-10 shrink-0">
                                 <button onClick={() => setSelectedTrip(null)} className="p-1 rounded-full hover:bg-gray-100"><ArrowRight className="rotate-180" size={24} /></button>
-                                <h3 className="font-bold text-lg">{selectedTrip.destination} 항공권</h3>
+                                <h3 className="font-bold text-lg">{language === 'en' ? `Flights to ${selectedTrip.destination}` : `${selectedTrip.destination} 항공권`}</h3>
                             </div>
                             <div className="flex-1 overflow-y-auto p-4 space-y-3">
                                 {isSearching ? (
@@ -993,18 +1039,22 @@ export default function Home() {
                                         <div key={flight.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 relative">
                                             <div className="flex justify-between items-start mb-4">
                                                 <div className="flex items-center gap-2"><span className="font-bold text-sm text-gray-700">{flight.carrierCode}</span></div>
-                                                <div className="text-right"><span className="block text-lg font-black text-brand-primary">{flight.price.toLocaleString()}원~</span></div>
+                                                <div className="text-right">
+                                                    <span className="block text-lg font-black text-brand-primary">
+                                                        {language === 'en' ? `from ₩${flight.price.toLocaleString()}` : `${flight.price.toLocaleString()}원~`}
+                                                    </span>
+                                                </div>
                                             </div>
                                             <div className="flex gap-2 mt-4">
-                                                <button onClick={() => window.open(flight.linkTripMobile || flight.linkTrip || flight.linkGlobal, '_blank')} className="flex-1 py-3 bg-[#2467F5] text-white font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all text-sm sm:text-base">Trip.com 최저가</button>
-                                                <button onClick={() => window.open(flight.linkGlobal, '_blank')} className="flex-1 py-3 bg-brand-accent text-white font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all text-sm sm:text-base">Aviasales 예약</button>
+                                                <button onClick={() => window.open(flight.linkTripMobile || flight.linkTrip || flight.linkGlobal, '_blank')} className="flex-1 py-3 bg-[#2467F5] text-white font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all text-sm sm:text-base">{translations[language].flight_btn_trip}</button>
+                                                <button onClick={() => window.open(flight.linkGlobal, '_blank')} className="flex-1 py-3 bg-brand-accent text-white font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all text-sm sm:text-base">{translations[language].flight_btn_avia}</button>
                                             </div>
                                         </div>
                                     ))
                                 ) : (
                                     <div className="text-center py-16 text-gray-400 flex flex-col items-center">
-                                        <p className="font-bold mb-2">검색된 항공권이 없습니다.</p>
-                                        <button onClick={() => { const t = selectedTrip; setSelectedTrip(null); setManualAirport({ show: true, trip: t, searchStr: "", error: "" }); }} className="px-4 py-2 bg-brand-primary/10 text-brand-primary font-bold rounded-xl mt-4">공항 직접 검색하기</button>
+                                        <p className="font-bold mb-2">{translations[language].flight_empty}</p>
+                                        <button onClick={() => { const t = selectedTrip; setSelectedTrip(null); setManualAirport({ show: true, trip: t, searchStr: "", error: "" }); }} className="px-4 py-2 bg-brand-primary/10 text-brand-primary font-bold rounded-xl mt-4">{translations[language].flight_empty_btn}</button>
                                     </div>
                                 )}
                             </div>

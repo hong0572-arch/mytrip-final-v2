@@ -6,9 +6,162 @@ import { ShieldCheck, ShieldAlert, PhoneCall, Timer, X, Send, User, ChevronUp, A
 import { db, auth } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc, getDocs, query, where, onSnapshot, deleteDoc } from 'firebase/firestore';
 
+const safeModeTranslations = {
+    ko: {
+        island_protecting: "🛡️ Safe Mode 실시간 보호 중",
+        island_manage: "관리",
+        float_protecting: "🛡️ 안심 귀가 보호 중",
+        float_title: "Safe Mode 설정",
+        panel_subtitle: "1인 & 여성 안심 귀가 스마트 타이머",
+        panel_protecting_title: "실시간 안심 보호 진행 중",
+        panel_guardian: "보호자",
+        btn_stop_siren: "🚨 사이렌 중지",
+        btn_start_siren: "🚨 위급 상황 사이렌 울리기",
+        btn_send_loc: "보호자에게 실시간 위치 전송",
+        btn_stop_timer: "🛡️ 귀가 완료 (타이머 끄기)",
+        step1_title: "1단계. 비상 안심 연락망 등록",
+        step1_linked: "서비스 연동 회원",
+        step1_edit: "수정",
+        step1_tab_search: "서비스 사용자 검색",
+        step1_tab_manual: "직접 연락처 입력",
+        step1_search_placeholder: "가입자 이름 또는 이메일 검색",
+        step1_search_btn: "검색",
+        step1_search_select: "선택",
+        step1_search_no_result: "일치하는 사용자를 찾지 못했습니다.",
+        step1_manual_name: "보호자 성함 (예: 엄마)",
+        step1_manual_phone: "휴대폰 번호 (-없이 입력)",
+        step1_manual_save: "비상 연락망 저장",
+        step2_title: "2단계. 안심 약속 귀가 시간 설정",
+        step2_duration_placeholder: "직접 시간 입력 (예: 120)",
+        step2_duration_unit: "분 뒤 알림",
+        step2_duration_btn: "{mins}분",
+        step2_desc: "💡 밤 10시 이후 이동할 때, 설정한 시간 내에 무사 귀가를 인증하지 않으면 보호자 알림 및 동행 단톡방에 경보 시스템 메시지가 자동으로 올라갑니다.",
+        btn_start_safe: "Safe Mode 실시간 보호 시작",
+        alert_title_siren: "🚨 긴급 비상 사이렌 가동!",
+        alert_title_expire: "🚨 귀가 안심 타이머 만료!",
+        alert_desc_siren: "사용자 작동으로 비상 경보 사이렌이 실행되었습니다.\n위험 상황이 해결되었다면 경보를 해제해 주세요.\n(현재 보호자 앱에 비상 알림이 연동되었습니다)",
+        alert_desc_expire: "지정한 귀가 예정 약속 시간이 끝났습니다.\n무사히 도착하셨다면 꼭 해제 버튼을 눌러주세요.\n(현재 비상 경보가 채팅방에 올라갔습니다)",
+        btn_stop_alert: "🛡️ 무사 도착 해제 (경보 끄기)",
+        loc_title: "📍 실시간 위치 전송 완료",
+        loc_desc: "보호자에게 실시간 위치 알림을 전송했으며,\n위치 텍스트가 클립보드에 복사되었습니다.\n상대방이 알림을 누르면 즉시 동행 요청함에서\n위치를 지도 상으로 관제할 수 있습니다.",
+        btn_confirm: "확인",
+        warn_title: "🚨 보호 대상 위험 경보!",
+        warn_desc: "보호 대상자인 {name}님의\n안심 귀가 예정 시간이 만료되었습니다!\n신속히 연락을 시도하고 안전을 확인하세요.",
+        btn_call: "대상자에게 전화하기",
+        btn_view_map: "실시간 안심 지도 보기",
+        
+        // Alerts and toasts
+        toast_siren_stopped: "🚨 사이렌이 중지되었습니다.",
+        toast_siren_started: "🚨 긴급 사이렌이 작동 중입니다!",
+        toast_no_audio: "⚠️ 현재 기기 환경에서 사이렌 오디오를 재생할 수 없습니다.",
+        toast_fetching_loc: "📍 현재 위치 정보를 가져오는 중입니다...",
+        toast_copied_loc: "📋 실제 위치가 포함된 공유 텍스트가 복사되었습니다!",
+        toast_copied_fail: "공유 텍스트 생성 실패",
+        toast_need_guardian: "먼저 비상 보호자 정보를 등록해 주세요! 🛡️",
+        toast_need_duration: "올바른 귀가 시간을 설정해 주세요! ⏱️",
+        toast_safe_started: "🟢 Safe Mode가 가동되었습니다. 보호 상태가 활성화됩니다!",
+        toast_safe_stopped: "🛡️ 귀가 약속이 해제되었습니다. 안전한 복귀를 축하합니다!",
+        toast_guardian_saved: "✅ 보호자 정보가 등록되었습니다.",
+        toast_guardian_linked: "✅ {name}님을 비상 보호자로 등록하고 알림을 보냈습니다.",
+        
+        // System and chat messages
+        msg_alarm_siren: "🚨 [긴급 호출] {name}님이 긴급 사이렌을 작동시켰습니다. 신속히 안전을 확인하세요!",
+        msg_alarm_expire: "🚨 [안심 귀가 경보] {name}님의 안전 타이머가 완료되었습니다. 안전을 즉시 확인하세요!",
+        msg_chat_expire: "🚨 [안심 귀가 알림] {name}님의 Safe Mode 안심 귀가 약속 타이머가 만료되었습니다! 안전을 확인해 주세요. 🚨",
+        msg_sms_body: "🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n\n📍 나의 정확한 현재 위치 (구글 지도):\n{googleMapsUrl}\n\n🛡️ 전용 안심 대시보드로 보기:\n{mapUrl}",
+        msg_sms_fallback: "🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n\n(위치 접근이 제한되어 기본 링크만 전송합니다)\n🛡️ 전용 안심 대시보드로 보기:\n{mapUrl}",
+        msg_loc_shared: "📍 [Safe Mode 위치 전송] {name}님이 실시간 위치 정보를 전송했습니다.",
+        msg_safe_started: "🛡️ [Safe Mode] {name}님이 안심 귀가 이동을 시작했습니다. 실시간 대시보드에서 지켜봐주세요!",
+        msg_safe_safe: "🛡️ [Safe Mode 완료] {name}님이 안전하게 무사 귀가했습니다.",
+        msg_guardian_registered: "🛡️ [Safe Mode] {name}님이 당신을 비상 보호자로 등록했습니다.",
+    },
+    en: {
+        island_protecting: "🛡️ Safe Mode Active",
+        island_manage: "Manage",
+        float_protecting: "🛡️ Safe Mode Active",
+        float_title: "Safe Mode Settings",
+        panel_subtitle: "Smart timer for solo & women's safe return",
+        panel_protecting_title: "Active Protection In Progress",
+        panel_guardian: "Guardian",
+        btn_stop_siren: "🚨 Stop Siren",
+        btn_start_siren: "🚨 Emergency Siren",
+        btn_send_loc: "Send Live Location to Guardian",
+        btn_stop_timer: "🛡️ Safe Return (Turn off timer)",
+        step1_title: "Step 1. Register Emergency Contact",
+        step1_linked: "Linked Member",
+        step1_edit: "Edit",
+        step1_tab_search: "Search Users",
+        step1_tab_manual: "Enter Manually",
+        step1_search_placeholder: "Search name or email",
+        step1_search_btn: "Search",
+        step1_search_select: "Select",
+        step1_search_no_result: "No matching users found.",
+        step1_manual_name: "Guardian Name (e.g. Mom)",
+        step1_manual_phone: "Phone Number (digits only)",
+        step1_manual_save: "Save Contact",
+        step2_title: "Step 2. Set Safe Return Time",
+        step2_duration_placeholder: "Enter time in minutes (e.g. 120)",
+        step2_duration_unit: "min timer",
+        step2_duration_btn: "{mins}m",
+        step2_desc: "💡 When traveling after 10 PM, if you do not confirm your safe return within the set time, emergency notifications will be sent to your guardian and chat room.",
+        btn_start_safe: "Start Safe Mode Protection",
+        alert_title_siren: "🚨 Emergency Siren Active!",
+        alert_title_expire: "🚨 Safe Return Timer Expired!",
+        alert_desc_siren: "Emergency siren was triggered by user action.\nPlease turn off the alarm if you are safe.\n(Emergency alert has been sent to your guardian)",
+        alert_desc_expire: "Your set return timer has expired.\nPlease click the button to confirm your safe return.\n(Emergency notification has been sent to the chat)",
+        btn_stop_alert: "🛡️ I am Safe (Turn off alarm)",
+        loc_title: "📍 Live Location Sent",
+        loc_desc: "Live location alert sent to your guardian,\nand the location text is copied to clipboard.\nThey can view your live track on the map.",
+        btn_confirm: "Confirm",
+        warn_title: "🚨 Guardian Emergency Alert!",
+        warn_desc: "Your protectee {name}'s\nsafe return timer has expired!\nPlease contact them immediately to verify safety.",
+        btn_call: "Call Protectee",
+        btn_view_map: "View Live Safety Map",
+        
+        // Alerts and toasts
+        toast_siren_stopped: "🚨 Siren stopped.",
+        toast_siren_started: "🚨 Emergency siren is active!",
+        toast_no_audio: "⚠️ Unable to play siren audio on this device.",
+        toast_fetching_loc: "📍 Retrieving current location...",
+        toast_copied_loc: "📋 Location share text copied to clipboard!",
+        toast_copied_fail: "Failed to generate share text.",
+        toast_need_guardian: "Please register a guardian first! 🛡️",
+        toast_need_duration: "Please set a valid return time! ⏱️",
+        toast_safe_started: "🟢 Safe Mode activated. Protection is active!",
+        toast_safe_stopped: "🛡️ Safe return confirmed. Welcome back!",
+        toast_guardian_saved: "✅ Guardian contact registered.",
+        toast_guardian_linked: "✅ Registered {name} as guardian and sent notification.",
+        
+        // System and chat messages
+        msg_alarm_siren: "🚨 [Emergency Call] {name} has triggered the emergency siren. Verify safety immediately!",
+        msg_alarm_expire: "🚨 [Emergency Alert] {name}'s safety timer has expired. Verify safety immediately!",
+        msg_chat_expire: "🚨 [Safety Alert] {name}'s Safe Mode return timer has expired! Please check their safety. 🚨",
+        msg_sms_body: "🚨 [TripMaker Safety Alert]\nI am moving in Safe Mode!\n\n📍 My current location (Google Maps):\n{googleMapsUrl}\n\n🛡️ View Live Safety Dashboard:\n{mapUrl}",
+        msg_sms_fallback: "🚨 [TripMaker Safety Alert]\nI am moving in Safe Mode!\n\n(Location access restricted, sending basic link)\n🛡️ View Live Safety Dashboard:\n{mapUrl}",
+        msg_loc_shared: "📍 [Safe Mode Location] {name} has sent their live location.",
+        msg_safe_started: "🛡️ [Safe Mode] {name} has started moving in Safe Mode. View live track on the dashboard!",
+        msg_safe_safe: "🛡️ [Safe Mode Complete] {name} has returned safely.",
+        msg_guardian_registered: "🛡️ [Safe Mode] {name} has registered you as an emergency guardian.",
+    }
+};
 export default function GlobalSafeMode() {
     const [user, setUser] = useState(null);
     const [isOpen, setIsOpen] = useState(false);
+    const [language, setLanguage] = useState('ko');
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const savedLang = localStorage.getItem('language') || 'ko';
+            setLanguage(savedLang);
+
+            const handleLangChange = () => {
+                const updatedLang = localStorage.getItem('language') || 'ko';
+                setLanguage(updatedLang);
+            };
+            window.addEventListener('languageChanged', handleLangChange);
+            return () => window.removeEventListener('languageChanged', handleLangChange);
+        }
+    }, []);
     
     // 안전 모드 핵심 상태
     const [isActive, setIsActive] = useState(false);
@@ -101,7 +254,7 @@ export default function GlobalSafeMode() {
             }
             setShowTimerAlert(false);
 
-            triggerToast('🚨 사이렌이 중지되었습니다.');
+            triggerToast(safeModeTranslations[language].toast_siren_stopped);
             return;
         }
 
@@ -140,7 +293,7 @@ export default function GlobalSafeMode() {
             }, 300);
 
             setIsSirenPlaying(true);
-            triggerToast('🚨 긴급 사이렌이 작동 중입니다!');
+            triggerToast(safeModeTranslations[language].toast_siren_started);
             
             // 🚨 수동 사이렌 작동 시에도 비상 모달창 노출 및 Firestore 세션 상태 동기화
             setShowTimerAlert(true);
@@ -164,11 +317,11 @@ export default function GlobalSafeMode() {
                     addDoc(collection(db, "match_requests"), {
                         type: "safemode_expired",
                         senderId: user.uid,
-                        senderName: user.displayName || '여행자',
+                        senderName: user.displayName || (language === 'en' ? 'Traveler' : '여행자'),
                         targetMateId: guardianUserId,
                         targetMateName: guardianName,
                         status: "pending",
-                        message: `🚨 [긴급 호출] ${user.displayName || '여행자'}님이 긴급 사이렌을 작동시켰습니다. 신속히 안전을 확인하세요!`,
+                        message: safeModeTranslations[language].msg_alarm_siren.replace('{name}', user.displayName || (language === 'en' ? 'Traveler' : '여행자')),
                         createdAt: serverTimestamp()
                     });
                 } catch (err) {
@@ -180,7 +333,7 @@ export default function GlobalSafeMode() {
             handleSendLocationMessage();
         } catch (err) {
             console.error("오디오 재생 실패:", err);
-            triggerToast('⚠️ 현재 기기 환경에서 사이렌 오디오를 재생할 수 없습니다.');
+            triggerToast(safeModeTranslations[language].toast_no_audio);
         }
     }
 
@@ -272,11 +425,11 @@ export default function GlobalSafeMode() {
                 await addDoc(collection(db, "match_requests"), {
                     type: "safemode_expired",
                     senderId: user.uid,
-                    senderName: user.displayName || '여행자',
+                    senderName: user.displayName || (language === 'en' ? 'Traveler' : '여행자'),
                     targetMateId: guardianUserId,
                     targetMateName: guardianName,
                     status: "pending",
-                    message: `🚨 [안심 귀가 경보] ${user.displayName || '여행자'}님의 안전 타이머가 완료되었습니다. 안전을 즉시 확인하세요!`,
+                    message: safeModeTranslations[language].msg_alarm_expire.replace('{name}', user.displayName || (language === 'en' ? 'Traveler' : '여행자')),
                     createdAt: serverTimestamp()
                 });
             } catch (err) {
@@ -289,7 +442,7 @@ export default function GlobalSafeMode() {
             const activeTripId = localStorage.getItem('activeTripId');
             if (activeTripId && user) {
                 await addDoc(collection(db, "trips", activeTripId, "messages"), {
-                    text: `🚨 [안심 귀가 알림] ${user.displayName || '여행자'}님의 Safe Mode 안심 귀가 약속 타이머가 만료되었습니다! 안전을 확인해 주세요. 🚨`,
+                    text: safeModeTranslations[language].msg_chat_expire.replace('{name}', user.displayName || (language === 'en' ? 'Traveler' : '여행자')),
                     senderId: 'system_safemode',
                     senderName: '🛡️ Safe Mode 시스템',
                     senderAvatar: '/logo.png',
@@ -305,7 +458,7 @@ export default function GlobalSafeMode() {
     async function handleSendLocationMessage() {
         if (typeof window === 'undefined') return;
 
-        triggerToast('📍 현재 위치 정보를 가져오는 중입니다...');
+        triggerToast(safeModeTranslations[language].toast_fetching_loc);
 
         const getPosition = () => {
             return new Promise((resolve, reject) => {
@@ -323,7 +476,7 @@ export default function GlobalSafeMode() {
 
         let textMessage = '';
         const baseUrl = `https://tripmaker.tips/share/live_safemode`;
-        const encodedName = encodeURIComponent(user?.displayName || '여행자');
+        const encodedName = encodeURIComponent(user?.displayName || (language === 'en' ? 'Traveler' : '여행자'));
 
         try {
             const position = await getPosition();
@@ -331,11 +484,11 @@ export default function GlobalSafeMode() {
             const googleMapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
             const mapUrl = `${baseUrl}?lat=${latitude}&lng=${longitude}&name=${encodedName}&userId=${user?.uid || ''}`;
             
-            textMessage = `🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n\n📍 나의 정확한 현재 위치 (구글 지도):\n${googleMapsUrl}\n\n🛡️ 전용 안심 대시보드로 보기:\n${mapUrl}`;
+            textMessage = safeModeTranslations[language].msg_sms_body.replace('{googleMapsUrl}', googleMapsUrl).replace('{mapUrl}', mapUrl);
         } catch (error) {
             console.error("위치 정보 획득 실패:", error);
             const mapUrl = `${baseUrl}?name=${encodedName}&userId=${user?.uid || ''}`;
-            textMessage = `🚨 [TripMaker 안심 알림]\n저 지금 Safe Mode 상태로 이동 중입니다!\n\n(위치 접근이 제한되어 기본 링크만 전송합니다)\n🛡️ 전용 안심 대시보드로 보기:\n${mapUrl}`;
+            textMessage = safeModeTranslations[language].msg_sms_fallback.replace('{mapUrl}', mapUrl);
         }
 
         // 가입된 보호자에게 실시간 위치 공유 인앱 알림 추가 발송
@@ -344,11 +497,11 @@ export default function GlobalSafeMode() {
                 await addDoc(collection(db, "match_requests"), {
                     type: "safemode_location_share",
                     senderId: user.uid,
-                    senderName: user.displayName || '여행자',
+                    senderName: user.displayName || (language === 'en' ? 'Traveler' : '여행자'),
                     targetMateId: guardianUserId,
                     targetMateName: guardianName,
                     status: "pending",
-                    message: `📍 [Safe Mode 위치 전송] ${user.displayName || '여행자'}님이 실시간 위치 정보를 전송했습니다.`,
+                    message: safeModeTranslations[language].msg_loc_shared.replace('{name}', user.displayName || (language === 'en' ? 'Traveler' : '여행자')),
                     sessionUrl: `/mypage?openInbox=true`,
                     createdAt: serverTimestamp()
                 });
@@ -359,10 +512,10 @@ export default function GlobalSafeMode() {
 
         try {
             await navigator.clipboard.writeText(textMessage);
-            triggerToast('📋 실제 위치가 포함된 공유 텍스트가 복사되었습니다!');
+            triggerToast(safeModeTranslations[language].toast_copied_loc);
             setShowLocationSentModal(true); // 위치 전송 완료 모달 가동
         } catch (err) {
-            triggerToast('공유 텍스트 생성 실패');
+            triggerToast(safeModeTranslations[language].toast_copied_fail);
         }
     }
 
@@ -548,12 +701,12 @@ export default function GlobalSafeMode() {
     // 6. Safe Mode 켜기
     const handleToggleOn = async () => {
         if (!guardianName.trim()) {
-            return triggerToast('먼저 비상 보호자 정보를 등록해 주세요! 🛡️');
+            return triggerToast(safeModeTranslations[language].toast_need_guardian);
         }
         
         const parsedDuration = Number(duration);
         if (!parsedDuration || parsedDuration <= 0) {
-            return triggerToast('올바른 귀가 시간을 설정해 주세요! ⏱️');
+            return triggerToast(safeModeTranslations[language].toast_need_duration);
         }
         
         const seconds = parsedDuration * 60;
@@ -564,7 +717,7 @@ export default function GlobalSafeMode() {
         
         setIsActive(true);
         setTimeLeft(seconds);
-        triggerToast('🟢 Safe Mode가 가동되었습니다. 보호 상태가 활성화됩니다!');
+        triggerToast(safeModeTranslations[language].toast_safe_started);
         triggerVibration(1);
 
         // Firestore 실시간 보호 세션 시작
@@ -572,7 +725,7 @@ export default function GlobalSafeMode() {
             const sessionRef = doc(db, "safemode_sessions", user.uid);
             await setDoc(sessionRef, {
                 userId: user.uid,
-                userName: user.displayName || '여행자',
+                userName: user.displayName || (language === 'en' ? 'Traveler' : '여행자'),
                 guardianUserId: guardianUserId || '',
                 guardianName: guardianName,
                 guardianPhone: guardianPhone || '',
@@ -593,11 +746,11 @@ export default function GlobalSafeMode() {
                 await addDoc(collection(db, "match_requests"), {
                     type: "safemode_started",
                     senderId: user.uid,
-                    senderName: user.displayName || '여행자',
+                    senderName: user.displayName || (language === 'en' ? 'Traveler' : '여행자'),
                     targetMateId: guardianUserId,
                     targetMateName: guardianName,
                     status: "pending",
-                    message: `🛡️ [Safe Mode] ${user.displayName || '여행자'}님이 안심 귀가 이동을 시작했습니다. 실시간 대시보드에서 지켜봐주세요!`,
+                    message: safeModeTranslations[language].msg_safe_started.replace('{name}', user.displayName || (language === 'en' ? 'Traveler' : '여행자')),
                     sessionUrl: `/share/live_safemode?userId=${user.uid}`,
                     createdAt: serverTimestamp()
                 });
@@ -618,7 +771,7 @@ export default function GlobalSafeMode() {
         setIsActive(false);
         setTimeLeft(0);
         setShowTimerAlert(false);
-        triggerToast('🛡️ 귀가 약속이 해제되었습니다. 안전한 복귀를 축하합니다!');
+        triggerToast(safeModeTranslations[language].toast_safe_stopped);
 
         // 사이렌이 켜져 있었다면 중지
         if (isSirenPlaying) {
@@ -640,11 +793,11 @@ export default function GlobalSafeMode() {
                 await addDoc(collection(db, "match_requests"), {
                     type: "safemode_safe",
                     senderId: user.uid,
-                    senderName: user.displayName || '여행자',
+                    senderName: user.displayName || (language === 'en' ? 'Traveler' : '여행자'),
                     targetMateId: guardianUserId,
                     targetMateName: guardianName,
                     status: "pending",
-                    message: `🛡️ [Safe Mode 완료] ${user.displayName || '여행자'}님이 안전하게 무사 귀가했습니다.`,
+                    message: safeModeTranslations[language].msg_safe_safe.replace('{name}', user.displayName || (language === 'en' ? 'Traveler' : '여행자')),
                     createdAt: serverTimestamp()
                 });
             } catch (err) {
@@ -663,7 +816,7 @@ export default function GlobalSafeMode() {
         localStorage.setItem('safeMode_gName', guardianName);
         localStorage.setItem('safeMode_gPhone', guardianPhone);
         setIsRegistered(true);
-        triggerToast('✅ 보호자 정보가 등록되었습니다.');
+        triggerToast(safeModeTranslations[language].toast_guardian_saved);
     };
 
     // 앱 사용자 검색 함수
@@ -713,17 +866,17 @@ export default function GlobalSafeMode() {
             await addDoc(collection(db, "match_requests"), {
                 type: "safemode_guardian_registered",
                 senderId: user.uid,
-                senderName: user.displayName || '여행자',
+                senderName: user.displayName || (language === 'en' ? 'Traveler' : '여행자'),
                 targetMateId: targetUser.id,
                 targetMateName: name,
                 status: "pending",
-                message: `🛡️ [Safe Mode] ${user.displayName || '여행자'}님이 당신을 비상 보호자로 등록했습니다.`,
+                message: safeModeTranslations[language].msg_guardian_registered.replace('{name}', user.displayName || (language === 'en' ? 'Traveler' : '여행자')),
                 createdAt: serverTimestamp()
             });
-            triggerToast(`✅ ${name}님을 비상 보호자로 등록하고 알림을 보냈습니다.`);
+            triggerToast(safeModeTranslations[language].toast_guardian_linked.replace('{name}', name));
         } catch (error) {
             console.error("보호자 등록 알림 실패:", error);
-            triggerToast(`✅ 보호자 정보가 저장되었습니다.`);
+            triggerToast(safeModeTranslations[language].toast_guardian_saved);
         }
 
         // 검색 상태 리셋
@@ -772,7 +925,7 @@ export default function GlobalSafeMode() {
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-white"></span>
                                 </span>
-                                <span className="text-xs font-black tracking-wide uppercase text-brand-accent">🛡️ Safe Mode 실시간 보호 중</span>
+                                <span className="text-xs font-black tracking-wide uppercase text-brand-accent">{safeModeTranslations[language].island_protecting}</span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <span className="bg-black/30 font-black px-2.5 py-1 rounded-lg text-sm tabular-nums tracking-wider border border-white/10 text-white">
@@ -782,7 +935,7 @@ export default function GlobalSafeMode() {
                                     onClick={() => setIsOpen(true)}
                                     className="bg-white text-brand-accent text-[10px] font-black px-3 py-1 rounded-lg hover:bg-brand-success/20 transition active:scale-95 shadow-sm"
                                 >
-                                    관리
+                                    {safeModeTranslations[language].island_manage}
                                 </button>
                             </div>
                         </div>
@@ -797,14 +950,14 @@ export default function GlobalSafeMode() {
             >
                 {isActive && (
                     <div className="bg-brand-success text-brand-accent text-[9px] font-black px-2.5 py-1 rounded-lg shadow-[0_0_15px_rgba(76,201,240,0.5)] animate-pulse border border-brand-success tracking-wide">
-                        🛡️ 안심 귀가 보호 중
+                        {safeModeTranslations[language].float_protecting}
                     </div>
                 )}
                 <button
                     onClick={() => setIsOpen(true)}
                     className="relative group flex items-center justify-center transition-transform duration-300 hover:scale-105 active:scale-95 outline-none"
                     style={{ width: '60px', height: '60px' }}
-                    title="Safe Mode 설정"
+                    title={safeModeTranslations[language].float_title}
                 >
                     {isActive ? (
                         <>
@@ -852,7 +1005,7 @@ export default function GlobalSafeMode() {
                                     <ShieldCheck className={isActive ? 'text-brand-success' : 'text-brand-primary'} size={26} />
                                     Safe Mode
                                 </h3>
-                                <p className="text-xs text-gray-500 font-bold mt-1">1인 & 여성 안심 귀가 스마트 타이머</p>
+                                <p className="text-xs text-gray-500 font-bold mt-1">{safeModeTranslations[language].panel_subtitle}</p>
                             </div>
                             <button onClick={() => setIsOpen(false)} className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition">
                                 <X size={20} strokeWidth={2.5} />
@@ -864,13 +1017,13 @@ export default function GlobalSafeMode() {
                             <div className="space-y-5">
                                 {/* 카운트다운 써클 카드 */}
                                 <div className="bg-gradient-to-br from-brand-success/10 to-brand-success/20 p-6 rounded-[28px] border border-brand-success/30 text-center relative overflow-hidden shadow-inner">
-                                    <span className="text-[10px] font-black uppercase text-brand-accent tracking-widest block mb-2">실시간 안심 보호 진행 중</span>
+                                    <span className="text-[10px] font-black uppercase text-brand-accent tracking-widest block mb-2">{safeModeTranslations[language].panel_protecting_title}</span>
                                     <div className="text-4xl sm:text-5xl font-black text-brand-accent tracking-wider tabular-nums font-mono">
                                         {formatTime(timeLeft)}
                                     </div>
                                     
                                     <div className="flex justify-center items-center gap-1.5 mt-3 text-xs font-bold text-brand-accent bg-white/60 inline-flex px-3 py-1 rounded-full border border-brand-accent/20">
-                                        <User size={12} /> 보호자: {guardianName} {guardianPhone && `(${guardianPhone})`}
+                                        <User size={12} /> {safeModeTranslations[language].panel_guardian}: {guardianName} {guardianPhone && `(${guardianPhone})`}
                                     </div>
                                 </div>
 
@@ -885,21 +1038,21 @@ export default function GlobalSafeMode() {
                                         }`}
                                     >
                                         <Siren size={20} className={isSirenPlaying ? "animate-spin" : ""} />
-                                        {isSirenPlaying ? '🚨 사이렌 중지' : '🚨 위급 상황 사이렌 울리기'}
+                                        {isSirenPlaying ? safeModeTranslations[language].btn_stop_siren : safeModeTranslations[language].btn_start_siren}
                                     </button>
 
                                     <button
                                         onClick={handleSendLocationMessage}
                                         className="w-full py-4.5 bg-brand-primary text-white rounded-2xl font-black text-base shadow-lg shadow-brand-primary/30 flex items-center justify-center gap-2 hover:bg-brand-primary/95 transition active:scale-95 border-b-4 border-brand-primary/80"
                                     >
-                                        <Send size={18} /> 보호자에게 실시간 위치 전송
+                                        <Send size={18} /> {safeModeTranslations[language].btn_send_loc}
                                     </button>
                                     
                                     <button
                                         onClick={handleToggleOff}
                                         className="w-full py-4 bg-brand-success text-brand-accent rounded-2xl font-black text-base shadow-lg shadow-brand-success/20 flex items-center justify-center gap-2 hover:bg-brand-success/95 transition active:scale-95 border-b-4 border-brand-success/80"
                                     >
-                                        🛡️ 귀가 완료 (타이머 끄기)
+                                        {safeModeTranslations[language].btn_stop_timer}
                                     </button>
                                 </div>
                             </div>
@@ -909,7 +1062,7 @@ export default function GlobalSafeMode() {
                                 <div className="bg-gray-50 p-5 rounded-[28px] border border-gray-200/60">
                                     <h4 className="text-sm font-black text-gray-800 mb-3 flex items-center gap-1.5">
                                         <PhoneCall size={16} className="text-brand-primary" />
-                                        1단계. 비상 안심 연락망 등록
+                                        {safeModeTranslations[language].step1_title}
                                     </h4>
 
                                     {isRegistered ? (
@@ -917,13 +1070,13 @@ export default function GlobalSafeMode() {
                                             <div>
                                                 <p className="text-sm font-black text-gray-800">{guardianName}</p>
                                                 {guardianPhone && <p className="text-xs font-bold text-gray-400 mt-0.5">{guardianPhone}</p>}
-                                                {guardianUserId && <span className="inline-block mt-1.5 text-[9px] font-black bg-brand-primary/10 text-brand-primary px-2 py-0.5 rounded">서비스 연동 회원</span>}
+                                                {guardianUserId && <span className="inline-block mt-1.5 text-[9px] font-black bg-brand-primary/10 text-brand-primary px-2 py-0.5 rounded">{safeModeTranslations[language].step1_linked}</span>}
                                             </div>
                                             <button 
                                                 onClick={handleResetGuardian}
                                                 className="text-xs font-bold text-brand-danger bg-brand-danger/10 hover:bg-brand-danger/20 px-3 py-2 rounded-lg transition"
                                             >
-                                                수정
+                                                {safeModeTranslations[language].step1_edit}
                                             </button>
                                         </div>
                                     ) : (
@@ -935,14 +1088,14 @@ export default function GlobalSafeMode() {
                                                     onClick={() => setRegisterTab('search')} 
                                                     className={`flex-1 pb-2 text-xs font-black text-center transition-all ${registerTab === 'search' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-400 hover:text-gray-600'}`}
                                                 >
-                                                    서비스 사용자 검색
+                                                    {safeModeTranslations[language].step1_tab_search}
                                                 </button>
                                                 <button 
                                                     type="button" 
                                                     onClick={() => setRegisterTab('manual')} 
                                                     className={`flex-1 pb-2 text-xs font-black text-center transition-all ${registerTab === 'manual' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-400 hover:text-gray-600'}`}
                                                 >
-                                                    직접 연락처 입력
+                                                    {safeModeTranslations[language].step1_tab_manual}
                                                 </button>
                                             </div>
 
@@ -952,7 +1105,7 @@ export default function GlobalSafeMode() {
                                                         <div className="relative flex-1">
                                                             <input
                                                                 type="text"
-                                                                placeholder="가입자 이름 또는 이메일 검색"
+                                                                placeholder={safeModeTranslations[language].step1_search_placeholder}
                                                                 value={searchQuery}
                                                                 onChange={(e) => setSearchQuery(e.target.value)}
                                                                 required
@@ -964,7 +1117,7 @@ export default function GlobalSafeMode() {
                                                             type="submit"
                                                             className="bg-brand-primary hover:bg-brand-primary/90 text-white px-4 py-3 rounded-xl text-xs font-black transition active:scale-95 shadow-sm"
                                                         >
-                                                            검색
+                                                            {safeModeTranslations[language].step1_search_btn}
                                                         </button>
                                                     </form>
 
@@ -989,14 +1142,14 @@ export default function GlobalSafeMode() {
                                                                         <p className="text-xs font-black text-gray-800 truncate">{targetUser.name || targetUser.displayName}</p>
                                                                         <p className="text-[10px] font-bold text-gray-400 truncate">{targetUser.email}</p>
                                                                     </div>
-                                                                    <span className="text-[9px] font-black bg-brand-primary/10 text-brand-primary px-2 py-1 rounded">선택</span>
+                                                                    <span className="text-[9px] font-black bg-brand-primary/10 text-brand-primary px-2 py-1 rounded">{safeModeTranslations[language].step1_search_select}</span>
                                                                 </div>
                                                             ))}
                                                         </div>
                                                     )}
 
                                                     {searchStatus === 'no-result' && (
-                                                        <p className="text-center text-[11px] text-gray-400 font-bold py-4">일치하는 사용자를 찾지 못했습니다.</p>
+                                                        <p className="text-center text-[11px] text-gray-400 font-bold py-4">{safeModeTranslations[language].step1_search_no_result}</p>
                                                     )}
                                                 </div>
                                             ) : (
@@ -1004,7 +1157,7 @@ export default function GlobalSafeMode() {
                                                     <div className="flex flex-col gap-2">
                                                         <input
                                                             type="text"
-                                                            placeholder="보호자 성함 (예: 엄마)"
+                                                            placeholder={safeModeTranslations[language].step1_manual_name}
                                                             value={guardianName}
                                                             onChange={(e) => setGuardianName(e.target.value)}
                                                             required
@@ -1012,7 +1165,7 @@ export default function GlobalSafeMode() {
                                                         />
                                                         <input
                                                             type="tel"
-                                                            placeholder="휴대폰 번호 (-없이 입력)"
+                                                            placeholder={safeModeTranslations[language].step1_manual_phone}
                                                             value={guardianPhone}
                                                             onChange={(e) => setGuardianPhone(e.target.value)}
                                                             required
@@ -1023,7 +1176,7 @@ export default function GlobalSafeMode() {
                                                         type="submit"
                                                         className="w-full py-3.5 bg-brand-accent hover:bg-brand-accent/90 text-white rounded-xl text-xs font-black shadow-md transition active:scale-95"
                                                     >
-                                                        비상 연락망 저장
+                                                        {safeModeTranslations[language].step1_manual_save}
                                                     </button>
                                                 </form>
                                             )}
@@ -1035,7 +1188,7 @@ export default function GlobalSafeMode() {
                                 <div className="space-y-3">
                                     <h4 className="text-sm font-black text-gray-800 flex items-center gap-1.5 px-1">
                                         <Timer size={16} className="text-brand-primary" />
-                                        2단계. 안심 약속 귀가 시간 설정
+                                        {safeModeTranslations[language].step2_title}
                                     </h4>
                                     
                                     <div className="flex flex-col gap-2.5">
@@ -1046,9 +1199,9 @@ export default function GlobalSafeMode() {
                                                 value={duration}
                                                 onChange={(e) => setDuration(e.target.value ? Number(e.target.value) : '')}
                                                 className="flex-1 bg-transparent text-sm font-black text-gray-900 outline-none w-full"
-                                                placeholder="직접 시간 입력 (예: 120)"
+                                                placeholder={safeModeTranslations[language].step2_duration_placeholder}
                                             />
-                                            <span className="text-xs font-bold text-gray-500 shrink-0">분 뒤 알림</span>
+                                            <span className="text-xs font-bold text-gray-500 shrink-0">{safeModeTranslations[language].step2_duration_unit}</span>
                                         </div>
                                         <div className="grid grid-cols-4 gap-2">
                                             {[10, 30, 60, 120].map((mins) => (
@@ -1061,13 +1214,13 @@ export default function GlobalSafeMode() {
                                                             : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
                                                     }`}
                                                 >
-                                                    {mins}분
+                                                    {safeModeTranslations[language].step2_duration_btn.replace('{mins}', mins.toString())}
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
                                     <p className="text-[10px] text-gray-400 font-bold px-1 leading-relaxed">
-                                        💡 밤 10시 이후 이동할 때, 설정한 시간 내에 무사 귀가를 인증하지 않으면 보호자 알림 및 동행 단톡방에 경보 시스템 메시지가 자동으로 올라갑니다.
+                                        {safeModeTranslations[language].step2_desc}
                                     </p>
                                 </div>
 
@@ -1077,7 +1230,7 @@ export default function GlobalSafeMode() {
                                     className="w-full py-4.5 bg-gradient-to-r from-brand-primary via-brand-secondary to-brand-accent text-white rounded-2xl font-black text-base shadow-xl hover:opacity-90 transition flex items-center justify-center gap-2 border-b-4 border-brand-accent active:scale-95"
                                 >
                                     <ShieldCheck size={20} className="text-white animate-pulse" />
-                                    Safe Mode 실시간 보호 시작
+                                    {safeModeTranslations[language].btn_start_safe}
                                 </button>
                             </div>
                         )}
@@ -1094,21 +1247,27 @@ export default function GlobalSafeMode() {
                             <AlertTriangle size={36} />
                         </div>
                         <h3 className="text-xl font-black text-gray-900 mb-1 text-center">
-                            {isSirenPlaying && timeLeft > 0 ? "🚨 긴급 비상 사이렌 가동!" : "🚨 귀가 안심 타이머 만료!"}
+                            {isSirenPlaying && timeLeft > 0 ? safeModeTranslations[language].alert_title_siren : safeModeTranslations[language].alert_title_expire}
                         </h3>
                         <p className="text-xs text-brand-danger font-black mb-3">Emergency Alert Triggered</p>
                         <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed font-semibold">
                             {isSirenPlaying && timeLeft > 0 ? (
                                 <>
-                                    사용자 작동으로 비상 경보 사이렌이 실행되었습니다.<br />
-                                    위험 상황이 해결되었다면 경보를 해제해 주세요.<br />
-                                    <span className="text-brand-danger font-bold block mt-2">(현재 보호자 앱에 비상 알림이 연동되었습니다)</span>
+                                    {safeModeTranslations[language].alert_desc_siren.split('\n').map((line, idx) => {
+                                        if (line.startsWith('(')) {
+                                            return <span key={idx} className="text-brand-danger font-bold block mt-2">{line}</span>;
+                                        }
+                                        return <React.Fragment key={idx}>{line}<br /></React.Fragment>;
+                                    })}
                                 </>
                             ) : (
                                 <>
-                                    지정한 귀가 예정 약속 시간이 끝났습니다.<br />
-                                    무사히 도착하셨다면 꼭 해제 버튼을 눌러주세요.<br />
-                                    <span className="text-brand-danger font-bold block mt-2">(현재 비상 경보가 채팅방에 올라갔습니다)</span>
+                                    {safeModeTranslations[language].alert_desc_expire.split('\n').map((line, idx) => {
+                                        if (line.startsWith('(')) {
+                                            return <span key={idx} className="text-brand-danger font-bold block mt-2">{line}</span>;
+                                        }
+                                        return <React.Fragment key={idx}>{line}<br /></React.Fragment>;
+                                    })}
                                 </>
                             )}
                         </p>
@@ -1116,7 +1275,7 @@ export default function GlobalSafeMode() {
                             onClick={handleToggleOff} 
                             className="w-full py-4.5 rounded-2xl font-black text-white bg-brand-danger hover:bg-brand-danger/90 transition-colors shadow-lg active:scale-95 text-base border-b-4 border-brand-danger/80"
                         >
-                            🛡️ 무사 도착 해제 (경보 끄기)
+                            {safeModeTranslations[language].btn_stop_alert}
                         </button>
                     </div>
                 </div>
@@ -1130,19 +1289,16 @@ export default function GlobalSafeMode() {
                         <div className="w-16 h-16 bg-brand-primary/10 rounded-2xl flex items-center justify-center text-brand-primary mb-4 animate-bounce shadow-md">
                             <Send size={28} className="translate-x-0.5" />
                         </div>
-                        <h3 className="text-xl font-black text-gray-900 mb-1 text-center">📍 실시간 위치 전송 완료</h3>
+                        <h3 className="text-xl font-black text-gray-900 mb-1 text-center">{safeModeTranslations[language].loc_title}</h3>
                         <p className="text-xs text-brand-primary font-black mb-3">Location Shared Successfully</p>
                         <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed font-semibold font-bold">
-                            보호자에게 실시간 위치 알림을 전송했으며,<br />
-                            위치 텍스트가 클립보드에 복사되었습니다.<br />
-                            상대방이 알림을 누르면 즉시 동행 요청함에서<br />
-                            위치를 지도 상으로 관제할 수 있습니다.
+                            {safeModeTranslations[language].loc_desc.split('\n').map((line, idx) => <React.Fragment key={idx}>{line}<br /></React.Fragment>)}
                         </p>
                         <button 
                             onClick={() => setShowLocationSentModal(false)} 
                             className="w-full py-4.5 rounded-2xl font-black text-white bg-brand-primary hover:bg-brand-primary/90 transition-colors shadow-lg active:scale-95 text-base border-b-4 border-brand-primary/80"
                         >
-                            확인
+                            {safeModeTranslations[language].btn_confirm}
                         </button>
                     </div>
                 </div>
@@ -1156,12 +1312,16 @@ export default function GlobalSafeMode() {
                         <div className="w-16 h-16 bg-brand-danger/10 text-brand-danger rounded-2xl flex items-center justify-center mb-4 animate-pulse shadow-md">
                             <ShieldAlert size={36} />
                         </div>
-                        <h3 className="text-xl font-black text-gray-900 mb-1 text-center">🚨 보호 대상 위험 경보!</h3>
+                        <h3 className="text-xl font-black text-gray-900 mb-1 text-center">{safeModeTranslations[language].warn_title}</h3>
                         <p className="text-xs text-brand-danger font-black mb-3">Guardian Emergency Warning</p>
                         <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed font-semibold">
-                            보호 대상자인 <span className="text-brand-danger font-black">{otherExpiredSession.userName}</span>님의<br />
-                            안심 귀가 예정 시간이 만료되었습니다!<br />
-                            신속히 연락을 시도하고 안전을 확인하세요.
+                            {safeModeTranslations[language].warn_desc.replace('{name}', otherExpiredSession.userName).split('\n').map((line, idx) => {
+                                if (line.includes(otherExpiredSession.userName)) {
+                                    const parts = line.split(otherExpiredSession.userName);
+                                    return <React.Fragment key={idx}>{parts[0]}<span className="text-brand-danger font-black">{otherExpiredSession.userName}</span>{parts[1]}<br /></React.Fragment>;
+                                }
+                                return <React.Fragment key={idx}>{line}<br /></React.Fragment>;
+                            })}
                         </p>
                         <div className="w-full space-y-2">
                             {otherExpiredSession.guardianPhone && (
@@ -1169,14 +1329,14 @@ export default function GlobalSafeMode() {
                                     href={`tel:${otherExpiredSession.guardianPhone}`}
                                     className="w-full py-4 rounded-2xl font-black text-brand-primary bg-brand-primary/10 hover:bg-brand-primary/20 transition-colors flex items-center justify-center gap-2 active:scale-95 text-sm"
                                 >
-                                    <PhoneCall size={16} /> 대상자에게 전화하기
+                                    <PhoneCall size={16} /> {safeModeTranslations[language].btn_call}
                                 </a>
                             )}
                             <a 
                                 href={`/share/live_safemode?userId=${otherExpiredSession.userId}`}
                                 className="w-full py-4 rounded-2xl font-black text-white bg-brand-danger hover:bg-brand-danger/90 transition-colors flex items-center justify-center gap-2 active:scale-95 text-sm shadow-md"
                             >
-                                <Shield size={16} /> 실시간 안심 지도 보기
+                                <Shield size={16} /> {safeModeTranslations[language].btn_view_map}
                             </a>
                         </div>
                     </div>

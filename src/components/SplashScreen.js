@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import DogMascot from './DogMascot';
 
-export default function SplashScreen({ onFinish }) {
+export default function SplashScreen({ language = 'ko', onFinish }) {
     return (
         <motion.div
             initial={{ opacity: 1 }}
@@ -66,7 +66,7 @@ export default function SplashScreen({ onFinish }) {
                         // ✨ drop-shadow-lg 로 변경하여 그림자 강화
                         className="text-lg font-medium text-gray-100 drop-shadow-lg"
                     >
-                        나만의 특별한 여행을 시작하세요
+                        {language === 'en' ? 'Start your own special trip' : '나만의 특별한 여행을 시작하세요'}
                     </motion.p>
                 </div>
             </div>

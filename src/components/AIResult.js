@@ -47,6 +47,16 @@ const getKlookLink = (keyword, language) => {
     return `https://www.klook.com/${language === 'en' ? 'en-US' : 'ko'}/search?q=${encodedKeyword}`;
 };
 
+    const formatTransitText = (txt) => {
+        if (!txt) return "";
+        if (language !== 'en') return txt;
+        return txt
+            .replace(/도보/g, 'Walk')
+            .replace(/이동/g, 'Drive')
+            .replace(/분/g, 'm')
+            .replace(/시간/g, 'h');
+    };
+
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 const DAY_COLORS = ['#FF4B4B', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
 
@@ -136,13 +146,13 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 <div style="padding: 10px; max-width: 250px; font-family: sans-serif;">
                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 4px;">
                         <h3 style="font-weight: bold; font-size: 15px; margin: 0; color: #111827;">${place.name}</h3>
-                        <span style="font-size: 10px; background: #f3f4f6; padding: 2px 6px; border-radius: 12px; color: #6b7280; white-space: nowrap; margin-left: 8px;">${place.category || '기타'}</span>
+                        <span style="font-size: 10px; background: #f3f4f6; padding: 2px 6px; border-radius: 12px; color: #6b7280; white-space: nowrap; margin-left: 8px;">${place.category || (language === 'en' ? 'Other' : '기타')}</span>
                     </div>
                     <p style="font-size: 12px; color: #4b5563; margin-top: 6px; margin-bottom: 8px; line-height: 1.4;">${place.description}</p>
-                    ${place.budget ? `<div style="font-size: 11px; font-weight: 800; color: #4f46e5; background: #f5f3ff; padding: 6px 10px; border-radius: 8px; margin-bottom: 8px; border: 1px dashed #c7d2fe; display: flex; align-items: center; gap: 4px;">💰 예산: ${place.budget}</div>` : ''}
-                    ${place.reason ? `<div style="font-size: 11px; color: #0891b2; background: #ecfeff; padding: 6px 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #cffafe;"><strong>🛡️ 안심 포인트!</strong><br />${place.reason}</div>` : ''}
+                    ${place.budget ? `<div style="font-size: 11px; font-weight: 800; color: #4f46e5; background: #f5f3ff; padding: 6px 10px; border-radius: 8px; margin-bottom: 8px; border: 1px dashed #c7d2fe; display: flex; align-items: center; gap: 4px;">💰 ${language === 'en' ? 'Budget' : '예산'}: ${place.budget}</div>` : ''}
+                    ${place.reason ? `<div style="font-size: 11px; color: #0891b2; background: #ecfeff; padding: 6px 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #cffafe;"><strong>🛡️ ${language === 'en' ? 'Safe Point!' : '안심 포인트!'}</strong><br />${place.reason}</div>` : ''}
                     <div style="display: flex; gap: 8px; margin-top: 10px;">
-                        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&hl=${language}" target="_blank" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #4f46e5; background: #e0e7ff; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🗺️ 길찾기</a>
+                        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&hl=${language}" target="_blank" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #4f46e5; background: #e0e7ff; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🗺️ ${language === 'en' ? 'Directions' : '길찾기'}</a>
                         ${(!place.category?.includes("Restaurant") && !place.category?.includes("Cafe")) ? `
                             <a href="${getTripLink(place.name, userInfo?.destination || "", language)}" target="_blank" rel="nofollow noopener noreferrer" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #0087ff; background: #e6f3ff; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🎟️ Trip.com</a>
                             <a href="${getKlookLink(place.name, language)}" target="_blank" rel="nofollow noopener noreferrer" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #ff5b00; background: #fff2e6; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🎟️ Klook</a>
@@ -184,23 +194,23 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     }, [tripId]);
 
     const handleRequestRealMate = async (targetUser) => {
-        if (!auth.currentUser) return alert("로그인이 필요합니다. 먼저 일정을 저장해주세요!");
+        if (!auth.currentUser) return alert(language === 'en' ? "Login required. Please save your itinerary first!" : "로그인이 필요합니다. 먼저 일정을 저장해주세요!");
         try {
             await addDoc(collection(db, "match_requests"), {
                 type: "workspace_invite",
                 senderId: auth.currentUser.uid,
-                senderName: auth.currentUser.displayName || "여행자",
+                senderName: auth.currentUser.displayName || (language === 'en' ? "Traveler" : "여행자"),
                 targetMateId: targetUser.id,
                 targetMateName: targetUser.name,
-                destination: data?.destination || "여행",
+                destination: data?.destination || (language === 'en' ? "Trip" : "여행"),
                 status: "pending",
-                message: "방금 만든 따끈따끈한 AI 여행 일정에 동행을 제안합니다! 👋",
+                message: language === 'en' ? "I'd like to suggest traveling together based on this brand new AI itinerary! 👋" : "방금 만든 따끈따끈한 AI 여행 일정에 동행을 제안합니다! 👋",
                 createdAt: serverTimestamp()
             });
-            alert(`${targetUser.name}님에게 동행 요청을 보냈습니다! (상대방의 우편함으로 도착합니다) 💌`);
+            alert(language === 'en' ? `Sent a request to ${targetUser.name}! (It will arrive in their mailbox) 💌` : `${targetUser.name}님에게 동행 요청을 보냈습니다! (상대방의 우편함으로 도착합니다) 💌`);
             setShowMatchModal(false);
         } catch (error) {
-            alert("요청 발송 실패");
+            alert(language === 'en' ? "Failed to send request" : "요청 발송 실패");
         }
     };
 
@@ -231,7 +241,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             ...savedUserInfo,
                             ...savedTripPlan,
                             memberIds: [user.uid],
-                            membersInfo: [{ uid: user.uid, name: user.displayName || "여행자", avatar: user.photoURL || "https://i.pravatar.cc/150?u=me" }],
+                            membersInfo: [{ uid: user.uid, name: user.displayName || (language === 'en' ? "Traveler" : "여행자"), avatar: user.photoURL || "https://i.pravatar.cc/150?u=me" }],
                             hostId: user.uid,
                             createdAt: serverTimestamp()
                         });
@@ -243,7 +253,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             await addDoc(collection(db, "feeds"), {
                                 author: user.displayName, avatar: user.photoURL, authorUid: user.uid,
                                 type: 'map', title: savedTripPlan.tripTitle, image: mapImg,
-                                tags: [`#${savedTripPlan.destination}`, "#AI여행", "#TripMaker"],
+                                tags: [`#${savedTripPlan.destination}`, language === 'en' ? "#AITrip" : "#AI여행", "#TripMaker"],
                                 likes: 0, comments: 0, forks: 0, mockTripData: { ...savedTripPlan }, createdAt: serverTimestamp()
                             });
 
@@ -266,11 +276,11 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             }
                         }
 
-                        const msg = isNewUser ? "가입 축하금 1,000P" : "저장 완료!";
+                        const msg = isNewUser ? (language === 'en' ? "1,000P Welcome Gift" : "가입 축하금 1,000P") : (language === 'en' ? "Save Completed!" : "저장 완료!");
                         const today = new Date().toISOString().split('T')[0];
                         const userDataForMsg = userSnap.exists() ? userSnap.data() : null;
                         const hasTodayReward = userDataForMsg && userDataForMsg.lastFeedRewardDate === today;
-                        const feedMsg = (shouldShareToFeed && !hasTodayReward) ? " + 피드 공유 100P 적립! 💰" : (shouldShareToFeed ? " + 피드 공유 완료!" : "");
+                        const feedMsg = (shouldShareToFeed && !hasTodayReward) ? (language === 'en' ? " + 100P Feed Share Reward! 💰" : " + 피드 공유 100P 적립! 💰") : (shouldShareToFeed ? (language === 'en' ? " + Feed shared!" : " + 피드 공유 완료!") : "");
                         alert(`${msg}${feedMsg}`);
 
                         sessionStorage.removeItem('pendingTripSave');
@@ -552,12 +562,12 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
             if (status === google.maps.places.PlacesServiceStatus.OK && results && results[0]) {
                 const location = results[0].geometry.location; const newCoords = { lat: location.lat(), lng: location.lng() }; const newPlan = { ...tripPlan };
                 newPlan.itinerary[dayIndex].places[placeIndex].coordinates = newCoords; setTripPlan(newPlan); if (!tripId) setShareUrl(null);
-                googleMapRef.current.panTo(newCoords); googleMapRef.current.setZoom(16); alert(`✅ '${results[0].name}' 위치로 보정했습니다!`);
-            } else { alert(`❌ '${finalQuery}'를 찾을 수 없습니다.`); }
+                googleMapRef.current.panTo(newCoords); googleMapRef.current.setZoom(16); alert(language === 'en' ? `✅ Calibrated position to '${results[0].name}'!` : `✅ '${results[0].name}' 위치로 보정했습니다!`);
+            } else { alert(language === 'en' ? `❌ Could not find '${finalQuery}'.` : `❌ '${finalQuery}'를 찾을 수 없습니다.`); }
         });
     };
 
-    const handleAutoFixAll = async () => { if (!window.google || !googleMapRef.current) { alert("지도가 로딩되지 않았습니다."); return; } if (!confirm("모든 장소의 위치를 여행지 기준으로 재설정하시겠습니까?")) return; setLoadingAction('autoFix'); hasAutoFixed.current = false; await performSilentAutoFix(googleMapRef.current); setLoadingAction(null); alert("전체 위치 보정이 완료되었습니다."); };
+    const handleAutoFixAll = async () => { if (!window.google || !googleMapRef.current) { alert(language === 'en' ? "Map is not loaded." : "지도가 로딩되지 않았습니다."); return; } if (!confirm(language === 'en' ? "Are you sure you want to reset all locations based on the destination?" : "모든 장소의 위치를 여행지 기준으로 재설정하시겠습니까?")) return; setLoadingAction('autoFix'); hasAutoFixed.current = false; await performSilentAutoFix(googleMapRef.current); setLoadingAction(null); alert(language === 'en' ? "All locations have been calibrated." : "전체 위치 보정이 완료되었습니다."); };
     const handleBudgetChange = (index, value) => { const newPlan = { ...tripPlan }; newPlan.budgetBreakdown[index] = value; setTripPlan(newPlan); if (!tripId) setShareUrl(null); };
     const handleAddBudget = () => { const newPlan = { ...tripPlan }; if (!newPlan.budgetBreakdown) newPlan.budgetBreakdown = []; newPlan.budgetBreakdown.push("새 항목: 0원"); setTripPlan(newPlan); if (!tripId) setShareUrl(null); };
     const handleDeleteBudget = (index) => { const newPlan = { ...tripPlan }; newPlan.budgetBreakdown.splice(index, 1); setTripPlan(newPlan); if (!tripId) setShareUrl(null); };
@@ -580,11 +590,11 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 isEdited: true,
                 updatedAt: serverTimestamp()
             });
-            alert("✅ 일정이 성공적으로 업데이트되었습니다!");
+            alert(language === 'en' ? "✅ Itinerary successfully updated!" : "✅ 일정이 성공적으로 업데이트되었습니다!");
             setIsEditMode(false);
         } catch (err) {
             console.error("Update Error:", err);
-            alert("일정 업데이트 중 오류가 발생했습니다.");
+            alert(language === 'en' ? "An error occurred while updating the itinerary." : "일정 업데이트 중 오류가 발생했습니다.");
         } finally {
             setLoadingAction(null);
         }
@@ -645,7 +655,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         p.transitToNext = "";
                     } else {
                         // 기존 매칭 텍스트가 있으면 그대로 쓰고, 없으면 기본 이동시간 부여
-                        p.transitToNext = oldTransitMap[idx] || (travelMode === 'WALKING' ? "🚶‍♂️ 도보 10분" : "🚗 이동 15분");
+                        p.transitToNext = oldTransitMap[idx] || (travelMode === 'WALKING' ? (language === 'en' ? "🚶‍♂️ 10 min walk" : "🚶‍♂️ 도보 10분") : (language === 'en' ? "🚗 15 min drive" : "🚗 이동 15분"));
                     }
                 });
 
@@ -669,22 +679,22 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     setShareUrl(null); // 신규 임시 일정인 경우 기존 공유 링크 무효화
                 }
 
-                triggerCustomToast("⚡ AI 자동 동선 최적화 완료! 걷는 거리와 꼬인 동선이 34% 이상 감소되었습니다. 🎉");
+                triggerCustomToast(language === 'en' ? "⚡ AI route optimization complete! Walking distance and detour routes reduced by over 34%. 🎉" : "⚡ AI 자동 동선 최적화 완료! 걷는 거리와 꼬인 동선이 34% 이상 감소되었습니다. 🎉");
 
                 // 지도 포커싱 재지정 및 강제 렌더링 유도
                 setSelectedIndex(0);
             } else {
-                triggerCustomToast("일정이 너무 짧아 동선 최적화가 필요하지 않습니다. 😊");
+                triggerCustomToast(language === 'en' ? "The itinerary is too short to optimize. 😊" : "일정이 너무 짧아 동선 최적화가 필요하지 않습니다. 😊");
             }
         } catch (err) {
             console.error("AI Route Optimization Error:", err);
-            triggerCustomToast("동선 최적화 중 오류가 발생했습니다.");
+            triggerCustomToast(language === 'en' ? "An error occurred during route optimization." : "동선 최적화 중 오류가 발생했습니다.");
         } finally {
             setLoadingAction(null);
         }
     };
 
-    const handleDeletePlace = (dayIndex, placeIndex) => { if (!confirm("이 장소를 삭제하시겠습니까?")) return; const newPlan = { ...tripPlan }; newPlan.itinerary[dayIndex].places.splice(placeIndex, 1); newPlan.itinerary[dayIndex].places.forEach((p, i) => p.order = i + 1); setTripPlan(newPlan); if (!tripId) setShareUrl(null); };
+    const handleDeletePlace = (dayIndex, placeIndex) => { if (!confirm(language === 'en' ? "Are you sure you want to delete this place?" : "이 장소를 삭제하시겠습니까?")) return; const newPlan = { ...tripPlan }; newPlan.itinerary[dayIndex].places.splice(placeIndex, 1); newPlan.itinerary[dayIndex].places.forEach((p, i) => p.order = i + 1); setTripPlan(newPlan); if (!tripId) setShareUrl(null); };
     const handleAddPlace = (dayIndex) => { const newPlan = { ...tripPlan }; const newOrder = newPlan.itinerary[dayIndex].places.length + 1; newPlan.itinerary[dayIndex].places.push({ order: newOrder, name: "새로운 장소", category: "기타", description: "설명을 입력해주세요.", coordinates: { lat: 35.6895, lng: 139.6917 } }); setTripPlan(newPlan); if (!tripId) setShareUrl(null); };
     const handleMovePlace = (dayIndex, placeIndex, direction) => { const newPlan = { ...tripPlan }; const places = newPlan.itinerary[dayIndex].places; const targetIndex = placeIndex + direction; if (targetIndex < 0 || targetIndex >= places.length) return;[places[placeIndex], places[targetIndex]] = [places[targetIndex], places[placeIndex]]; places.forEach((p, i) => p.order = i + 1); setTripPlan(newPlan); if (!tripId) setShareUrl(null); };
 
@@ -707,7 +717,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
         } catch (e) {
             console.error("Save Error Details:", e);
             // 구체적인 에러 메시지를 포함하여 사용자에게 안내 (디버깅 지원)
-            alert(`공유 링크 생성 중 오류가 발생했습니다:\n${e.code || e.message || '알 수 없는 오류'}`);
+            alert(language === 'en' ? `An error occurred while generating the share link:\n${e.code || e.message || 'Unknown error'}` : `공유 링크 생성 중 오류가 발생했습니다:\n${e.code || e.message || '알 수 없는 오류'}`);
             return null;
         }
     };
@@ -740,13 +750,14 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 if (i > 0) pdf.addPage(); pdf.addImage(imgData, 'PNG', 0, 0, A4_WIDTH_MM, A4_HEIGHT_MM);
             }
             pdf.save(`${tripPlan.tripTitle || 'trip_plan'}.pdf`); document.body.removeChild(printContainer);
-        } catch (error) { alert("PDF 생성 중 오류가 발생했습니다."); } finally { setLoadingAction(null); }
+        } catch (error) { alert(language === 'en' ? "An error occurred while generating the PDF." : "PDF 생성 중 오류가 발생했습니다."); } finally { setLoadingAction(null); }
     };
 
     const formatTripText = (url) => {
-        if (!tripPlan) return ""; let text = `✈️ [Trip Maker] AI가 만든 여행 일정\n\n📍 제목: ${tripPlan.tripTitle}\n`;
-        if (tripPlan.budgetBreakdown?.length > 0) text += `\n💰 예상 견적:\n${tripPlan.budgetBreakdown.join('\n')}\n`;
-        if (url) text += `\n🔗 일정 상세 보기: ${url}`; return text;
+        if (!tripPlan) return "";
+        let text = language === 'en' ? `✈️ [Trip Maker] AI-generated Trip Itinerary\n\n📍 Title: ${tripPlan.tripTitle}\n` : `✈️ [Trip Maker] AI가 만든 여행 일정\n\n📍 제목: ${tripPlan.tripTitle}\n`;
+        if (tripPlan.budgetBreakdown?.length > 0) text += `\n💰 ${language === 'en' ? 'Estimated Budget' : '예상 견적'}:\n${tripPlan.budgetBreakdown.join('\n')}\n`;
+        if (url) text += `\n🔗 ${language === 'en' ? 'View details' : '일정 상세 보기'}: ${url}`; return text;
     };
 
     const handleKakaoConsult = () => {
@@ -779,7 +790,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
             setLoadingAction(null);
         });
     };
-    const handleShare = async () => { setLoadingAction('share'); const url = await getOrSaveShareUrl(); if (url) { const text = formatTripText(url); if (navigator.share) { try { await navigator.share({ title: tripPlan.tripTitle, text: text }); } catch (e) { } } else { try { await navigator.clipboard.writeText(text); alert("링크가 복사되었습니다!"); } catch (e) { } } } setLoadingAction(null); };
+    const handleShare = async () => { setLoadingAction('share'); const url = await getOrSaveShareUrl(); if (url) { const text = formatTripText(url); if (navigator.share) { try { await navigator.share({ title: tripPlan.tripTitle, text: text }); } catch (e) { } } else { try { await navigator.clipboard.writeText(text); alert(language === 'en' ? "Link copied to clipboard!" : "링크가 복사되었습니다!"); } catch (e) { } } } setLoadingAction(null); };
 
     const executeSave = async () => {
         if (isSavingRef.current) return;
@@ -817,7 +828,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     memberIds: [user.uid],
                     membersInfo: [{
                         uid: user.uid,
-                        name: user.displayName || "여행자",
+                        name: user.displayName || (language === 'en' ? "Traveler" : "여행자"),
                         avatar: user.photoURL || "https://i.pravatar.cc/150?u=me"
                     }],
                     hostId: user.uid,
@@ -831,7 +842,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     await addDoc(collection(db, "feeds"), {
                         author: user.displayName, authorUid: user.uid, avatar: user.photoURL,
                         type: 'map', title: tripPlan.tripTitle, image: mapImageUrl,
-                        tags: [`#${tripPlan.destination}`, "#여행동선", "#TripMaker"],
+                        tags: [`#${tripPlan.destination}`, language === 'en' ? "#Route" : "#여행동선", "#TripMaker"],
                         likes: 0, likedBy: [], comments: 0, forks: 0,
                         mockTripData: { ...tripPlan }, createdAt: serverTimestamp()
                     });
@@ -856,12 +867,12 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     }
                 }
 
-                alert(isNewUser ? "가입 축하금 1,000P + 일정 저장 완료!" : "✨ 여행 워크스페이스가 생성되었습니다!");
+                alert(isNewUser ? (language === 'en' ? "1,000P Welcome Gift + Itinerary Saved!" : "가입 축하금 1,000P + 일정 저장 완료!") : (language === 'en' ? "✨ Travel workspace created!" : "✨ 여행 워크스페이스가 생성되었습니다!"));
                 router.push('/mypage');
             }
         } catch (error) {
             console.error("저장 실패:", error);
-            alert("저장 중 오류가 발생했습니다.");
+            alert(language === 'en' ? "An error occurred while saving." : "저장 중 오류가 발생했습니다.");
         } finally {
             setIsSaving(false);
             isSavingRef.current = false;
@@ -869,7 +880,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     };
 
     const handleSaveClick = () => {
-        if (tripId) { alert("이미 저장된 일정입니다."); return; }
+        if (tripId) { alert(language === 'en' ? "This itinerary is already saved." : "이미 저장된 일정입니다."); return; }
         setShowSaveModal(true);
     };
 
@@ -930,10 +941,10 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                 {/* Right Top Buttons - Unified Vertical Toolbar */}
                 <div className="absolute top-8 right-4 sm:right-6 z-50 pointer-events-auto flex flex-col items-center bg-black/40 backdrop-blur-xl border border-white/20 rounded-[32px] p-2 shadow-2xl gap-2">
-                    <button onClick={() => router.push('/mypage')} className="p-2.5 rounded-full text-white hover:bg-white/20 transition-colors" title="마이페이지">
+                    <button onClick={() => router.push('/mypage')} className="p-2.5 rounded-full text-white hover:bg-white/20 transition-colors" title={language === 'en' ? "My Page" : "마이페이지"}>
                         <User size={20} />
                     </button>
-                    <button onClick={() => setShowInfoModal(true)} className="p-2.5 rounded-full text-brand-accent hover:bg-white/20 transition-colors relative" title="여행 정보">
+                    <button onClick={() => setShowInfoModal(true)} className="p-2.5 rounded-full text-brand-accent hover:bg-white/20 transition-colors relative" title={language === 'en' ? "Trip Info" : "여행 정보"}>
                         <Sparkles size={20} className="animate-pulse" />
                     </button>
                     <button onClick={() => {
@@ -942,7 +953,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         } else {
                             setIsEditMode(!isEditMode);
                         }
-                    }} className={`p-2.5 rounded-full transition-colors ${isEditMode ? 'bg-indigo-500 text-white shadow-lg' : 'text-white hover:bg-white/20'}`} title="일정 편집">
+                    }} className={`p-2.5 rounded-full transition-colors ${isEditMode ? 'bg-indigo-500 text-white shadow-lg' : 'text-white hover:bg-white/20'}`} title={language === 'en' ? "Edit Itinerary" : "일정 편집"}>
                         {loadingAction === 'save' ? <Loader2 className="animate-spin" size={20} /> : (isEditMode ? <Check size={20} /> : <Pencil size={20} />)}
                     </button>
 
@@ -953,21 +964,21 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             <button
                                 onClick={() => setTravelMode('DRIVING')}
                                 className={`p-2 rounded-full transition-colors ${travelMode === 'DRIVING' ? 'bg-indigo-500 text-white shadow-md' : 'text-gray-300 hover:bg-white/20 hover:text-white'}`}
-                                title="자동차"
+                                title={language === 'en' ? "Driving" : "자동차"}
                             >
                                 <Car size={18} />
                             </button>
                             <button
                                 onClick={() => setTravelMode('WALKING')}
                                 className={`p-2 rounded-full transition-colors ${travelMode === 'WALKING' ? 'bg-emerald-500 text-white shadow-md' : 'text-gray-300 hover:bg-white/20 hover:text-white'}`}
-                                title="도보"
+                                title={language === 'en' ? "Walking" : "도보"}
                             >
                                 <Footprints size={18} />
                             </button>
                             <button
                                 onClick={() => setTravelMode('TRANSIT')}
                                 className={`p-2 rounded-full transition-colors ${travelMode === 'TRANSIT' ? 'bg-amber-500 text-white shadow-md' : 'text-gray-300 hover:bg-white/20 hover:text-white'}`}
-                                title="대중교통"
+                                title={language === 'en' ? "Transit" : "대중교통"}
                             >
                                 <Train size={18} />
                             </button>
@@ -978,7 +989,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                 onClick={handleOptimizeItineraryRoute}
                                 disabled={loadingAction === 'optimize'}
                                 className="p-2.5 bg-gradient-to-br from-violet-500 to-indigo-600 text-amber-300 rounded-full shadow-lg hover:shadow-indigo-500/50 transition-all hover:scale-110 active:scale-95 border border-white/20"
-                                title="AI 동선 자동 최적화"
+                                title={language === 'en' ? "AI Route Optimization" : "AI 동선 자동 최적화"}
                             >
                                 {loadingAction === 'optimize' ? (
                                     <Loader2 className="animate-spin text-white" size={20} />
@@ -1002,7 +1013,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             ) : (
                                 <>
                                     <ChevronLeft size={24} className="shrink-0" />
-                                    <span className="text-xs font-black pr-1.5 whitespace-nowrap">일정</span>
+                                    <span className="text-xs font-black pr-1.5 whitespace-nowrap">{language === 'en' ? 'Plan' : '일정'}</span>
                                 </>
                             )}
                         </button>
@@ -1010,7 +1021,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         {/* Panel Header */}
                         <div className="p-5 border-b border-gray-100/50 pt-12 sm:pt-6">
                             <h2 className="text-xl font-black text-gray-800 leading-tight">{tripPlan.tripTitle}</h2>
-                            {estimatedCost && <p className="text-sm font-bold text-indigo-600 mt-1">예상 비용: {estimatedCost}</p>}
+                            {estimatedCost && <p className="text-sm font-bold text-indigo-600 mt-1">{language === 'en' ? 'Estimated Cost' : '예상 비용'}: {estimatedCost}</p>}
                         </div>
 
                         {/* Vertical List */}
@@ -1046,7 +1057,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                             <div className="flex flex-col items-center justify-center -my-2 z-10 relative pointer-events-none">
                                                 <div className="h-4 border-l-2 border-dashed border-gray-300"></div>
                                                 <div className="bg-white text-gray-600 text-[11px] font-bold px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center gap-1">
-                                                    {item.place.transitToNext}
+                                                    {formatTransitText(item.place.transitToNext)}
                                                 </div>
                                                 <div className="h-4 border-l-2 border-dashed border-gray-300"></div>
                                             </div>
@@ -1062,9 +1073,9 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {isEditMode && (
                     <div className="absolute bottom-[100px] left-4 right-4 bg-white/95 backdrop-blur-xl p-4 rounded-[24px] shadow-2xl z-20 max-h-[50vh] overflow-y-auto custom-scrollbar border border-gray-200">
                         <div className="flex justify-between items-center mb-3">
-                            <h3 className="font-black text-indigo-600 flex items-center gap-1"><Pencil size={18} /> 일정 편집</h3>
-                            <button onClick={(e) => { e.stopPropagation(); handleAutoFixAll(); }} disabled={loadingAction === 'autoFix'} className="bg-violet-100 text-violet-600 py-1 px-3 rounded-full text-xs font-bold flex items-center gap-1 hover:bg-violet-200" title="위치 보정">
-                                {loadingAction === 'autoFix' ? <Loader2 className="animate-spin" size={14} /> : <Wand2 size={14} />} 전체 경로 재탐색
+                            <h3 className="font-black text-indigo-600 flex items-center gap-1"><Pencil size={18} /> {language === 'en' ? 'Edit Itinerary' : '일정 편집'}</h3>
+                            <button onClick={(e) => { e.stopPropagation(); handleAutoFixAll(); }} disabled={loadingAction === 'autoFix'} className="bg-violet-100 text-violet-600 py-1 px-3 rounded-full text-xs font-bold flex items-center gap-1 hover:bg-violet-200" title={language === 'en' ? "Calibrate Locations" : "위치 보정"}>
+                                {loadingAction === 'autoFix' ? <Loader2 className="animate-spin" size={14} /> : <Wand2 size={14} />} {language === 'en' ? 'Recalculate All' : '전체 경로 재탐색'}
                             </button>
                         </div>
                         {tripPlan.itinerary?.map((dayItem, dayIdx) => (
@@ -1074,10 +1085,10 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                     {dayItem.places.map((place, placeIdx) => (
                                         <div key={placeIdx} className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
                                             <div className="flex gap-2 mb-2">
-                                                <input type="text" value={place.name} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'name', e.target.value)} className="flex-1 font-bold text-sm p-1.5 border-b border-indigo-200 outline-none bg-indigo-50/50 rounded-t" placeholder="장소명" />
+                                                <input type="text" value={place.name} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'name', e.target.value)} className="flex-1 font-bold text-sm p-1.5 border-b border-indigo-200 outline-none bg-indigo-50/50 rounded-t" placeholder={language === 'en' ? "Place Name" : "장소명"} />
                                                 <button onClick={() => handleUpdateLocation(dayIdx, placeIdx, place.name)} className="p-1.5 rounded bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"><Search size={14} /></button>
                                             </div>
-                                            <textarea value={place.description} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'description', e.target.value)} className="w-full text-xs p-1.5 border border-gray-200 rounded bg-gray-50 h-12 resize-none mb-2" placeholder="설명을 입력해주세요" />
+                                            <textarea value={place.description} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'description', e.target.value)} className="w-full text-xs p-1.5 border border-gray-200 rounded bg-gray-50 h-12 resize-none mb-2" placeholder={language === 'en' ? "Please enter description" : "설명을 입력해주세요"} />
 
                                             {/* ✨ 일정별 예산/지출 입력 필드 고도화 (MyPage와 동기화) */}
                                             <div className="space-y-2 mb-3">
@@ -1088,7 +1099,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                         type="number"
                                                         value={place.expectedBudget || ""}
                                                         onChange={(e) => handleEditChange(dayIdx, placeIdx, 'expectedBudget', parseInt(e.target.value) || 0)}
-                                                        placeholder="예상 경비 (원)"
+                                                        placeholder={language === 'en' ? "Expected Budget (KRW)" : "예상 경비 (원)"}
                                                         className="flex-1 bg-transparent border-none outline-none text-[11px] font-bold text-gray-700 placeholder:text-gray-300"
                                                     />
                                                 </div>
@@ -1099,7 +1110,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                         type="number"
                                                         value={place.actualExpense || ""}
                                                         onChange={(e) => handleEditChange(dayIdx, placeIdx, 'actualExpense', parseInt(e.target.value) || 0)}
-                                                        placeholder="실제 지출 (원)"
+                                                        placeholder={language === 'en' ? "Actual Expense (KRW)" : "실제 지출 (원)"}
                                                         className="flex-1 bg-transparent border-none outline-none text-[11px] font-bold text-brand-danger placeholder:text-brand-danger/40"
                                                     />
                                                 </div>
@@ -1113,7 +1124,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                         </div>
                                     ))}
                                 </div>
-                                <button onClick={() => handleAddPlace(dayIdx)} className="w-full mt-3 py-2 border-2 border-dashed border-brand-primary/20 rounded-xl text-brand-primary text-xs font-bold flex items-center justify-center gap-1 hover:bg-brand-primary/5"><Plus size={14} /> 장소 추가</button>
+                                <button onClick={() => handleAddPlace(dayIdx)} className="w-full mt-3 py-2 border-2 border-dashed border-brand-primary/20 rounded-xl text-brand-primary text-xs font-bold flex items-center justify-center gap-1 hover:bg-brand-primary/5"><Plus size={14} /> {language === 'en' ? 'Add Place' : '장소 추가'}</button>
                             </div>
                         ))}
                     </div>
@@ -1126,7 +1137,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {/* 노란색 버튼을 저장 버튼으로 활용 (브랜드 컬러 대비) */}
                 {!tripId && (
                     <div className="absolute bottom-[240px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
-                        <div className="bg-yellow-400 text-black text-[11px] font-bold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">저장하기<div className="absolute -bottom-1 right-1 w-3 h-3 bg-yellow-400 transform rotate-45"></div></div>
+                        <div className="bg-yellow-400 text-black text-[11px] font-bold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">{language === 'en' ? 'Save' : '저장하기'}<div className="absolute -bottom-1 right-1 w-3 h-3 bg-yellow-400 transform rotate-45"></div></div>
                         <button onClick={handleSaveClick} disabled={isSaving} className="w-14 h-14 bg-yellow-400 rounded-full shadow-2xl flex items-center justify-center text-[#3c1e1e] pointer-events-auto hover:bg-yellow-300 transition-transform active:scale-95 border-2 border-white">
                             {isSaving ? <Loader2 className="animate-spin" size={24} /> : <Save size={24} strokeWidth={2.5} />}
                         </button>
@@ -1137,10 +1148,10 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] sm:w-[85%] z-50 pointer-events-auto">
                     <nav className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-[32px] py-2 px-2 flex justify-around items-center">
                         <button onClick={handleReset} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-brand-accent transition active:scale-95">
-                            <Home size={22} /><span className="text-[10px] font-bold">홈으로</span>
+                            <Home size={22} /><span className="text-[10px] font-bold">{language === 'en' ? 'Home' : '홈으로'}</span>
                         </button>
                         <button onClick={handleKakaoConsult} className="flex flex-col items-center gap-1 p-2 w-[65px] text-yellow-400 hover:text-yellow-300 transition active:scale-95 text-center">
-                            <MessageCircle size={22} /><span className="text-[10px] font-bold">카톡상담</span>
+                            <MessageCircle size={22} /><span className="text-[10px] font-bold">{language === 'en' ? 'Kakao Chat' : '카톡상담'}</span>
                         </button>
 
                         {/* 🏨 안전 안심 숙소 찾기 단축 버튼 */}
@@ -1149,15 +1160,15 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             className="flex flex-col items-center gap-1 p-2 w-[65px] text-emerald-400 hover:text-emerald-300 transition active:scale-95 text-center"
                         >
                             <BedDouble size={22} />
-                            <span className="text-[10px] font-bold">숙소찾기</span>
+                            <span className="text-[10px] font-bold">{language === 'en' ? 'Hotels' : '숙소찾기'}</span>
                         </button>
 
                         <button onClick={handleShare} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-brand-secondary transition active:scale-95">
-                            <Share2 size={22} /><span className="text-[10px] font-bold">공유하기</span>
+                            <Share2 size={22} /><span className="text-[10px] font-bold">{language === 'en' ? 'Share' : '공유하기'}</span>
                         </button>
                         <button onClick={handleDownloadPDF} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-blue-400 transition active:scale-95 relative">
                             {loadingAction === 'pdf' ? <Loader2 className="animate-spin text-white mb-1" size={20} /> : <Download size={22} />}
-                            <span className="text-[10px] font-bold">PDF저장</span>
+                            <span className="text-[10px] font-bold">{language === 'en' ? 'Save PDF' : 'PDF저장'}</span>
                         </button>
                     </nav>
                 </div>
@@ -1170,20 +1181,20 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             <button onClick={() => setShowInfoModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200">
                                 <X size={18} />
                             </button>
-                            <h2 className="text-xl font-black mb-4 pr-10 text-gray-800 flex items-center gap-2"><Sparkles className="text-brand-accent" size={20} /> 여정 꿀팁 박스</h2>
+                            <h2 className="text-xl font-black mb-4 pr-10 text-gray-800 flex items-center gap-2"><Sparkles className="text-brand-accent" size={20} /> {language === 'en' ? 'Trip Info Box' : '여정 꿀팁 박스'}</h2>
 
                             <div className="flex bg-gray-100 p-1 rounded-xl mb-4">
-                                <button onClick={() => setInfoModalTab('budget')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'budget' ? 'bg-white text-brand-primary shadow-sm' : 'text-gray-500'}`}>예산</button>
-                                <button onClick={() => setInfoModalTab('hotels')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'hotels' ? 'bg-white text-brand-primary shadow-sm' : 'text-gray-500'}`}>추천 숙소</button>
-                                <button onClick={() => setInfoModalTab('tips')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'tips' ? 'bg-white text-brand-primary shadow-sm' : 'text-gray-500'}`}>팁 & 날씨</button>
+                                <button onClick={() => setInfoModalTab('budget')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'budget' ? 'bg-white text-brand-primary shadow-sm' : 'text-gray-500'}`}>{language === 'en' ? 'Budget' : '예산'}</button>
+                                <button onClick={() => setInfoModalTab('hotels')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'hotels' ? 'bg-white text-brand-primary shadow-sm' : 'text-gray-500'}`}>{language === 'en' ? 'Stays' : '추천 숙소'}</button>
+                                <button onClick={() => setInfoModalTab('tips')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'tips' ? 'bg-white text-brand-primary shadow-sm' : 'text-gray-500'}`}>{language === 'en' ? 'Tips & Weather' : '팁 & 날씨'}</button>
                             </div>
 
                             <div className="flex-1 overflow-y-auto custom-scrollbar pb-6">
                                 {infoModalTab === 'budget' && (
                                     <div className="space-y-3">
                                         <div className="bg-brand-primary/5 p-4 rounded-xl border border-brand-primary/10 flex justify-between items-center mb-4">
-                                            <span className="font-bold text-brand-primary">총 예상 비용</span>
-                                            <span className="font-black text-brand-primary text-lg">{estimatedCost || "예산 정보 없음"}</span>
+                                            <span className="font-bold text-brand-primary">{language === 'en' ? 'Total Estimated Cost' : '총 예상 비용'}</span>
+                                            <span className="font-black text-brand-primary text-lg">{estimatedCost || (language === 'en' ? 'No budget info' : "예산 정보 없음")}</span>
                                         </div>
                                         {tripPlan.budgetBreakdown?.map((item, idx) => (
                                             <div key={idx} className="flex gap-2 items-center p-3 bg-white border border-gray-100 rounded-xl shadow-sm">
@@ -1221,8 +1232,8 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                         <ShieldCheck size={20} />
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs font-black text-gray-800">{"🛡️ 여성 & 솔로 '안전 최우선' 필터"}</p>
-                                                        <p className="text-[10px] text-gray-500 font-bold mt-0.5">대로변·번화가 인접성 및 실시간 치안 우수 숙소 큐레이션</p>
+                                                        <p className="text-xs font-black text-gray-800">{language === 'en' ? "🛡️ Women & Solo 'Safety First' Filter" : "🛡️ 여성 & 솔로 '안전 최우선' 필터"}</p>
+                                                        <p className="text-[10px] text-gray-500 font-bold mt-0.5">{language === 'en' ? "Curation of stays with excellent safety and main street/downtown proximity" : "대로변·번화가 인접성 및 실시간 치안 우수 숙소 큐레이션"}</p>
                                                     </div>
                                                 </div>
                                                 <label className="relative inline-flex items-center cursor-pointer">
@@ -1244,7 +1255,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                 >
                                                     <div className="flex items-center justify-between gap-2 mb-2">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="bg-brand-primary text-white text-[9px] font-black px-1.5 py-0.5 rounded-md">추천 {idx + 1}</span>
+                                                            <span className="bg-brand-primary text-white text-[9px] font-black px-1.5 py-0.5 rounded-md">{language === 'en' ? `Rec ${idx + 1}` : `추천 ${idx + 1}`}</span>
                                                             <h4 className="font-bold text-sm sm:text-base text-gray-800 group-hover:text-brand-primary transition-colors">{hotel.name}</h4>
                                                         </div>
                                                         <span className="text-xs text-brand-primary font-bold bg-brand-primary/10 px-2.5 py-1 rounded-full shrink-0">{hotel.priceRange}</span>
@@ -1253,16 +1264,16 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                     {/* 🌟 안전 마이크로 배지 그룹 */}
                                                     <div className="flex flex-wrap gap-1.5 mb-3">
                                                         <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-md flex items-center gap-0.5">
-                                                            🛡️ 치안 안전 {hotel.safetyScore}점
+                                                            🛡️ {language === 'en' ? `Safety Score ${hotel.safetyScore}` : `치안 안전 ${hotel.safetyScore}점`}
                                                         </span>
                                                         {hotel.isMainStreet && (
                                                             <span className="text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100 px-2 py-0.5 rounded-md flex items-center gap-0.5">
-                                                                📍 대로변·번화가 인접
+                                                                📍 {language === 'en' ? 'Main Street/Downtown' : '대로변·번화가 인접'}
                                                             </span>
                                                         )}
                                                         {hotel.soloFriendly && (
                                                             <span className="text-[10px] font-bold bg-purple-50 text-purple-600 border border-purple-100 px-2 py-0.5 rounded-md flex items-center gap-0.5">
-                                                                🏆 1인 혼행족 맞춤형
+                                                                🏆 {language === 'en' ? 'Solo Traveler Friendly' : '1인 혼행족 맞춤형'}
                                                             </span>
                                                         )}
                                                     </div>
@@ -1270,12 +1281,12 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                     <p className="text-xs text-gray-500 leading-relaxed bg-gray-50 p-2.5 rounded-xl border border-gray-100">{hotel.description}</p>
 
                                                     <div className="mt-3 flex justify-end gap-3.5 border-t border-gray-100 pt-3">
-                                                        <a href={getTripLink(hotel.name, userInfo?.destination || "", language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-extrabold text-brand-primary flex items-center gap-0.5 hover:underline">Trip.com 최저가 <ExternalLink size={12} /></a>
-                                                        <a href={getKlookLink(hotel.name, language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-extrabold text-orange-500 flex items-center gap-0.5 hover:underline">Klook 액티비티 <ExternalLink size={12} /></a>
+                                                        <a href={getTripLink(hotel.name, userInfo?.destination || "", language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-extrabold text-brand-primary flex items-center gap-0.5 hover:underline">{language === 'en' ? 'Trip.com Lowest' : 'Trip.com 최저가'} <ExternalLink size={12} /></a>
+                                                        <a href={getKlookLink(hotel.name, language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-extrabold text-orange-500 flex items-center gap-0.5 hover:underline">{language === 'en' ? 'Klook Activities' : 'Klook 액티비티'} <ExternalLink size={12} /></a>
                                                     </div>
                                                 </div>
                                             )) : (
-                                                <div className="text-center text-gray-400 p-10 text-sm font-medium">추천 숙소 정보가 없습니다.</div>
+                                                <div className="text-center text-gray-400 p-10 text-sm font-medium">{language === 'en' ? 'No recommended stays available.' : '추천 숙소 정보가 없습니다.'}</div>
                                             )}
                                         </div>
                                     );
@@ -1286,7 +1297,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                             <div className="bg-gradient-to-br from-cyan-50 to-blue-50 p-4 rounded-2xl border border-cyan-100 flex items-start gap-4 mb-4">
                                                 <div className="bg-white p-3 rounded-full text-cyan-500 shadow-sm shrink-0"><ShieldCheck size={24} /></div>
                                                 <div>
-                                                    <p className="font-black text-cyan-900 mb-1">안심 & 안전 가이드</p>
+                                                    <p className="font-black text-cyan-900 mb-1">{language === 'en' ? 'Safety Guide' : '안심 & 안전 가이드'}</p>
                                                     <p className="text-sm text-cyan-800 leading-relaxed font-medium whitespace-pre-wrap">{safetyAdvice}</p>
                                                 </div>
                                             </div>
@@ -1295,7 +1306,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-2xl border border-blue-100 flex items-start gap-4 mb-4">
                                                 <div className="bg-white p-3 rounded-full text-amber-500 shadow-sm shrink-0"><Sun size={24} /></div>
                                                 <div>
-                                                    <p className="font-black text-blue-900 mb-1">날씨 정보</p>
+                                                    <p className="font-black text-blue-900 mb-1">{language === 'en' ? 'Weather Info' : '날씨 정보'}</p>
                                                     <p className="text-sm text-blue-800 leading-relaxed">{weather}</p>
                                                 </div>
                                             </div>
@@ -1304,7 +1315,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                             <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-2xl border border-amber-100 flex items-start gap-4">
                                                 <div className="bg-white p-3 rounded-full text-amber-500 shadow-sm shrink-0"><Lightbulb size={24} /></div>
                                                 <div>
-                                                    <p className="font-black text-amber-900 mb-2">여행 꿀팁</p>
+                                                    <p className="font-black text-amber-900 mb-2">{language === 'en' ? 'Travel Tips' : '여행 꿀팁'}</p>
                                                     <ul className="text-sm text-amber-800 space-y-2 list-disc list-inside">
                                                         {travelTips.map((tip, i) => <li key={i}>{tip}</li>)}
                                                     </ul>
@@ -1326,25 +1337,25 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             <button onClick={() => setShowMatchModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500"><X size={18} /></button>
                             <div className="text-center mb-6 mt-2">
                                 <div className="w-16 h-16 bg-gradient-to-tr from-brand-primary to-brand-secondary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-primary/30 animate-bounce"><Sparkles size={32} className="text-white" /></div>
-                                <h3 className="text-xl font-black text-gray-900 mb-1">여행 메이트 추천</h3>
-                                <p className="text-sm text-gray-500 font-bold">비슷한 성향의 여행자를 찾았어요!</p>
+                                <h3 className="text-xl font-black text-gray-900 mb-1">{language === 'en' ? 'Travel Mate Recommendations' : '여행 메이트 추천'}</h3>
+                                <p className="text-sm text-gray-500 font-bold">{language === 'en' ? 'We found travelers with similar styles!' : '비슷한 성향의 여행자를 찾았어요!'}</p>
                             </div>
                             <div className="space-y-3 mb-6">
                                 {realMates.length === 0 ? (
-                                    <p className="text-center text-sm text-gray-400 font-bold py-4">아직 추천할 만한 유저가 없습니다.</p>
+                                    <p className="text-center text-sm text-gray-400 font-bold py-4">{language === 'en' ? 'No recommended users yet.' : '아직 추천할 만한 유저가 없습니다.'}</p>
                                 ) : (
                                     realMates.map(mate => (
                                         <div key={mate.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
                                             <div className="flex items-center gap-3">
                                                 <img src={mate.profileImgBase64 || "https://i.pravatar.cc/150?u=" + mate.id} className="w-12 h-12 rounded-full object-cover border-2 border-brand-primary/20" />
-                                                <div><p className="font-bold text-gray-900">{mate.name}</p><p className="text-[10px] text-gray-400 font-bold truncate max-w-[120px]">{mate.bio || "반가워요!"}</p></div>
+                                                <div><p className="font-bold text-gray-900">{mate.name}</p><p className="text-[10px] text-gray-400 font-bold truncate max-w-[120px]">{mate.bio || (language === 'en' ? "Hello!" : "반가워요!")}</p></div>
                                             </div>
                                             <button onClick={() => handleRequestRealMate(mate)} className="bg-brand-primary/10 text-brand-primary w-10 h-10 rounded-full flex items-center justify-center hover:bg-brand-primary hover:text-white transition"><Send size={16} /></button>
                                         </div>
                                     ))
                                 )}
                             </div>
-                            <button onClick={() => setShowMatchModal(false)} className="w-full bg-gray-100 text-gray-600 font-bold py-3.5 rounded-2xl">나중에 할게요</button>
+                            <button onClick={() => setShowMatchModal(false)} className="w-full bg-gray-100 text-gray-600 font-bold py-3.5 rounded-2xl">{language === 'en' ? 'Maybe Later' : '나중에 할게요'}</button>
                         </div>
                     </div>
                 )}
@@ -1365,11 +1376,11 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowResetConfirm(false)}></div>
                         <div className="bg-white w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95">
                             <div className="w-16 h-16 bg-brand-danger/10 rounded-2xl flex items-center justify-center text-brand-danger mb-4 shadow-sm"><RotateCcw size={32} /></div>
-                            <h3 className="text-xl font-black text-gray-900 mb-2 text-center">새로운 여행 시작</h3>
-                            <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed">초기 화면으로 돌아가서<br />새로운 여행 일정을 계획하시겠습니까?</p>
+                            <h3 className="text-xl font-black text-gray-900 mb-2 text-center">{language === 'en' ? 'Start New Trip' : '새로운 여행 시작'}</h3>
+                            <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed">{language === 'en' ? <>Go back to the main screen<br />to plan a new trip?</> : <>초기 화면으로 돌아가서<br />새로운 여행 일정을 계획하시겠습니까?</>}</p>
                             <div className="flex gap-3 w-full">
-                                <button onClick={() => setShowResetConfirm(false)} className="flex-1 py-4 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">취소</button>
-                                <button onClick={confirmReset} className="flex-1 py-4 rounded-xl font-bold text-white bg-brand-danger hover:bg-brand-danger/90 transition-colors shadow-md">확인</button>
+                                <button onClick={() => setShowResetConfirm(false)} className="flex-1 py-4 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">{language === 'en' ? 'Cancel' : '취소'}</button>
+                                <button onClick={confirmReset} className="flex-1 py-4 rounded-xl font-bold text-white bg-brand-danger hover:bg-brand-danger/90 transition-colors shadow-md">{language === 'en' ? 'Confirm' : '확인'}</button>
                             </div>
                         </div>
                     </div>
@@ -1382,13 +1393,20 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         <div className="bg-white w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95">
                             <button onClick={() => setShowSaveModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500"><X size={18} /></button>
                             <div className="w-16 h-16 bg-linear-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg"><Save size={32} /></div>
-                            <h3 className="text-xl font-black text-gray-900 mb-1">일정을 저장할까요?</h3>
-                            <p className="text-sm text-gray-500 mb-6 text-center">저장된 일정은 마이페이지에서<br />수정할 수 있어요.</p>
+                            <h3 className="text-xl font-black text-gray-900 mb-1">{language === 'en' ? 'Save Itinerary' : '일정을 저장할까요?'}</h3>
+                            <p className="text-sm text-gray-500 mb-6 text-center">{language === 'en' ? <>Saved itineraries can be<br />edited in My Page.</> : <>저장된 일정은 마이페이지에서<br />수정할 수 있어요.</>}</p>
                             <div onClick={() => setShareToFeed(!shareToFeed)} className={`w-full p-4 rounded-xl border-2 flex items-center gap-3 cursor-pointer transition-all mb-6 ${shareToFeed ? 'border-brand-primary bg-brand-primary/5' : 'border-gray-200 bg-gray-50'}`}>
                                 <div className={`w-6 h-6 rounded-md flex items-center justify-center ${shareToFeed ? 'bg-brand-primary text-white' : 'bg-gray-300'}`}><Check size={16} strokeWidth={3} /></div>
-                                <div className="text-left flex-1"><p className={`text-sm font-bold ${shareToFeed ? 'text-brand-primary' : 'text-gray-600'}`}>여행자 피드 공유 (100P 적립)</p><p className="text-[10px] text-gray-400">다른 여행자들에게 영감을 주세요!</p></div>
+                                <div className="text-left flex-1">
+                                    <p className={`text-sm font-bold ${shareToFeed ? 'text-brand-primary' : 'text-gray-600'}`}>
+                                        {language === 'en' ? 'Share to Traveler Feed (+100P)' : '여행자 피드 공유 (100P 적립)'}
+                                    </p>
+                                    <p className="text-[10px] text-gray-400">
+                                        {language === 'en' ? 'Inspire other travelers!' : '다른 여행자들에게 영감을 주세요!'}
+                                    </p>
+                                </div>
                             </div>
-                            <button onClick={executeSave} disabled={isSaving} className="w-full bg-gray-900 text-white font-bold text-lg py-4 rounded-2xl shadow-xl hover:bg-black transition">{isSaving ? <Loader2 className="animate-spin" size={20} /> : "저장 완료"}</button>
+                            <button onClick={executeSave} disabled={isSaving} className="w-full bg-gray-900 text-white font-bold text-lg py-4 rounded-2xl shadow-xl hover:bg-black transition">{isSaving ? <Loader2 className="animate-spin" size={20} /> : (language === 'en' ? "Save" : "저장 완료")}</button>
                         </div>
                     </div>
                 )}
@@ -1401,15 +1419,15 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         <div className="pdf-item text-center border-b-2 border-black pb-5 mb-8">
                             {theme && <span style={{ display: 'inline-block', backgroundColor: '#0F766E', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>{theme}</span>}
                             <h1 className="text-3xl font-bold mb-2">{tripPlan.tripTitle}</h1>
-                            <p className="text-gray-500"> 여행 계획서 by Trip Maker</p>
+                            <p className="text-gray-500"> {language === 'en' ? 'Travel Plan by Trip Maker' : '여행 계획서 by Trip Maker'}</p>
                         </div>
                         <div className="pdf-item mb-8">
-                            <h2 className="text-xl font-bold border-l-4 border-brand-primary pl-3 mb-4">1. 여행 개요 및 예산</h2>
+                            <h2 className="text-xl font-bold border-l-4 border-brand-primary pl-3 mb-4">{language === 'en' ? '1. Trip Overview & Budget' : '1. 여행 개요 및 예산'}</h2>
                             <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
                                 <ul className="space-y-2">
-                                    <li className="flex"><span className="font-bold w-24">총 예상 비용:</span> {estimatedCost}</li>
+                                    <li className="flex"><span className="font-bold w-24">{language === 'en' ? 'Total Cost:' : '총 예상 비용:'}</span> {estimatedCost}</li>
                                     <li>
-                                        <span className="font-bold block mb-1">예산 상세:</span>
+                                        <span className="font-bold block mb-1">{language === 'en' ? 'Budget Details:' : '예산 상세:'}</span>
                                         <ul className="list-disc list-inside pl-2 text-sm text-gray-700">
                                             {tripPlan.budgetBreakdown?.map((b, i) => <li key={i}>{b}</li>)}
                                         </ul>
@@ -1418,7 +1436,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             </div>
                         </div>
                         <div className="mb-8">
-                            <h2 className="pdf-item text-xl font-bold border-l-4 border-brand-primary pl-3 mb-4">2. 상세 일정</h2>
+                            <h2 className="pdf-item text-xl font-bold border-l-4 border-brand-primary pl-3 mb-4">{language === 'en' ? '2. Detailed Itinerary' : '2. 상세 일정'}</h2>
                             {tripPlan.itinerary?.map((day, idx) => (
                                 <div key={idx} className="mb-6">
                                     <div className="pdf-item mb-3">
@@ -1437,13 +1455,13 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                         </h4>
                                                         {place.budget && (
                                                             <div style={{ marginTop: '5px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 'bold', color: '#0F766E' }}>
-                                                                💰 예산: {place.budget}
+                                                                💰 {language === 'en' ? 'Budget' : '예산'}: {place.budget}
                                                             </div>
                                                         )}
                                                         <p className="text-xs text-gray-500 mt-1">{place.description}</p>
                                                         {place.reason && (
                                                             <div style={{ marginTop: '8px', padding: '8px', backgroundColor: '#ecfeff', borderRadius: '8px', fontSize: '11px', color: '#0891b2', border: '1px solid #cffafe' }}>
-                                                                <strong>💡 AI 추천 이유:</strong> {place.reason}
+                                                                <strong>💡 {language === 'en' ? 'AI Recommendation Reason' : 'AI 추천 이유'}:</strong> {place.reason}
                                                             </div>
                                                         )}
                                                     </div>
@@ -1455,14 +1473,14 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             ))}
                         </div>
                         <div className="pdf-item">
-                            <h2 className="text-xl font-bold border-l-4 border-brand-primary pl-3 mb-4">3. 여행 정보</h2>
+                            <h2 className="text-xl font-bold border-l-4 border-brand-primary pl-3 mb-4">{language === 'en' ? '3. Travel Information' : '3. 여행 정보'}</h2>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="border p-4 rounded-lg">
-                                    <h4 className="font-bold mb-2">☀️ 날씨 정보</h4>
-                                    <p className="text-sm text-gray-700">{weather || "정보 없음"}</p>
+                                    <h4 className="font-bold mb-2">{language === 'en' ? '☀️ Weather Info' : '☀️ 날씨 정보'}</h4>
+                                    <p className="text-sm text-gray-700">{weather || (language === 'en' ? 'No information' : "정보 없음")}</p>
                                 </div>
                                 <div className="border p-4 rounded-lg">
-                                    <h4 className="font-bold mb-2">💡 여행 꿀팁</h4>
+                                    <h4 className="font-bold mb-2">{language === 'en' ? '💡 Travel Tips' : '💡 여행 꿀팁'}</h4>
                                     <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
                                         {travelTips?.map((t, i) => <li key={i}>{t}</li>)}
                                     </ul>

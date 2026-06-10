@@ -5,23 +5,36 @@ import { RotateCcw, Smartphone } from 'lucide-react';
 
 const PortraitOnly = () => {
     const [isLandscape, setIsLandscape] = useState(false);
+    const [language, setLanguage] = useState('ko');
 
     useEffect(() => {
-        const checkOrientation = () => {
-            // 태블릿 이상(768px 초과)에서는 가로 모드 허용, 모바일에서만 제한
-            const isMobile = window.innerWidth <= 768;
-            const landscape = window.innerHeight < window.innerWidth;
-            setIsLandscape(isMobile && landscape);
-        };
+        if (typeof window !== "undefined") {
+            const savedLang = localStorage.getItem('language') || 'ko';
+            setLanguage(savedLang);
 
-        checkOrientation();
-        window.addEventListener('resize', checkOrientation);
-        window.addEventListener('orientationchange', checkOrientation);
+            const handleLangChange = () => {
+                const updatedLang = localStorage.getItem('language') || 'ko';
+                setLanguage(updatedLang);
+            };
+            window.addEventListener('languageChanged', handleLangChange);
+            
+            const checkOrientation = () => {
+                // 태블릿 이상(768px 초과)에서는 가로 모드 허용, 모바일에서만 제한
+                const isMobile = window.innerWidth <= 768;
+                const landscape = window.innerHeight < window.innerWidth;
+                setIsLandscape(isMobile && landscape);
+            };
 
-        return () => {
-            window.removeEventListener('resize', checkOrientation);
-            window.removeEventListener('orientationchange', checkOrientation);
-        };
+            checkOrientation();
+            window.addEventListener('resize', checkOrientation);
+            window.addEventListener('orientationchange', checkOrientation);
+
+            return () => {
+                window.removeEventListener('languageChanged', handleLangChange);
+                window.removeEventListener('resize', checkOrientation);
+                window.removeEventListener('orientationchange', checkOrientation);
+            };
+        }
     }, []);
 
     if (!isLandscape) return null;
@@ -40,12 +53,21 @@ const PortraitOnly = () => {
             </div>
             
             <h2 className="text-2xl font-black text-white mb-4 tracking-tight">
-                세로 모드로 전환해 주세요
+                {language === 'en' ? 'Please rotate to portrait mode' : '세로 모드로 전환해 주세요'}
             </h2>
             
             <p className="text-gray-400 text-sm font-medium leading-relaxed max-w-[240px] break-keep">
-                Trip Maker는 세로 화면에 최적화되어 있습니다.<br/>
-                기기를 세로로 돌려주시면 편리하게 이용하실 수 있습니다.
+                {language === 'en' ? (
+                    <>
+                        Trip Maker is optimized for portrait mode.<br/>
+                        Please rotate your device to portrait.
+                    </>
+                ) : (
+                    <>
+                        Trip Maker는 세로 화면에 최적화되어 있습니다.<br/>
+                        기기를 세로로 돌려주시면 편리하게 이용하실 수 있습니다.
+                    </>
+                )}
             </p>
 
             <div className="mt-12 flex gap-1.5">

@@ -38,7 +38,7 @@ export default function TravelNews({ language = 'ko' }) {
             const items = (data.items || [])
                 .filter(item => item.image)
                 .slice(0, 10)
-                .map(item => ({ ...item, tag: '🎉 축제/행사' }));
+                .map(item => ({ ...item, tag: language === 'en' ? '🎉 Festival/Event' : '🎉 축제/행사' }));
 
             setNewsItems(items);
         } catch (err) {
@@ -103,10 +103,10 @@ export default function TravelNews({ language = 'ko' }) {
         return (
             <div className="w-full text-center py-4">
                 <p className="text-sm text-gray-400 font-medium">
-                    {error ? '소식을 불러오지 못했어요 😿' : '새로운 소식이 없어요'}
+                    {error ? (language === 'en' ? 'Failed to load news 😿' : '소식을 불러오지 못했어요 😿') : (language === 'en' ? 'No new updates' : '새로운 소식이 없어요')}
                 </p>
                 <button onClick={fetchNews} className="mt-2 text-xs text-brand-primary font-bold flex items-center gap-1 mx-auto">
-                    <RefreshCw size={12} /> 다시 시도
+                    <RefreshCw size={12} /> {language === 'en' ? 'Retry' : '다시 시도'}
                 </button>
             </div>
         );
