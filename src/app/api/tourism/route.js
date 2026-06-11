@@ -7,7 +7,7 @@ export async function GET(request) {
     const numOfRows = searchParams.get("numOfRows") || "10";
 
     // 공공데이터포털 한국관광공사 국문 관광정보 서비스 인증키
-    const serviceKey = "8ed14b467e021a7ef5801d0a9628602170d0414f8ade42814a9cde30ec04f2fb";
+    const serviceKey = "a4b7729944fec19e456ea3c89d4009106447e1fbd2dbdbb4db0cff882b6bf98c";
     
     // 오늘 날짜 구하기 (YYYYMMDD 형식)
     const today = new Date();
