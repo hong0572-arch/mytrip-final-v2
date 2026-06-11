@@ -47,6 +47,146 @@ const backgroundImages = [
     "/4.JPG",
 ];
 
+const CITY_TO_IATA = {
+    // 🇰🇷 대한민국 (Korea)
+    "인천": "ICN", "Incheon": "ICN", "서울": "ICN", "Seoul": "ICN",
+    "김포": "GMP", "Gimpo": "GMP",
+    "부산": "PUS", "Busan": "PUS", "김해": "PUS",
+    "제주": "CJU", "Jeju": "CJU",
+    "대구": "TAE", "Daegu": "TAE",
+    "청주": "CJJ", "Cheongju": "CJJ",
+
+    // 🇯🇵 일본 (Japan)
+    "오사카": "KIX", "Osaka": "KIX", "간사이": "KIX",
+    "도쿄": "NRT", "Tokyo": "NRT", "나리타": "NRT", "하네다": "HND",
+    "후쿠오카": "FUK", "Fukuoka": "FUK",
+    "삿포로": "CTS", "Sapporo": "CTS", "치토세": "CTS", "홋카이도": "CTS",
+    "오키나와": "OKA", "Okinawa": "OKA", "나하": "OKA",
+    "나고야": "NGO", "Nagoya": "NGO",
+    "교토": "KIX", "Kyoto": "KIX", // 교토는 공항이 없어서 오사카로 연결
+
+    // 🇨🇳 중화권 (China/Taiwan/HK)
+    "홍콩": "HKG", "Hong Kong": "HKG",
+    "마카오": "MFM", "Macau": "MFM",
+    "타이베이": "TPE", "Taipei": "TPE", "대만": "TPE", "Taiwan": "TPE",
+    "가오슝": "KHH", "Kaohsiung": "KHH",
+    "상하이": "PVG", "Shanghai": "PVG", "푸동": "PVG",
+    "베이징": "PEK", "Beijing": "PEK", "북경": "PEK",
+    "칭다오": "TAO", "Qingdao": "TAO",
+
+    // 🌏 동남아시아 (Southeast Asia)
+    "다낭": "DAD", "Danang": "DAD", "Da Nang": "DAD",
+    "나트랑": "CXR", "Nha Trang": "CXR",
+    "하노이": "HAN", "Hanoi": "HAN",
+    "호치민": "SGN", "Ho Chi Minh": "SGN", "사이공": "SGN",
+    "푸꾸옥": "PQC", "Phu Quoc": "PQC",
+    "베트남": "DAD", // 베트남만 입력하면 다낭으로 (인기도 기준)
+
+    "방콕": "BKK", "Bangkok": "BKK", "수완나품": "BKK",
+    "치앙마이": "CNX", "Chiang Mai": "CNX",
+    "푸켓": "HKT", "Phuket": "HKT",
+    "태국": "BKK",
+
+    "세부": "CEB", "Cebu": "CEB",
+    "보홀": "TAG", "Bohol": "TAG",
+    "마닐라": "MNL", "Manila": "MNL",
+    "보라카이": "KLO", "Boracay": "KLO", "칼리보": "KLO",
+    "필리핀": "CEB",
+
+    "싱가포르": "SIN", "Singapore": "SIN",
+    "발리": "DPS", "Bali": "DPS", "덴파사르": "DPS",
+    "자카르타": "CGK", "Jakarta": "CGK",
+    "코타키나발루": "BKI", "Kota Kinabalu": "BKI",
+    "쿠알라룸푸르": "KUL", "Kuala Lumpur": "KUL",
+
+    // 🇪🇺 유럽 (Europe) - 주요 허브 및 관광지
+    // 🇫🇷 프랑스 (France)
+    "파리": "CDG", "Paris": "CDG",
+    "니스": "NCE", "Nice": "NCE", "남부 프랑스": "NCE", "South France": "NCE",
+    "마르세유": "MRS", "Marseille": "MRS", "Marseilles": "MRS",
+    "리옹": "LYS", "Lyon": "LYS",
+    "프랑스": "CDG", "France": "CDG",
+
+    "로마": "FCO", "Rome": "FCO", "Roma": "FCO",
+    "밀라노": "MXP", "Milan": "MXP", "Milano": "MXP",
+    "베네치아": "VCE", "Venice": "VCE", "Venezia": "VCE",
+    "피렌체": "FLR", "Florence": "FLR", "Firenze": "FLR",
+    "나폴리": "NAP", "Naples": "NAP", "Napoli": "NAP",
+    "이탈리아": "FCO", "Italy": "FCO", // 국가명 검색 시 로마로 연결
+
+    // 🇪🇸 스페인 (Spain)
+    "바르셀로나": "BCN", "Barcelona": "BCN",
+    "마드리드": "MAD", "Madrid": "MAD",
+    "세비야": "SVQ", "Seville": "SVQ",
+    "스페인": "MAD", "Spain": "MAD",
+    "그라나다": "GRX", "Granada": "GRX",
+
+    // 🇨🇵 포르투갈 (Portugal)
+    "리스본": "LIS", "Lisbon": "LIS",
+    "포르투": "OPO", "Porto": "OPO",
+
+    // 영국/독일/스위스/기타
+    // 🇬🇧 영국 (UK)
+    "런던": "LHR", "London": "LHR", "히드로": "LHR",
+    "영국": "LHR", "UK": "LHR",
+    "맨체스터": "MAN", "Manchester": "MAN",
+    "에든버러": "EDI", "Edinburgh": "EDI",
+
+    "프랑크푸르트": "FRA", "Frankfurt": "FRA",
+    "뮌헨": "MUC", "Munich": "MUC",
+    "베를린": "BER", "Berlin": "BER",
+
+    // 🇨🇭 스위스 (Switzerland)
+    "취리히": "ZRH", "Zurich": "ZRH",
+    "제네바": "GVA", "Geneva": "GVA",
+    "인터라켄": "ZRH", "Interlaken": "ZRH",
+    "스위스": "ZRH", "Switzerland": "ZRH",
+
+    "암스테르담": "AMS", "Amsterdam": "AMS", "네덜란드": "AMS",
+    "브뤼셀": "BRU", "Brussels": "BRU", "벨기에": "BRU",
+
+    "프라하": "PRG", "Prague": "PRG", "체코": "PRG",
+    "비엔나": "VIE", "Vienna": "VIE", "오스트리아": "VIE",
+    "부다페스트": "BUD", "Budapest": "BUD", "헝가리": "BUD",
+    "동유럽": "PRG", // 동유럽 대표 -> 프라하
+
+    "이스탄불": "IST", "Istanbul": "IST", "튀르키예": "IST", "터키": "IST",
+    "아테네": "ATH", "Athens": "ATH", "그리스": "ATH",
+    "산토리니": "JTR", "Santorini": "JTR",
+    "자그레브": "ZAG", "Zagreb": "ZAG", "크로아티아": "ZAG",
+
+    // 🇺🇸 미주 (Americas)
+    "뉴욕": "JFK", "New York": "JFK",
+    "로스앤젤레스": "LAX", "Los Angeles": "LAX", "LA": "LAX", "엘에이": "LAX",
+    "샌프란시스코": "SFO", "San Francisco": "SFO",
+    "라스베이거스": "LAS", "Las Vegas": "LAS",
+    "시애틀": "SEA", "Seattle": "SEA",
+    "하와이": "HNL", "Hawaii": "HNL", "호놀룰루": "HNL",
+    "괌": "GUM", "Guam": "GUM",
+    "사이판": "SPN", "Saipan": "SPN",
+    "밴쿠버": "YVR", "Vancouver": "YVR", "캐나다": "YVR",
+    "토론토": "YYZ", "Toronto": "YYZ",
+    "칸쿤": "CUN", "Cancun": "CUN",
+
+    // 🇦🇺 대양주 (Oceania)
+    "시드니": "SYD", "Sydney": "SYD", "호주": "SYD",
+    "멜버른": "MEL", "Melbourne": "MEL",
+    "브리즈번": "BNE", "Brisbane": "BNE",
+    "오클랜드": "AKL", "Auckland": "AKL", "뉴질랜드": "AKL",
+
+    // 🌍 중동/아프리카 (Middle East / Africa)
+    "두바이": "DXB", "Dubai": "DXB",
+    "아부다비": "AUH", "Abu Dhabi": "AUH",
+    "리야드": "RUH", "Riyadh": "RUH", "사우디": "RUH",
+    "쿠웨이트": "KWI", "Kuwait": "KWI",
+    "제다": "JED", "Jeddah": "JED",
+    "도하": "DOH", "Doha": "DOH",
+    "카이로": "CAI", "Cairo": "CAI", "이집트": "CAI",
+    "케이프타운": "CPT", "Cape Town": "CPT", "남아공": "CPT",
+    "요하네스버그": "JNB", "Johannesburg": "JNB",
+    "카사블랑카": "CMN", "Casablanca": "CMN", "모로코": "CMN"
+};
+
 const tourOptions = [
     { id: '자유여행', label: '자유여행', enLabel: 'Solo/Free', desc: '내 맘대로 자유롭게', enDesc: 'Travel at my own pace' },
     { id: '소그룹', label: '소그룹 투어', enLabel: 'Small Group', desc: '우리끼리 편안하게', enDesc: 'Cozy and comfortable' },
@@ -188,6 +328,60 @@ const extractIataFromItinerary = (tripResult) => {
     return { inCode, outCode };
 };
 
+const calculateDDayNum = (startDateStr) => {
+    if (!startDateStr) return 999;
+    try { const today = new Date(); today.setHours(0, 0, 0, 0); const start = new Date(startDateStr); start.setHours(0, 0, 0, 0); return Math.ceil((start - today) / (1000 * 60 * 60 * 24)); } catch (e) { return 999; }
+};
+
+const calculateDDay = (startDateStr) => {
+    const diff = calculateDDayNum(startDateStr);
+    if (diff === 999) return "D-?"; if (diff === 0) return "D-Day"; if (diff > 0) return `D-${diff}`; return `D+${Math.abs(diff)}`;
+};
+
+const formatTripDate = (startStr, endStr, durationStr) => {
+    try {
+        if (!startStr) return "날짜 미정"; const start = new Date(startStr); if (isNaN(start.getTime())) return "날짜 미정";
+        const startFormatted = `${start.getFullYear()}.${String(start.getMonth() + 1).padStart(2, '0')}.${String(start.getDate()).padStart(2, '0')}`;
+        let endFormatted = ""; if (endStr) { const end = new Date(endStr); if (!isNaN(end.getTime())) { endFormatted = ` - ${String(end.getMonth() + 1).padStart(2, '0')}.${String(end.getDate()).padStart(2, '0')}`; } }
+        return `${startFormatted}${endFormatted}${durationStr ? ` (${durationStr})` : ""}`;
+    } catch (e) { return "날짜 오류"; }
+};
+
+const GlassCard = ({ children, className = "", onClick }) => (
+    <div onClick={onClick} className={`bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgba(0,0,0,0.05)] rounded-[20px] ${className}`}>{children}</div>
+);
+
+const getTripPhase = (trip) => {
+    if (!trip || !trip.startDate) return 'none';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(trip.startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = trip.endDate ? new Date(trip.endDate) : start;
+    end.setHours(0, 0, 0, 0);
+
+    if (today < start) return 'prep'; // 출발 전
+    if (today >= start && today <= end) return 'during'; // 여행 중
+    return 'post'; // 여행 완료
+};
+
+const getCoachingGuide = (trip) => {
+    if (!trip) return "";
+    const phase = getTripPhase(trip);
+    if (phase === 'prep') {
+        const ddayNum = calculateDDayNum(trip.startDate);
+        if (ddayNum === 0) return "🎉 드디어 오늘 출발일입니다! 공항 가기 전 여권과 예약 바우처를 최종 확인하세요.";
+        if (ddayNum <= 3) return `⏰ 출국 ${ddayNum}일 전입니다! 🔌 돼지코 플러그와 외화 환전 상태를 체크하세요.`;
+        if (ddayNum <= 7) return `✈️ 여행 일주일 전입니다. 🛡️ 안심 여행자 보험에 가입해 안전을 확보하세요!`;
+        return `🗓️ 여행 준비 코칭이 활성화되었습니다. 체크리스트를 하나씩 완료해보세요!`;
+    } else if (phase === 'during') {
+        return "🏃 실시간 안심 여행 코칭이 켜져 있어요! 물 섭취와 걸음 수를 기록해 신체 밸런스를 조절해보세요.";
+    } else {
+        return "✨ 여행 코칭이 무사히 완료되었습니다! 📸 보관함에 즐거운 추억 사진을 보관해보세요.";
+    }
+};
+
+
 // --- 3. 메인 Home 컴포넌트 ---
 export default function Home() {
     const router = useRouter();
@@ -195,6 +389,7 @@ export default function Home() {
     const { token, notificationPermission } = useFcmToken();
 
     // 상태 관리 (원본 유지 + 로그인 모달 추가)
+    const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [loadingText, setLoadingText] = useState("AI가 여행 계획을 짜고 있어요...");
     const [recommendedTrips, setRecommendedTrips] = useState([]);
@@ -752,6 +947,57 @@ export default function Home() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto scrollbar-hide pt-2 pb-32">
+                    {/* 🌟 진행 중이거나 가장 가까운 활성 여행에 대한 액티브 컨트롤 타워 (홈 화면 최상단 적용) */}
+                    {(user || session) && mySchedules.length > 0 && (() => {
+                        const activeTrip = mySchedules.find(t => calculateDDayNum(t.startDate) >= 0) || mySchedules[0];
+                        if (!activeTrip) return null;
+                        return (
+                            <div className="mb-2 mt-4 px-2 animate-fadeIn">
+                                <GlassCard className="p-5 bg-emerald-950/85 backdrop-blur-2xl text-white border border-emerald-500/35 shadow-2xl overflow-hidden relative group rounded-[28px]">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                                    <div className="relative z-10 flex flex-col gap-4">
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[13px] sm:text-[14px] font-extrabold bg-emerald-500 text-slate-950 border border-emerald-400 px-3 py-1 rounded-full uppercase tracking-wider">{calculateDDay(activeTrip.startDate)}</span>
+                                                <span className="text-[13px] sm:text-[14px] text-emerald-200 font-extrabold">현재 나의 여행 정보</span>
+                                            </div>
+                                            <span className="text-[22px] font-black">{activeTrip.icon || '✈️'}</span>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-3xl font-black text-white leading-tight">{activeTrip.destination || activeTrip.title}</h3>
+                                            <p className="text-[15px] text-slate-200 font-bold mt-2">{formatTripDate(activeTrip.startDate, activeTrip.endDate, activeTrip.duration)}</p>
+                                        </div>
+                                        
+                                        <div className="bg-emerald-900/40 px-4 py-3 rounded-2xl border border-emerald-500/30 mt-1 text-[13px] sm:text-[14px] font-extrabold text-emerald-100 leading-relaxed flex items-start gap-2 select-none">
+                                            <Sparkles size={15} className="shrink-0 mt-0.5 text-emerald-300" />
+                                            <span>{getCoachingGuide(activeTrip)}</span>
+                                        </div>
+                                        
+                                        {/* 퀵 바로가기 그리드 */}
+                                        <div className="grid grid-cols-4 gap-2 pt-3 border-t border-emerald-500/30 mt-1">
+                                            <button onClick={() => router.push('/mypage?tab=coach')} className="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white/10 hover:bg-white/15 transition border border-white/10 active:scale-95 cursor-pointer">
+                                                <Sparkles size={18} className="text-emerald-400" />
+                                                <span className="text-[11px] sm:text-[12px] font-extrabold text-white tracking-tight break-keep whitespace-nowrap">트립코치</span>
+                                            </button>
+                                            <button onClick={() => router.push('/mypage?tab=social')} className="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white/10 hover:bg-white/15 transition border border-white/10 active:scale-95 cursor-pointer">
+                                                <Users size={18} className="text-rose-400" />
+                                                <span className="text-[11px] sm:text-[12px] font-extrabold text-white tracking-tight break-keep whitespace-nowrap">동행 찾기</span>
+                                            </button>
+                                            <button onClick={() => router.push('/mypage?tab=wallet')} className="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white/10 hover:bg-white/15 transition border border-white/10 active:scale-95 cursor-pointer">
+                                                <Wallet size={18} className="text-indigo-400" />
+                                                <span className="text-[11px] sm:text-[12px] font-extrabold text-white tracking-tight break-keep whitespace-nowrap">트립머니</span>
+                                            </button>
+                                            <button onClick={() => router.push('/mypage?tab=vault')} className="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white/10 hover:bg-white/15 transition border border-white/10 active:scale-95 cursor-pointer">
+                                                <Box size={18} className="text-amber-400" />
+                                                <span className="text-[11px] sm:text-[12px] font-extrabold text-white tracking-tight break-keep whitespace-nowrap">보관함</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </GlassCard>
+                            </div>
+                        );
+                    })()}
+
                     {/* 상단 배너 — 냥프로 인사 → 여행 소식 자동 전환 */}
                     <div className="mb-8 mt-6 px-2">
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative bg-gradient-to-br from-white to-brand-primary/5 rounded-[1.5rem] p-5 border border-white shadow-lg overflow-hidden min-h-[160px]">
@@ -813,153 +1059,200 @@ export default function Home() {
 
                     <div className="px-4 pb-12">
                         {activeTab === 'create' && (
-                            <div className="space-y-8 animate-fadeIn">
-                                {/* 목적지 — 그림자 강화된 화이트 카드 */}
-                                <div className="bg-white/95 p-6 rounded-[2rem] shadow-2xl border border-white">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div className="flex items-center gap-2">
-                                            <label className="flex items-center gap-2 text-sm font-bold text-gray-500"><Sparkles size={16} className="text-brand-primary" /> {translations[language].label_where}</label>
-                                            <button onClick={fetchUserLocation} disabled={isLocationLoading} className="p-1.5 text-brand-primary hover:bg-brand-primary/10 rounded-full transition-all active:scale-95 flex items-center justify-center">
-                                                {isLocationLoading ? <RefreshCw size={14} className="animate-spin" /> : <MapPin size={18} />}
+                            <div className="space-y-6 animate-fadeIn">
+                                {/* 🌟 단계 표시용 진행바 인디케이터 */}
+                                <div className="flex justify-between items-center px-5 py-3.5 bg-white/80 backdrop-blur-md rounded-[20px] shadow-sm border border-gray-100">
+                                    {[1, 2, 3, 4].map(num => (
+                                        <div key={num} className="flex items-center gap-1.5">
+                                            <button
+                                                onClick={() => {
+                                                    if (num === 1) setStep(1);
+                                                    else if (num === 2 && formData.destination) setStep(2);
+                                                    else if (num === 3 && formData.destination && startDate && endDate) setStep(3);
+                                                    else if (num === 4 && formData.destination && startDate && endDate) setStep(4);
+                                                }}
+                                                className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs transition-all cursor-pointer select-none ${step === num ? 'bg-brand-primary text-white scale-110 shadow-md shadow-brand-primary/20' : step > num ? 'bg-brand-primary/15 text-brand-primary font-bold' : 'bg-gray-100 text-gray-400'}`}
+                                            >
+                                                {num}
                                             </button>
+                                            {num < 4 && <div className={`w-8 sm:w-12 h-0.5 rounded-full ${step > num ? 'bg-brand-primary/30' : 'bg-gray-100'}`} />}
                                         </div>
-                                    </div>
-                                    {/* 네이버/다음 스타일의 프리미엄 통합 검색바 */}
-                                    <div className="relative flex items-center bg-white border-2 border-brand-primary rounded-full px-5 py-3.5 shadow-[0_4px_16px_rgba(22,163,74,0.06)] focus-within:shadow-[0_4px_20px_rgba(22,163,74,0.18)] focus-within:border-brand-primary transition-all duration-300 gap-3 mb-4">
-                                        <Search size={20} className="text-brand-primary shrink-0" />
-                                        <input 
-                                            type="text" 
-                                            name="destination" 
-                                            value={formData.destination} 
-                                            onChange={handleInputChange} 
-                                            placeholder={listeningField === 'destination' ? translations[language].msg_listening : translations[language].placeholder_dest} 
-                                            className="w-full text-base sm:text-lg font-black text-gray-800 bg-transparent outline-none pr-2 placeholder:text-gray-400" 
-                                        />
-                                        <button 
-                                            type="button" 
-                                            onClick={() => handleVoiceInput('destination')} 
-                                            className={`p-2 rounded-full transition-all shrink-0 hover:bg-gray-100 active:scale-95 ${listeningField === 'destination' ? 'bg-brand-secondary text-white animate-pulse' : 'text-gray-400'}`}
-                                        >
-                                            <Mic size={18} />
-                                        </button>
-                                    </div>
-                                    <div className="flex bg-gray-100 p-1.5 rounded-2xl mb-4 gap-1.5 shadow-inner">
-                                        {['auto', 'domestic', 'international', 'daytrip'].map(type => (
-                                            <button key={type} onClick={() => {
-                                                if (type === 'daytrip') {
-                                                    const baseDate = startDate || new Date();
-                                                    setDateRange([baseDate, baseDate]);
-                                                    setFormData(prev => ({
-                                                        ...prev,
-                                                        regionType: 'daytrip',
-                                                        startDate: baseDate.toISOString().split('T')[0],
-                                                        endDate: baseDate.toISOString().split('T')[0],
-                                                        request: prev.request ? (prev.request.includes('당일치기') || prev.request.includes('day trip') ? prev.request : `${prev.request}, ${language === 'en' ? 'day trip' : '당일치기 여행'}`) : (language === 'en' ? 'day trip' : '당일치기 여행')
-                                                    }));
-                                                } else {
-                                                    setFormData(prev => ({
-                                                        ...prev,
-                                                        regionType: type,
-                                                        request: prev.request.replace(', 당일치기 여행', '').replace('당일치기 여행', '').replace(', day trip', '').replace('day trip', '').trim()
-                                                    }));
-                                                }
-                                            }} className={`flex-1 text-xs sm:text-sm font-black py-3.5 rounded-xl transition-all duration-300 ${formData.regionType === type ? 'bg-white text-brand-primary shadow-md scale-[1.02]' : 'text-gray-500 hover:bg-white/50'}`}>
-                                                {type === 'auto' ? translations[language].region_auto : type === 'domestic' ? translations[language].region_domestic : type === 'international' ? translations[language].region_international : translations[language].region_daytrip}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-50">
-                                        {(language === 'en' ? QUICK_TAGS_EN : QUICK_TAGS).map((tag, idx) => (
-                                            <button key={idx} onClick={() => setFormData(prev => ({ ...prev, destination: prev.destination ? `${prev.destination}, ${cleanTagText(tag, language)}` : cleanTagText(tag, language) }))} className="bg-gray-50 border border-gray-100 text-gray-600 px-3 py-1.5 rounded-xl text-[12px] font-bold transition hover:bg-brand-primary/10 active:scale-95">{tag}</button>
-                                        ))}
-                                    </div>
+                                    ))}
                                 </div>
 
-                                {/* 날짜/인원/예산 (원본 유지) */}
-                                <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <label className="flex items-center gap-2 text-sm font-bold text-gray-500"><Calendar size={16} className="text-brand-primary" /> {translations[language].label_when}</label>
-                                        <button onClick={() => handleVoiceInput('date')} className={`p-2 rounded-full ${listeningField === 'date' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={16} /></button>
-                                    </div>
-                                    <DatePicker selectsRange={true} startDate={startDate} endDate={endDate} onChange={handleDateChange} minDate={new Date()} locale={language === 'en' ? enUS : ko} dateFormat="yyyy.MM.dd" placeholderText={translations[language].placeholder_date} className="w-full text-lg font-bold bg-transparent outline-none cursor-pointer" wrapperClassName="w-full" />
-                                </div>
-
-                                <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <label className="text-sm font-bold text-gray-600 block px-1">{translations[language].label_companion}</label>
-                                        <button onClick={() => handleVoiceInput('companion')} className={`p-1.5 rounded-full ${listeningField === 'companion' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={14} /></button>
-                                    </div>
-                                    <div className="grid grid-cols-5 gap-2">
-                                        {companionOptions.map((opt) => (
-                                            <button key={opt.id} onClick={() => setFormData({ ...formData, companion: opt.id })} className={`flex flex-col items-center justify-center py-3 rounded-2xl transition-all gap-1 ${formData.companion === opt.id ? 'bg-brand-primary text-white shadow-md scale-105' : 'bg-gray-50 text-gray-400'}`}>
-                                                {opt.icon} <span className="text-[10px] break-keep">{language === 'en' ? opt.enLabel : opt.label}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className={`p-4 rounded-3xl border transition-all ${isLuxury ? "bg-amber-50 border-amber-200" : "bg-white border-gray-100 shadow-sm"}`}>
-                                    <div className="flex gap-4 items-center justify-between">
-                                        {isLuxury ? (
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2 text-amber-600 font-bold mb-1"><Sparkles size={16} /> VIP 예산</div>
-                                                <p className="text-xs text-gray-500">무제한 (AI 최적화)</p>
-                                            </div>
-                                        ) : (
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-1 mb-1">
-                                                    <label className="text-xs font-bold text-gray-500 flex items-center gap-1"><Wallet size={12} /> {translations[language].label_budget}</label>
-                                                    <button onClick={() => handleVoiceInput('budget')} className={`p-1 rounded-full ${listeningField === 'budget' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={12} /></button>
+                                {/* 🌟 1단계: 목적지 및 지역 타입 */}
+                                {step === 1 && (
+                                    <div className="space-y-6 animate-in slide-in-from-left-5 fade-in duration-300">
+                                        <div className="bg-white/95 p-6 rounded-[2rem] shadow-2xl border border-white">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-2">
+                                                    <label className="flex items-center gap-2 text-sm font-bold text-gray-500"><Sparkles size={16} className="text-brand-primary" /> {translations[language].label_where}</label>
+                                                    <button onClick={fetchUserLocation} disabled={isLocationLoading} className="p-1.5 text-brand-primary hover:bg-brand-primary/10 rounded-full transition-all active:scale-95 flex items-center justify-center">
+                                                        {isLocationLoading ? <RefreshCw size={14} className="animate-spin" /> : <MapPin size={18} />}
+                                                    </button>
                                                 </div>
-                                                <div className="flex items-end gap-1 mb-2">
-                                                    <span className="text-xl font-bold text-brand-primary">
-                                                        {language === 'en' ? (formData.budget * 10000).toLocaleString() : formData.budget.toLocaleString()}
-                                                    </span>
-                                                    <span className="text-sm text-gray-400">{language === 'en' ? ' KRW' : '만원'}</span>
-                                                </div>
-                                                <input type="range" name="budget" min="50" max="1000" step="10" value={formData.budget} onChange={handleInputChange} className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-primary" />
                                             </div>
-                                        )}
-                                        <div className="w-[1px] h-10 bg-gray-100"></div>
-                                        <div className="flex flex-col items-center">
-                                            <div className="flex items-center gap-1 mb-1">
-                                                <label className="text-xs font-bold text-gray-500">{translations[language].label_people}</label>
-                                                <button onClick={() => handleVoiceInput('people')} className={`p-1 rounded-full ${listeningField === 'people' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={12} /></button>
+                                            
+                                            <div className="relative flex items-center bg-white border-2 border-brand-primary rounded-full px-5 py-3.5 shadow-[0_4px_16px_rgba(22,163,74,0.06)] focus-within:shadow-[0_4px_20px_rgba(22,163,74,0.18)] focus-within:border-brand-primary transition-all duration-300 gap-3 mb-4">
+                                                <Search size={20} className="text-brand-primary shrink-0" />
+                                                <input 
+                                                    type="text" 
+                                                    name="destination" 
+                                                    value={formData.destination} 
+                                                    onChange={handleInputChange} 
+                                                    placeholder={listeningField === 'destination' ? translations[language].msg_listening : translations[language].placeholder_dest} 
+                                                    className="w-full text-base sm:text-lg font-black text-gray-800 bg-transparent outline-none pr-2 placeholder:text-gray-400" 
+                                                />
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => handleVoiceInput('destination')} 
+                                                    className={`p-2 rounded-full transition-all shrink-0 hover:bg-gray-100 active:scale-95 ${listeningField === 'destination' ? 'bg-brand-secondary text-white animate-pulse' : 'text-gray-400'}`}
+                                                >
+                                                    <Mic size={18} />
+                                                </button>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <button onClick={() => updatePeople(-1)} className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 font-bold">-</button>
-                                                <span className="font-bold text-gray-800 w-4 text-center">{formData.people}</span>
-                                                <button onClick={() => updatePeople(1)} className="w-8 h-8 rounded-full bg-brand-primary text-white font-bold">+</button>
+
+                                            <div className="flex bg-gray-100 p-1.5 rounded-2xl mb-4 gap-1.5 shadow-inner">
+                                                {['auto', 'domestic', 'international', 'daytrip'].map(type => (
+                                                    <button key={type} onClick={() => {
+                                                        if (type === 'daytrip') {
+                                                            const baseDate = startDate || new Date();
+                                                            setDateRange([baseDate, baseDate]);
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                regionType: 'daytrip',
+                                                                startDate: baseDate.toISOString().split('T')[0],
+                                                                endDate: baseDate.toISOString().split('T')[0],
+                                                                request: prev.request ? (prev.request.includes('당일치기') || prev.request.includes('day trip') ? prev.request : `${prev.request}, ${language === 'en' ? 'day trip' : '당일치기 여행'}`) : (language === 'en' ? 'day trip' : '당일치기 여행')
+                                                            }));
+                                                        } else {
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                regionType: type,
+                                                                request: prev.request.replace(', 당일치기 여행', '').replace('당일치기 여행', '').replace(', day trip', '').replace('day trip', '').trim()
+                                                            }));
+                                                        }
+                                                    }} className={`flex-1 text-[11px] sm:text-xs font-black py-3.5 rounded-xl transition-all duration-300 ${formData.regionType === type ? 'bg-white text-brand-primary shadow-md scale-[1.02]' : 'text-gray-500 hover:bg-white/50'}`}>
+                                                        {type === 'auto' ? translations[language].region_auto : type === 'domestic' ? translations[language].region_domestic : type === 'international' ? translations[language].region_international : translations[language].region_daytrip}
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-50">
+                                                {(language === 'en' ? QUICK_TAGS_EN : QUICK_TAGS).map((tag, idx) => (
+                                                    <button key={idx} onClick={() => setFormData(prev => ({ ...prev, destination: prev.destination ? `${prev.destination}, ${cleanTagText(tag, language)}` : cleanTagText(tag, language) }))} className="bg-gray-50 border border-gray-100 text-gray-600 px-3 py-1.5 rounded-xl text-[12px] font-bold transition hover:bg-brand-primary/10 active:scale-95">{tag}</button>
+                                                ))}
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
 
-                                <div>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <label className="text-sm font-bold text-gray-600 px-1">{translations[language].label_style}</label>
-                                        <button onClick={() => handleVoiceInput('tourType')} className={`p-1.5 rounded-full ${listeningField === 'tourType' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={14} /></button>
+                                {/* 🌟 2단계: 날짜 선택 */}
+                                {step === 2 && (
+                                    <div className="space-y-6 animate-in slide-in-from-right-5 fade-in duration-300">
+                                        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <label className="flex items-center gap-2 text-sm font-bold text-gray-500"><Calendar size={16} className="text-brand-primary" /> {translations[language].label_when}</label>
+                                                <button onClick={() => handleVoiceInput('date')} className={`p-2 rounded-full ${listeningField === 'date' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={16} /></button>
+                                            </div>
+                                            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 mb-2">
+                                                <DatePicker selectsRange={true} startDate={startDate} endDate={endDate} onChange={handleDateChange} minDate={new Date()} locale={language === 'en' ? enUS : ko} dateFormat="yyyy.MM.dd" placeholderText={translations[language].placeholder_date} className="w-full text-lg font-black bg-transparent outline-none cursor-pointer text-gray-800" wrapperClassName="w-full" />
+                                            </div>
+                                            <p className="text-[10px] text-gray-400 font-bold px-1">달력에서 출발일과 도착일을 연속 터치하여 여행 기간을 지정하세요.</p>
+                                        </div>
                                     </div>
-                                    <div className="grid grid-cols-3 gap-2 mb-3">
-                                        {tourOptions.map((option) => (
-                                            <button key={option.id} onClick={() => setFormData({ ...formData, tourType: option.id })} className={`py-3 px-2 rounded-2xl border transition-all flex flex-col items-center text-center ${formData.tourType === option.id ? 'bg-white border-brand-primary text-brand-primary shadow-md ring-1 ring-brand-primary' : 'bg-white border-gray-100 text-gray-400'}`}>
-                                                <span className="font-bold text-sm mb-1">{language === 'en' ? option.enLabel : option.label}</span>
-                                                <span className="text-[10px] opacity-70">{language === 'en' ? option.enDesc : option.desc}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <button onClick={toggleLuxuryMode} className={`w-full py-3 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 border ${isLuxury ? "bg-amber-500 text-white shadow-lg" : "bg-gray-50 text-gray-500"}`}>
-                                        {isLuxury ? <><Crown size={16} fill="white" /> {translations[language].btn_luxury_on}</> : <><Crown size={16} /> {translations[language].btn_luxury_off}</>}
-                                    </button>
-                                </div>
+                                )}
 
-                                <div className="bg-white p-4 rounded-2xl border border-gray-200">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <label className="text-xs font-bold text-gray-400 flex items-center gap-1"><MessageSquare size={12} /> {translations[language].label_request}</label>
-                                        <button onClick={() => handleVoiceInput('request')} className={`p-1.5 rounded-full ${listeningField === 'request' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={14} /></button>
+                                {/* 🌟 3단계: 동행자 및 여행 스타일 */}
+                                {step === 3 && (
+                                    <div className="space-y-6 animate-in slide-in-from-right-5 fade-in duration-300">
+                                        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-5">
+                                            <div>
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <label className="text-sm font-bold text-gray-500 block px-1">{translations[language].label_companion}</label>
+                                                    <button onClick={() => handleVoiceInput('companion')} className={`p-1.5 rounded-full ${listeningField === 'companion' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={14} /></button>
+                                                </div>
+                                                <div className="grid grid-cols-5 gap-2">
+                                                    {companionOptions.map((opt) => (
+                                                        <button key={opt.id} onClick={() => setFormData({ ...formData, companion: opt.id })} className={`flex flex-col items-center justify-center py-3 rounded-2xl transition-all gap-1 ${formData.companion === opt.id ? 'bg-brand-primary text-white shadow-md scale-105' : 'bg-gray-50 text-gray-400 hover:bg-gray-100/50'}`}>
+                                                            {opt.icon} <span className="text-[10px] font-black break-keep">{language === 'en' ? opt.enLabel : opt.label}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="border-t border-gray-100 pt-4">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <label className="text-sm font-bold text-gray-500 px-1">{translations[language].label_style}</label>
+                                                    <button onClick={() => handleVoiceInput('tourType')} className={`p-1.5 rounded-full ${listeningField === 'tourType' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={14} /></button>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-2 mb-3">
+                                                    {tourOptions.map((option) => (
+                                                        <button key={option.id} onClick={() => setFormData({ ...formData, tourType: option.id })} className={`py-3 px-2 rounded-2xl border transition-all flex flex-col items-center text-center cursor-pointer ${formData.tourType === option.id ? 'bg-white border-brand-primary text-brand-primary shadow-md ring-1 ring-brand-primary scale-105' : 'bg-white border-gray-100 text-gray-400 hover:bg-gray-50'}`}>
+                                                            <span className="font-bold text-xs sm:text-sm mb-1">{language === 'en' ? option.enLabel : option.label}</span>
+                                                            <span className="text-[9px] opacity-75 leading-tight">{language === 'en' ? option.enDesc : option.desc}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <button onClick={toggleLuxuryMode} className={`w-full py-3.5 rounded-2xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 border ${isLuxury ? "bg-amber-500 text-white shadow-lg border-amber-600" : "bg-gray-50 text-gray-500 hover:bg-gray-100"}`}>
+                                                    {isLuxury ? <><Crown size={16} fill="white" /> {translations[language].btn_luxury_on}</> : <><Crown size={16} /> {translations[language].btn_luxury_off}</>}
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <textarea name="request" value={formData.request} onChange={handleInputChange} placeholder={listeningField === 'request' ? translations[language].msg_listening : translations[language].placeholder_request} className="w-full text-sm font-medium outline-none text-gray-800 resize-none h-32 bg-transparent leading-relaxed" />
-                                </div>
+                                )}
+
+                                {/* 🌟 4단계: 예산, 인원 및 안심 요청사항 */}
+                                {step === 4 && (
+                                    <div className="space-y-6 animate-in slide-in-from-right-5 fade-in duration-300">
+                                        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-5">
+                                            <div className={`p-4 rounded-2xl border transition-all ${isLuxury ? "bg-amber-50 border-amber-200" : "bg-gray-50 border-gray-100"}`}>
+                                                <div className="flex gap-4 items-center justify-between">
+                                                    {isLuxury ? (
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2 text-amber-600 font-bold mb-1"><Sparkles size={16} /> VIP 예산</div>
+                                                            <p className="text-xs text-gray-500">무제한 (AI 최적화)</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-1 mb-1">
+                                                                <label className="text-xs font-bold text-gray-500 flex items-center gap-1"><Wallet size={12} /> {translations[language].label_budget}</label>
+                                                                <button onClick={() => handleVoiceInput('budget')} className={`p-1 rounded-full ${listeningField === 'budget' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={12} /></button>
+                                                            </div>
+                                                            <div className="flex items-end gap-1 mb-2">
+                                                                <span className="text-xl font-bold text-brand-primary">
+                                                                    {language === 'en' ? (formData.budget * 10000).toLocaleString() : formData.budget.toLocaleString()}
+                                                                </span>
+                                                                <span className="text-sm text-gray-400">{language === 'en' ? ' KRW' : '만원'}</span>
+                                                            </div>
+                                                            <input type="range" name="budget" min="50" max="1000" step="10" value={formData.budget} onChange={handleInputChange} className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-primary" />
+                                                        </div>
+                                                    )}
+                                                    <div className="w-[1px] h-10 bg-gray-200"></div>
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="flex items-center gap-1 mb-1">
+                                                            <label className="text-xs font-bold text-gray-500">{translations[language].label_people}</label>
+                                                            <button onClick={() => handleVoiceInput('people')} className={`p-1 rounded-full ${listeningField === 'people' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={12} /></button>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <button onClick={() => updatePeople(-1)} className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 font-bold active:scale-95 transition-all">-</button>
+                                                            <span className="font-bold text-gray-800 w-4 text-center">{formData.people}</span>
+                                                            <button onClick={() => updatePeople(1)} className="w-8 h-8 rounded-full bg-brand-primary text-white font-bold active:scale-95 transition-all">+</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-white p-4 rounded-2xl border border-gray-200">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <label className="text-xs font-bold text-gray-400 flex items-center gap-1"><MessageSquare size={12} /> {translations[language].label_request}</label>
+                                                    <button onClick={() => handleVoiceInput('request')} className={`p-1.5 rounded-full ${listeningField === 'request' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={14} /></button>
+                                                </div>
+                                                <textarea name="request" value={formData.request} onChange={handleInputChange} placeholder={listeningField === 'request' ? translations[language].msg_listening : translations[language].placeholder_request} className="w-full text-sm font-medium outline-none text-gray-800 resize-none h-24 bg-transparent leading-relaxed" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -1064,29 +1357,40 @@ export default function Home() {
 
                 {/* 하단 생성 버튼 */}
                 {activeTab === 'create' && (
-                    <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-white via-white/95 to-transparent z-30">
-                        <button onClick={generatePlan} disabled={loading} onMouseEnter={() => setIsButtonHovered(true)} onMouseLeave={() => setIsButtonHovered(false)} className={`w-full py-4 rounded-2xl font-bold text-xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-95 ${isLuxury ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white" : "bg-gradient-to-r from-brand-primary to-brand-secondary text-white"}`}>
-                            {loading ? <><Sparkles className="animate-spin" size={24} /> {loadingText}</> : translations[language].btn_generate}
+                    <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-white via-white/95 to-transparent z-30 flex gap-3">
+                        {step > 1 && (
+                            <button onClick={() => setStep(step - 1)} className="px-6 py-4 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-sm sm:text-base rounded-2xl active:scale-95 transition-all cursor-pointer">
+                                이전
+                            </button>
+                        )}
+                        <button onClick={() => {
+                            if (step < 4) {
+                                if (step === 1 && !formData.destination) {
+                                    alert(language === "en" ? "Please enter your destination!" : "목적지를 입력해주세요!");
+                                    return;
+                                }
+                                if (step === 2 && (!startDate || !endDate)) {
+                                    alert(language === "en" ? "Please select your travel dates!" : "여행 날짜를 선택해주세요!");
+                                    return;
+                                }
+                                setStep(step + 1);
+                            } else {
+                                generatePlan();
+                            }
+                        }} disabled={loading} className={`flex-1 py-4 rounded-2xl font-bold text-base sm:text-lg shadow-xl transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer ${isLuxury ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white" : "bg-gradient-to-r from-brand-primary to-brand-secondary text-white"}`}>
+                            {loading ? (
+                                <><Sparkles className="animate-spin" size={20} /> {loadingText}</>
+                            ) : step < 4 ? (
+                                <>다음 단계로 <ArrowRight size={16} /></>
+                            ) : (
+                                translations[language].btn_generate
+                            )}
                         </button>
                     </div>
                 )}
             </motion.div>
 
-            {/* 전역 하단 네비게이션바 (로그인 유저 기준) */}
-            {(user || session) && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-[570px] px-6 z-50 animate-fadeIn">
-                    <nav className="bg-white/70 backdrop-blur-2xl border border-white/50 shadow-[0_20px_40px_rgba(0,0,0,0.1)] rounded-[32px] px-2 py-2.5 flex justify-around items-center">
-                        <button onClick={() => {
-                            if (activeTab !== 'create') setActiveTab('create');
-                        }} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'create' ? 'text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary scale-110' : 'text-gray-500 hover:text-brand-primary'}`}><HomeIcon size={24} strokeWidth={activeTab === 'create' ? 2.5 : 2} className={activeTab === 'create' ? 'text-brand-primary' : ''} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">홈</span></button>
-                        <button onClick={() => router.push('/mypage?tab=social')} className="flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] text-gray-500 hover:text-brand-primary transition"><Users size={24} strokeWidth={2} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">동행</span></button>
-                        <button onClick={() => router.push('/mypage?tab=schedule')} className="flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] text-gray-500 hover:text-brand-primary transition"><Calendar size={24} strokeWidth={2} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">일정</span></button>
-                        <button onClick={() => router.push('/mypage?tab=coach')} className="flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] text-gray-500 hover:text-brand-primary transition"><Sparkles size={24} strokeWidth={2} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">코치</span></button>
-                        <button onClick={() => router.push('/mypage?tab=wallet')} className="flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] text-gray-500 hover:text-brand-primary transition"><Wallet size={24} strokeWidth={2} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">트립머니</span></button>
-                        <button onClick={() => router.push('/mypage?tab=vault')} className="flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] text-gray-500 hover:text-brand-primary transition"><Box size={24} strokeWidth={2} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">보관함</span></button>
-                    </nav>
-                </div>
-            )}
+
 
             <style jsx global>{`
                 .custom-scrollbar::-webkit-scrollbar { height: 8px; }

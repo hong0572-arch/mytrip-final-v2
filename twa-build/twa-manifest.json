@@ -19,8 +19,8 @@
     "path": "C:\\Users\\iwing\\.antigravity\\mytrip-final\\android.keystore",
     "alias": "tripmaker"
   },
-  "appVersionName": "2.8",
-  "appVersionCode": 15,
+  "appVersionName": "3.0",
+  "appVersionCode": 19,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://tripmaker.tips/manifest.json",
@@ -46,5 +46,5 @@
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "2.8"
+  "appVersion": "3.0"
 }

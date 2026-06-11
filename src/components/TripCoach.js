@@ -26,7 +26,7 @@ const DESTINATION_INFO = {
   기본: { adapter: '멀티 어댑터 지참 권장', currency: '현지 통화', tip: '여권 유효기간은 출국일 기준 최소 6개월 이상 남아있어야 안심할 수 있어요.' }
 };
 
-export default function TripCoach({ itineraries = [], userData = {}, onShowToast, language = 'ko' }) {
+export default function TripCoach({ itineraries = [], userData = {}, onShowToast, language = 'ko', onTabChange }) {
   const [selectedTrip, setSelectedTrip] = useState(null);
   
   // 1. 자가기록 및 코칭 측정값들
@@ -170,7 +170,7 @@ export default function TripCoach({ itineraries = [], userData = {}, onShowToast
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            className="stroke-gray-100/10 fill-none"
+            className="stroke-white/20 fill-none"
             strokeWidth={strokeWidth}
           />
           {/* Animated Foreground circle */}
@@ -255,7 +255,7 @@ export default function TripCoach({ itineraries = [], userData = {}, onShowToast
                     className={`px-5 py-3.5 rounded-[20px] font-bold text-xs whitespace-nowrap transition-all border shadow-sm flex items-center gap-2 ${
                       isActive
                         ? 'bg-gradient-to-r from-brand-primary to-brand-secondary text-white border-brand-primary scale-105 shadow-brand-primary/20'
-                        : 'bg-white/5 border-white/5 text-gray-300 hover:bg-white/10'
+                        : 'bg-slate-900/60 border-white/10 text-white hover:bg-slate-900/80'
                     }`}
                   >
                     <span>{trip.icon || '✈️'}</span>
@@ -270,15 +270,15 @@ export default function TripCoach({ itineraries = [], userData = {}, onShowToast
         {selectedTrip && (
           <>
             {/* 1. Apple Health 스타일 대시보드 링 카드 */}
-            <div className="bg-white/5 border border-white/10 rounded-[32px] p-6 shadow-2xl backdrop-blur-3xl relative overflow-hidden">
+            <div className="bg-slate-950/80 border border-white/15 rounded-[32px] p-6 shadow-2xl backdrop-blur-3xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
               
-              <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
+              <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
                 <div>
                   <h3 className="text-white font-black text-lg flex items-center gap-2">
                     {selectedTrip?.destination} 코칭 지표
                   </h3>
-                  <p className="text-[10px] text-gray-400 font-bold mt-0.5">
+                  <p className="text-[10px] text-gray-200 font-bold mt-0.5">
                     아이폰 건강 앱과 연동되어 안전하고 건강한 라이프를 코칭합니다.
                   </p>
                 </div>
@@ -287,41 +287,41 @@ export default function TripCoach({ itineraries = [], userData = {}, onShowToast
               {/* 2x2 그리드형 원형 차트 */}
               <div className="grid grid-cols-2 gap-4">
                 {/* 준비도 링 */}
-                <div className="bg-white/5 p-4 rounded-2xl flex items-center justify-between gap-2 border border-white/5">
+                <div className="bg-white/10 p-4 rounded-2xl flex items-center justify-between gap-2 border border-white/10">
                   <div className="overflow-hidden">
-                    <span className="text-[10px] font-bold text-gray-400 block mb-0.5">준비도</span>
+                    <span className="text-[10px] font-bold text-gray-200 block mb-0.5">준비도</span>
                     <span className="text-sm font-black text-white tracking-tight">{prepScore}% 완료</span>
-                    <span className="text-[9px] text-gray-500 block mt-1">체크리스트 달성율</span>
+                    <span className="text-[9px] text-gray-300 block mt-1">체크리스트 달성율</span>
                   </div>
                   <ProgressRing percentage={prepScore} colorClass="stroke-cyan-400" />
                 </div>
 
                 {/* 활동량 링 */}
-                <div className="bg-white/5 p-4 rounded-2xl flex items-center justify-between gap-2 border border-white/5">
+                <div className="bg-white/10 p-4 rounded-2xl flex items-center justify-between gap-2 border border-white/10">
                   <div className="overflow-hidden">
-                    <span className="text-[10px] font-bold text-gray-400 block mb-0.5">활동 지수</span>
+                    <span className="text-[10px] font-bold text-gray-200 block mb-0.5">활동 지수</span>
                     <span className="text-sm font-black text-white tracking-tight">{stepCount.toLocaleString()}보</span>
-                    <span className="text-[9px] text-gray-500 block mt-1">목표: 1만보 ({activityScore}%)</span>
+                    <span className="text-[9px] text-gray-300 block mt-1">목표: 1만보 ({activityScore}%)</span>
                   </div>
                   <ProgressRing percentage={activityScore} colorClass="stroke-rose-500" />
                 </div>
 
                 {/* 수분량 링 */}
-                <div className="bg-white/5 p-4 rounded-2xl flex items-center justify-between gap-2 border border-white/5">
+                <div className="bg-white/10 p-4 rounded-2xl flex items-center justify-between gap-2 border border-white/10">
                   <div className="overflow-hidden">
-                    <span className="text-[10px] font-bold text-gray-400 block mb-0.5">수분 섭취</span>
+                    <span className="text-[10px] font-bold text-gray-200 block mb-0.5">수분 섭취</span>
                     <span className="text-sm font-black text-white tracking-tight">{waterIntake} / 2,000</span>
-                    <span className="text-[9px] text-gray-500 block mt-1">ml 단위 ({hydrationScore}%)</span>
+                    <span className="text-[9px] text-gray-300 block mt-1">ml 단위 ({hydrationScore}%)</span>
                   </div>
                   <ProgressRing percentage={hydrationScore} colorClass="stroke-indigo-400" />
                 </div>
 
                 {/* 안전도 링 */}
-                <div className="bg-white/5 p-4 rounded-2xl flex items-center justify-between gap-2 border border-white/5">
+                <div className="bg-white/10 p-4 rounded-2xl flex items-center justify-between gap-2 border border-white/10">
                   <div className="overflow-hidden">
-                    <span className="text-[10px] font-bold text-gray-400 block mb-0.5">컨디션 & 안전</span>
+                    <span className="text-[10px] font-bold text-gray-200 block mb-0.5">컨디션 & 안전</span>
                     <span className="text-sm font-black text-white tracking-tight">{safetyScore}점</span>
-                    <span className="text-[9px] text-gray-500 block mt-1">
+                    <span className="text-[9px] text-gray-300 block mt-1">
                       {safetyScore >= 80 ? '안전·우수 🟢' : safetyScore >= 60 ? '휴식 필요 🟡' : '위험 🔴'}
                     </span>
                   </div>
@@ -331,19 +331,19 @@ export default function TripCoach({ itineraries = [], userData = {}, onShowToast
             </div>
 
             {/* 2. 자가 건강 및 컨디션 기록하기 */}
-            <div className="bg-white/5 border border-white/10 rounded-[32px] p-6 shadow-xl backdrop-blur-md">
+            <div className="bg-slate-950/80 border border-white/15 rounded-[32px] p-6 shadow-xl backdrop-blur-3xl">
               <h3 className="text-white font-black text-base mb-4 flex items-center gap-2">
                 <CheckCircle2 size={18} className="text-brand-secondary" /> 자가 건강 및 활동 기록
               </h3>
               
               <div className="space-y-4">
                 {/* 수분 섭취 퀵로그 */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white/5 p-4 rounded-2xl border border-white/5">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white/10 p-4 rounded-2xl border border-white/10">
                   <div>
                     <h4 className="text-sm font-bold text-gray-200 flex items-center gap-1.5">
                       <Droplet size={16} className="text-indigo-400" /> 수분 섭취량 기록
                     </h4>
-                    <p className="text-[10px] text-gray-400 mt-0.5">현재 누적: {waterIntake}ml / 하루 권장량 2.0L</p>
+                    <p className="text-[10px] text-gray-300 mt-0.5">현재 누적: {waterIntake}ml / 하루 권장량 2.0L</p>
                   </div>
                   <div className="flex gap-2 w-full sm:w-auto">
                     <button
@@ -362,12 +362,12 @@ export default function TripCoach({ itineraries = [], userData = {}, onShowToast
                 </div>
 
                 {/* 뚜벅이 걸음 수 기록 */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white/5 p-4 rounded-2xl border border-white/5">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white/10 p-4 rounded-2xl border border-white/10">
                   <div>
                     <h4 className="text-sm font-bold text-gray-200 flex items-center gap-1.5">
                       <Footprints size={16} className="text-rose-400" /> 걸음 수 증가 기록 (만보기 시뮬레이션)
                     </h4>
-                    <p className="text-[10px] text-gray-400 mt-0.5">현재 걸음수: {stepCount.toLocaleString()}보</p>
+                    <p className="text-[10px] text-gray-300 mt-0.5">현재 걸음수: {stepCount.toLocaleString()}보</p>
                   </div>
                   <div className="flex gap-2 w-full sm:w-auto">
                     <button
@@ -386,16 +386,16 @@ export default function TripCoach({ itineraries = [], userData = {}, onShowToast
                 </div>
 
                 {/* 피로 상태 설정 */}
-                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                <div className="bg-white/10 p-4 rounded-2xl border border-white/10">
                   <h4 className="text-sm font-bold text-gray-200 mb-3 flex items-center gap-1.5">
                     <Flame size={16} className="text-amber-400" /> 신체 피로 수준 체크
                   </h4>
                   <div className="grid grid-cols-4 gap-2">
                     {[
-                      { id: 'relaxed', label: '상쾌함 🌱', color: 'border-emerald-500 text-emerald-400 bg-emerald-500/5' },
-                      { id: 'active', label: '움직임 활발 🏃', color: 'border-cyan-500 text-cyan-400 bg-cyan-500/5' },
-                      { id: 'tired', label: '피곤함 🥱', color: 'border-amber-500 text-amber-400 bg-amber-500/5' },
-                      { id: 'exhausted', label: '방전상태 🚨', color: 'border-rose-500 text-rose-400 bg-rose-500/5' }
+                      { id: 'relaxed', label: '상쾌함 🌱', color: 'border-emerald-500 text-emerald-400 bg-emerald-500/10' },
+                      { id: 'active', label: '움직임 활발 🏃', color: 'border-cyan-500 text-cyan-400 bg-cyan-500/10' },
+                      { id: 'tired', label: '피곤함 🥱', color: 'border-amber-500 text-amber-400 bg-amber-500/10' },
+                      { id: 'exhausted', label: '방전상태 🚨', color: 'border-rose-500 text-rose-400 bg-rose-500/10' }
                     ].map(opt => (
                       <button
                         key={opt.id}
@@ -406,7 +406,7 @@ export default function TripCoach({ itineraries = [], userData = {}, onShowToast
                         className={`py-3 rounded-xl border text-[11px] font-black text-center transition-all ${
                           fatigueLevel === opt.id
                             ? `${opt.color} scale-[1.03] ring-1 ring-white/10`
-                            : 'border-white/5 text-gray-400 bg-white/5 hover:bg-white/10'
+                            : 'border-white/10 text-gray-300 bg-white/5 hover:bg-white/15'
                         }`}
                       >
                         {opt.label}
@@ -520,7 +520,7 @@ export default function TripCoach({ itineraries = [], userData = {}, onShowToast
             </div>
 
             {/* 4. 여행 준비 체크리스트 */}
-            <div className="bg-white/5 border border-white/10 rounded-[32px] p-6 shadow-xl backdrop-blur-md">
+            <div className="bg-slate-950/80 border border-white/15 rounded-[32px] p-6 shadow-xl backdrop-blur-3xl">
               <h3 className="text-white font-black text-base mb-4 flex items-center gap-2">
                 <CheckCircle2 size={18} className="text-cyan-400" /> 필수 여행 준비 체크리스트
               </h3>
@@ -529,33 +529,50 @@ export default function TripCoach({ itineraries = [], userData = {}, onShowToast
                 {[
                   { key: 'passport', label: '🛂 여권 유효기간 확인 (6개월 이상)' },
                   { key: 'visa', label: '✈️ 무비자 확인 혹은 비자 신청' },
-                  { key: 'insurance', label: '🛡️ 여행자 안심 보험 가입 완료' },
-                  { key: 'exchange', label: '💵 현지 외화 환전 및 카드 준비' },
+                  { key: 'insurance', label: '🛡️ 여행자 안심 보험 가입 완료', action: { label: '간편가입 🔗', type: 'link', url: 'https://m.tokiomarine.co.kr' } },
+                  { key: 'exchange', label: '💵 현지 외화 환전 및 카드 준비', action: { label: '환전하기 👛', type: 'tab', target: 'wallet' } },
                   { key: 'adapter', label: '🔌 국가별 돼지코 플러그 챙기기' },
-                  { key: 'hotelCheckin', label: '🏨 호텔 체크인 정보 및 위치 캡처' }
+                  { key: 'hotelCheckin', label: '🏨 호텔 체크인 정보 및 위치 캡처', action: { label: '보관함 🎟️', type: 'tab', target: 'vault' } }
                 ].map(item => (
-                  <button
-                    key={item.key}
-                    onClick={() => handleToggleChecklist(item.key)}
-                    className={`p-3.5 rounded-xl border flex items-center gap-2.5 transition text-left text-xs font-bold ${
-                      checklist[item.key]
-                        ? 'border-cyan-500/30 bg-cyan-900/10 text-cyan-400'
-                        : 'border-white/5 bg-white/5 text-gray-400 hover:bg-white/10'
-                    }`}
-                  >
-                    <div className={`w-4.5 h-4.5 rounded-md flex items-center justify-center border ${
-                      checklist[item.key] ? 'bg-cyan-500 border-cyan-500 text-white' : 'border-gray-500 text-transparent'
-                    }`}>
-                      <Check size={12} strokeWidth={3} />
-                    </div>
-                    <span>{item.label}</span>
-                  </button>
+                  <div key={item.key} className="relative flex items-center w-full">
+                    <button
+                      onClick={() => handleToggleChecklist(item.key)}
+                      className={`flex-1 p-3.5 pr-20 rounded-xl border flex items-center gap-2.5 transition text-left text-xs font-bold ${
+                        checklist[item.key]
+                          ? 'border-cyan-500/30 bg-cyan-900/10 text-cyan-400'
+                          : 'border-white/10 bg-white/10 text-gray-300 hover:bg-white/20'
+                      }`}
+                    >
+                      <div className={`w-4.5 h-4.5 rounded-md flex items-center justify-center border ${
+                        checklist[item.key] ? 'bg-cyan-500 border-cyan-500 text-white' : 'border-gray-500 text-transparent'
+                      }`}>
+                        <Check size={12} strokeWidth={3} />
+                      </div>
+                      <span className="truncate pr-2">{item.label}</span>
+                    </button>
+                    
+                    {item.action && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (item.action.type === 'tab' && onTabChange) {
+                            onTabChange(item.action.target);
+                          } else if (item.action.type === 'link') {
+                            window.open(item.action.url, '_blank');
+                          }
+                        }}
+                        className="absolute right-3 py-1.5 px-2.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-[10px] font-black text-cyan-300 border border-cyan-500/30 active:scale-95 transition-all cursor-pointer z-10"
+                      >
+                        {item.action.label}
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
 
             {/* 5. 알림 세팅 & 알림 테스트 해보기 */}
-            <div className="bg-white/5 border border-white/10 rounded-[32px] p-6 shadow-xl backdrop-blur-md">
+            <div className="bg-slate-950/80 border border-white/15 rounded-[32px] p-6 shadow-xl backdrop-blur-3xl">
               <div className="flex items-center gap-2 mb-4">
                 <Settings2 size={18} className="text-purple-400" />
                 <h3 className="text-white font-black text-base">알림 유형 설정 & 실시간 테스트</h3>
@@ -568,10 +585,10 @@ export default function TripCoach({ itineraries = [], userData = {}, onShowToast
                   { key: 'health', label: '여행 중 수분 부족 및 휴식 권장 알림', desc: '수분 충전 타이밍 알림' },
                   { key: 'safety', label: '위험 지역 및 소매치기 위험 감지 알림', desc: '안전 보강 알림' }
                 ].map(opt => (
-                  <div key={opt.key} className="flex justify-between items-center py-2 border-b border-white/5">
+                  <div key={opt.key} className="flex justify-between items-center py-2 border-b border-white/10">
                     <div>
                       <span className="text-xs font-bold text-gray-200 block">{opt.label}</span>
-                      <span className="text-[10px] text-gray-500 font-bold block">{opt.desc}</span>
+                      <span className="text-[10px] text-gray-300 font-bold block">{opt.desc}</span>
                     </div>
                     <button
                       onClick={() => setNotificationConfig(prev => ({ ...prev, [opt.key]: !prev[opt.key] }))}

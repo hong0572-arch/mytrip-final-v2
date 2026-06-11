@@ -1086,6 +1086,7 @@ export default function MyPage() {
             userData={userData}
             onShowToast={showToast}
             language="ko"
+            onTabChange={setActiveTab}
         />
     );
 
@@ -1594,7 +1595,7 @@ export default function MyPage() {
     return (
         <div className="min-h-screen relative font-sans selection:bg-brand-primary/20 overflow-x-hidden flex justify-center">
             <div className="fixed inset-0 z-[-2]"><img src={BACKGROUND_IMAGE} alt="background" className="w-full h-full object-cover" /></div>
-            <div className="fixed inset-0 z-[-1] bg-white/40 backdrop-blur-[20px]"></div>
+            <div className="fixed inset-0 z-[-1] bg-slate-950/45 backdrop-blur-[16px]"></div>
 
             {/* ✨ 메인 래퍼 박스 확장 (w-full max-w-[500px])-->max-w-[560px] */}
             <div className="w-full max-w-[560px] h-full relative bg-white/60 shadow-2xl overflow-hidden flex flex-col">
