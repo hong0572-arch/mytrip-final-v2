@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, MapPin, Calendar, RefreshCw, ExternalLink } from 'lucide-react';
+import { getApiUrl } from '../utils/api';
 
 // 날짜 포맷 헬퍼
 const formatDate = (dateStr) => {
@@ -22,7 +23,7 @@ export default function TravelNews({ language = 'ko' }) {
     const fetchNews = useCallback(async () => {
         try {
             setError(null);
-            const res = await fetch('/api/tourism?type=festival&numOfRows=10');
+            const res = await fetch(getApiUrl('/api/tourism?type=festival&numOfRows=10'));
             
             if (!res.ok) {
                 throw new Error(`API Error: ${res.status}`);

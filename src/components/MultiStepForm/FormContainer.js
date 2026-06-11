@@ -10,6 +10,7 @@ import Step3Theme from "./Step3Theme";
 import Step4Transport from "./Step4Transport";
 import ProgressBar from "./ProgressBar";
 import AIResult from "../AIResult";
+import { getApiUrl } from "../../utils/api";
 
 export default function FormContainer() {
     const [step, setStep] = useState(1);
@@ -37,7 +38,7 @@ export default function FormContainer() {
         setIsSubmitting(true);
         try {
             // Real API Call to our new JSON backend
-            const response = await fetch("/api/generate", {
+            const response = await fetch(getApiUrl("/api/generate"), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
