@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import TravelQuiz from '../../components/TravelQuiz';
 import TripCoach from '../../components/TripCoach';
+import { getApiUrl } from '../../utils/api';
 
 
 
@@ -518,7 +519,7 @@ export default function MyPage() {
                 ? getSafeDestination(itineraries[0].destination)
                 : "서울";
 
-            const response = await fetch('/api/quiz', {
+            const response = await fetch(getApiUrl('/api/quiz/'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ destination: latestDest })

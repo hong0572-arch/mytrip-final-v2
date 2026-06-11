@@ -16,6 +16,7 @@ import { db, auth } from '../lib/firebase';
 import { collection, addDoc, updateDoc, doc, serverTimestamp, setDoc, increment, getDoc, getDocs } from 'firebase/firestore';
 import { signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "firebase/auth";
 import TravelQuiz from './TravelQuiz';
+import { getApiUrl } from '../utils/api';
 
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
@@ -329,7 +330,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
         if (!destination) return;
         setIsQuizLoading(true);
         try {
-            const response = await fetch('/api/quiz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ destination }) });
+            const response = await fetch(getApiUrl('/api/quiz/'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ destination }) });
             const newData = await response.json();
             if (newData.result) setCurrentQuizData(newData.result);
         } catch (error) { console.error(error); } finally { setIsQuizLoading(false); }

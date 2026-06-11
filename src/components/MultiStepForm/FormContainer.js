@@ -38,7 +38,7 @@ export default function FormContainer() {
         setIsSubmitting(true);
         try {
             // Real API Call to our new JSON backend
-            const response = await fetch(getApiUrl("/api/generate"), {
+            const response = await fetch(getApiUrl("/api/generate/"), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

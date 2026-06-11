@@ -9,6 +9,7 @@ import dynamic from 'next/dynamic';
 // 스플래시 및 훅
 import SplashScreen from "../components/SplashScreen";
 import useFcmToken from '../hooks/useFcmToken';
+import { getApiUrl } from '../utils/api';
 
 // 컴포넌트
 import CatMascot from '../components/CatMascot';
@@ -720,7 +721,7 @@ export default function Home() {
         setSelectedTrip({ ...trip, iata: arrivalCode, returnIata: returnOriginCode, returnDateCalc: retDateStr });
         setIsSearching(true); setFlightResults([]);
         try {
-            const res = await fetch('/api/flights/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ destinationCode: arrivalCode, returnOriginCode, departureDate: depDateStr, returnDate: retDateStr, language, destinationName: trip.destination || trip.title }) });
+            const res = await fetch(getApiUrl('/api/flights/'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ destinationCode: arrivalCode, returnOriginCode, departureDate: depDateStr, returnDate: retDateStr, language, destinationName: trip.destination || trip.title }) });
             const data = await res.json(); setFlightResults(data.flights || []);
         } catch (error) { console.error(error); } finally { setIsSearching(false); }
     };

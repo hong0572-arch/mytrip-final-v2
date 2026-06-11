@@ -1,14 +1,17 @@
-// API URL resolver utility for Capacitor and Web environments
-
 export function getApiUrl(path) {
-  // Check if running inside Capacitor (native mobile WebView)
-  const isCapacitor = typeof window !== 'undefined' && (window.Capacitor || window.webkit?.messageHandlers?.cordova);
-  
-  if (isCapacitor) {
-    // Force production API server domain in native mobile environment
-    return `https://mytrip2.pro${path}`;
+  if (typeof window === 'undefined') {
+    return path;
   }
-  
+
+  // Check if running inside native Capacitor (not local browser development pointing to dev server)
+  const isNativeCapacitor = !!window.Capacitor && 
+    (window.location.origin === 'https://localhost' || window.location.origin.startsWith('capacitor://'));
+
+  if (isNativeCapacitor) {
+    // Force production API server domain in native mobile environment
+    return `https://tripmaker.tips${path}`;
+  }
+
   // Use relative path for web and local Next.js development server
   return path;
 }
