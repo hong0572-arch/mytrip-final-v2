@@ -24,8 +24,6 @@ export async function GET(request) {
       MobileOS: "ETC",
       MobileApp: "TripMaker",
       _type: "json",
-      dataType: "JSON",
-      listYN: "Y",
       arrange: "C", // 시작일 순 정렬
       eventStartDate: eventStartDate,
     });
