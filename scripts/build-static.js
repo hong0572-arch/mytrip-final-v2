@@ -2,6 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
+// Force static export output mode for Capacitor build
+process.env.CAPACITOR_BUILD = 'true';
+
 const apiPath = path.join(__dirname, '../src/app/api');
 const tempApiPath = path.join(__dirname, '../src/api-temp');
 
