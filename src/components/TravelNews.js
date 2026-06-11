@@ -23,7 +23,7 @@ export default function TravelNews({ language = 'ko' }) {
     const fetchNews = useCallback(async () => {
         try {
             setError(null);
-            const res = await fetch(getApiUrl('/api/tourism?type=festival&numOfRows=10'));
+            const res = await fetch(getApiUrl(`/api/tourism?type=festival&numOfRows=10&t=${Date.now()}`));
             
             if (!res.ok) {
                 throw new Error(`API Error: ${res.status}`);
