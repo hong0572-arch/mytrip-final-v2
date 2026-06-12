@@ -48,7 +48,7 @@ const getKlookLink = (keyword, language) => {
     return `https://www.klook.com/${language === 'en' ? 'en-US' : 'ko'}/search?q=${encodedKeyword}`;
 };
 
-    const formatTransitText = (txt) => {
+    const formatTransitText = (txt, language) => {
         if (!txt) return "";
         if (language !== 'en') return txt;
         return txt
@@ -1058,7 +1058,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                             <div className="flex flex-col items-center justify-center -my-2 z-10 relative pointer-events-none">
                                                 <div className="h-4 border-l-2 border-dashed border-gray-300"></div>
                                                 <div className="bg-white text-gray-600 text-[11px] font-bold px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center gap-1">
-                                                    {formatTransitText(item.place.transitToNext)}
+                                                    {formatTransitText(item.place.transitToNext, language)}
                                                 </div>
                                                 <div className="h-4 border-l-2 border-dashed border-gray-300"></div>
                                             </div>
