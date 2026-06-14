@@ -525,7 +525,6 @@ export default function Home() {
     useEffect(() => {
         const hasShownSplash = sessionStorage.getItem('hasShownSplash');
         if (!hasShownSplash) setShowSplash(true);
-        const timer = setInterval(() => setBgIndex((prev) => (prev + 1) % backgroundImages.length), 5000);
         const checkStandalone = () => { setIsStandalone(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true); };
         checkStandalone();
         const handleAppInstalled = async () => {
@@ -585,7 +584,7 @@ export default function Home() {
                 });
             } else { setMySchedules([]); }
         });
-        return () => { clearInterval(timer); window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt); window.removeEventListener('appinstalled', handleAppInstalled); unsubscribeAuth(); if (unsubscribeTrips) unsubscribeTrips(); };
+        return () => { window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt); window.removeEventListener('appinstalled', handleAppInstalled); unsubscribeAuth(); if (unsubscribeTrips) unsubscribeTrips(); };
     }, [router, token]); // ✨ token을 의존성 배열에 추가
 
     // ✨ NextAuth (카카오) 로그인 상태를 감지하여 Firebase Custom Token 연동 및 마이페이지 리다이렉트
@@ -1188,7 +1187,7 @@ export default function Home() {
                                                 </div>
                                             </div>
 
-                                            <div className="relative flex items-center bg-[#121212] border border-white/10 rounded-full px-5 py-3.5 shadow-inner focus-within:border-spotify-green transition-all duration-300 gap-3 mb-4">
+                                            <div className="relative flex items-center bg-white border border-white/10 rounded-full px-5 py-3.5 shadow-inner focus-within:border-spotify-green transition-all duration-300 gap-3 mb-4">
                                                 <Search size={20} className="text-spotify-green shrink-0" />
                                                 <input
                                                     type="text"
@@ -1196,12 +1195,12 @@ export default function Home() {
                                                     value={formData.destination}
                                                     onChange={handleInputChange}
                                                     placeholder={listeningField === 'destination' ? translations[language].msg_listening : translations[language].placeholder_dest}
-                                                    className="w-full text-base sm:text-lg font-black text-white bg-transparent outline-none pr-2 placeholder:text-spotify-text-muted"
+                                                    className="w-full text-base sm:text-lg font-black text-slate-900 bg-transparent outline-none pr-2 placeholder:text-slate-400"
                                                 />
                                                 <button
                                                     type="button"
                                                     onClick={() => handleVoiceInput('destination')}
-                                                    className={`p-2 rounded-full transition-all shrink-0 hover:bg-white/5 active:scale-95 ${listeningField === 'destination' ? 'bg-spotify-green text-black animate-pulse' : 'text-spotify-text-muted'}`}
+                                                    className={`p-2 rounded-full transition-all shrink-0 hover:bg-black/5 active:scale-95 ${listeningField === 'destination' ? 'bg-spotify-green text-black animate-pulse' : 'text-slate-400'}`}
                                                 >
                                                     <Mic size={22} />
                                                 </button>
