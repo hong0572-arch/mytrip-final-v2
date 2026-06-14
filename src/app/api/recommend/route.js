@@ -26,16 +26,17 @@ export async function POST(req) {
       You are "Nyang-Pro", an elite AI travel advisor.
       Recommend exactly 3 safe, popular, and excellent places for the category "${category}" in "${destination}".
       For each place, provide a warm safety-focused recommendation.
+      IMPORTANT: Generate all details (including name, description, reason, and address) entirely in ${targetLang}. For example, if ${targetLang} is Korean, all place names, descriptions, reasons, and addresses must be written in Korean.
       
       Return ONLY the following JSON. Do not use Markdown formatting blocks like \`\`\`json.
       {
         "places": [
           {
-            "name": "Place Name",
+            "name": "Place Name in ${targetLang}",
             "category": "${category}",
-            "description": "Short description of the place",
+            "description": "Short description of the place in ${targetLang}",
             "reason": "Why it is recommended (empathetic + safety description) in ${targetLang}",
-            "address": "Street address of the place",
+            "address": "Street address of the place in ${targetLang}",
             "googleSearchQuery": "Place Name + City",
             "lat": 37.5665,
             "lng": 126.9780,
@@ -45,8 +46,8 @@ export async function POST(req) {
       }
     `;
 
-    // Using gemini-1.5-flash as it is fast and reliable for simple structured queries
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Using gemini-3.1-flash-lite as it is fast and reliable for simple structured queries
+    const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
     const result = await model.generateContent(prompt);
     const response = await result.response;
     let text = response.text();

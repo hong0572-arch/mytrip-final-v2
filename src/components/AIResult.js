@@ -18,6 +18,7 @@ import { db, auth } from '../lib/firebase';
 import { collection, addDoc, updateDoc, doc, serverTimestamp, setDoc, increment, getDoc, getDocs } from 'firebase/firestore';
 import { signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "firebase/auth";
 import TravelQuiz from './TravelQuiz';
+import SunSceneBackground from './SunSceneBackground';
 import { getApiUrl } from '../utils/api';
 
 import { toPng } from 'html-to-image';
@@ -89,6 +90,18 @@ const getInfoModalGradient = (tab) => {
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 const DAY_COLORS = ['#FF4B4B', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
 
+const isRestaurant = (place) => {
+    const cat = (place.category || '').toLowerCase();
+    const name = (place.name || '').toLowerCase();
+    return (
+        cat.includes('맛집') || cat.includes('식당') || cat.includes('식사') || cat.includes('요리') || cat.includes('레스토랑') ||
+        cat.includes('카페') || cat.includes('디저트') || cat.includes('베이커리') || cat.includes('음식') ||
+        cat.includes('restaurant') || cat.includes('cafe') || cat.includes('food') || cat.includes('dining') || cat.includes('bakery') || cat.includes('dessert') || cat.includes('bistro') || cat.includes('sushi') || cat.includes('ramen') || cat.includes('coffee') || cat.includes('bar') || cat.includes('pub') || cat.includes('grill') || cat.includes('gastronomy') ||
+        name.includes('맛집') || name.includes('식당') || name.includes('카페') || name.includes('디저트') || name.includes('베이커리') || name.includes('레스토랑') || name.includes('커피') || name.includes('까페') || name.includes('빵집') || name.includes('스시') || name.includes('라멘') || name.includes('우동') || name.includes('소바') || name.includes('식사') || name.includes('다이닝') ||
+        name.includes('restaurant') || name.includes('cafe') || name.includes('bakery') || name.includes('bistro') || name.includes('coffee') || name.includes('sushi') || name.includes('ramen') || name.includes('pizza') || name.includes('pasta') || name.includes('grill') || name.includes('diner') || name.includes('kitchen')
+    );
+};
+
 export default function AIResult({ data, userInfo, tripId, onReset, language = 'ko' }) {
     const router = useRouter();
     const [bgIndex, setBgIndex] = useState(0);
@@ -106,6 +119,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const [loadingAction, setLoadingAction] = useState(null);
     const [shareUrl, setShareUrl] = useState(null);
     const [activeTab, setActiveTab] = useState('itinerary');
+    const [viewMode, setViewMode] = useState('map'); // 'map' | 'timeline' | 'summary'
     const [isSaving, setIsSaving] = useState(false);
     const [mapHeight, setMapHeight] = useState(40);
     const [isPanelOpen, setIsPanelOpen] = useState(true);
@@ -129,6 +143,12 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const [mapType, setMapType] = useState('roadmap');
     const [recommendLoading, setRecommendLoading] = useState(false);
     const [recommendInput, setRecommendInput] = useState('');
+    const [recommendInputFood, setRecommendInputFood] = useState('');
+    const [recommendInputSight, setRecommendInputSight] = useState('');
+    const [showInsertModal, setShowInsertModal] = useState(false);
+    const [insertCategory, setInsertCategory] = useState('');
+    const [selectedInsertDay, setSelectedInsertDay] = useState(0);
+    const [selectedInsertPos, setSelectedInsertPos] = useState(-1);
 
     const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -146,6 +166,14 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const currentDayIdx = React.useMemo(() => {
         return flatPlaces[selectedIndex]?.dayIdx ?? 0;
     }, [flatPlaces, selectedIndex]);
+
+    const handleTriggerRecommendation = (category) => {
+        if (!category || category.trim() === '') return;
+        setInsertCategory(category);
+        setSelectedInsertDay(currentDayIdx);
+        setSelectedInsertPos(-1); // default to end
+        setShowInsertModal(true);
+    };
 
     const handleSelectPlace = (idx) => {
         setSelectedIndex(idx);
@@ -237,7 +265,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
         return total > 0 ? `${total}${language === 'en' ? 'm' : '분'}` : (language === 'en' ? '30m' : '30분');
     }, [transitSegments, language]);
 
-    const handleAddAIRecommendation = async (categoryStr) => {
+    const handleAddAIRecommendation = async (categoryStr, targetDayIdx, targetPosIdx) => {
         if (!categoryStr || categoryStr.trim() === '') return;
         const dest = tripPlan.destination || userInfo?.destination || "Seoul";
         const cleanDest = dest.split('#')[0].trim();
@@ -262,40 +290,40 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
             const recommendedPlaces = resData.result.places;
             const newPlan = { ...tripPlan };
-            const activeDayItem = newPlan.itinerary[currentDayIdx];
+            const activeDayItem = newPlan.itinerary[targetDayIdx];
             
             if (activeDayItem) {
-                const startIndex = activeDayItem.places.length;
-                recommendedPlaces.forEach((p, idx) => {
-                    const newPlace = {
-                        order: startIndex + idx + 1,
-                        name: p.name,
-                        category: p.category || categoryStr,
-                        description: p.description || p.reason || "",
-                        reason: p.reason || "",
-                        address: p.address || "",
-                        phone: p.phone || "",
-                        coordinates: {
-                            lat: parseFloat(p.lat) || 37.5665,
-                            lng: parseFloat(p.lng) || 126.9780
-                        },
-                        transitToNext: ""
-                    };
-                    
-                    if (activeDayItem.places.length > 0) {
-                        const lastPlace = activeDayItem.places[activeDayItem.places.length - 1];
-                        lastPlace.transitToNext = travelMode === 'WALKING' 
+                const newPlaces = [...activeDayItem.places];
+                const insertIdx = targetPosIdx === -1 || targetPosIdx > newPlaces.length ? newPlaces.length : targetPosIdx;
+
+                const formattedRecommended = recommendedPlaces.map((p) => ({
+                    name: p.name,
+                    category: p.category || categoryStr,
+                    description: p.description || p.reason || "",
+                    reason: p.reason || "",
+                    address: p.address || "",
+                    phone: p.phone || "",
+                    coordinates: {
+                        lat: parseFloat(p.lat) || 37.5665,
+                        lng: parseFloat(p.lng) || 126.9780
+                    },
+                    transitToNext: ""
+                }));
+
+                newPlaces.splice(insertIdx, 0, ...formattedRecommended);
+
+                newPlaces.forEach((p, idx) => {
+                    p.order = idx + 1;
+                    if (idx < newPlaces.length - 1) {
+                        p.transitToNext = travelMode === 'WALKING' 
                             ? (language === 'en' ? "🚶‍♂️ 10 min walk" : "🚶‍♂️ 도보 10분") 
                             : (language === 'en' ? "🚗 15 min drive" : "🚗 이동 15분");
+                    } else {
+                        p.transitToNext = "";
                     }
-                    
-                    activeDayItem.places.push(newPlace);
                 });
 
-                if (activeDayItem.places.length > 0) {
-                    activeDayItem.places[activeDayItem.places.length - 1].transitToNext = "";
-                }
-
+                activeDayItem.places = newPlaces;
                 setTripPlan(newPlan);
                 
                 if (tripId) {
@@ -308,7 +336,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     });
                 }
                 
-                triggerCustomToast(language === 'en' ? `Added 3 recommendations to Day ${currentDayIdx + 1}! Check the map. 📍` : `Day ${currentDayIdx + 1} 일정에 3개의 추천 장소가 추가되었습니다! 지도를 확인하세요. 📍`);
+                triggerCustomToast(language === 'en' ? `Added 3 recommendations to Day ${targetDayIdx + 1}! Check the map. 📍` : `Day ${targetDayIdx + 1} 일정에 3개의 추천 장소가 추가되었습니다! 지도를 확인하세요. 📍`);
                 setRecommendInput("");
             }
         } catch (err) {
@@ -1135,11 +1163,11 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     };
 
     return (
-        <div className="fixed inset-0 w-full z-[100] bg-[#030712] flex items-center justify-center font-sans overflow-hidden selection:bg-indigo-500/30">
+        <div className="fixed inset-0 w-full bg-[#030712] flex items-center justify-center font-sans overflow-hidden selection:bg-indigo-500/30" style={{ zIndex: 100 }}>
             <div id={CAPTURE_ID} className="w-full max-w-[480px] h-full sm:h-[92vh] sm:rounded-[48px] bg-black relative shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col border border-white/10 ring-1 ring-white/5">
 
                 {/* Full screen Map */}
-                <div className="absolute inset-0 z-0 bg-gray-900 pointer-events-auto">
+                <div className={`absolute inset-0 z-0 bg-gray-900 pointer-events-auto ${viewMode === 'map' ? 'block' : 'hidden'}`}>
                     <div ref={mapRef} className="w-full h-full" />
                 </div>
 
@@ -1151,6 +1179,40 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         </span>
                     )}
                     <h1 className="text-xl sm:text-2xl font-bold text-white drop-shadow-lg w-full pr-12 leading-tight">{tripPlan.tripTitle}</h1>
+                </div>
+
+                {/* View Mode Switcher Tab Bar */}
+                <div className="absolute top-20 left-4 right-4 z-30 flex bg-[#121212]/20 border border-white/10 p-1 rounded-xl pointer-events-auto backdrop-blur-md">
+                    <button 
+                        onClick={() => setViewMode('map')} 
+                        className={`flex-1 py-1.5 text-xs font-black rounded-lg transition-all ${
+                            viewMode === 'map' 
+                                ? 'bg-spotify-green text-black shadow-md' 
+                                : 'text-gray-400 hover:text-white'
+                        }`}
+                    >
+                        🗺️ {language === 'en' ? 'Map' : '지도'}
+                    </button>
+                    <button 
+                        onClick={() => setViewMode('timeline')} 
+                        className={`flex-1 py-1.5 text-xs font-black rounded-lg transition-all ${
+                            viewMode === 'timeline' 
+                                ? 'bg-spotify-green text-black shadow-md' 
+                                : 'text-gray-400 hover:text-white'
+                        }`}
+                    >
+                        🍔 {language === 'en' ? 'Restaurants' : '맛집'}
+                    </button>
+                    <button 
+                        onClick={() => setViewMode('summary')} 
+                        className={`flex-1 py-1.5 text-xs font-black rounded-lg transition-all ${
+                            viewMode === 'summary' 
+                                ? 'bg-spotify-green text-black shadow-md' 
+                                : 'text-gray-400 hover:text-white'
+                        }`}
+                    >
+                        🛍️ {language === 'en' ? 'Shopping/Sights' : '쇼핑/볼거리'}
+                    </button>
                 </div>
 
                 {/* Right Top Buttons - Unified Vertical Toolbar */}
@@ -1175,44 +1237,48 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                     {!isEditMode && (
                         <>
-                            <div className="w-8 h-[1px] bg-white/10 my-1"></div>
+                            {viewMode === 'map' && (
+                                <>
+                                    <div className="w-8 h-[1px] bg-white/10 my-1"></div>
 
-                            <button
-                                onClick={() => setTravelMode('DRIVING')}
-                                className={`p-2 rounded-full transition-all ${travelMode === 'DRIVING' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
-                                title={language === 'en' ? "Driving" : "자동차"}
-                            >
-                                <Car size={18} />
-                            </button>
-                            <button
-                                onClick={() => setTravelMode('WALKING')}
-                                className={`p-2 rounded-full transition-all ${travelMode === 'WALKING' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
-                                title={language === 'en' ? "Walking" : "도보"}
-                            >
-                                <Footprints size={18} />
-                            </button>
-                            <button
-                                onClick={() => setTravelMode('TRANSIT')}
-                                className={`p-2 rounded-full transition-all ${travelMode === 'TRANSIT' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
-                                title={language === 'en' ? "Transit" : "대중교통"}
-                            >
-                                <Train size={18} />
-                            </button>
+                                    <button
+                                        onClick={() => setTravelMode('DRIVING')}
+                                        className={`p-2 rounded-full transition-all ${travelMode === 'DRIVING' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
+                                        title={language === 'en' ? "Driving" : "자동차"}
+                                    >
+                                        <Car size={18} />
+                                    </button>
+                                    <button
+                                        onClick={() => setTravelMode('WALKING')}
+                                        className={`p-2 rounded-full transition-all ${travelMode === 'WALKING' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
+                                        title={language === 'en' ? "Walking" : "도보"}
+                                    >
+                                        <Footprints size={18} />
+                                    </button>
+                                    <button
+                                        onClick={() => setTravelMode('TRANSIT')}
+                                        className={`p-2 rounded-full transition-all ${travelMode === 'TRANSIT' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
+                                        title={language === 'en' ? "Transit" : "대중교통"}
+                                    >
+                                        <Train size={18} />
+                                    </button>
 
-                            <div className="w-8 h-[1px] bg-white/10 my-1"></div>
+                                    <div className="w-8 h-[1px] bg-white/10 my-1"></div>
 
-                            <button
-                                onClick={handleOptimizeItineraryRoute}
-                                disabled={loadingAction === 'optimize'}
-                                className="p-2.5 bg-spotify-green text-black rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all disabled:opacity-50 border border-white/10 hover:bg-spotify-green-hover"
-                                title={language === 'en' ? "AI Route Optimization" : "AI 동선 자동 최적화"}
-                            >
-                                {loadingAction === 'optimize' ? (
-                                    <Loader2 className="animate-spin text-black" size={20} />
-                                ) : (
-                                    <Wand2 size={20} />
-                                )}
-                            </button>
+                                    <button
+                                        onClick={handleOptimizeItineraryRoute}
+                                        disabled={loadingAction === 'optimize'}
+                                        className="p-2.5 bg-spotify-green text-black rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all disabled:opacity-50 border border-white/10 hover:bg-spotify-green-hover"
+                                        title={language === 'en' ? "AI Route Optimization" : "AI 동선 자동 최적화"}
+                                    >
+                                        {loadingAction === 'optimize' ? (
+                                            <Loader2 className="animate-spin text-black" size={20} />
+                                        ) : (
+                                            <Wand2 size={20} />
+                                        )}
+                                    </button>
+                                </>
+                            )}
 
                             <div className="w-8 h-[1px] bg-white/10 my-1"></div>
 
@@ -1248,145 +1314,46 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     )}
                 </div>
                 {/* Drag-based Bottom Sheet — 모바일 최적화 바텀 시트 */}
-                {!isEditMode && (
+                {!isEditMode && viewMode === 'map' && (
                     <div 
-                        className={`absolute bottom-0 left-0 w-full backdrop-blur-2xl shadow-[0_-20px_40px_rgba(0,0,0,0.6)] z-40 transition-all duration-500 ease-[cubic-bezier(0.3,1,0.3,1)] flex flex-col border-t border-white/10 rounded-t-[32px] overflow-hidden text-white`}
+                        className={`absolute bottom-0 left-0 w-full bg-white/8 backdrop-blur-2xl shadow-[0_-20px_40px_rgba(0,0,0,0.15)] z-40 transition-all duration-500 ease-[cubic-bezier(0.3,1,0.3,1)] flex flex-col border-t border-white/40 rounded-t-[32px] overflow-hidden text-slate-800`}
                         style={{ 
-                            backgroundImage: `linear-gradient(to bottom, ${getThemeGradient(theme)}d0 0%, ${getThemeGradient(theme)}b0 40%, #121212f2 100%)`,
-                            height: sheetState === 'min' ? '115px' : sheetState === 'half' ? '50%' : '85%'
+                            height: sheetState === 'min' ? '140px' : sheetState === 'half' ? '50%' : '85%'
                         }}
                     >
                         {/* Drag Handle Bar */}
                         <div 
                             onClick={toggleSheetState}
-                            className="w-full py-3 flex justify-center cursor-row-resize select-none shrink-0"
+                            className={`w-full flex justify-center cursor-row-resize select-none shrink-0 ${sheetState === 'min' ? 'py-1' : 'py-2'}`}
                         >
-                            <div className="w-12 h-1.5 bg-white/20 hover:bg-white/40 rounded-full transition-colors" />
+                            <div className="w-10 h-1 bg-slate-300 hover:bg-slate-400 rounded-full transition-colors" />
                         </div>
 
                         {/* Top Header Section (Always Visible) */}
-                        <div className="px-5 pb-3 flex justify-between items-center shrink-0 border-b border-white/5">
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs font-black px-2 py-0.5 bg-white/10 text-spotify-green rounded-full">
-                                        Day {currentDayIdx + 1}
-                                    </span>
-                                    <h2 className="text-base font-black truncate max-w-[200px]">
-                                        {tripPlan.itinerary[currentDayIdx]?.day ? `${tripPlan.itinerary[currentDayIdx].day}일차` : tripTitle}
-                                    </h2>
-                                </div>
-                                <p className="text-[11px] font-bold text-spotify-text-muted mt-1">
-                                    {language === 'en' ? 'Total transit time: ' : '총 이동 시간: '}
-                                    <span className="text-spotify-green">{totalTransitTime}</span>
-                                </p>
+                        <div className={`flex justify-between items-center shrink-0 border-b border-slate-100 ${sheetState === 'min' ? 'px-4 pb-1 pt-0.5' : 'px-4 pb-2'}`}>
+                            <div className="flex flex-col">
+                                <span className={`font-black text-slate-900 ${sheetState === 'min' ? 'text-[13px]' : 'text-[15px] sm:text-base'}`}>
+                                    Day {currentDayIdx + 1} · {destName}
+                                </span>
                             </div>
-
-                        </div>
-
-                        {/* Transit Segment Bar (Always Visible) */}
-                        <div className="px-5 py-2 border-b border-white/5 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0 min-h-[46px]">
-                            {transitSegments.length > 0 ? (
-                                transitSegments.map((seg, idx) => (
-                                    <React.Fragment key={idx}>
-                                        <div 
-                                            className="bg-white/5 border border-white/10 px-2.5 py-1 rounded-full flex items-center gap-1 text-[11px] font-bold shrink-0 shadow-sm"
-                                            title={seg.raw}
-                                        >
-                                            <span>{seg.icon}</span>
-                                            <span className="text-spotify-text-muted">{seg.label}</span>
-                                            <span className="text-spotify-green">{seg.duration}</span>
-                                        </div>
-                                        {idx < transitSegments.length - 1 && (
-                                            <span className="text-white/20 text-xs shrink-0 font-bold">›</span>
-                                        )}
-                                    </React.Fragment>
-                                ))
-                            ) : (
-                                <p className="text-[10px] text-spotify-text-muted font-bold py-1">
-                                    {language === 'en' ? 'No transit segments for today.' : '오늘 일정의 이동 수단 정보가 없습니다.'}
-                                </p>
-                            )}
+                            <button 
+                                onClick={onReset} 
+                                className={`rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/60 flex items-center justify-center text-slate-700 transition-colors ${sheetState === 'min' ? 'w-6 h-6' : 'w-7 h-7'}`}
+                                title={language === 'en' ? 'Close' : '닫기'}
+                            >
+                                <X size={sheetState === 'min' ? 12 : 14} />
+                            </button>
                         </div>
 
                         {/* Expandable Body Section */}
-                        {sheetState !== 'min' && (
-                            <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+                        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
                                 
-                                {/* 1. Place Detail Card (Visible in FULL state and when a place is selected) */}
-                                {sheetState === 'full' && flatPlaces[selectedIndex] && (() => {
-                                    const selectedPlace = flatPlaces[selectedIndex].place;
-                                    const mockImages = [
-                                        `https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=300&q=80`,
-                                        `https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=300&q=80`,
-                                        `https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=300&q=80`
-                                    ];
-                                    return (
-                                        <div className="p-4 mx-4 mt-3 bg-white/5 border border-white/10 rounded-2xl shrink-0 flex flex-col gap-3 shadow-xl backdrop-blur-md">
-                                            <div className="flex justify-between items-start gap-2">
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="bg-spotify-green text-black text-[9px] font-black px-1.5 py-0.5 rounded-md">
-                                                            {selectedPlace.category || (language === 'en' ? 'Place' : '장소')}
-                                                        </span>
-                                                        <h3 className="font-black text-sm text-white truncate max-w-[220px]">
-                                                            {selectedPlace.name}
-                                                        </h3>
-                                                    </div>
-                                                    <p className="text-[10px] text-spotify-text-muted font-bold mt-1 truncate max-w-[280px]">
-                                                        📍 {selectedPlace.address || (language === 'en' ? 'Address unavailable' : '주소 정보 없음')}
-                                                    </p>
-                                                </div>
-                                                {selectedPlace.budget && (
-                                                    <span className="text-[11px] font-bold text-spotify-green bg-spotify-green/10 px-2 py-0.5 rounded-full border border-spotify-green/20">
-                                                        💰 {selectedPlace.budget}
-                                                    </span>
-                                                )}
-                                            </div>
 
-                                            {/* Action Buttons */}
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => window.open(getTripLink(selectedPlace.name, destName, language), '_blank')}
-                                                    className="flex-1 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
-                                                >
-                                                    <ExternalLink size={12} />
-                                                    <span>{language === 'en' ? 'Info' : '장소정보'}</span>
-                                                </button>
-                                                <a
-                                                    href={`tel:${selectedPlace.phone || '02-123-4567'}`}
-                                                    className="flex-1 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
-                                                >
-                                                    <PhoneCall size={12} />
-                                                    <span>{language === 'en' ? 'Call' : '전화'}</span>
-                                                </a>
-                                                <button
-                                                    onClick={() => handleOpenGoogleMaps(selectedPlace)}
-                                                    className="flex-1 py-1.5 rounded-xl bg-spotify-green/20 hover:bg-spotify-green/30 border border-spotify-green/30 text-spotify-green text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
-                                                >
-                                                    <Navigation size={12} />
-                                                    <span>{language === 'en' ? 'Route' : '길찾기'}</span>
-                                                </button>
-                                            </div>
-
-                                            {/* Image Carousel */}
-                                            <div className="flex gap-2 overflow-x-auto py-1 no-scrollbar shrink-0">
-                                                {mockImages.map((src, idx) => (
-                                                    <img
-                                                        key={idx}
-                                                        src={src}
-                                                        alt={`place_preview_${idx}`}
-                                                        className="w-24 h-16 rounded-xl object-cover border border-white/10 shrink-0 shadow-md hover:scale-105 transition-transform duration-300"
-                                                    />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    );
-                                })()}
 
                                 {/* 2. Timeline List */}
                                 <div 
                                     ref={scrollContainerRef} 
-                                    className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-24"
+                                    className={`flex-1 overflow-y-auto custom-scrollbar ${sheetState === 'min' ? 'p-2 space-y-2 pb-6' : 'p-4 space-y-4 pb-24'}`}
                                 >
                                     {flatPlaces.map((item, i) => {
                                         const isSelected = i === selectedIndex;
@@ -1399,33 +1366,43 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                 <div
                                                     data-index={i}
                                                     onClick={() => handleSelectPlace(i)}
-                                                    className={`vertical-place-card relative p-4 rounded-2xl border transition-all duration-300 cursor-pointer ${
+                                                    className={`vertical-place-card relative border transition-all duration-300 cursor-pointer ${
+                                                        sheetState === 'min' ? 'p-2.5 rounded-xl' : 'p-4 rounded-2xl'
+                                                    } ${
                                                         isSelected 
-                                                            ? 'border-spotify-green bg-gradient-to-br from-spotify-green/20 to-white/5 shadow-lg shadow-spotify-green/5 scale-[1.02] opacity-100' 
-                                                            : 'border-white/5 bg-gradient-to-br from-white/5 to-white/0 hover:border-white/10 hover:from-white/10 hover:to-white/5 opacity-70'
+                                                            ? 'border-spotify-green bg-[#10b981]/10 shadow-md shadow-spotify-green/5 scale-[1.02] opacity-100' 
+                                                            : 'border-slate-100 bg-slate-50/50 hover:border-slate-200 hover:bg-slate-100/80 opacity-80'
                                                     }`}
                                                 >
-                                                    <div className="flex items-start gap-3">
-                                                        <div className={`w-7 h-7 rounded-full flex items-center justify-center font-black text-xs shrink-0 transition-colors duration-300 ${isSelected ? 'bg-spotify-green text-black' : 'bg-white/10 text-spotify-text-muted'}`}>
+                                                    <div className={`flex items-start ${sheetState === 'min' ? 'gap-2.5' : 'gap-3'}`}>
+                                                        <div className={`rounded-full flex items-center justify-center font-black shrink-0 transition-colors duration-300 ${
+                                                            sheetState === 'min' ? 'w-6 h-6 text-[10px]' : 'w-7 h-7 text-xs'
+                                                        } ${isSelected ? 'bg-spotify-green text-white' : 'bg-slate-200 text-slate-600'}`}>
                                                             {item.placeIdx + 1}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center justify-between mb-1">
-                                                                <span className="text-[10px] font-black uppercase text-spotify-text-muted">Day {item.dayIdx + 1}</span>
-                                                                {item.place.budget && <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isSelected ? 'text-spotify-green bg-spotify-green/10' : 'text-spotify-text-muted bg-white/5'}`}>💰 {item.place.budget}</span>}
+                                                            <div className={`flex items-center justify-between ${sheetState === 'min' ? 'mb-0.5' : 'mb-1'}`}>
+                                                                <span className="text-[10px] font-black uppercase text-slate-400">Day {item.dayIdx + 1}</span>
+                                                                {item.place.budget && <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isSelected ? 'text-spotify-green bg-spotify-green/20' : 'text-slate-500 bg-slate-200/50'}`}>💰 {item.place.budget}</span>}
                                                             </div>
-                                                            <h3 className={`text-sm font-bold truncate mb-1 transition-colors duration-300 ${isSelected ? 'text-white' : 'text-spotify-text-muted'}`}>{item.place.name}</h3>
-                                                            <p className={`text-xs leading-relaxed transition-colors duration-300 ${isSelected ? 'text-white/90 line-clamp-none' : 'text-spotify-text-muted/65 line-clamp-1'}`}>{item.place.description}</p>
+                                                            <h3 className={`font-bold truncate transition-colors duration-300 ${
+                                                                sheetState === 'min' ? 'text-xs mb-0.5' : 'text-sm mb-1'
+                                                            } ${isSelected ? 'text-slate-900' : 'text-slate-700'}`}>{item.place.name}</h3>
+                                                            <p className={`leading-relaxed transition-colors duration-300 ${
+                                                                sheetState === 'min' ? 'text-[11px]' : 'text-xs'
+                                                            } ${isSelected ? 'text-slate-600 font-medium' : 'text-slate-500'} ${
+                                                                (!isSelected || sheetState === 'min') ? 'line-clamp-1' : 'line-clamp-none'
+                                                            }`}>{item.place.description}</p>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 {showTransit && (
                                                     <div className="flex flex-col items-center justify-center -my-2 z-10 relative pointer-events-none">
-                                                        <div className="h-3 border-l border-dashed border-white/10"></div>
-                                                        <div className="bg-gradient-to-r from-spotify-green/20 to-[#121212]/90 text-spotify-green text-[10px] font-bold px-3 py-1 rounded-full border border-white/10 shadow-md flex items-center gap-1">
+                                                        <div className="h-3 border-l border-dashed border-slate-200"></div>
+                                                        <div className="bg-slate-100 text-spotify-green text-[10px] font-bold px-3 py-1 rounded-full border border-slate-200 shadow-sm flex items-center gap-1">
                                                             {formatTransitText(item.place.transitToNext, language)}
                                                         </div>
-                                                        <div className="h-3 border-l border-dashed border-white/10"></div>
+                                                        <div className="h-3 border-l border-dashed border-slate-200"></div>
                                                     </div>
                                                 )}
                                             </React.Fragment>
@@ -1434,15 +1411,15 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                                     {/* 3. AI Recommendation Form (Visible inside Full state at the bottom of list) */}
                                     {sheetState === 'full' && (
-                                        <div className="pt-4 border-t border-white/10 mt-6 pb-12">
-                                            <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col gap-3 backdrop-blur-md">
+                                        <div className="pt-4 border-t border-slate-200 mt-6 pb-12">
+                                            <div className="bg-slate-50 border border-slate-200/60 p-4 rounded-2xl flex flex-col gap-3">
                                                 <div className="flex items-center gap-2 text-spotify-green">
                                                     <Sparkles size={16} className="animate-pulse" />
                                                     <h4 className="text-xs font-black uppercase tracking-wider">
                                                         {language === 'en' ? '🪄 Nyang-Pro AI Recommendation' : '🪄 냥프로 AI 추가 추천 요청'}
                                                     </h4>
                                                 </div>
-                                                <p className="text-[10px] text-spotify-text-muted font-bold">
+                                                <p className="text-[10px] text-slate-500 font-bold">
                                                     {language === 'en' 
                                                         ? 'Request restaurant, cafe, or shopping recommendations near your destination!'
                                                         : '현재 여행지 주변의 맞춤형 맛집, 카페, 쇼핑 장소를 추가 추천받아 일정에 반영해보세요.'}
@@ -1451,45 +1428,48 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                 {/* Category Action Badges */}
                                                 <div className="flex gap-1.5 flex-wrap">
                                                     <button
-                                                        onClick={() => handleAddAIRecommendation('맛집')}
+                                                        onClick={() => handleTriggerRecommendation('맛집')}
                                                         disabled={recommendLoading}
-                                                        className="px-3 py-1.5 bg-white/5 hover:bg-spotify-green hover:text-black border border-white/10 text-[11px] font-extrabold rounded-full transition-all shrink-0 disabled:opacity-50"
+                                                        className="px-3 py-1.5 bg-white hover:bg-spotify-green hover:text-white border border-slate-200 text-[11px] font-extrabold rounded-full transition-all shrink-0 text-slate-700 disabled:opacity-50"
                                                     >
                                                         🍔 {language === 'en' ? 'Restaurants' : '맛집 추가'}
                                                     </button>
                                                     <button
-                                                        onClick={() => handleAddAIRecommendation('쇼핑')}
+                                                        onClick={() => handleTriggerRecommendation('쇼핑')}
                                                         disabled={recommendLoading}
-                                                        className="px-3 py-1.5 bg-white/5 hover:bg-spotify-green hover:text-black border border-white/10 text-[11px] font-extrabold rounded-full transition-all shrink-0 disabled:opacity-50"
+                                                        className="px-3 py-1.5 bg-white hover:bg-spotify-green hover:text-white border border-slate-200 text-[11px] font-extrabold rounded-full transition-all shrink-0 text-slate-700 disabled:opacity-50"
                                                     >
                                                         🛍️ {language === 'en' ? 'Shopping' : '쇼핑 추가'}
                                                     </button>
                                                     <button
-                                                        onClick={() => handleAddAIRecommendation('카페')}
+                                                        onClick={() => handleTriggerRecommendation('카페')}
                                                         disabled={recommendLoading}
-                                                        className="px-3 py-1.5 bg-white/5 hover:bg-spotify-green hover:text-black border border-white/10 text-[11px] font-extrabold rounded-full transition-all shrink-0 disabled:opacity-50"
+                                                        className="px-3 py-1.5 bg-white hover:bg-spotify-green hover:text-white border border-slate-200 text-[11px] font-extrabold rounded-full transition-all shrink-0 text-slate-700 disabled:opacity-50"
                                                     >
                                                         ☕ {language === 'en' ? 'Cafes' : '카페 추가'}
                                                     </button>
                                                 </div>
 
                                                 {/* Direct Text Input */}
-                                                <div className="flex gap-2 bg-black/40 border border-white/10 p-1 rounded-xl">
+                                                <div className="flex gap-2 bg-slate-100 border border-slate-200 p-1 rounded-xl">
                                                     <input
                                                         type="text"
                                                         value={recommendInput}
                                                         onChange={(e) => setRecommendInput(e.target.value)}
                                                         disabled={recommendLoading}
                                                         placeholder={language === 'en' ? 'e.g. Places with great night views' : '예: 야경이 예쁜 루프탑'}
-                                                        className="flex-1 bg-transparent px-2.5 py-2 text-xs text-white border-none outline-none placeholder:text-spotify-text-muted"
+                                                        className="flex-1 bg-transparent px-2.5 py-2 text-xs text-slate-800 border-none outline-none placeholder:text-slate-400"
                                                     />
                                                     <button
-                                                        onClick={() => handleAddAIRecommendation(recommendInput)}
+                                                        onClick={() => {
+                                                            handleTriggerRecommendation(recommendInput);
+                                                            setRecommendInput('');
+                                                        }}
                                                         disabled={recommendLoading || !recommendInput.trim()}
-                                                        className="bg-spotify-green text-black px-3.5 py-2 rounded-lg text-xs font-black transition-transform active:scale-95 disabled:opacity-50 shrink-0 flex items-center justify-center"
+                                                        className="bg-spotify-green text-white px-3.5 py-2 rounded-lg text-xs font-black transition-transform active:scale-95 disabled:opacity-50 shrink-0 flex items-center justify-center"
                                                     >
                                                         {recommendLoading ? (
-                                                            <Loader2 size={14} className="animate-spin text-black" />
+                                                            <Loader2 size={14} className="animate-spin text-white" />
                                                         ) : (
                                                             <Send size={14} />
                                                         )}
@@ -1500,9 +1480,254 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                     )}
                                 </div>
                             </div>
-                        )}
-                    </div>
-                )}
+                        </div>
+                    )}                 {/* Timeline View Mode (Restaurants Only) */}
+                {!isEditMode && viewMode === 'timeline' && (() => {
+                    const allFoodPlaces = [];
+                    tripPlan.itinerary?.forEach((dayItem, dayIdx) => {
+                        dayItem.places.forEach((place, placeIdx) => {
+                            if (isRestaurant(place)) {
+                                allFoodPlaces.push({ place, dayIdx, originalIdx: placeIdx });
+                            }
+                        });
+                    });
+
+                    return (
+                        <div className="absolute inset-0 z-0 bg-[#121212] overflow-y-auto pt-36 pb-24 px-4 custom-scrollbar flex flex-col pointer-events-auto">
+                            <SunSceneBackground scene={['mountain', 'beach', 'city', 'cruise', 'sky'][currentDayIdx % 5]} />
+                            <div className="relative z-10 w-full flex flex-col gap-6">
+                                {/* AI Recommendation Widget specifically for Restaurants (Moved to Top) */}
+                                <div className="bg-[#121212]/80 border border-white/10 rounded-3xl p-5 backdrop-blur-xl shadow-2xl flex flex-col gap-3 mt-4">
+                                    <div className="flex items-center gap-2 text-spotify-green">
+                                        <Sparkles size={16} className="animate-pulse" />
+                                        <h4 className="text-xs font-black uppercase tracking-wider">
+                                            {language === 'en' ? '🪄 AI Food & Cafe Recommendation' : '🪄 냥프로 AI 맛집/카페 추가 추천'}
+                                        </h4>
+                                    </div>
+                                    <p className="text-[10px] text-spotify-text-muted font-bold">
+                                        {language === 'en' 
+                                            ? 'Add delicious restaurants or cafes near your destination!'
+                                            : '현재 여행지 주변의 맛집이나 이색 카페를 추천받아 일정에 반영해보세요.'}
+                                    </p>
+                                    <div className="flex gap-1.5 flex-wrap">
+                                        <button
+                                            onClick={() => handleTriggerRecommendation('맛집')}
+                                            disabled={recommendLoading}
+                                            className="px-3 py-1.5 bg-white/5 hover:bg-spotify-green hover:text-black border border-white/10 text-[11px] font-extrabold rounded-full transition-all disabled:opacity-50"
+                                        >
+                                            🍔 {language === 'en' ? 'Add Restaurant' : '맛집 추가'}
+                                        </button>
+                                        <button
+                                            onClick={() => handleTriggerRecommendation('카페')}
+                                            disabled={recommendLoading}
+                                            className="px-3 py-1.5 bg-white/5 hover:bg-spotify-green hover:text-black border border-white/10 text-[11px] font-extrabold rounded-full transition-all disabled:opacity-50"
+                                        >
+                                            ☕ {language === 'en' ? 'Add Cafe' : '카페 추가'}
+                                        </button>
+                                    </div>
+                                    <div className="flex gap-2 bg-black/40 border border-white/10 p-1 rounded-xl">
+                                        <input
+                                            type="text"
+                                            value={recommendInputFood}
+                                            onChange={(e) => setRecommendInputFood(e.target.value)}
+                                            disabled={recommendLoading}
+                                            placeholder={language === 'en' ? 'e.g. Cozy local noodle restaurants' : '예: 현지인들이 가는 아늑한 일식당'}
+                                            className="flex-1 bg-transparent px-2.5 py-2 text-xs text-white border-none outline-none placeholder:text-spotify-text-muted"
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                handleTriggerRecommendation(recommendInputFood);
+                                            }}
+                                            disabled={recommendLoading || !recommendInputFood.trim()}
+                                            className="bg-spotify-green text-black px-3.5 py-2 rounded-lg text-xs font-black transition-all active:scale-95 disabled:opacity-50 shrink-0 flex items-center justify-center"
+                                        >
+                                            {recommendLoading ? <Loader2 size={14} className="animate-spin text-black" /> : <Send size={14} />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="text-center py-4 bg-black/40 backdrop-blur-md rounded-2xl border border-white/5 p-4 shadow-xl">
+                                    <h2 className="text-lg font-black text-white">{tripPlan.tripTitle}</h2>
+                                    <p className="text-[11px] font-bold text-spotify-text-muted mt-1">{destName} • {estimatedCost} • {language === 'en' ? 'Restaurants & Cafes' : '여행지 추천 맛집 리스트'}</p>
+                                </div>
+
+                                <div className="bg-[#121212]/80 border border-white/10 rounded-3xl p-5 backdrop-blur-xl shadow-2xl flex flex-col gap-4">
+                                    <div className="space-y-4">
+                                        {allFoodPlaces.length === 0 ? (
+                                            <div className="text-xs text-spotify-text-muted/60 text-center py-8 italic">
+                                                {language === 'en' ? 'No restaurant/cafe recommended for this trip.' : '이 여행에는 등록된 맛집/카페 일정이 없습니다.'}
+                                            </div>
+                                        ) : (
+                                            allFoodPlaces.map(({ place, dayIdx, originalIdx }, idx) => (
+                                                <div 
+                                                    key={idx}
+                                                    onClick={() => {
+                                                        const flatIndex = flatPlaces.findIndex(fp => fp.dayIdx === dayIdx && fp.placeIdx === originalIdx);
+                                                        if (flatIndex !== -1) {
+                                                            setSelectedIndex(flatIndex);
+                                                            setViewMode('map');
+                                                            setSheetState('full');
+                                                        }
+                                                    }}
+                                                    className="group p-4 bg-white/[0.02] hover:bg-white/[0.08] border border-white/5 hover:border-spotify-green/20 rounded-2xl transition-all duration-300 cursor-pointer flex gap-3.5 items-start text-left"
+                                                >
+                                                    <div className="w-7 h-7 rounded-full bg-white/10 group-hover:bg-spotify-green group-hover:text-black flex items-center justify-center text-xs font-black text-spotify-text-muted transition-colors shrink-0">
+                                                        {idx + 1}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex justify-between items-start gap-2 mb-1">
+                                                            <div className="flex items-center gap-2 min-w-0">
+                                                                <h4 className="font-extrabold text-white text-sm truncate group-hover:text-spotify-green transition-colors">{place.name}</h4>
+                                                                <span className="bg-spotify-green/10 text-spotify-green text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase shrink-0">
+                                                                    Day {dayIdx + 1}
+                                                                </span>
+                                                            </div>
+                                                            {place.category && (
+                                                                <span className="bg-white/10 text-spotify-text-muted text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0">
+                                                                    {place.category}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-xs text-spotify-text-muted leading-relaxed line-clamp-2">{place.description}</p>
+                                                        {place.budget && (
+                                                            <div className="text-[10px] font-bold text-spotify-green mt-2 flex items-center gap-1">
+                                                                💰 {place.budget}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
+
+                {/* Summary View Mode (Shopping & Sights Only) */}
+                {!isEditMode && viewMode === 'summary' && (() => {
+                    const allSightPlaces = [];
+                    tripPlan.itinerary?.forEach((dayItem, dayIdx) => {
+                        dayItem.places.forEach((place, placeIdx) => {
+                            if (!isRestaurant(place)) {
+                                allSightPlaces.push({ place, dayIdx, originalIdx: placeIdx });
+                            }
+                        });
+                    });
+
+                    return (
+                        <div className="absolute inset-0 z-0 bg-[#121212] overflow-y-auto pt-36 pb-24 px-4 custom-scrollbar flex flex-col pointer-events-auto">
+                            <SunSceneBackground scene="sky" />
+                            <div className="relative z-10 w-full flex flex-col gap-6">
+                                {/* AI Recommendation Widget specifically for Shopping & Attractions */}
+                                <div className="bg-[#121212]/80 border border-white/10 rounded-3xl p-5 backdrop-blur-xl shadow-2xl flex flex-col gap-3 mt-4">
+                                    <div className="flex items-center gap-2 text-spotify-green">
+                                        <Sparkles size={16} className="animate-pulse" />
+                                        <h4 className="text-xs font-black uppercase tracking-wider">
+                                            {language === 'en' ? '🪄 AI Shopping & Sights Recommendation' : '🪄 냥프로 AI 쇼핑/볼거리 추가 추천'}
+                                        </h4>
+                                    </div>
+                                    <p className="text-[10px] text-spotify-text-muted font-bold">
+                                        {language === 'en' 
+                                            ? 'Request shopping spots, landmarks, or parks near your destination!'
+                                            : '현재 여행지 주변의 기념품 숍, 랜드마크, 공원 등을 추천받아 일정에 반영해보세요.'}
+                                    </p>
+                                    <div className="flex gap-1.5 flex-wrap">
+                                        <button
+                                            onClick={() => handleTriggerRecommendation('쇼핑')}
+                                            disabled={recommendLoading}
+                                            className="px-3 py-1.5 bg-white/5 hover:bg-spotify-green hover:text-black border border-white/10 text-[11px] font-extrabold rounded-full transition-all disabled:opacity-50"
+                                        >
+                                            🛍️ {language === 'en' ? 'Add Shopping' : '쇼핑 추가'}
+                                        </button>
+                                        <button
+                                            onClick={() => handleTriggerRecommendation('관광명소')}
+                                            disabled={recommendLoading}
+                                            className="px-3 py-1.5 bg-white/5 hover:bg-spotify-green hover:text-black border border-white/10 text-[11px] font-extrabold rounded-full transition-all disabled:opacity-50"
+                                        >
+                                            🏛️ {language === 'en' ? 'Add Attraction' : '볼거리/명소 추가'}
+                                        </button>
+                                    </div>
+                                    <div className="flex gap-2 bg-black/40 border border-white/10 p-1 rounded-xl">
+                                        <input
+                                            type="text"
+                                            value={recommendInputSight}
+                                            onChange={(e) => setRecommendInputSight(e.target.value)}
+                                            disabled={recommendLoading}
+                                            placeholder={language === 'en' ? 'e.g. Landmarks with great sunset views' : '예: 노을이 잘 보이고 조용한 공원'}
+                                            className="flex-1 bg-transparent px-2.5 py-2 text-xs text-white border-none outline-none placeholder:text-spotify-text-muted"
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                handleTriggerRecommendation(recommendInputSight);
+                                            }}
+                                            disabled={recommendLoading || !recommendInputSight.trim()}
+                                            className="bg-spotify-green text-black px-3.5 py-2 rounded-lg text-xs font-black transition-all active:scale-95 disabled:opacity-50 shrink-0 flex items-center justify-center"
+                                        >
+                                            {recommendLoading ? <Loader2 size={14} className="animate-spin text-black" /> : <Send size={14} />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="text-center py-4 bg-black/40 backdrop-blur-md rounded-2xl border border-white/5 p-4 shadow-xl">
+                                    <h2 className="text-lg font-black text-white">{tripPlan.tripTitle}</h2>
+                                    <p className="text-[11px] font-bold text-spotify-text-muted mt-1">{destName} • {estimatedCost} • {language === 'en' ? 'Shopping & Sights' : '여행지 추천 쇼핑 및 볼거리 리스트'}</p>
+                                </div>
+
+                                <div className="bg-[#121212]/80 border border-white/10 rounded-3xl p-5 backdrop-blur-xl shadow-2xl flex flex-col gap-4">
+                                    <div className="space-y-4">
+                                        {allSightPlaces.length === 0 ? (
+                                            <div className="text-xs text-spotify-text-muted/60 text-center py-8 italic">
+                                                {language === 'en' ? 'No shopping or attractions registered.' : '등록된 쇼핑/볼거리 일정이 없습니다.'}
+                                            </div>
+                                        ) : (
+                                            allSightPlaces.map(({ place, dayIdx, originalIdx }, idx) => (
+                                                <div 
+                                                    key={idx}
+                                                    onClick={() => {
+                                                        const flatIndex = flatPlaces.findIndex(fp => fp.dayIdx === dayIdx && fp.placeIdx === originalIdx);
+                                                        if (flatIndex !== -1) {
+                                                            setSelectedIndex(flatIndex);
+                                                            setViewMode('map');
+                                                            setSheetState('full');
+                                                        }
+                                                    }}
+                                                    className="group p-4 bg-white/[0.02] hover:bg-white/[0.08] border border-white/5 hover:border-spotify-green/20 rounded-2xl transition-all duration-300 cursor-pointer flex gap-3.5 items-start text-left"
+                                                >
+                                                    <div className="w-7 h-7 rounded-full bg-white/10 group-hover:bg-spotify-green group-hover:text-black flex items-center justify-center text-xs font-black text-spotify-text-muted transition-colors shrink-0">
+                                                        {idx + 1}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex justify-between items-start gap-2 mb-1">
+                                                            <div className="flex items-center gap-2 min-w-0">
+                                                                <h4 className="font-extrabold text-white text-sm truncate group-hover:text-spotify-green transition-colors">{place.name}</h4>
+                                                                <span className="bg-spotify-green/10 text-spotify-green text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0">
+                                                                    Day {dayIdx + 1}
+                                                                </span>
+                                                            </div>
+                                                            {place.category && (
+                                                                <span className="bg-white/10 text-spotify-text-muted text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0">
+                                                                    {place.category}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-xs text-spotify-text-muted leading-relaxed line-clamp-2">{place.description}</p>
+                                                        {place.budget && (
+                                                            <div className="text-[10px] font-bold text-spotify-green mt-2 flex items-center gap-1">
+                                                                💰 {place.budget}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
 
                 {/* Edit Mode Overlay container */}
                 {/* Edit Mode Overlay container */}
@@ -1584,7 +1809,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                 {/* Info Modal (Budget, Hotels, Tips) — 스포티파이 스타일 */}
                 {showInfoModal && (
-                    <div className="absolute inset-0 z-[60] flex items-end sm:items-center justify-center">
+                    <div className="absolute inset-0 flex items-end sm:items-center justify-center" style={{ zIndex: 60 }}>
                         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowInfoModal(false)}></div>
                         <div 
                             className={`w-full sm:w-[90%] h-[75vh] sm:h-[80vh] rounded-t-[32px] sm:rounded-[32px] relative z-20 shadow-2xl flex flex-col p-5 animate-in slide-in-from-bottom-full sm:zoom-in-95 border border-white/10 text-white transition-all duration-700`}
@@ -1759,7 +1984,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                 {/* 매칭 모달 */}
                 {showMatchModal && (
-                    <div className="fixed inset-0 z-70 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 80 }}>
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowMatchModal(false)}></div>
                         <div className="bg-[#121212]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl animate-in zoom-in-95 text-white">
                             <button onClick={() => setShowMatchModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:text-white"><X size={18} /></button>
@@ -1790,7 +2015,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                 {/* 커스텀 토스트 알림 */}
                 {customToast && (
-                    <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-[9999] w-[85%] max-w-[340px] animate-in slide-in-from-bottom duration-300 pointer-events-none">
+                    <div className="absolute bottom-28 left-1/2 -translate-x-1/2 w-[85%] max-w-[340px] animate-in slide-in-from-bottom duration-300 pointer-events-none" style={{ zIndex: 9999 }}>
                         <div className="bg-gray-900/95 backdrop-blur-md text-white border border-white/10 px-4 py-3 rounded-2xl shadow-2xl text-xs font-black text-center flex items-center justify-center gap-2">
                             <Sparkles size={14} className="text-amber-300 animate-pulse shrink-0" />
                             <span>{customToast}</span>
@@ -1798,9 +2023,114 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     </div>
                 )}
 
+                {/* AI 추천 일정 추가 위치 선택 모달 */}
+                {showInsertModal && (
+                    <div className="absolute inset-0 flex items-center justify-center p-6" style={{ zIndex: 80 }}>
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowInsertModal(false); setRecommendInputFood(''); setRecommendInputSight(''); }}></div>
+                        <div className="bg-[#121212]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl text-white">
+                            <button onClick={() => { setShowInsertModal(false); setRecommendInputFood(''); setRecommendInputSight(''); }} className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:text-white"><X size={18} /></button>
+                            <div className="w-12 h-12 bg-spotify-green/10 rounded-xl flex items-center justify-center text-spotify-green mb-3"><Sparkles size={24} /></div>
+                            <h3 className="text-lg font-black text-white mb-2">{language === 'en' ? 'Add Recommendation Position' : '일정 추가 위치 설정'}</h3>
+                            
+                            <div className="space-y-4 w-full text-left mb-6">
+                                {/* 1. Day Selector */}
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase tracking-wider text-spotify-text-muted">
+                                        {language === 'en' ? 'Select Day' : '1. 추가할 일차 선택'}
+                                    </label>
+                                    <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
+                                        {tripPlan.itinerary?.map((dayItem, idx) => (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedInsertDay(idx);
+                                                    setSelectedInsertPos(-1); // Reset selected position to end on day change
+                                                }}
+                                                className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all shrink-0 ${
+                                                    selectedInsertDay === idx 
+                                                        ? 'bg-spotify-green text-black shadow-lg shadow-spotify-green/20' 
+                                                        : 'bg-white/5 border border-white/10 hover:bg-white/10 text-white'
+                                                }`}
+                                            >
+                                                Day {dayItem.day}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 2. Position Selector */}
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase tracking-wider text-spotify-text-muted">
+                                        {language === 'en' ? 'Select Order Position' : '2. 일정 순서 선택'}
+                                    </label>
+                                    <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                                        {/* Option for At the End */}
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedInsertPos(-1)}
+                                            className={`w-full p-2.5 rounded-xl border text-xs font-bold transition-all flex justify-between items-center text-left ${
+                                                selectedInsertPos === -1 
+                                                    ? 'bg-spotify-green/10 border-spotify-green text-spotify-green' 
+                                                    : 'bg-white/5 border-white/5 hover:border-white/20 text-white'
+                                            }`}
+                                        >
+                                            <span>✨ {language === 'en' ? 'At the end of the day' : '하루 일정 맨 뒤에 추가'}</span>
+                                            {selectedInsertPos === -1 && <Check size={12} />}
+                                        </button>
+
+                                        {/* List current places of selected day */}
+                                        {tripPlan.itinerary?.[selectedInsertDay]?.places?.map((p, idx) => (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => setSelectedInsertPos(idx)}
+                                                className={`w-full p-2.5 rounded-xl border text-xs font-bold transition-all flex justify-between items-center text-left ${
+                                                    selectedInsertPos === idx 
+                                                        ? 'bg-spotify-green/10 border-spotify-green text-spotify-green' 
+                                                        : 'bg-white/5 border-white/5 hover:border-white/20 text-white'
+                                                }`}
+                                            >
+                                                <span className="truncate">
+                                                    {idx + 1}. {p.name} {language === 'en' ? 'Front' : '앞에 추가'}
+                                                </span>
+                                                {selectedInsertPos === idx && <Check size={12} />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 w-full">
+                                <button
+                                    onClick={() => {
+                                        setShowInsertModal(false);
+                                        setRecommendInputFood('');
+                                        setRecommendInputSight('');
+                                    }}
+                                    className="flex-1 py-3.5 rounded-xl font-bold text-white/85 bg-white/10 hover:bg-white/20 border border-white/5 transition-all text-xs"
+                                >
+                                    {language === 'en' ? 'Cancel' : '취소'}
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        setShowInsertModal(false);
+                                        await handleAddAIRecommendation(insertCategory, selectedInsertDay, selectedInsertPos);
+                                        setRecommendInputFood('');
+                                        setRecommendInputSight('');
+                                    }}
+                                    className="flex-1 py-3.5 rounded-xl font-bold bg-spotify-green hover:bg-spotify-green-hover text-black transition-all text-xs shadow-md"
+                                >
+                                    {language === 'en' ? 'Add' : '추가하기'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* 새 여행 시작 모달 */}
                 {showResetConfirm && (
-                    <div className="absolute inset-0 z-70 flex items-center justify-center p-6">
+                    <div className="absolute inset-0 flex items-center justify-center p-6" style={{ zIndex: 80 }}>
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowResetConfirm(false)}></div>
                         <div className="bg-[#121212]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 text-white">
                             <div className="w-16 h-16 bg-brand-danger/10 rounded-2xl flex items-center justify-center text-brand-danger mb-4 shadow-sm"><RotateCcw size={32} /></div>
@@ -1816,7 +2146,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                 {/* 저장 모달 */}
                 {showSaveModal && (
-                    <div className="absolute inset-0 z-70 flex items-center justify-center p-6">
+                    <div className="absolute inset-0 flex items-center justify-center p-6" style={{ zIndex: 80 }}>
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSaveModal(false)}></div>
                         <div className="bg-[#121212]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 text-white">
                             <button onClick={() => setShowSaveModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:text-white"><X size={18} /></button>
