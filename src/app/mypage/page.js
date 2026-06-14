@@ -23,6 +23,7 @@ import {
 import TravelQuiz from '../../components/TravelQuiz';
 import TripCoach from '../../components/TripCoach';
 import { getApiUrl } from '../../utils/api';
+import SunSceneBackground from '../../components/SunSceneBackground';
 
 
 
@@ -82,7 +83,7 @@ const FeedCarousel = ({ feed, onClick }) => {
 
     return (
         // 🚨 최상단 부모의 onClick을 제거하여 버튼 클릭과 완전히 분리했습니다.
-        <div className="w-full aspect-square relative group bg-gray-100 overflow-hidden">
+        <div className="w-full aspect-square relative group bg-white/5 overflow-hidden">
 
             {/* ✨ 버그 원인 제거: style 태그를 사진들이 있는 flex 박스 밖으로 뺐습니다! */}
             <style>{`.hide-scroll::-webkit-scrollbar { display: none; }`}</style>
@@ -150,9 +151,36 @@ const FeedCarousel = ({ feed, onClick }) => {
     );
 };
 
+const backgroundImages = [
+    "/1.jpg",
+    "/2.jpg",
+    "/3.jpg",
+    "/4.JPG",
+];
+
+const getMypageGradient = (tab) => {
+    switch(tab) {
+        case 'schedule': return '#6d28d9'; // Violet/Purple for schedules
+        case 'social': return '#2563eb';   // Royal Blue for feed
+        case 'coach': return '#059669';    // Dark Emerald for coaching
+        case 'wallet': return '#4f46e5';   // Indigo/Purple for money
+        case 'vault': return '#0891b2';    // Teal/Cyan for local vault
+        default: return '#1f2937';
+    }
+};
+
 export default function MyPage() {
     const router = useRouter();
+    const [bgIndex, setBgIndex] = useState(0);
     const [activeTab, setActiveTab] = useState('schedule');
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setBgIndex((prev) => (prev + 1) % backgroundImages.length);
+        }, 5000);
+        return () => clearInterval(timer);
+    }, []);
+
     const [expandedDays, setExpandedDays] = useState({});
     const [user, setUser] = useState(null);
     const [userData, setUserData] = useState(null);
@@ -438,47 +466,47 @@ export default function MyPage() {
         return (
             <div className="animate-in fade-in duration-500 p-4 pt-10">
                 <div className="flex items-center justify-between mb-6 px-2">
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">내 보관함</h1>
+                    <h1 className="text-3xl font-black text-white tracking-tight">내 보관함</h1>
                 </div>
                 <div className="flex gap-2 mb-6 px-2 overflow-x-auto custom-scrollbar pb-2">
                     {[ { id: 'ticket', label: '🎟️ 예약/티켓' }, { id: 'coupon', label: '🎫 쿠폰' }, { id: 'photo', label: '📸 사진첩' } ].map(cat => (
-                        <button key={cat.id} onClick={() => setVaultCategory(cat.id)} className={`px-5 py-2.5 rounded-[20px] font-bold text-sm whitespace-nowrap transition-all shadow-sm ${vaultCategory === cat.id ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white scale-105' : 'bg-white border border-gray-100 text-gray-600 hover:bg-gray-50'}`}>{cat.label}</button>
+                        <button key={cat.id} onClick={() => setVaultCategory(cat.id)} className={`px-5 py-2.5 rounded-[20px] font-bold text-sm whitespace-nowrap transition-all shadow-sm ${vaultCategory === cat.id ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white scale-105' : 'bg-white/10 border border-white/10 text-slate-300 hover:bg-white/20'}`}>{cat.label}</button>
                     ))}
                 </div>
                 {filteredItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4"><Box className="text-gray-400 w-10 h-10" /></div>
-                        <p className="text-gray-500 font-bold mb-1">아직 보관된 항목이 없습니다</p>
-                        <p className="text-xs text-gray-400">우측 하단의 + 버튼을 눌러 추가해보세요!</p>
+                        <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-4"><Box className="text-spotify-text-muted w-10 h-10" /></div>
+                        <p className="text-slate-200 font-bold mb-1">아직 보관된 항목이 없습니다</p>
+                        <p className="text-xs text-spotify-text-muted">우측 하단의 + 버튼을 눌러 추가해보세요!</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 gap-4 px-2">
                         {filteredItems.map(item => (
-                            <div key={item.id} className="bg-white p-2 rounded-[24px] shadow-sm border border-gray-100 relative group transition-all hover:shadow-md">
-                                <div className="aspect-[4/5] rounded-[18px] overflow-hidden bg-gray-100 mb-3 relative cursor-pointer" onClick={() => setViewVaultImage(item.image)}>
+                            <div key={item.id} className="bg-[#181818] p-2 rounded-[24px] shadow-sm border border-white/10 relative group transition-all hover:shadow-md">
+                                <div className="aspect-[4/5] rounded-[18px] overflow-hidden bg-white/5 mb-3 relative cursor-pointer" onClick={() => setViewVaultImage(item.image)}>
                                     <img src={item.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={item.title} />
                                     <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </div>
-                                <p className="text-sm font-black text-gray-800 px-2 pb-1 truncate">{item.title}</p>
-                                <button onClick={() => deleteVault(item.id)} className="absolute top-4 right-4 w-8 h-8 bg-white/90 backdrop-blur-md rounded-full text-brand-danger flex items-center justify-center shadow-lg transform scale-0 group-hover:scale-100 transition-all"><Trash2 size={16} strokeWidth={2.5} /></button>
+                                <p className="text-sm font-black text-white px-2 pb-1 truncate">{item.title}</p>
+                                <button onClick={() => deleteVault(item.id)} className="absolute top-4 right-4 w-8 h-8 bg-[#181818]/90 backdrop-blur-md rounded-full text-brand-danger flex items-center justify-center shadow-lg transform scale-0 group-hover:scale-100 transition-all"><Trash2 size={16} strokeWidth={2.5} /></button>
                             </div>
                         ))}
                     </div>
                 )}
                 {showVaultUpload && (
                     <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col justify-end">
-                        <div className="bg-white w-full rounded-t-[40px] p-8 pb-safe animate-in slide-in-from-bottom-full duration-300">
+                        <div className="bg-[#181818] border-t border-white/10 w-full rounded-t-[40px] p-8 pb-safe animate-in slide-in-from-bottom-full duration-300 text-white">
                             <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-2xl font-black text-gray-900">새 항목 추가</h3>
-                                <button onClick={() => {setShowVaultUpload(false); setVaultImageBase64(''); setVaultTitle('');}} className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600"><X size={20} strokeWidth={2.5} /></button>
+                                <h3 className="text-2xl font-black text-white">새 항목 추가</h3>
+                                <button onClick={() => {setShowVaultUpload(false); setVaultImageBase64(''); setVaultTitle('');}} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition"><X size={20} strokeWidth={2.5} /></button>
                             </div>
                             <div className="space-y-5">
                                 <div className="flex gap-2">
                                     {[ { id: 'ticket', label: '🎟️ 예약/티켓' }, { id: 'coupon', label: '🎫 쿠폰' }, { id: 'photo', label: '📸 사진첩' } ].map(cat => (
-                                        <button key={cat.id} onClick={() => setVaultCategory(cat.id)} className={`flex-1 py-3 rounded-[16px] text-sm font-bold transition-all border ${vaultCategory === cat.id ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-white text-gray-500 border-gray-200'}`}>{cat.label}</button>
+                                        <button key={cat.id} onClick={() => setVaultCategory(cat.id)} className={`flex-1 py-3 rounded-[16px] text-sm font-bold transition-all border ${vaultCategory === cat.id ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-white/5 text-spotify-text-muted border-white/5 hover:bg-white/10'}`}>{cat.label}</button>
                                     ))}
                                 </div>
-                                <input type="text" placeholder="제목이나 메모를 입력하세요" value={vaultTitle} onChange={e => setVaultTitle(e.target.value)} className="w-full bg-gray-50 border border-gray-200 px-5 py-4 rounded-[20px] font-bold text-gray-900 outline-none focus:ring-2 focus:ring-emerald-400 transition" />
+                                <input type="text" placeholder="제목이나 메모를 입력하세요" value={vaultTitle} onChange={e => setVaultTitle(e.target.value)} className="w-full bg-white/5 border border-white/10 px-5 py-4 rounded-[20px] font-bold text-white outline-none focus:ring-2 focus:ring-emerald-400 placeholder:text-spotify-text-muted transition" />
                                 <div>
                                     <input type="file" accept="image/*" className="hidden" ref={vaultFileInputRef} onChange={handleVaultImageChange} />
                                     {vaultImageBase64 ? (
@@ -487,9 +515,9 @@ export default function MyPage() {
                                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => vaultFileInputRef.current.click()}><p className="text-white font-bold flex items-center gap-2"><Camera size={20} /> 사진 변경</p></div>
                                         </div>
                                     ) : (
-                                        <div onClick={() => vaultFileInputRef.current.click()} className="w-full aspect-video bg-gray-50 border-2 border-dashed border-gray-200 rounded-[24px] flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-gray-100 transition-colors">
-                                            <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400"><Camera size={24} /></div>
-                                            <p className="text-sm font-bold text-gray-500">사진 업로드</p>
+                                        <div onClick={() => vaultFileInputRef.current.click()} className="w-full aspect-video bg-white/5 border-2 border-dashed border-white/10 rounded-[24px] flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-white/10 transition-colors">
+                                            <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center shadow-sm text-white"><Camera size={24} /></div>
+                                            <p className="text-sm font-bold text-spotify-text-muted">사진 업로드</p>
                                         </div>
                                     )}
                                 </div>
@@ -1094,14 +1122,14 @@ export default function MyPage() {
     // --- UI 렌더 시작 ---
     const renderSchedule = () => (
         <div className="animate-in fade-in duration-500">
-            <header className="flex justify-between items-center px-3 pt-12 pb-4 sticky top-0 z-40 bg-gradient-to-b from-white/60 to-transparent backdrop-blur-md border-b border-white/30">
-                <button onClick={() => router.push('/?mode=new')} className="text-gray-900 bg-white/50 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/80"><ArrowLeft size={22} strokeWidth={2.5} /></button>
-                <h1 className="text-lg font-black text-gray-900 tracking-tight break-keep whitespace-nowrap">트립허브 (Trip Hub)</h1>
-                <button onClick={() => setShowSearchModal(true)} className="text-gray-900 bg-white/50 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/80"><Search size={22} strokeWidth={2.5} /></button>
+            <header className="flex justify-between items-center px-3 pt-12 pb-4 sticky top-0 z-40 bg-gradient-to-b from-[#121212]/80 to-transparent backdrop-blur-md border-b border-white/10">
+                <button onClick={() => router.push('/?mode=new')} className="text-white bg-white/10 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/20"><ArrowLeft size={22} strokeWidth={2.5} /></button>
+                <h1 className="text-lg font-black text-white tracking-tight break-keep whitespace-nowrap">트립허브 (Trip Hub)</h1>
+                <button onClick={() => setShowSearchModal(true)} className="text-white bg-white/10 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/20"><Search size={22} strokeWidth={2.5} /></button>
             </header>
             <div className="px-3 pt-4 pb-6">
                 <div className="inline-flex items-center gap-1.5 bg-brand-primary/10 text-brand-primary text-xs font-black tracking-wide mb-2 px-3 py-1.5 rounded-full backdrop-blur-md border border-brand-primary/20 shadow-sm break-keep whitespace-nowrap"><Sparkles size={14} className="fill-brand-primary" /> AI TRIPS & WORKSPACE</div>
-                <h2 className="text-3xl font-black text-gray-900 tracking-tight break-keep whitespace-nowrap">나의 여행 일정</h2>
+                <h2 className="text-3xl font-black text-white tracking-tight break-keep whitespace-nowrap">나의 여행 일정</h2>
             </div>
             <main className="px-3 space-y-6 pb-6">
                 {/* 🌟 진행 중이거나 가장 가까운 활성 여행에 대한 액티브 컨트롤 타워 */}
@@ -1115,13 +1143,13 @@ export default function MyPage() {
                                 <div className="flex justify-between items-center">
                                     <div className="flex items-center gap-2">
                                         <span className="text-[10px] font-black bg-brand-primary/20 text-brand-primary border border-brand-primary/30 px-2.5 py-1 rounded-full uppercase tracking-wider">{calculateDDay(activeTrip.startDate)}</span>
-                                        <span className="text-[10px] text-gray-400 font-bold">진행 중인 여행 정보</span>
+                                        <span className="text-[10px] text-slate-400 font-bold">진행 중인 여행 정보</span>
                                     </div>
                                     <span className="text-[20px] font-black">{activeTrip.icon || '✈️'}</span>
                                 </div>
                                 <div>
                                     <h3 className="text-2xl font-black text-white leading-tight">{activeTrip.destination || activeTrip.title}</h3>
-                                    <p className="text-xs text-gray-400 font-semibold mt-1">{formatTripDate(activeTrip.startDate, activeTrip.endDate, activeTrip.duration)}</p>
+                                    <p className="text-xs text-slate-300 font-semibold mt-1">{formatTripDate(activeTrip.startDate, activeTrip.endDate, activeTrip.duration)}</p>
                                 </div>
                                 
                                 {/* 퀵 바로가기 그리드 */}
@@ -1150,7 +1178,7 @@ export default function MyPage() {
 
                 {/* 🌟 다가오는 여행 목록 */}
                 {itineraries.length === 0 ? (
-                    <GlassCard className="text-center py-12 text-gray-500 font-medium"><p>다가오는 여행이 없습니다.</p></GlassCard>
+                    <GlassCard className="text-center py-12 text-slate-400 font-medium"><p>다가오는 여행이 없습니다.</p></GlassCard>
                 ) : (
                     itineraries.map((trip) => {
                         const safeDest = getSafeDestination(trip.destination);
@@ -1174,20 +1202,20 @@ export default function MyPage() {
                                 </div>
                                 <div className="p-5">
                                     <div className="flex justify-between items-start mb-1">
-                                        <h3 className="text-[24px] font-black text-gray-900 break-keep">{trip.destination || "여행지"}</h3>
+                                        <h3 className="text-[24px] font-black text-white break-keep">{trip.destination || "여행지"}</h3>
                                         <div className="flex items-center gap-1.5 text-brand-primary/70 bg-brand-primary/5 px-2 py-1 rounded-lg mt-1 shrink-0"><Plane size={16} strokeWidth={2.5} /><Bed size={16} strokeWidth={2.5} /><Utensils size={16} strokeWidth={2.5} /></div>
                                     </div>
-                                    <p className="text-gray-600 text-sm font-semibold mb-4 break-keep whitespace-nowrap">{formatTripDate(trip.startDate, trip.endDate, trip.duration)}</p>
-                                    <div className="flex items-center justify-between bg-gray-50/80 p-3 rounded-[16px] mb-5 border border-gray-100 shadow-inner">
+                                    <p className="text-slate-300 text-sm font-semibold mb-4 break-keep whitespace-nowrap">{formatTripDate(trip.startDate, trip.endDate, trip.duration)}</p>
+                                    <div className="flex items-center justify-between bg-white/5 p-3 rounded-[16px] mb-5 border border-white/10 shadow-inner">
                                         <div className="flex items-center gap-3 w-full pr-4 overflow-hidden">
                                             <div className="flex -space-x-2 shrink-0">
-                                                {actualMembers.slice(0, 3).map((m, i) => (<img key={i} src={m.avatar || "https://i.pravatar.cc/150"} alt={m.name} title={m.name} className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-sm" />))}
-                                                {actualMembers.length > 3 && (<div className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600 shadow-sm z-10">+{actualMembers.length - 3}</div>)}
-                                                <button onClick={() => openInviteModal(trip)} className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 bg-white flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50 transition shadow-sm z-10" title="동행자 초대하기"><Plus size={14} strokeWidth={3} /></button>
+                                                {actualMembers.slice(0, 3).map((m, i) => (<img key={i} src={m.avatar || "https://i.pravatar.cc/150"} alt={m.name} title={m.name} className="w-8 h-8 rounded-full border-2 border-white/10 object-cover shadow-sm" />))}
+                                                {actualMembers.length > 3 && (<div className="w-8 h-8 rounded-full border-2 border-white/10 bg-white/10 flex items-center justify-center text-[10px] font-bold text-slate-300 shadow-sm z-10">+{actualMembers.length - 3}</div>)}
+                                                <button onClick={() => openInviteModal(trip)} className="w-8 h-8 rounded-full border-2 border-dashed border-white/20 bg-white/5 flex items-center justify-center text-slate-400 hover:text-indigo-400 hover:border-indigo-400 hover:bg-white/15 transition shadow-sm z-10" title="동행자 초대하기"><Plus size={14} strokeWidth={3} /></button>
                                             </div>
-                                            <div className="flex flex-col"><span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider break-keep whitespace-nowrap">Members</span><span className="text-xs font-bold text-gray-700 break-keep whitespace-nowrap">{actualMembers.length}명 참여 중</span></div>
+                                            <div className="flex flex-col"><span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider break-keep whitespace-nowrap">Members</span><span className="text-xs font-bold text-slate-200 break-keep whitespace-nowrap">{actualMembers.length}명 참여 중</span></div>
                                         </div>
-                                        <span className="text-[10px] bg-white border border-gray-200 text-gray-500 px-2 py-1 rounded-md font-bold shadow-sm shrink-0 break-keep whitespace-nowrap">{isHost ? '관리자(나)' : '동행인'}</span>
+                                        <span className="text-[10px] bg-white/10 border border-white/10 text-slate-300 px-2 py-1 rounded-md font-bold shadow-sm shrink-0 break-keep whitespace-nowrap">{isHost ? '관리자(나)' : '동행인'}</span>
                                     </div>
                                     <div className="flex gap-2.5">
                                         <button onClick={() => {
@@ -1197,15 +1225,15 @@ export default function MyPage() {
                                                 console.error("일정 ID를 찾을 수 없습니다.");
                                             }
                                         }} className="flex-1 bg-gradient-to-r from-slate-800 to-gray-900 text-white py-3.5 rounded-[16px] flex items-center justify-center gap-2 font-bold text-sm hover:from-slate-900 hover:to-black shadow-md active:scale-[0.98] transition break-keep whitespace-nowrap"><Calendar size={16} strokeWidth={2.5} className="shrink-0" /> 일정 보기</button>
-                                        <button onClick={() => handleShareTrip(trip)} className="flex-1 bg-white border border-gray-200 text-gray-800 py-3.5 rounded-[16px] flex items-center justify-center gap-2 font-bold text-sm hover:bg-gray-50 transition active:scale-[0.98] shadow-sm break-keep whitespace-nowrap"><Share2 size={16} strokeWidth={2.5} className="shrink-0" /> 외부 공유</button>
+                                        <button onClick={() => handleShareTrip(trip)} className="flex-1 bg-gradient-to-br from-white/10 to-white/2 border border-white/10 text-white py-3.5 rounded-[16px] flex items-center justify-center gap-2 font-bold text-sm hover:from-white/15 hover:to-white/5 transition active:scale-[0.98] shadow-sm break-keep whitespace-nowrap"><Share2 size={16} strokeWidth={2.5} className="shrink-0" /> 외부 공유</button>
                                     </div>
                                 </div>
                             </GlassCard>
                         );
                     })
                 )}
-                <GlassCard className="mt-6 p-5 flex items-center justify-between cursor-pointer hover:bg-white/80 transition group active:scale-[0.98]" onClick={() => router.push('/?mode=new')}>
-                    <div className="flex items-center gap-4"><div className="w-12 h-12 bg-gradient-to-br from-brand-primary to-brand-secondary text-white rounded-full flex items-center justify-center shadow-lg shadow-brand-primary/30 group-hover:scale-110 transition-transform shrink-0"><Plus size={24} strokeWidth={3} /></div><div className="overflow-hidden"><h4 className="font-bold text-gray-900 text-base mb-0.5 break-keep whitespace-nowrap truncate w-full">새로운 일정 만들기</h4><p className="text-xs text-gray-500 font-medium break-keep whitespace-nowrap">AI가 취향에 맞게 짜드려요</p></div></div><ChevronRight size={20} className="text-gray-300 group-hover:text-gray-600 transition shrink-0" />
+                <GlassCard className="mt-6 p-5 flex items-center justify-between cursor-pointer hover:bg-white/10 transition group active:scale-[0.98]" onClick={() => router.push('/?mode=new')}>
+                    <div className="flex items-center gap-4"><div className="w-12 h-12 bg-gradient-to-br from-brand-primary to-brand-secondary text-white rounded-full flex items-center justify-center shadow-lg shadow-brand-primary/30 group-hover:scale-110 transition-transform shrink-0"><Plus size={24} strokeWidth={3} /></div><div className="overflow-hidden"><h4 className="font-bold text-white text-base mb-0.5 break-keep whitespace-nowrap truncate w-full">새로운 일정 만들기</h4><p className="text-xs text-slate-300 font-medium break-keep whitespace-nowrap">AI가 취향에 맞게 짜드려요</p></div></div><ChevronRight size={20} className="text-slate-400 group-hover:text-white transition shrink-0" />
                 </GlassCard>
             </main>
         </div>
@@ -1213,23 +1241,23 @@ export default function MyPage() {
 
     const renderSocial = () => (
         <div className="animate-in fade-in duration-500">
-            <header className="flex justify-between items-center px-3 pt-12 pb-4 sticky top-0 z-40 bg-gradient-to-b from-white/60 to-transparent backdrop-blur-md border-b border-white/30">
-                <div onClick={openProfileModal} className="flex items-center gap-3 cursor-pointer group hover:bg-white/40 p-2 -ml-2 rounded-2xl transition w-full pr-4 overflow-hidden">
+            <header className="flex justify-between items-center px-3 pt-12 pb-4 sticky top-0 z-40 bg-gradient-to-b from-[#121212]/80 to-transparent backdrop-blur-md border-b border-white/10">
+                <div onClick={openProfileModal} className="flex items-center gap-3 cursor-pointer group hover:bg-white/10 p-2 -ml-2 rounded-2xl transition w-full pr-4 overflow-hidden">
                     <div className="w-11 h-11 rounded-full bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 text-brand-primary flex items-center justify-center overflow-hidden border-2 border-white shadow-md shrink-0">
                         {previewImage || user?.photoURL ? (<img src={previewImage || user?.photoURL} alt="Profile" className="w-full h-full object-cover" />) : (<User size={20} />)}
                     </div>
                     <div className="overflow-hidden">
-                        <h1 className="text-lg font-black text-gray-900 flex items-center gap-1 drop-shadow-sm break-keep whitespace-nowrap truncate w-full">
-                            {userData?.name || user?.displayName || "여행자"} <ChevronRight size={16} className="text-gray-600 group-hover:text-brand-primary transition shrink-0" />
+                        <h1 className="text-lg font-black text-white flex items-center gap-1 drop-shadow-sm break-keep whitespace-nowrap truncate w-full">
+                            {userData?.name || user?.displayName || "여행자"} <ChevronRight size={16} className="text-spotify-text-muted group-hover:text-brand-primary transition shrink-0" />
                         </h1>
-                        <div className="text-[10px] text-gray-800 font-bold mt-0.5 flex gap-1">
-                            {userData?.travelTags?.length > 0 ? userData.travelTags.slice(0, 2).map((tag, i) => <span key={i} className="bg-white/60 backdrop-blur-sm border border-white/50 px-2 py-0.5 rounded-full shadow-sm break-keep whitespace-nowrap">{tag}</span>) : <span className="text-gray-600 bg-white/50 backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm break-keep whitespace-nowrap"><Edit3 size={10} className="shrink-0" /> 프로필 꾸미기</span>}
+                        <div className="text-[10px] text-slate-200 font-bold mt-0.5 flex gap-1">
+                            {userData?.travelTags?.length > 0 ? userData.travelTags.slice(0, 2).map((tag, i) => <span key={i} className="bg-white/10 backdrop-blur-sm border border-white/20 px-2.5 py-0.5 rounded-full shadow-sm break-keep whitespace-nowrap">{tag}</span>) : <span className="text-spotify-text-muted bg-white/10 backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm break-keep whitespace-nowrap"><Edit3 size={10} className="shrink-0" /> 프로필 꾸미기</span>}
                         </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-3 text-gray-900 shrink-0">
-                    <button onClick={() => setShowSearchModal(true)} className="bg-white/50 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/80"><Search size={20} /></button>
-                    <div onClick={() => setShowInboxModal(true)} className="relative bg-white/50 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/80 cursor-pointer">
+                <div className="flex items-center gap-3 text-white shrink-0">
+                    <button onClick={() => setShowSearchModal(true)} className="bg-white/10 border border-white/10 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/20"><Search size={20} /></button>
+                    <div onClick={() => setShowInboxModal(true)} className="relative bg-white/10 border border-white/10 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/20 cursor-pointer">
                         <Bell size={20} />
                         {matchRequests.filter(r => r.status === 'pending').length > 0 && (<span className="absolute top-1 right-1 w-2.5 h-2.5 bg-brand-accent rounded-full border-2 border-white animate-pulse"></span>)}
                     </div>
@@ -1237,50 +1265,50 @@ export default function MyPage() {
             </header>
 
             <div className="px-3 pt-2 space-y-6 pb-8">
-                <div onClick={() => setShowInboxModal(true)} className="bg-white/60 backdrop-blur-xl border border-brand-primary/20 shadow-lg shadow-brand-primary/5 rounded-[20px] p-5 flex items-center justify-between cursor-pointer hover:bg-white/80 transition active:scale-95">
+                <div onClick={() => setShowInboxModal(true)} className="bg-gradient-to-br from-white/12 to-white/3 backdrop-blur-md border border-white/10 shadow-lg rounded-[20px] p-5 flex items-center justify-between cursor-pointer hover:bg-white/20 transition active:scale-95">
                     <div className="flex items-center gap-4 w-full pr-4 overflow-hidden">
                         <div className="relative shrink-0">
                             <div className="w-12 h-12 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-full flex items-center justify-center text-white shadow-md"><Inbox size={22} strokeWidth={2.5} /></div>
                             {matchRequests.filter(r => r.status === 'pending').length > 0 && (<div className="absolute -top-1 -right-1 bg-gray-900 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">{matchRequests.filter(r => r.status === 'pending').length}</div>)}
                         </div>
-                        <div className="overflow-hidden"><h3 className="font-black text-gray-900 text-lg mb-0.5 break-keep whitespace-nowrap truncate w-full">내 동행 요청함</h3><p className="text-xs text-gray-600 font-medium break-keep whitespace-nowrap truncate w-full">{matchRequests.filter(r => r.status === 'pending').length > 0 ? `새로운 요청이 도착했어요!` : `아직 주고받은 찌르기가 없어요.`}</p></div>
+                        <div className="overflow-hidden"><h3 className="font-black text-white text-lg mb-0.5 break-keep whitespace-nowrap truncate w-full">내 동행 요청함</h3><p className="text-xs text-slate-300 font-medium break-keep whitespace-nowrap truncate w-full">{matchRequests.filter(r => r.status === 'pending').length > 0 ? `새로운 요청이 도착했어요!` : `아직 주고받은 찌르기가 없어요.`}</p></div>
                     </div>
-                    <ChevronRight size={20} className="text-brand-primary/60 shrink-0" />
+                    <ChevronRight size={20} className="text-white/60 shrink-0" />
                 </div>
 
                 <section className="mb-8">
-                    <h3 className="text-lg font-black text-gray-900 mb-4 flex items-center justify-between break-keep whitespace-nowrap">
-                        AI 동행 추천 <button className="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 shrink-0">전체보기</button>
+                    <h3 className="text-lg font-black text-white mb-4 flex items-center justify-between break-keep whitespace-nowrap">
+                        AI 동행 추천 <button className="text-xs font-bold text-slate-300 bg-white/10 border border-white/10 px-3 py-1.5 rounded-full hover:bg-white/20 shrink-0">전체보기</button>
                     </h3>
                     <div className="space-y-3">
                         {recommendedMates.length === 0 ? (
-                            <div className="bg-white p-8 rounded-[20px] border border-gray-100 shadow-sm text-center">
+                            <div className="bg-gradient-to-br from-white/12 to-white/3 backdrop-blur-md p-8 rounded-[20px] border border-white/10 shadow-sm text-center">
                                 <div className="text-4xl mb-2 opacity-50">👻</div>
-                                <p className="text-gray-400 font-bold text-sm break-keep">현재 추천할 만한 동행자가 없어요.</p>
-                                <p className="text-gray-400 text-xs mt-1 break-keep">조금만 기다리면 새로운 메이트가 나타날 거예요!</p>
+                                <p className="text-slate-300 font-bold text-sm break-keep">현재 추천할 만한 동행자가 없어요.</p>
+                                <p className="text-spotify-text-muted text-xs mt-1 break-keep">조금만 기다리면 새로운 메이트가 나타날 거예요!</p>
                             </div>
                         ) : (
                             recommendedMates.map((mate, idx) => {
                                 const randomMatch = Math.floor(Math.random() * 20) + 80;
                                 return (
-                                    <div key={mate.id} className="bg-white p-4 rounded-[20px] border border-gray-100 shadow-sm flex items-center justify-between group hover:border-indigo-100 hover:shadow-md transition">
+                                    <div key={mate.id} className="bg-gradient-to-br from-white/12 to-white/3 backdrop-blur-md p-4 rounded-[20px] border border-white/10 shadow-sm flex items-center justify-between group hover:border-white/20 hover:shadow-md transition">
                                         <div className="flex items-center gap-4 w-full pr-4 overflow-hidden">
                                             <div className="relative shrink-0">
-                                                <img src={mate.profileImgBase64 || `https://i.pravatar.cc/150?u=${mate.id}`} alt="avatar" className="w-14 h-14 rounded-full object-cover border-2 border-indigo-50" />
+                                                <img src={mate.profileImgBase64 || `https://i.pravatar.cc/150?u=${mate.id}`} alt="avatar" className="w-14 h-14 rounded-full object-cover border-2 border-white/10" />
                                             </div>
                                             <div className="overflow-hidden">
                                                 <div className="flex items-center gap-1.5 mb-1">
-                                                    <span className="font-bold text-gray-900 text-base break-keep whitespace-nowrap truncate max-w-[100px] sm:max-w-[150px]">{mate.name}</span>
+                                                    <span className="font-bold text-white text-base break-keep whitespace-nowrap truncate max-w-[100px] sm:max-w-[150px]">{mate.name}</span>
                                                     <span className="text-[10px] bg-brand-accent text-white px-2 py-0.5 rounded-full font-bold shrink-0">{randomMatch}% 일치</span>
                                                 </div>
-                                                <p className="text-xs text-gray-400 font-medium truncate w-full">
+                                                <p className="text-xs text-slate-300 font-medium truncate w-full">
                                                     {mate.travelTags && mate.travelTags.length > 0 ? mate.travelTags.join(' · ') : (mate.bio || "새로운 여행자입니다 👋")}
                                                 </p>
                                             </div>
                                         </div>
                                         <button
                                             onClick={() => { handleRequestMate(mate); alert(`${mate.name}님에게 동행 신청을 보냈습니다! 💌`); }}
-                                            className="bg-gray-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-black active:scale-95 transition flex items-center gap-1 shadow-sm shrink-0 break-keep whitespace-nowrap"
+                                            className="bg-white text-black text-xs font-black px-4 py-2.5 rounded-xl hover:bg-spotify-green hover:scale-105 active:scale-95 transition flex items-center gap-1 shadow-sm shrink-0 break-keep whitespace-nowrap"
                                         >
                                             <UserPlus size={14} className="shrink-0" /> 신청
                                         </button>
@@ -1293,19 +1321,19 @@ export default function MyPage() {
 
                 <section className="pt-4 border-t border-white/40">
                     <div className="flex justify-between items-end mb-6">
-                        <h2 className="text-2xl font-black text-gray-900 drop-shadow-sm break-keep whitespace-nowrap">여행자 피드</h2>
+                        <h2 className="text-2xl font-black text-white drop-shadow-sm break-keep whitespace-nowrap">여행자 피드</h2>
 
                         {/* ✨ [추가] 정렬 필터 버튼 */}
-                        <div className="flex gap-2 bg-white/50 p-1 rounded-xl backdrop-blur-md shadow-inner border border-white/60">
+                        <div className="flex gap-2 bg-white/10 p-1 rounded-xl backdrop-blur-md shadow-inner border border-white/10">
                             <button
                                 onClick={() => { setFeedSort('latest'); setFeedLimit(5); }}
-                                className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-all ${feedSort === 'latest' ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`}
+                                className={`text-xs font-black px-3 py-1.5 rounded-lg transition-all ${feedSort === 'latest' ? 'bg-white text-black shadow-md' : 'text-spotify-text-muted hover:text-white'}`}
                             >
                                 최신순
                             </button>
                             <button
                                 onClick={() => { setFeedSort('popular'); setFeedLimit(5); }}
-                                className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 ${feedSort === 'popular' ? 'bg-brand-primary text-white shadow-md' : 'text-gray-500 hover:text-brand-primary'}`}
+                                className={`text-xs font-black px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 ${feedSort === 'popular' ? 'bg-white text-black shadow-md' : 'text-spotify-text-muted hover:text-white'}`}
                             >
                                 <Sparkles size={12} /> 인기순
                             </button>
@@ -1314,21 +1342,21 @@ export default function MyPage() {
 
                     <div className="space-y-8 pb-10">
                         {feeds.length === 0 ? (
-                            <div className="text-center py-20 text-gray-400"><p className="break-keep">아직 등록된 피드가 없어요.<br />첫 번째 게시글의 주인공이 되어보세요!</p></div>
+                            <div className="text-center py-20 text-spotify-text-muted"><p className="break-keep">아직 등록된 피드가 없어요.<br />첫 번째 게시글의 주인공이 되어보세요!</p></div>
                         ) : (
                             <>
                                 {feeds.map(feed => {
                                     const isLiked = feed.likedBy?.includes(user?.uid);
                                     const isMyFeed = feed.author === (userData?.name || user?.displayName);
                                     return (
-                                        <div key={feed.id} className="bg-white/80 backdrop-blur-xl border border-white/60 rounded-[32px] overflow-hidden shadow-lg">
+                                        <div key={feed.id} className="bg-gradient-to-br from-white/12 to-white/3 backdrop-blur-md border border-white/10 rounded-[32px] overflow-hidden shadow-lg">
                                             {/* 기존 피드 헤더 */}
                                             <div className="p-4 flex items-center justify-between">
-                                                <div className="flex items-center gap-3 w-full pr-4 overflow-hidden"><img src={feed.avatar || "https://i.pravatar.cc/150?u=default"} alt="avatar" className="w-11 h-11 rounded-full border-2 border-brand-primary/10 object-cover shrink-0" /><div className="overflow-hidden"><div className="flex items-center gap-2 mb-0.5"><span className="font-bold text-gray-900 text-[15px] truncate max-w-[100px] sm:max-w-[150px]">{feed.author}</span></div><p className="text-[11px] text-gray-500 font-medium break-keep whitespace-nowrap">{feed.createdAt ? new Date(feed.createdAt.seconds * 1000).toLocaleDateString() : '방금 전'}</p></div></div>
+                                                <div className="flex items-center gap-3 w-full pr-4 overflow-hidden"><img src={feed.avatar || "https://i.pravatar.cc/150?u=default"} alt="avatar" className="w-11 h-11 rounded-full border-2 border-white/10 object-cover shrink-0" /><div className="overflow-hidden"><div className="flex items-center gap-2 mb-0.5"><span className="font-bold text-white text-[15px] truncate max-w-[100px] sm:max-w-[150px]">{feed.author}</span></div><p className="text-[11px] text-spotify-text-muted font-medium break-keep whitespace-nowrap">{feed.createdAt ? new Date(feed.createdAt.seconds * 1000).toLocaleDateString() : '방금 전'}</p></div></div>
                                                 {isMyFeed && (
                                                     <div className="flex items-center gap-1 shrink-0">
-                                                        <button onClick={() => openEditFeedModal(feed)} className="text-gray-400 hover:text-indigo-500 p-2 transition" title="피드 수정"><Edit3 size={18} /></button>
-                                                        <button onClick={() => handleDeleteFeed(feed)} className="text-gray-400 hover:text-brand-danger p-2 transition" title="피드 삭제"><Trash2 size={18} /></button>
+                                                        <button onClick={() => openEditFeedModal(feed)} className="text-spotify-text-muted hover:text-white p-2 transition" title="피드 수정"><Edit3 size={18} /></button>
+                                                        <button onClick={() => handleDeleteFeed(feed)} className="text-spotify-text-muted hover:text-brand-danger p-2 transition" title="피드 삭제"><Trash2 size={18} /></button>
                                                     </div>
                                                 )}
                                             </div>
@@ -1340,16 +1368,16 @@ export default function MyPage() {
                                             <div className="p-5">
                                                 <div className="flex items-center justify-between mb-4">
                                                     <div className="flex items-center gap-4 shrink-0">
-                                                        <button onClick={() => handleToggleLike(feed)} className={`transition-transform active:scale-75 ${isLiked ? 'text-brand-danger' : 'text-gray-800'}`}><Heart size={28} className={isLiked ? "fill-brand-danger" : ""} /></button>
-                                                        <button onClick={() => openCommentModal(feed)} className="text-gray-800 hover:text-gray-500 transition relative">
+                                                        <button onClick={() => handleToggleLike(feed)} className={`transition-transform active:scale-75 ${isLiked ? 'text-brand-danger' : 'text-white hover:text-brand-danger'}`}><Heart size={28} className={isLiked ? "fill-brand-danger" : ""} /></button>
+                                                        <button onClick={() => openCommentModal(feed)} className="text-white hover:text-spotify-text-muted transition relative">
                                                             <MessageCircleIcon size={28} />
                                                             {feed.commentCount > 0 && <span className="absolute -top-1 -right-1 bg-indigo-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{feed.commentCount}</span>}
                                                         </button>
                                                     </div>
-                                                    <button onClick={() => handleForkClick(feed)} disabled={isSaving} className="bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-600 hover:text-white px-4 py-2.5 rounded-2xl text-[12px] font-black transition-all active:scale-95 flex items-center gap-1.5 shadow-sm shrink-0 break-keep whitespace-nowrap"><Download size={16} className="shrink-0" /> 일정 가져오기 ({feed.forks || 0})</button>
+                                                    <button onClick={() => handleForkClick(feed)} disabled={isSaving} className="bg-white/10 text-white border border-white/10 hover:bg-white/20 px-4 py-2.5 rounded-2xl text-[12px] font-black transition-all active:scale-95 flex items-center gap-1.5 shadow-sm shrink-0 break-keep whitespace-nowrap"><Download size={16} className="shrink-0" /> 일정 가져오기 ({feed.forks || 0})</button>
                                                 </div>
-                                                <p className="font-bold text-sm text-gray-900 mb-2 break-keep whitespace-nowrap">좋아요 {(feed.likes || 0).toLocaleString()}개</p>
-                                                <p className="text-[14px] text-gray-800 leading-relaxed break-keep"><span className="font-black mr-2 text-gray-900">{feed.author}</span>{feed.title}</p>
+                                                <p className="font-bold text-sm text-white mb-2 break-keep whitespace-nowrap">좋아요 {(feed.likes || 0).toLocaleString()}개</p>
+                                                <p className="text-[14px] text-slate-200 leading-relaxed break-keep"><span className="font-black mr-2 text-white">{feed.author}</span>{feed.title}</p>
                                             </div>
                                         </div>
                                     );
@@ -1360,7 +1388,7 @@ export default function MyPage() {
                                     <div className="pt-4 flex justify-center">
                                         <button
                                             onClick={() => setFeedLimit(prev => prev + 5)}
-                                            className="bg-white border border-gray-200 text-gray-600 font-bold text-sm px-6 py-3 rounded-full shadow-sm hover:bg-gray-50 active:scale-95 transition flex items-center gap-2"
+                                            className="bg-white/10 border border-white/10 text-white font-bold text-sm px-6 py-3 rounded-full shadow-sm hover:bg-white/20 active:scale-95 transition flex items-center gap-2"
                                         >
                                             <Loader2 size={16} className="text-gray-400" /> 피드 5개 더 보기
                                         </button>
@@ -1390,9 +1418,9 @@ export default function MyPage() {
 
         return (
             <div className="animate-in fade-in duration-500 pb-10">
-                <header className="flex justify-between items-center px-3 pt-12 pb-4 sticky top-0 z-40 bg-gradient-to-b from-gray-50 to-transparent backdrop-blur-md">
-                    <div className="flex items-center gap-2 shrink-0"><div className="w-10 h-10 bg-gradient-to-br from-brand-primary via-brand-secondary to-brand-accent rounded-[14px] flex items-center justify-center text-white shadow-lg shrink-0"><Wallet size={20} /></div><h1 className="text-xl font-black text-gray-900 tracking-tight break-keep whitespace-nowrap">Trip Money</h1></div>
-                    <div className="flex items-center gap-3 text-gray-900 shrink-0"><button className="bg-white/50 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/80"><Search size={20} /></button><div className="relative bg-white/50 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/80 cursor-pointer" onClick={() => alert("현재 엔화(JPY) 환율이 많이 내렸어요! 📉")}><BellRing size={20} className="text-brand-primary animate-pulse" /><span className="absolute top-1 right-1 w-2.5 h-2.5 bg-brand-danger rounded-full border-2 border-white"></span></div></div>
+                <header className="flex justify-between items-center px-3 pt-12 pb-4 sticky top-0 z-40 bg-gradient-to-b from-[#121212]/50 to-transparent backdrop-blur-md">
+                    <div className="flex items-center gap-2 shrink-0"><div className="w-10 h-10 bg-gradient-to-br from-brand-primary via-brand-secondary to-brand-accent rounded-[14px] flex items-center justify-center text-white shadow-lg shrink-0"><Wallet size={20} /></div><h1 className="text-xl font-black text-white tracking-tight break-keep whitespace-nowrap">Trip Money</h1></div>
+                    <div className="flex items-center gap-3 text-white shrink-0"><button className="bg-white/10 hover:bg-white/20 backdrop-blur-md p-2 rounded-full shadow-sm transition"><Search size={20} /></button><div className="relative bg-white/10 hover:bg-white/20 backdrop-blur-md p-2 rounded-full shadow-sm transition cursor-pointer" onClick={() => alert("현재 엔화(JPY) 환율이 많이 내렸어요! 📉")}><BellRing size={20} className="text-brand-primary animate-pulse" /><span className="absolute top-1 right-1 w-2.5 h-2.5 bg-brand-danger rounded-full border-2 border-white"></span></div></div>
                 </header>
 
                 <div className="px-3 pt-4 space-y-6">
@@ -1413,7 +1441,7 @@ export default function MyPage() {
                             </button>
                         </div>
                     ))}
-                    <div className="flex justify-between items-end mb-2 px-1"><h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest break-keep whitespace-nowrap">Total Assets</h3></div>
+                    <div className="flex justify-between items-end mb-2 px-1"><h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest break-keep whitespace-nowrap">Total Assets</h3></div>
                     <GlassCard className="p-6 bg-gradient-to-br from-brand-accent via-brand-secondary to-brand-primary text-white relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
                         <div className="relative z-10">
@@ -1429,12 +1457,12 @@ export default function MyPage() {
                         </div>
                     </GlassCard>
 
-                    <div className="bg-brand-primary/10 border border-brand-primary/20 rounded-[20px] p-5 shadow-sm relative overflow-hidden">
+                    <div className="bg-gradient-to-br from-brand-primary/20 to-white/5 border border-white/10 rounded-[20px] p-5 shadow-lg relative overflow-hidden animate-pulse">
                         <div className="absolute -right-4 -bottom-4 text-brand-primary/10 opacity-50"><BrainCircuit size={100} /></div>
                         <div className="relative z-10">
                             <div className="flex items-center gap-1.5 mb-2"><Sparkles size={16} className="text-brand-primary shrink-0" /><span className="text-xs font-black text-brand-primary tracking-wider break-keep whitespace-nowrap">AI FUNDING COACH</span></div>
-                            <h3 className="text-lg font-black text-gray-900 leading-tight mb-1 break-keep">{advice.title}</h3>
-                            <p className="text-sm text-gray-600 font-medium leading-relaxed mb-4 break-keep">{advice.message}</p>
+                            <h3 className="text-lg font-black text-white leading-tight mb-1 break-keep">{advice.title}</h3>
+                            <p className="text-sm text-slate-300 font-medium leading-relaxed mb-4 break-keep">{advice.message}</p>
                             <button onClick={() => { if (advice.trip) { setSelectedTrip(advice.trip); setShowGroupManageModal(true); } }} className="w-full py-3.5 bg-brand-primary hover:bg-brand-primary/90 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 break-keep whitespace-nowrap">
                                 {advice.isGroup ? <Users size={18} className="shrink-0" /> : <TrendingDown size={18} className="shrink-0" />} {advice.action}
                             </button>
@@ -1442,10 +1470,10 @@ export default function MyPage() {
                     </div>
 
                     <section>
-                        <div className="flex justify-between items-end mb-4 px-1"><h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest break-keep whitespace-nowrap">My Travel Funds</h3></div>
+                        <div className="flex justify-between items-end mb-4 px-1"><h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest break-keep whitespace-nowrap">My Travel Funds</h3></div>
                         <div className="space-y-4">
                             {itineraries.length === 0 ? (
-                                <div className="text-center py-10 text-gray-400 bg-white/50 rounded-2xl border border-dashed border-gray-300"><ShoppingBag size={32} className="mx-auto mb-2 opacity-50" /><p className="text-sm break-keep">목표로 할 여행이 없어요.</p></div>
+                                <div className="text-center py-10 text-slate-400 bg-white/5 rounded-2xl border border-dashed border-white/10"><ShoppingBag size={32} className="mx-auto mb-2 opacity-50" /><p className="text-sm break-keep">목표로 할 여행이 없어요.</p></div>
                             ) : (
                                     itineraries.map((trip) => {
                                         const actualMembers = trip.membersInfo || [{ avatar: user?.photoURL || "https://i.pravatar.cc/150", name: user?.displayName || "나" }];
@@ -1465,7 +1493,7 @@ export default function MyPage() {
                                         else if (percent > 0) statusMsg = "차곡차곡 모으는 중이에요! 💪";
 
                                         return (
-                                            <GlassCard key={trip.id} className="p-6 flex flex-col group transition-all hover:ring-2 hover:ring-brand-primary/30 hover:shadow-2xl relative overflow-hidden backdrop-blur-3xl border-white/40 mb-4">
+                                            <GlassCard key={trip.id} className="p-6 flex flex-col group transition-all hover:ring-2 hover:ring-brand-primary/30 hover:shadow-2xl relative overflow-hidden backdrop-blur-3xl border-white/10 mb-4 bg-white/5">
                                                 {/* ✨ 상단 장식 오버레이 */}
                                                 <div className={`absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl opacity-20 transition-all group-hover:opacity-40 ${isGroup ? 'bg-brand-secondary/40' : 'bg-brand-primary/40'}`}></div>
                                                 
@@ -1476,48 +1504,48 @@ export default function MyPage() {
                                                         </div>
                                                         <div className="overflow-hidden">
                                                             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                                                                <h4 className="font-black text-gray-900 text-xl tracking-tight truncate max-w-[150px]">{trip.destination || "여행"}</h4>
+                                                                <h4 className="font-black text-white text-xl tracking-tight truncate max-w-[150px]">{trip.destination || "여행"}</h4>
                                                                 <div className="flex gap-1.5">
-                                                                    {isGroup && <span className="bg-brand-secondary/10 text-brand-secondary text-[10px] font-black px-2.5 py-1 rounded-full border border-brand-secondary/20 uppercase tracking-tighter">Group</span>}
-                                                                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border uppercase tracking-tighter shadow-xs ${dDayNum <= 7 ? 'bg-brand-danger text-white border-brand-danger/50 animate-pulse' : 'bg-gray-900 text-white border-gray-800'}`}>
+                                                                    {isGroup && <span className="bg-brand-secondary/15 text-brand-secondary text-[10px] font-black px-2.5 py-1 rounded-full border border-brand-secondary/20 uppercase tracking-tighter">Group</span>}
+                                                                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border uppercase tracking-tighter shadow-xs ${dDayNum <= 7 ? 'bg-brand-danger text-white border-brand-danger/50 animate-pulse' : 'bg-white/10 text-white border-white/10'}`}>
                                                                         {dDay}
                                                                     </span>
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-1.5 cursor-help">
-                                                                <Target size={12} className="text-gray-400" />
-                                                                <p className="text-[11px] text-gray-500 font-bold tracking-tight">목표: <span className="text-gray-900">{targetCost.toLocaleString()}원</span></p>
+                                                                <Target size={12} className="text-slate-400" />
+                                                                <p className="text-[11px] text-slate-400 font-bold tracking-tight">목표: <span className="text-white">{targetCost.toLocaleString()}원</span></p>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <button onClick={() => { setSelectedTrip(trip); setShowGroupManageModal(true); }} className="w-10 h-10 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all shrink-0"><ChevronRight size={20} strokeWidth={3} /></button>
+                                                    <button onClick={() => { setSelectedTrip(trip); setShowGroupManageModal(true); }} className="w-10 h-10 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/20 transition-all shrink-0"><ChevronRight size={20} strokeWidth={3} /></button>
                                                 </div>
 
-                                                <div className="bg-white/40 backdrop-blur-md rounded-[24px] p-5 border border-white/60 shadow-inner relative z-10">
+                                                <div className="bg-white/5 backdrop-blur-md rounded-[24px] p-5 border border-white/10 shadow-inner relative z-10">
                                                     <div className="flex justify-between items-end text-xs font-black mb-3">
                                                         <div className="flex flex-col gap-0.5">
-                                                            <span className="text-gray-400 text-[10px] uppercase tracking-widest">Available Balance</span>
-                                                            <span className={`text-lg font-black tracking-tight ${isGroup ? "text-brand-primary" : "text-indigo-600"}`}>{savedAmount.toLocaleString()}원</span>
+                                                            <span className="text-slate-400 text-[10px] uppercase tracking-widest">Available Balance</span>
+                                                            <span className={`text-lg font-black tracking-tight ${isGroup ? "text-brand-primary" : "text-indigo-400"}`}>{savedAmount.toLocaleString()}원</span>
                                                         </div>
                                                         <div className="flex flex-col items-end gap-0.5">
-                                                            <span className="text-gray-400 text-[10px] uppercase tracking-widest">Progress</span>
-                                                            <span className="text-gray-900 text-sm">{percent}%</span>
+                                                            <span className="text-slate-400 text-[10px] uppercase tracking-widest">Progress</span>
+                                                            <span className="text-white text-sm">{percent}%</span>
                                                         </div>
                                                     </div>
                                                     
-                                                    <div className="h-3 w-full bg-gray-200/50 rounded-full overflow-hidden mb-4 p-0.5 border border-gray-100">
+                                                    <div className="h-3 w-full bg-white/10 rounded-full overflow-hidden mb-4 p-0.5 border border-white/5">
                                                         <div className={`h-full rounded-full transition-all duration-1000 ease-out relative ${isGroup ? "bg-gradient-to-r from-brand-primary to-brand-secondary" : "bg-linear-to-r from-indigo-600 to-indigo-400"}`} style={{ width: `${percent}%` }}>
                                                             {percent > 5 && <div className="absolute top-0 right-0 w-4 h-full bg-white/30 blur-xs"></div>}
                                                         </div>
                                                     </div>
 
-                                                    <p className={`text-[10px] font-bold mb-4 flex items-center gap-1 ${percent >= 100 ? 'text-emerald-600' : 'text-gray-500'}`}>
+                                                    <p className={`text-[10px] font-bold mb-4 flex items-center gap-1 ${percent >= 100 ? 'text-emerald-400' : 'text-slate-400'}`}>
                                                         {percent >= 100 ? <CheckCircle size={12} /> : <Sparkles size={12} className="text-amber-400" />}
                                                         {statusMsg}
                                                     </p>
 
                                                     {isGroup && (
-                                                        <div className="flex items-center justify-between mt-1 pt-4 border-t border-gray-100/50">
+                                                        <div className="flex items-center justify-between mt-1 pt-4 border-t border-white/10">
                                                             <div className="flex -space-x-2.5 shrink-0">
                                                                 {actualMembers.slice(0, 4).map((m, i) => (
                                                                     <div key={i} className="relative group/avatar">
@@ -1529,21 +1557,21 @@ export default function MyPage() {
                                                                 )}
                                                             </div>
                                                             <div className="flex gap-2">
-                                                                <button onClick={() => openBudgetModal(trip)} className="text-[11px] font-black bg-white border border-gray-200 text-gray-800 px-3.5 py-2.5 rounded-xl shadow-xs hover:bg-gray-50 active:scale-95 transition-all flex items-center gap-1.5 break-keep whitespace-nowrap">
+                                                                <button onClick={() => openBudgetModal(trip)} className="text-[11px] font-black bg-white/10 border border-white/10 text-white px-3.5 py-2.5 rounded-xl shadow-xs hover:bg-white/20 active:scale-95 transition-all flex items-center gap-1.5 break-keep whitespace-nowrap">
                                                                     <Plus size={14} className="text-brand-primary shrink-0" /> 지출 추가
                                                                 </button>
-                                                                <button onClick={() => { setSelectedTrip(trip); setShowGroupManageModal(true); }} className={`text-[11px] font-black px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all active:scale-95 ${isHost ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200' : 'bg-white border border-gray-200 text-gray-800 hover:bg-gray-50 shadow-gray-100'}`}>
+                                                                <button onClick={() => { setSelectedTrip(trip); setShowGroupManageModal(true); }} className={`text-[11px] font-black px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all active:scale-95 ${isHost ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200' : 'bg-white/10 border border-white/10 text-white hover:bg-white/20 shadow-white/5'}`}>
                                                                     {isHost ? <><Settings size={14} className="shrink-0" /> 관리</> : <><Wallet size={14} className="shrink-0" /> 입금</>}
                                                                 </button>
                                                             </div>
                                                         </div>
                                                     )}
                                                     {!isGroup && (
-                                                        <div className="mt-1 pt-4 border-t border-gray-100/50 flex justify-end gap-2">
-                                                            <button onClick={() => openBudgetModal(trip)} className="text-[11px] font-black bg-white border border-gray-200 text-gray-800 px-3.5 py-2.5 rounded-xl shadow-xs hover:bg-gray-50 active:scale-95 transition-all flex items-center gap-1.5 break-keep whitespace-nowrap">
-                                                                <Plus size={14} className="text-indigo-500 shrink-0" /> 지출 추가
+                                                        <div className="mt-1 pt-4 border-t border-white/10 flex justify-end gap-2">
+                                                            <button onClick={() => openBudgetModal(trip)} className="text-[11px] font-black bg-white/10 border border-white/10 text-white px-3.5 py-2.5 rounded-xl shadow-xs hover:bg-white/20 active:scale-95 transition-all flex items-center gap-1.5 break-keep whitespace-nowrap">
+                                                                <Plus size={14} className="text-indigo-400 shrink-0" /> 지출 추가
                                                             </button>
-                                                            <button onClick={() => { setSelectedTrip(trip); setShowGroupManageModal(true); }} className="text-[11px] font-black bg-gray-900 text-white px-5 py-2.5 rounded-xl shadow-xl hover:bg-black transition-all active:scale-95 flex items-center gap-2">
+                                                            <button onClick={() => { setSelectedTrip(trip); setShowGroupManageModal(true); }} className="text-[11px] font-black bg-white/25 text-white px-5 py-2.5 rounded-xl shadow-xl hover:bg-white/35 transition-all active:scale-95 flex items-center gap-2 border border-white/10">
                                                                 <Wallet size={14} className="shrink-0 text-indigo-400" /> 지갑 관리
                                                             </button>
                                                         </div>
@@ -1594,13 +1622,31 @@ export default function MyPage() {
     };
 
     return (
-        <div className="min-h-screen relative font-sans selection:bg-brand-primary/20 overflow-x-hidden flex justify-center">
-            <div className="fixed inset-0 z-[-2]"><img src={BACKGROUND_IMAGE} alt="background" className="w-full h-full object-cover" /></div>
-            <div className="fixed inset-0 z-[-1] bg-slate-950/45 backdrop-blur-[16px]"></div>
+        <div className="min-h-screen relative font-sans selection:bg-brand-primary/20 overflow-x-hidden flex justify-center bg-[#121212]">
+            {/* 배경 — 프리미엄 켄 번 효과 이미지 전환 적용 */}
+            <div className="fixed inset-0 z-[-2] overflow-hidden">
+                <AnimatePresence mode='wait'>
+                    <motion.img
+                        key={bgIndex}
+                        src={backgroundImages[bgIndex]}
+                        initial={{ opacity: 0, scale: 1.1 }}
+                        animate={{ opacity: 1, scale: 1.0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 1.5, ease: "easeOut" }}
+                        className="absolute inset-0 w-full h-full object-cover"
+                    />
+                </AnimatePresence>
+            </div>
+            {/* 비네팅 및 블러 오버레이 (뒷배경 사진과 어우러지도록 최적화) */}
+            <div className="fixed inset-0 z-[-1] bg-slate-950/35 backdrop-blur-[12px]"></div>
 
-            {/* ✨ 메인 래퍼 박스 확장 (w-full max-w-[500px])-->max-w-[560px] */}
-            <div className="w-full max-w-[560px] h-full relative bg-white/60 shadow-2xl overflow-hidden flex flex-col">
-                <div className="pb-32 flex-1 overflow-y-auto custom-scrollbar">
+            {/* ✨ 메인 래퍼 주 박스 (배경 그라데이션화 및 뒤편 이미지 투명 반사) */}
+            <div 
+                className="w-full max-w-[560px] h-full relative text-white border-x border-white/10 shadow-2xl overflow-hidden flex flex-col transition-all duration-700 bg-[#121212]"
+            >
+                <SunSceneBackground scene={activeTab === 'schedule' ? 'mountain' : activeTab === 'social' ? 'beach' : activeTab === 'coach' ? 'city' : activeTab === 'wallet' ? 'cruise' : 'sky'} />
+                
+                <div className="pb-32 flex-1 overflow-y-auto custom-scrollbar relative z-10">
                     {activeTab === 'schedule' && renderSchedule()}
                     {activeTab === 'social' && renderSocial()}
                     {activeTab === 'coach' && renderCoach()}
@@ -1609,13 +1655,13 @@ export default function MyPage() {
                 </div>
 
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-[570px] px-6 z-50">
-                    <nav className="bg-white/70 backdrop-blur-2xl border border-white/50 shadow-[0_20px_40px_rgba(0,0,0,0.1)] rounded-[32px] px-2 py-2.5 flex justify-around items-center">
-                        <button onClick={() => router.push('/?mode=new')} className="flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] text-gray-500 hover:text-brand-primary transition"><HomeIcon size={24} strokeWidth={2} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">홈</span></button>
-                        <button onClick={() => setActiveTab('social')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'social' ? 'text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary scale-110' : 'text-gray-500 hover:text-brand-primary'}`}><Users size={24} strokeWidth={activeTab === 'social' ? 2.5 : 2} className={activeTab === 'social' ? 'text-brand-primary' : ''} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">동행</span></button>
-                        <button onClick={() => setActiveTab('schedule')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'schedule' ? 'text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary scale-110' : 'text-gray-500 hover:text-brand-primary'}`}><Calendar size={24} strokeWidth={activeTab === 'schedule' ? 2.5 : 2} className={activeTab === 'schedule' ? 'text-brand-primary' : ''} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">일정</span></button>
-                        <button onClick={() => setActiveTab('coach')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'coach' ? 'text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary scale-110' : 'text-gray-500 hover:text-brand-primary'}`}><Sparkles size={24} strokeWidth={activeTab === 'coach' ? 2.5 : 2} className={activeTab === 'coach' ? 'text-brand-primary' : ''} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">코치</span></button>
-                        <button onClick={() => setActiveTab('wallet')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'wallet' ? 'text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 scale-110' : 'text-gray-500 hover:text-indigo-600'}`}><Wallet size={24} strokeWidth={activeTab === 'wallet' ? 2.5 : 2} className={activeTab === 'wallet' ? 'text-indigo-500' : ''} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">트립머니</span></button>
-                        <button onClick={() => setActiveTab('vault')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'vault' ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500 scale-110' : 'text-gray-500 hover:text-emerald-600'}`}><Box size={24} strokeWidth={activeTab === 'vault' ? 2.5 : 2} className={activeTab === 'vault' ? 'text-emerald-500' : ''} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">보관함</span></button>
+                    <nav className="bg-[#121212]/80 backdrop-blur-2xl border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.5)] rounded-[32px] px-2 py-2.5 flex justify-around items-center">
+                        <button onClick={() => router.push('/?mode=new')} className="flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] text-spotify-text-muted hover:text-white transition"><HomeIcon size={24} strokeWidth={2} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">홈</span></button>
+                        <button onClick={() => setActiveTab('social')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'social' ? 'text-spotify-green scale-110 font-bold' : 'text-spotify-text-muted hover:text-white'}`}><Users size={24} strokeWidth={activeTab === 'social' ? 2.5 : 2} className={activeTab === 'social' ? 'text-spotify-green' : 'text-spotify-text-muted'} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">동행</span></button>
+                        <button onClick={() => setActiveTab('schedule')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'schedule' ? 'text-spotify-green scale-110 font-bold' : 'text-spotify-text-muted hover:text-white'}`}><Calendar size={24} strokeWidth={activeTab === 'schedule' ? 2.5 : 2} className={activeTab === 'schedule' ? 'text-spotify-green' : 'text-spotify-text-muted'} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">일정</span></button>
+                        <button onClick={() => setActiveTab('coach')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'coach' ? 'text-spotify-green scale-110 font-bold' : 'text-spotify-text-muted hover:text-white'}`}><Sparkles size={24} strokeWidth={activeTab === 'coach' ? 2.5 : 2} className={activeTab === 'coach' ? 'text-spotify-green' : 'text-spotify-text-muted'} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">코치</span></button>
+                        <button onClick={() => setActiveTab('wallet')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'wallet' ? 'text-spotify-green scale-110 font-bold' : 'text-spotify-text-muted hover:text-white'}`}><Wallet size={24} strokeWidth={activeTab === 'wallet' ? 2.5 : 2} className={activeTab === 'wallet' ? 'text-spotify-green' : 'text-spotify-text-muted'} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">트립머니</span></button>
+                        <button onClick={() => setActiveTab('vault')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'vault' ? 'text-spotify-green scale-110 font-bold' : 'text-spotify-text-muted hover:text-white'}`}><Box size={24} strokeWidth={activeTab === 'vault' ? 2.5 : 2} className={activeTab === 'vault' ? 'text-spotify-green' : 'text-spotify-text-muted'} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">보관함</span></button>
                     </nav>
                 </div>
             </div>
@@ -1623,31 +1669,31 @@ export default function MyPage() {
             {/* 내 개인 자산 입출 내역 모달 */}
             {showAssetHistoryModal && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowAssetHistoryModal(false)}></div>
-                    <div className="bg-white/90 backdrop-blur-2xl border border-white/60 w-full max-w-md h-[80vh] rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl flex flex-col">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowAssetHistoryModal(false)}></div>
+                    <div className="bg-[#121212]/90 backdrop-blur-2xl border border-white/10 w-full max-w-md h-[80vh] rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl flex flex-col text-white">
                         <div className="flex items-center justify-between mb-6 shrink-0">
-                            <h3 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2 break-keep whitespace-nowrap"><History className="text-indigo-500" /> 입출금 내역</h3>
-                            <button onClick={() => setShowAssetHistoryModal(false)} className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition shrink-0"><X size={20} strokeWidth={2.5} /></button>
+                            <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 break-keep whitespace-nowrap"><History className="text-indigo-400" /> 입출금 내역</h3>
+                            <button onClick={() => setShowAssetHistoryModal(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/20 transition shrink-0"><X size={20} strokeWidth={2.5} /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
                             {pointHistory.length === 0 ? (
-                                <div className="text-center py-20 text-gray-400"><p className="break-keep whitespace-nowrap">최근 입출금 내역이 없습니다.</p></div>
+                                <div className="text-center py-20 text-slate-400"><p className="break-keep whitespace-nowrap">최근 입출금 내역이 없습니다.</p></div>
                             ) : (
                                 <div className="space-y-3">
                                     {pointHistory.map((item) => {
                                         const isPositive = item.amount > 0;
                                         return (
-                                            <div key={item.id} className="flex justify-between items-center bg-white p-4 rounded-[20px] border border-gray-100 shadow-sm">
+                                            <div key={item.id} className="flex justify-between items-center bg-gradient-to-br from-white/10 to-white/5 p-4 rounded-[20px] border border-white/10 shadow-sm">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isPositive ? 'bg-indigo-50 text-indigo-500' : 'bg-brand-danger/10 text-brand-danger'}`}>
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isPositive ? 'bg-indigo-500/20 text-indigo-300' : 'bg-rose-500/20 text-rose-300'}`}>
                                                         <Receipt size={18} />
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-gray-900 text-sm break-keep whitespace-nowrap">{item.reason}</p>
-                                                        <p className="text-[10px] text-gray-400 font-bold break-keep whitespace-nowrap">{item.createdAt ? new Date(item.createdAt.seconds * 1000).toLocaleDateString() : "방금"}</p>
+                                                        <p className="font-bold text-white text-sm break-keep whitespace-nowrap">{item.reason}</p>
+                                                        <p className="text-[10px] text-slate-400 font-bold break-keep whitespace-nowrap">{item.createdAt ? new Date(item.createdAt.seconds * 1000).toLocaleDateString() : "방금"}</p>
                                                     </div>
                                                 </div>
-                                                <span className={`font-black shrink-0 break-keep whitespace-nowrap ${isPositive ? 'text-indigo-600' : 'text-brand-danger'}`}>
+                                                <span className={`font-black shrink-0 break-keep whitespace-nowrap ${isPositive ? 'text-indigo-400' : 'text-rose-400'}`}>
                                                     {isPositive ? '+' : ''}{item.amount.toLocaleString()} 원
                                                 </span>
                                             </div>
@@ -1664,15 +1710,15 @@ export default function MyPage() {
             {showGroupManageModal && selectedTrip && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowGroupManageModal(false)}></div>
-                    <div className="bg-white/90 backdrop-blur-2xl border border-white/60 w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-0 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl h-[90vh] flex flex-col overflow-hidden">
+                    <div className="bg-[#121212]/95 backdrop-blur-2xl border border-white/10 w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-0 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl h-[90vh] flex flex-col overflow-hidden text-white">
                         <div className="bg-gradient-to-br from-indigo-900 to-gray-900 p-6 pt-10 text-white shrink-0 relative">
                             <button onClick={() => setShowGroupManageModal(false)} className="absolute top-6 right-6 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/30 transition shrink-0"><X size={18} strokeWidth={2.5} /></button>
                             <span className="bg-indigo-500 text-[10px] font-bold px-2 py-1 rounded mb-2 inline-block break-keep whitespace-nowrap">Trip Wallet</span>
                             <h3 className="text-2xl font-black mb-6 break-keep">{selectedTrip.destination || "여행"}</h3>
-                            <p className="text-xs text-gray-300 mb-1 break-keep whitespace-nowrap">모임통장 잔고 (KRW)</p>
+                            <p className="text-xs text-slate-300 mb-1 break-keep whitespace-nowrap">모임통장 잔고 (KRW)</p>
                             <div className="flex items-end gap-2 mb-4">
                                 <h2 className="text-4xl font-black tracking-tighter truncate max-w-[200px] sm:max-w-[300px]">{(selectedTrip.tripWalletBalance || 0).toLocaleString()}</h2>
-                                <span className="text-base font-bold text-gray-400 mb-1 shrink-0">원</span>
+                                <span className="text-base font-bold text-slate-400 mb-1 shrink-0">원</span>
                             </div>
                             {selectedTrip.foreignWallets && Object.keys(selectedTrip.foreignWallets).length > 0 && (
                                 <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-2">
@@ -1680,7 +1726,7 @@ export default function MyPage() {
                                         if (amt <= 0) return null;
                                         return (
                                             <div key={cur} className="bg-white/10 p-3 rounded-xl min-w-[100px] border border-white/10 backdrop-blur-md shrink-0">
-                                                <p className="text-[10px] text-gray-400 font-bold mb-1 break-keep whitespace-nowrap">{cur}</p>
+                                                <p className="text-[10px] text-slate-400 font-bold mb-1 break-keep whitespace-nowrap">{cur}</p>
                                                 <p className="font-bold truncate w-full">{amt.toLocaleString()}</p>
                                             </div>
                                         )
@@ -1689,27 +1735,27 @@ export default function MyPage() {
                             )}
                         </div>
 
-                        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-gray-50 space-y-6">
+                        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-transparent space-y-6">
                             <section>
                                 <div className="flex justify-between items-center mb-3">
-                                    <h4 className="font-black text-gray-900 text-base break-keep whitespace-nowrap">멤버 입금 현황</h4>
-                                    {selectedTrip.hostId === user?.uid && <span className="text-[10px] bg-brand-accent/10 text-brand-accent px-2 py-1 rounded font-bold shrink-0 break-keep whitespace-nowrap">내가 방장 👑</span>}
+                                    <h4 className="font-black text-white text-base break-keep whitespace-nowrap">멤버 입금 현황</h4>
+                                    {selectedTrip.hostId === user?.uid && <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded font-bold shrink-0 break-keep whitespace-nowrap">내가 방장 👑</span>}
                                 </div>
-                                <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-4">
+                                <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-2xl p-4 shadow-sm border border-white/10 space-y-4">
                                     {selectedTrip.hostId === user?.uid && (
-                                        <div className="flex gap-2 mb-4 pb-4 border-b border-gray-100 flex-col">
+                                        <div className="flex gap-2 mb-4 pb-4 border-b border-white/10 flex-col">
                                             <div className="flex gap-2 w-full items-end">
                                                 <div className="flex-1">
-                                                    <p className="text-[10px] text-gray-500 font-bold mb-1 break-keep whitespace-nowrap">총 여행 경비 설정 (현재: {(selectedTrip.targetTotalCost || parseCost(selectedTrip.estimatedCost) || 0).toLocaleString()}원)</p>
-                                                    <input type="number" value={targetTotalCostInput} onChange={e => setTargetTotalCostInput(e.target.value)} placeholder="총 모금할 금액 입력" className="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg text-sm font-bold outline-none" />
+                                                    <p className="text-[10px] text-slate-400 font-bold mb-1 break-keep whitespace-nowrap">총 여행 경비 설정 (현재: {(selectedTrip.targetTotalCost || parseCost(selectedTrip.estimatedCost) || 0).toLocaleString()}원)</p>
+                                                    <input type="number" value={targetTotalCostInput} onChange={e => setTargetTotalCostInput(e.target.value)} placeholder="총 모금할 금액 입력" className="w-full bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-sm font-bold text-white outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white/10" />
                                                 </div>
-                                                <button onClick={handleSetTargetCost} className="bg-gray-900 text-white font-bold text-xs px-4 py-2 rounded-lg active:scale-95 transition h-[36px] shrink-0 break-keep whitespace-nowrap">수정</button>
+                                                <button onClick={handleSetTargetCost} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2 rounded-lg active:scale-95 transition h-[36px] shrink-0 break-keep whitespace-nowrap">수정</button>
                                             </div>
                                             <button 
                                                 onClick={handleRequestDeposit} 
-                                                className="w-full mt-2 bg-brand-primary/5 hover:bg-brand-primary/10 text-brand-primary border border-brand-primary/10 font-black text-xs py-3.5 rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all break-keep whitespace-nowrap"
+                                                className="w-full mt-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/20 font-black text-xs py-3.5 rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all break-keep whitespace-nowrap"
                                             >
-                                                <BellRing size={14} className="shrink-0 text-brand-primary" /> 
+                                                <BellRing size={14} className="shrink-0 text-indigo-300" /> 
                                                 {selectedTrip.targetTotalCost || parseCost(selectedTrip.estimatedCost) ? (
                                                     `${Math.ceil((selectedTrip.targetTotalCost || parseCost(selectedTrip.estimatedCost)) / (selectedTrip.membersInfo?.length || 1)).toLocaleString()}원씩 N빵 입금 알림 보내기`
                                                 ) : (
@@ -1726,16 +1772,16 @@ export default function MyPage() {
                                         return (
                                             <div key={m.uid} className="flex justify-between items-center py-1">
                                                 <div className="flex items-center gap-3 w-full pr-2 overflow-hidden">
-                                                    <img src={m.avatar} className="w-10 h-10 rounded-full object-cover border border-gray-200 shrink-0" />
+                                                    <img src={m.avatar} className="w-10 h-10 rounded-full object-cover border border-white/10 shrink-0" />
                                                     <div className="overflow-hidden">
-                                                        <p className="font-bold text-sm text-gray-900 truncate w-full break-keep whitespace-nowrap">{m.name} {m.uid === user?.uid && "(나)"}</p>
-                                                        {target > 0 && <p className="text-[10px] text-gray-400 break-keep whitespace-nowrap">목표: {target.toLocaleString()}원</p>}
+                                                        <p className="font-bold text-sm text-white truncate w-full break-keep whitespace-nowrap">{m.name} {m.uid === user?.uid && "(나)"}</p>
+                                                        {target > 0 && <p className="text-[10px] text-slate-400 break-keep whitespace-nowrap">목표: {target.toLocaleString()}원</p>}
                                                     </div>
                                                 </div>
                                                 <div className="text-right shrink-0 flex items-center gap-2.5">
                                                     <div className="flex flex-col items-end">
-                                                        <p className={`font-black text-sm break-keep whitespace-nowrap ${isComplete ? 'text-emerald-500' : 'text-gray-900'}`}>{deposited.toLocaleString()}원</p>
-                                                        {isComplete && <span className="text-[9px] bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded font-bold break-keep whitespace-nowrap">완료</span>}
+                                                        <p className={`font-black text-sm break-keep whitespace-nowrap ${isComplete ? 'text-emerald-400' : 'text-white'}`}>{deposited.toLocaleString()}원</p>
+                                                        {isComplete && <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-bold break-keep whitespace-nowrap">완료</span>}
                                                     </div>
                                                     {selectedTrip.hostId === user?.uid && m.uid !== user?.uid && !isComplete && (() => {
                                                         const pendingReq = matchRequests.find(r => 
@@ -1748,14 +1794,14 @@ export default function MyPage() {
                                                         return pendingReq ? (
                                                             <button 
                                                                 onClick={() => handleNudgeDeposit(m)}
-                                                                className="text-[10px] font-black bg-amber-50 text-amber-600 border border-amber-200 px-2.5 py-1.5 rounded-xl hover:bg-amber-100 active:scale-95 transition-all shrink-0 break-keep whitespace-nowrap flex items-center gap-1 animate-pulse"
+                                                                className="text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/20 px-2.5 py-1.5 rounded-xl hover:bg-amber-500/30 active:scale-95 transition-all shrink-0 break-keep whitespace-nowrap flex items-center gap-1 animate-pulse"
                                                             >
                                                                 재촉 ⚡
                                                             </button>
                                                         ) : (
                                                             <button 
                                                                 onClick={() => handleIndividualRequestDeposit(m)}
-                                                                className="text-[10px] font-black bg-brand-primary/5 text-brand-primary border border-brand-primary/10 px-2.5 py-1.5 rounded-xl hover:bg-brand-primary/10 active:scale-95 transition-all shrink-0 break-keep whitespace-nowrap"
+                                                                className="text-[10px] font-black bg-indigo-600/20 text-indigo-300 border border-indigo-500/20 px-2.5 py-1.5 rounded-xl hover:bg-indigo-600/30 active:scale-95 transition-all shrink-0 break-keep whitespace-nowrap"
                                                             >
                                                                 요청
                                                             </button>
@@ -1766,19 +1812,19 @@ export default function MyPage() {
                                         );
                                     })}
 
-                                    <div className="mt-4 pt-4 border-t border-gray-100">
-                                        <div className="flex items-center justify-between gap-2 mb-4 bg-indigo-50/50 p-3 rounded-xl border border-indigo-100/50">
+                                    <div className="mt-4 pt-4 border-t border-white/10">
+                                        <div className="flex items-center justify-between gap-2 mb-4 bg-indigo-500/10 p-3 rounded-xl border border-indigo-500/20">
                                             <div className="text-center flex-1">
-                                                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">내 지갑</p>
-                                                <p className="text-sm font-black text-gray-900 truncate">{currentAsset.toLocaleString()}원</p>
+                                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">내 지갑</p>
+                                                <p className="text-sm font-black text-white truncate">{currentAsset.toLocaleString()}원</p>
                                             </div>
-                                            <div className="flex flex-col items-center justify-center text-indigo-500 animate-pulse shrink-0 px-2">
+                                            <div className="flex flex-col items-center justify-center text-indigo-400 animate-pulse shrink-0 px-2">
                                                 <ArrowRight size={16} strokeWidth={3} className="rotate-90 sm:rotate-0" />
-                                                <span className="text-[8px] font-black text-indigo-600 mt-0.5">송금</span>
+                                                <span className="text-[8px] font-black text-indigo-300 mt-0.5">송금</span>
                                             </div>
                                             <div className="text-center flex-1">
-                                                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">모임 통장</p>
-                                                <p className="text-sm font-black text-indigo-600 truncate">{(selectedTrip.tripWalletBalance || 0).toLocaleString()}원</p>
+                                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">모임 통장</p>
+                                                <p className="text-sm font-black text-indigo-400 truncate">{(selectedTrip.tripWalletBalance || 0).toLocaleString()}원</p>
                                             </div>
                                         </div>
                                         <div className="relative flex items-center w-full">
@@ -1787,7 +1833,7 @@ export default function MyPage() {
                                                 value={myDepositInput} 
                                                 onChange={e => setMyDepositInput(e.target.value)} 
                                                 placeholder="입금할 금액 입력" 
-                                                className="w-full bg-gray-50 border border-gray-200 pl-4 pr-16 py-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white transition" 
+                                                className="w-full bg-white/5 border border-white/10 pl-4 pr-16 py-3.5 rounded-xl text-sm font-bold text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white/10 transition" 
                                             />
                                             <button 
                                                 onClick={handleDepositToTrip} 
@@ -1802,11 +1848,11 @@ export default function MyPage() {
 
                              {selectedTrip.hostId === user?.uid && (
                                  <section>
-                                     <h4 className="font-black text-gray-900 text-base mb-3 flex items-center gap-1 break-keep whitespace-nowrap"><RefreshCw size={16} className="text-indigo-500 shrink-0" /> 여행 자금 환전 (방장)</h4>
-                                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                                     <h4 className="font-black text-white text-base mb-3 flex items-center gap-1 break-keep whitespace-nowrap"><RefreshCw size={16} className="text-indigo-400 shrink-0" /> 여행 자금 환전 (방장)</h4>
+                                     <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-2xl p-4 shadow-sm border border-white/10">
                                          <div className="flex gap-2 mb-3">
                                              {['JPY', 'USD', 'EUR'].map(c => (
-                                                 <button key={c} onClick={() => setTripExchangeCurrency(c)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition break-keep whitespace-nowrap ${tripExchangeCurrency === c ? 'bg-indigo-50 text-indigo-600 border border-indigo-200' : 'bg-gray-50 text-gray-500'}`}>{c}</button>
+                                                 <button key={c} onClick={() => setTripExchangeCurrency(c)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition break-keep whitespace-nowrap ${tripExchangeCurrency === c ? 'bg-indigo-600 text-white border border-indigo-500' : 'bg-white/5 border border-white/5 text-slate-400 hover:bg-white/10'}`}>{c}</button>
                                              ))}
                                          </div>
                                          <div className="relative flex items-center w-full">
@@ -1815,23 +1861,23 @@ export default function MyPage() {
                                                  value={tripExchangeAmount} 
                                                  onChange={e => setTripExchangeAmount(e.target.value)} 
                                                  placeholder={`${tripExchangeCurrency} 금액 입력`} 
-                                                 className="w-full bg-gray-50 border border-gray-200 pl-4 pr-16 py-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white transition" 
+                                                 className="w-full bg-white/5 border border-white/10 text-white placeholder-slate-500 pl-4 pr-16 py-3.5 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white/10 transition" 
                                              />
                                              <button 
                                                  onClick={handleTripExchange} 
-                                                 className="absolute right-2 px-4 py-2 bg-gray-900 hover:bg-slate-800 text-white font-black text-xs rounded-lg shadow-md active:scale-95 transition shrink-0 break-keep whitespace-nowrap"
+                                                 className="absolute right-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-lg shadow-md active:scale-95 transition shrink-0 break-keep whitespace-nowrap"
                                              >
                                                  환전
                                              </button>
                                          </div>
                                         {tripExchangeAmount > 0 && (
-                                            <p className="text-[10px] text-brand-primary font-bold mt-2 text-right break-keep whitespace-nowrap">모임통장에서 -{Math.floor(tripExchangeAmount * CURRENCY_RATES[tripExchangeCurrency]).toLocaleString()} KRW 차감</p>
+                                            <p className="text-[10px] text-indigo-400 font-bold mt-2 text-right break-keep whitespace-nowrap">모임통장에서 -{Math.floor(tripExchangeAmount * CURRENCY_RATES[tripExchangeCurrency]).toLocaleString()} KRW 차감</p>
                                         )}
                                     </div>
                                 </section>
                             )}
 
-                            <button onClick={() => { setShowGroupManageModal(false); openBudgetModal(selectedTrip); }} className="w-full bg-white border border-gray-200 text-gray-900 font-bold py-4 rounded-2xl shadow-sm hover:bg-gray-50 transition flex items-center justify-center gap-2 mb-3 break-keep whitespace-nowrap">
+                            <button onClick={() => { setShowGroupManageModal(false); openBudgetModal(selectedTrip); }} className="w-full bg-white/5 border border-white/10 text-white font-bold py-4 rounded-2xl shadow-sm hover:bg-white/10 transition flex items-center justify-center gap-2 mb-3 break-keep whitespace-nowrap">
                                 <Receipt size={18} className="shrink-0" /> 이 여행의 상세 지출(가계부) 보기
                             </button>
 
@@ -1847,16 +1893,16 @@ export default function MyPage() {
             {showInboxModal && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowInboxModal(false)}></div>
-                    <div className="bg-white/90 backdrop-blur-2xl border border-white/60 w-full max-w-md h-[85vh] sm:h-[600px] rounded-t-[40px] sm:rounded-[40px] p-8 flex flex-col relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl">
+                    <div className="bg-[#121212]/90 backdrop-blur-2xl border border-white/10 w-full max-w-md h-[85vh] sm:h-[600px] rounded-t-[40px] sm:rounded-[40px] p-8 flex flex-col relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl text-white">
                         <div className="flex items-center justify-between mb-6 shrink-0">
-                            <h3 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2 break-keep whitespace-nowrap"><Inbox size={24} className="text-brand-primary" /> 내 동행 요청함</h3>
-                            <button onClick={() => setShowInboxModal(false)} className="w-10 h-10 bg-gray-200/50 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition shrink-0"><X size={20} strokeWidth={2.5} /></button>
+                            <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 break-keep whitespace-nowrap"><Inbox size={24} className="text-indigo-400" /> 내 동행 요청함</h3>
+                            <button onClick={() => setShowInboxModal(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-slate-300 hover:bg-white/20 hover:text-white transition shrink-0"><X size={20} strokeWidth={2.5} /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto pb-4 custom-scrollbar">
                             {matchRequests.length === 0 ? (
-                                <div className="py-20 flex flex-col items-center justify-center text-center text-gray-400">
-                                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-300"><Inbox size={40} /></div>
-                                    <p className="font-bold text-lg mb-1 text-gray-500 break-keep whitespace-nowrap">아직 요청 내역이 없어요</p>
+                                <div className="py-20 flex flex-col items-center justify-center text-center text-slate-400">
+                                    <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-4 text-slate-500"><Inbox size={40} /></div>
+                                    <p className="font-bold text-lg mb-1 text-slate-300 break-keep whitespace-nowrap">아직 요청 내역이 없어요</p>
                                     <p className="text-sm break-keep">마음에 드는 메이트에게 동행을 신청해보세요!</p>
                                 </div>
                             ) : (
@@ -1872,25 +1918,25 @@ export default function MyPage() {
 
                                         if (isSafeMode) {
                                             return (
-                                                <div key={req.id} className="border border-brand-primary/20 rounded-[20px] p-5 shadow-sm bg-brand-primary/10">
-                                                    <div className="flex justify-between items-center mb-3 border-b border-brand-primary/20 pb-3">
-                                                        <span className="text-[10px] font-black px-2.5 py-1 rounded-md bg-brand-primary text-white break-keep whitespace-nowrap">
-                                                            🛡️ 안심 귀가 알림
+                                                <div key={req.id} className="border border-rose-500/20 rounded-[20px] p-5 shadow-sm bg-rose-500/10">
+                                                    <div className="flex justify-between items-center mb-3 border-b border-rose-500/20 pb-3">
+                                                        <span className="text-[10px] font-black px-2.5 py-1 rounded-md bg-rose-600 text-white break-keep whitespace-nowrap">
+                                                            🚨 안심 귀가 알림
                                                         </span>
                                                         <span className="text-[10px] text-gray-400 font-medium break-keep whitespace-nowrap">{req.createdAt ? new Date(req.createdAt.seconds * 1000).toLocaleDateString() : '방금 전'}</span>
                                                     </div>
                                                     <div className="flex items-center gap-3 mb-4 w-full overflow-hidden">
-                                                        <div className="w-12 h-12 bg-brand-primary/20 text-brand-primary rounded-full flex items-center justify-center font-black text-lg border-2 border-white shadow-sm overflow-hidden shrink-0">
+                                                        <div className="w-12 h-12 bg-rose-500/20 text-rose-300 rounded-full flex items-center justify-center font-black text-lg border-2 border-white/10 shadow-sm overflow-hidden shrink-0">
                                                             {req.senderName?.[0] || "?"}
                                                         </div>
                                                         <div className="overflow-hidden">
-                                                            <h4 className="font-bold text-base truncate w-full break-keep whitespace-nowrap text-gray-900">{req.senderName} 님의 안심 귀가</h4>
+                                                            <h4 className="font-bold text-base truncate w-full break-keep whitespace-nowrap text-white">{req.senderName} 님의 안심 귀가</h4>
                                                             <p className="text-xs text-gray-500 font-medium truncate w-full break-keep whitespace-nowrap">
                                                                 <MapPin size={10} className="inline mr-0.5 text-gray-400" /> 실시간 위치 공유 중
                                                             </p>
                                                         </div>
                                                     </div>
-                                                    <div className="p-3 rounded-xl border border-brand-primary/10 bg-brand-primary/5 text-xs font-medium mb-4 italic break-keep text-gray-700">
+                                                    <div className="p-3 rounded-xl border border-rose-500/10 bg-rose-500/5 text-xs font-medium mb-4 italic break-keep text-slate-200">
                                                         &quot;{req.message}&quot;
                                                     </div>
                                                     <div className="flex gap-2">
@@ -1899,7 +1945,7 @@ export default function MyPage() {
                                                                 onClick={() => {
                                                                     router.push(`/share/live_safemode?userId=${req.senderId}`);
                                                                 }} 
-                                                                className="flex-1 bg-gradient-to-r from-brand-primary to-brand-secondary text-white py-3 rounded-xl text-xs font-black shadow-md hover:from-brand-primary/90 hover:to-brand-secondary/90 transition active:scale-95 text-center break-keep whitespace-nowrap"
+                                                                className="flex-1 bg-gradient-to-r from-rose-500 to-red-600 text-white py-3 rounded-xl text-xs font-black shadow-md hover:from-rose-600 hover:to-red-700 transition active:scale-95 text-center break-keep whitespace-nowrap"
                                                             >
                                                                 우리앱 지도로 위치 보기
                                                             </button>
@@ -1910,49 +1956,49 @@ export default function MyPage() {
                                         }
 
                                         return (
-                                            <div key={req.id} className={`border rounded-[20px] p-5 shadow-sm transition-all ${isCompleted ? 'bg-gray-100 border-gray-200 opacity-80' : 'bg-white/80 border-brand-primary/20'}`}>
-                                                <div className="flex justify-between items-center mb-3 border-b border-gray-100 pb-3">
-                                                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-md break-keep whitespace-nowrap ${isCompleted ? 'bg-gray-200 text-gray-500' : (isWorkspaceInvite && !isSender ? 'bg-indigo-100 text-indigo-600' : 'bg-brand-primary/10 text-brand-primary')}`}>
+                                            <div key={req.id} className={`border rounded-[20px] p-5 shadow-sm transition-all ${isCompleted ? 'bg-white/5 border-white/5 opacity-60' : 'bg-gradient-to-br from-white/12 to-white/3 border-white/10'}`}>
+                                                <div className="flex justify-between items-center mb-3 border-b border-white/10 pb-3">
+                                                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-md break-keep whitespace-nowrap ${isCompleted ? 'bg-white/5 text-slate-400' : (isWorkspaceInvite && !isSender ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-500/20 text-indigo-300')}`}>
                                                         {isSender ? '내가 보낸 요청' : (isWorkspaceInvite ? '초대장 도착! 💌' : '받은 요청')}
                                                     </span>
                                                     <span className="text-[10px] text-gray-400 font-medium break-keep whitespace-nowrap">{req.createdAt ? new Date(req.createdAt.seconds * 1000).toLocaleDateString() : '방금 전'}</span>
                                                 </div>
                                                 <div className="flex items-center gap-3 mb-4 w-full overflow-hidden">
-                                                    <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center text-gray-600 font-black text-lg border-2 border-white shadow-sm overflow-hidden shrink-0">
+                                                    <div className="w-12 h-12 bg-gradient-to-br from-white/10 to-white/5 rounded-full flex items-center justify-center text-slate-300 font-black text-lg border-2 border-white/10 shadow-sm overflow-hidden shrink-0">
                                                         {isSender ? (req.targetMateName?.[0] || "?") : (req.senderName?.[0] || "?")}
                                                     </div>
                                                     <div className="overflow-hidden">
-                                                        <h4 className={`font-bold text-base truncate w-full break-keep whitespace-nowrap ${isCompleted ? 'text-gray-500' : 'text-gray-900'}`}>{isSender ? `${req.targetMateName} 님에게` : `${req.senderName} 님이 나에게`}</h4>
+                                                        <h4 className={`font-bold text-base truncate w-full break-keep whitespace-nowrap ${isCompleted ? 'text-slate-400' : 'text-white'}`}>{isSender ? `${req.targetMateName} 님에게` : `${req.senderName} 님이 나에게`}</h4>
                                                         <p className="text-xs text-gray-500 font-medium truncate w-full break-keep whitespace-nowrap"><MapPin size={10} className="inline mr-0.5 text-gray-400" />{req.destination}</p>
                                                     </div>
                                                 </div>
-                                                <div className={`p-3 rounded-xl border text-xs font-medium mb-4 italic break-keep ${isCompleted ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-gray-50 border-gray-100 text-gray-600'}`}>
+                                                <div className={`p-3 rounded-xl border text-xs font-medium mb-4 italic break-keep ${isCompleted ? 'bg-white/5 border-white/5 text-slate-400' : 'bg-white/5 border-white/5 text-slate-200'}`}>
                                                     &quot;{req.message}&quot;
                                                 </div>
                                                 <div className="flex gap-2">
                                                     {isCompleted ? (
                                                         <>
-                                                            <div className="flex-1 bg-gray-200 text-gray-500 py-3 rounded-xl text-xs font-bold cursor-default flex items-center justify-center gap-1 break-keep whitespace-nowrap">
+                                                            <div className="flex-1 bg-white/10 text-slate-400 py-3 rounded-xl text-xs font-bold cursor-default flex items-center justify-center gap-1 break-keep whitespace-nowrap">
                                                                 {isAccepted ? <><Check size={14} className="shrink-0" /> {req.type === 'deposit_request' ? '송금 완료' : '수락 완료'}</> : <><X size={14} className="shrink-0" /> 거절됨</>}
                                                             </div>
-                                                            <button onClick={() => handleDeleteRequest(req.id)} className="bg-gray-200 text-gray-500 px-4 py-3 rounded-xl hover:bg-brand-danger/10 hover:text-brand-danger transition active:scale-95 shrink-0" title="내역 삭제">
+                                                            <button onClick={() => handleDeleteRequest(req.id)} className="bg-white/10 text-slate-300 px-4 py-3 rounded-xl hover:bg-rose-500/20 hover:text-rose-400 transition active:scale-95 shrink-0" title="내역 삭제">
                                                                 <Trash2 size={16} />
                                                             </button>
                                                         </>
                                                     ) : isSender ? (
                                                         <>
-                                                            <button onClick={() => handleDeleteRequest(req.id)} className="flex-1 bg-white border border-gray-200 text-gray-500 py-3 rounded-xl text-xs font-bold hover:bg-gray-50 transition active:scale-95 break-keep whitespace-nowrap">요청 취소</button>
-                                                            <button className="flex-1 bg-gray-50 text-gray-400 py-3 rounded-xl text-xs font-bold cursor-default flex items-center justify-center gap-1 break-keep whitespace-nowrap"><Loader2 size={12} className="animate-spin shrink-0" /> 대기중</button>
+                                                            <button onClick={() => handleDeleteRequest(req.id)} className="flex-1 bg-white/5 border border-white/10 text-slate-300 py-3 rounded-xl text-xs font-bold hover:bg-white/10 transition active:scale-95 break-keep whitespace-nowrap">요청 취소</button>
+                                                            <button className="flex-1 bg-white/5 text-slate-500 py-3 rounded-xl text-xs font-bold cursor-default flex items-center justify-center gap-1 break-keep whitespace-nowrap"><Loader2 size={12} className="animate-spin shrink-0" /> 대기중</button>
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <button onClick={() => handleRejectRequest(req.id)} className="flex-1 bg-white border border-gray-200 text-gray-500 py-3 rounded-xl text-xs font-bold hover:bg-gray-50 transition active:scale-95 break-keep whitespace-nowrap">거절하기</button>
+                                                            <button onClick={() => handleRejectRequest(req.id)} className="flex-1 bg-white/5 border border-white/10 text-slate-300 py-3 rounded-xl text-xs font-bold hover:bg-white/10 transition active:scale-95 break-keep whitespace-nowrap">거절하기</button>
                                                             {req.type === "workspace_invite" ? (
-                                                                <button onClick={() => router.push(`/join/${req.tripId}`)} className="flex-1 bg-gradient-to-r from-indigo-500 to-violet-600 text-white py-3 rounded-xl text-xs font-bold shadow-md hover:from-indigo-600 hover:to-violet-700 transition active:scale-95 break-keep whitespace-nowrap">초대장 열기</button>
+                                                                <button onClick={() => router.push(`/join/${req.tripId}`)} className="flex-1 bg-indigo-600 text-white py-3 rounded-xl text-xs font-bold shadow-md hover:bg-indigo-700 transition active:scale-95 break-keep whitespace-nowrap">초대장 열기</button>
                                                             ) : req.type === "deposit_request" ? (
-                                                                <button onClick={() => handlePayDeposit(req)} className="flex-1 bg-gray-900 text-white py-3 rounded-xl text-xs font-bold shadow-md flex items-center justify-center gap-1.5 hover:bg-black transition active:scale-95 break-keep whitespace-nowrap"><Wallet size={14} className="shrink-0" /> {req.amount?.toLocaleString()}원 송금하기</button>
+                                                                <button onClick={() => handlePayDeposit(req)} className="flex-1 bg-indigo-600 text-white py-3 rounded-xl text-xs font-bold shadow-md flex items-center justify-center gap-1.5 hover:bg-indigo-700 transition active:scale-95 break-keep whitespace-nowrap"><Wallet size={14} className="shrink-0" /> {req.amount?.toLocaleString()}원 송금하기</button>
                                                             ) : (
-                                                                <button onClick={() => handleAcceptRequest(req.id)} className="flex-1 bg-gradient-to-r from-brand-primary to-brand-secondary text-white py-3 rounded-xl text-xs font-bold shadow-md hover:from-brand-primary/95 hover:to-brand-secondary/95 transition active:scale-95 break-keep whitespace-nowrap">수락 및 채팅</button>
+                                                                <button onClick={() => handleAcceptRequest(req.id)} className="flex-1 bg-indigo-600 text-white py-3 rounded-xl text-xs font-bold shadow-md hover:bg-indigo-700 transition active:scale-95 break-keep whitespace-nowrap">수락 및 채팅</button>
                                                             )}
                                                         </>
                                                     )}
@@ -1971,21 +2017,21 @@ export default function MyPage() {
             {showInviteModal && inviteTrip && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowInviteModal(false)}></div>
-                    <div className="bg-white w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl flex flex-col h-[85vh] sm:h-auto">
+                    <div className="bg-[#121212]/90 backdrop-blur-2xl border border-white/10 w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl flex flex-col h-[85vh] sm:h-auto text-white">
                         <div className="flex items-center justify-between mb-6 shrink-0">
-                            <h3 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2 break-keep whitespace-nowrap"><UserPlus className="text-indigo-500" /> 동행자 초대</h3>
-                            <button onClick={() => setShowInviteModal(false)} className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition shrink-0"><X size={20} strokeWidth={2.5} /></button>
+                            <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 break-keep whitespace-nowrap"><UserPlus className="text-indigo-400" /> 동행자 초대</h3>
+                            <button onClick={() => setShowInviteModal(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-slate-300 hover:bg-white/20 hover:text-white transition shrink-0"><X size={20} strokeWidth={2.5} /></button>
                         </div>
-                        <div className="bg-gray-50 border border-gray-200 rounded-[20px] p-4 mb-6 flex items-center gap-4 shadow-inner shrink-0">
+                        <div className="bg-white/5 border border-white/10 rounded-[20px] p-4 mb-6 flex items-center gap-4 shadow-inner shrink-0">
                             <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-500 shrink-0"><Plane size={24} /></div>
                             <div className="overflow-hidden w-full">
                                 <p className="text-xs font-bold text-gray-400 mb-0.5 break-keep whitespace-nowrap">이 여행에 초대합니다</p>
-                                <h4 className="font-black text-gray-900 leading-tight truncate w-full break-keep whitespace-nowrap">{inviteTrip.destination || inviteTrip.title}</h4>
+                                <h4 className="font-black text-white leading-tight truncate w-full break-keep whitespace-nowrap">{inviteTrip.destination || inviteTrip.title}</h4>
                             </div>
                         </div>
                         <form onSubmit={handleInviteSearch} className="relative mb-6 shrink-0">
                             <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-gray-400"><Search size={20} strokeWidth={2.5} /></div>
-                            <input type="text" value={inviteSearchQuery} onChange={(e) => setInviteSearchQuery(e.target.value)} placeholder="정확한 이름 또는 이메일 검색" className="w-full bg-white border border-gray-200 text-gray-900 placeholder-gray-400 font-bold text-[15px] rounded-[20px] py-4 pl-14 pr-5 outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm" autoFocus />
+                            <input type="text" value={inviteSearchQuery} onChange={(e) => setInviteSearchQuery(e.target.value)} placeholder="정확한 이름 또는 이메일 검색" className="w-full bg-white/5 border border-white/10 text-white placeholder-slate-500 font-bold text-[15px] rounded-[20px] py-4 pl-14 pr-5 outline-none focus:ring-2 focus:ring-indigo-400 transition shadow-sm" autoFocus />
                         </form>
                         <div className="flex-1 min-h-[160px] overflow-y-auto custom-scrollbar pb-4">
                             {inviteSearchStatus === 'idle' && (
@@ -2001,15 +2047,15 @@ export default function MyPage() {
                                 <div className="animate-in fade-in duration-300 space-y-3">
                                     <h4 className="text-[10px] font-bold text-gray-400 mb-2 pl-1 uppercase tracking-widest break-keep whitespace-nowrap">검색 결과</h4>
                                     {inviteSearchResults.map(resultUser => (
-                                        <div key={resultUser.id} className="bg-white border border-gray-200 shadow-sm rounded-[20px] p-4 flex items-center justify-between hover:border-indigo-200 transition group">
+                                        <div key={resultUser.id} className="bg-white/5 border border-white/10 shadow-sm rounded-[20px] p-4 flex items-center justify-between hover:border-indigo-400 transition group">
                                             <div className="flex items-center gap-3 w-full pr-4 overflow-hidden">
                                                 <img src={resultUser.photoURL || resultUser.profileImgBase64 || "https://i.pravatar.cc/150?u=user"} alt="found user" className="w-12 h-12 rounded-full object-cover shadow-sm shrink-0" />
                                                 <div className="overflow-hidden">
-                                                    <h3 className="font-black text-gray-900 text-base truncate w-full break-keep whitespace-nowrap">{resultUser.name}</h3>
+                                                    <h3 className="font-black text-white text-base truncate w-full break-keep whitespace-nowrap">{resultUser.name}</h3>
                                                     <p className="text-[10px] text-gray-400 font-bold truncate w-full break-keep whitespace-nowrap">{resultUser.email}</p>
                                                 </div>
                                             </div>
-                                            <button onClick={() => handleSendWorkspaceInvite(resultUser)} className="bg-indigo-50 text-indigo-600 font-bold text-xs px-4 py-2 rounded-xl hover:bg-indigo-600 hover:text-white transition active:scale-95 shrink-0 break-keep whitespace-nowrap">초대하기</button>
+                                            <button onClick={() => handleSendWorkspaceInvite(resultUser)} className="bg-indigo-600 text-white hover:bg-indigo-700 font-bold text-xs px-4 py-2 rounded-xl transition active:scale-95 shrink-0 break-keep whitespace-nowrap">초대하기</button>
                                         </div>
                                     ))}
                                 </div>
@@ -2028,7 +2074,7 @@ export default function MyPage() {
                         </div>
                         <div className="mt-4 pt-6 border-t border-gray-100 w-full text-center shrink-0">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 break-keep whitespace-nowrap">또는 외부 링크로 초대하기</p>
-                            <button onClick={handleCopyInviteLink} className="w-full bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-sm py-4 rounded-[20px] transition flex items-center justify-center gap-2 border border-gray-200 break-keep whitespace-nowrap">
+                            <button onClick={handleCopyInviteLink} className="w-full bg-white/5 hover:bg-white/10 text-white font-bold text-sm py-4 rounded-[20px] transition flex items-center justify-center gap-2 border border-white/10 break-keep whitespace-nowrap">
                                 <LinkIcon size={16} className="shrink-0" /> 카카오톡으로 초대 링크 보내기
                             </button>
                         </div>
@@ -2040,9 +2086,9 @@ export default function MyPage() {
             {showSearchModal && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-md animate-in fade-in duration-300" onClick={closeSearchModal}></div>
-                    <div className="bg-white/90 backdrop-blur-2xl border border-white/60 w-full max-w-md h-[85vh] sm:h-[600px] rounded-t-[40px] sm:rounded-[40px] p-8 flex flex-col relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl">
-                        <div className="flex items-center justify-between mb-8"><h3 className="text-2xl font-black text-gray-900 tracking-tight break-keep whitespace-nowrap">메이트 검색</h3><button onClick={closeSearchModal} className="w-10 h-10 bg-gray-200/50 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition shrink-0"><X size={20} strokeWidth={2.5} /></button></div>
-                        <form onSubmit={handleSearchUser} className="relative mb-6"><div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-gray-400"><Search size={22} strokeWidth={2.5} /></div><input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="정확한 이름 또는 이메일 검색" className="w-full bg-white/60 border border-gray-200 text-gray-900 placeholder-gray-400 font-bold text-lg rounded-[20px] py-5 pl-14 pr-5 outline-none focus:ring-2 focus:ring-gray-900 transition shadow-sm" autoFocus /></form>
+                    <div className="bg-[#121212]/90 backdrop-blur-2xl border border-white/10 w-full max-w-md h-[85vh] sm:h-[600px] rounded-t-[40px] sm:rounded-[40px] p-8 flex flex-col relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl text-white">
+                        <div className="flex items-center justify-between mb-8"><h3 className="text-2xl font-black text-white tracking-tight break-keep whitespace-nowrap">메이트 검색</h3><button onClick={closeSearchModal} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-slate-300 hover:bg-white/20 hover:text-white transition shrink-0"><X size={20} strokeWidth={2.5} /></button></div>
+                        <form onSubmit={handleSearchUser} className="relative mb-6"><div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-gray-400"><Search size={22} strokeWidth={2.5} /></div><input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="정확한 이름 또는 이메일 검색" className="w-full bg-white/5 border border-white/10 text-white placeholder-slate-500 font-bold text-lg rounded-[20px] py-5 pl-14 pr-5 outline-none focus:ring-2 focus:ring-indigo-400 transition shadow-sm" autoFocus /></form>
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
                             {searchStatus === 'idle' && (<div className="text-center py-20 flex flex-col items-center justify-center h-full"><div className="w-20 h-20 bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 rounded-full flex items-center justify-center text-brand-primary/60 mb-6"><Users size={40} /></div><p className="text-gray-500 font-bold text-lg mb-2 break-keep whitespace-nowrap">실제 가입된 회원을 검색해보세요!</p></div>)}
                             {searchStatus === 'loading' && (<div className="flex flex-col items-center justify-center h-full py-20 text-gray-400"><Loader2 className="animate-spin mb-4" size={40} /><p className="font-bold text-lg break-keep whitespace-nowrap">회원 검색 중...</p></div>)}
@@ -2050,15 +2096,15 @@ export default function MyPage() {
                                 <div className="animate-in fade-in duration-300 space-y-3">
                                     <h4 className="text-xs font-bold text-gray-500 mb-3 pl-1 uppercase tracking-widest break-keep whitespace-nowrap">검색 결과</h4>
                                     {searchResults.map(resultUser => (
-                                        <div key={resultUser.id} className="bg-white/60 border border-white/50 shadow-sm rounded-[20px] p-5 flex items-center justify-between">
+                                        <div key={resultUser.id} className="bg-white/5 border border-white/10 shadow-sm rounded-[20px] p-5 flex items-center justify-between">
                                             <div className="flex items-center gap-4 w-full pr-4 overflow-hidden">
                                                 <img src={resultUser.photoURL || resultUser.profileImgBase64 || "https://i.pravatar.cc/150"} alt="found user" className="w-14 h-14 rounded-full object-cover border-[3px] border-white shadow-sm shrink-0" />
                                                 <div className="overflow-hidden">
-                                                    <h3 className="font-black text-gray-900 text-lg truncate w-full break-keep whitespace-nowrap">{resultUser.name}</h3>
+                                                    <h3 className="font-black text-white text-lg truncate w-full break-keep whitespace-nowrap">{resultUser.name}</h3>
                                                     <p className="text-[11px] text-gray-500 font-bold truncate w-full break-keep whitespace-nowrap">{resultUser.email}</p>
                                                 </div>
                                             </div>
-                                            <button onClick={() => handleRequestMate(resultUser)} className="bg-gradient-to-r from-slate-800 to-gray-900 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md hover:from-slate-900 hover:to-black active:scale-95 transition shrink-0 break-keep whitespace-nowrap">동행 찌르기</button>
+                                            <button onClick={() => handleRequestMate(resultUser)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md active:scale-95 transition shrink-0 break-keep whitespace-nowrap">동행 찌르기</button>
                                         </div>
                                     ))}
                                 </div>
@@ -2074,18 +2120,18 @@ export default function MyPage() {
             {showAssetModal && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowAssetModal(false)}></div>
-                    <div className="bg-white/90 backdrop-blur-2xl border border-white/60 w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl">
-                        <button onClick={() => setShowAssetModal(false)} className="absolute top-6 right-6 w-10 h-10 bg-gray-200/50 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition"><X size={20} strokeWidth={2.5} /></button>
+                    <div className="bg-[#121212]/90 backdrop-blur-2xl border border-white/10 w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl text-white">
+                        <button onClick={() => setShowAssetModal(false)} className="absolute top-6 right-6 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/20 transition"><X size={20} strokeWidth={2.5} /></button>
                         <div className="pt-2 mt-4">
-                            <h3 className="text-2xl font-black text-gray-900 mb-2 tracking-tight break-keep whitespace-nowrap">내 지갑 채우기</h3>
+                            <h3 className="text-2xl font-black text-white mb-2 tracking-tight break-keep whitespace-nowrap">내 지갑 채우기</h3>
                             <p className="text-gray-500 font-medium mb-6 break-keep">여행을 위해 저축할 금액을 입력해주세요.</p>
-                            <div className="bg-white/60 rounded-[20px] p-6 mb-6 border border-white/50 shadow-sm">
+                            <div className="bg-white/5 rounded-[20px] p-6 mb-6 border border-white/10 shadow-sm">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-2xl font-black text-gray-900">₩</span>
-                                    <input type="number" value={tempAssetInput} onChange={(e) => setTempAssetInput(e.target.value)} placeholder="0" className="w-full bg-transparent text-4xl font-black text-gray-900 outline-none placeholder-gray-300 tracking-tighter" autoFocus />
+                                    <span className="text-2xl font-black text-white">₩</span>
+                                    <input type="number" value={tempAssetInput} onChange={(e) => setTempAssetInput(e.target.value)} placeholder="0" className="w-full bg-transparent text-4xl font-black text-white outline-none placeholder-slate-600 tracking-tighter" autoFocus />
                                 </div>
                             </div>
-                            <button onClick={handleDepositAsset} className="w-full bg-gray-900 text-white font-black text-lg py-5 rounded-[20px] shadow-xl hover:bg-black active:scale-[0.98] transition break-keep whitespace-nowrap">
+                            <button onClick={handleDepositAsset} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black text-lg py-5 rounded-[20px] shadow-xl active:scale-[0.98] transition break-keep whitespace-nowrap">
                                 추가 입금
                             </button>
                         </div>
@@ -2097,8 +2143,8 @@ export default function MyPage() {
             {showProfileModal && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowProfileModal(false)}></div>
-                    <div className="bg-white/90 backdrop-blur-2xl border border-white/60 w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl h-[90vh] sm:h-auto overflow-y-auto custom-scrollbar flex flex-col">
-                        <div className="flex items-center justify-between mb-8"><h3 className="text-2xl font-black text-gray-900 tracking-tight break-keep whitespace-nowrap">프로필 꾸미기</h3><button onClick={() => setShowProfileModal(false)} className="w-10 h-10 bg-gray-200/50 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition shrink-0"><X size={20} strokeWidth={2.5} /></button></div>
+                    <div className="bg-[#121212]/90 backdrop-blur-2xl border border-white/10 w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl h-[90vh] sm:h-auto overflow-y-auto custom-scrollbar flex flex-col text-white">
+                        <div className="flex items-center justify-between mb-8"><h3 className="text-2xl font-black text-white tracking-tight break-keep whitespace-nowrap">프로필 꾸미기</h3><button onClick={() => setShowProfileModal(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-slate-300 hover:bg-white/20 hover:text-white transition shrink-0"><X size={20} strokeWidth={2.5} /></button></div>
                         <div className="flex flex-col items-center justify-center mb-8">
                             <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleImageChange} />
                             <div onClick={() => fileInputRef.current.click()} className="relative cursor-pointer group mb-3">
@@ -2107,14 +2153,14 @@ export default function MyPage() {
                             </div>
                         </div>
                         <div className="space-y-6 flex-1">
-                            <div><label className="block text-xs font-bold text-gray-500 mb-2 pl-1 uppercase tracking-wider break-keep whitespace-nowrap">Nickname</label><input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="멋진 닉네임을 입력해주세요" className="w-full bg-white/50 border border-gray-200 px-5 py-4 rounded-[20px] font-bold text-gray-900 outline-none focus:ring-2 focus:ring-brand-primary transition shadow-sm" /></div>
-                            <div><label className="block text-xs font-bold text-gray-500 mb-2 pl-1 uppercase tracking-wider break-keep whitespace-nowrap">Bio</label><input type="text" value={editBio} onChange={(e) => setEditBio(e.target.value)} placeholder="예: 낯선 골목길을 걷는 걸 좋아해요!" className="w-full bg-white/50 border border-gray-200 px-5 py-4 rounded-[20px] text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-brand-primary transition shadow-sm" /></div>
+                            <div><label className="block text-xs font-bold text-gray-500 mb-2 pl-1 uppercase tracking-wider break-keep whitespace-nowrap">Nickname</label><input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="멋진 닉네임을 입력해주세요" className="w-full bg-white/5 border border-white/10 px-5 py-4 rounded-[20px] font-bold text-white outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white/10 transition shadow-sm" /></div>
+                            <div><label className="block text-xs font-bold text-gray-500 mb-2 pl-1 uppercase tracking-wider break-keep whitespace-nowrap">Bio</label><input type="text" value={editBio} onChange={(e) => setEditBio(e.target.value)} placeholder="예: 낯선 골목길을 걷는 걸 좋아해요!" className="w-full bg-white/5 border border-white/10 px-5 py-4 rounded-[20px] text-sm font-medium text-white outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white/10 transition shadow-sm" /></div>
                             <div>
-                                <div className="flex items-center justify-between mb-3 pl-1"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider break-keep whitespace-nowrap">Travel Style (Max 3)</label><span className="text-[11px] text-gray-900 font-black bg-gray-100 px-2 py-1 rounded-full shrink-0">{selectedTags.length} / 3</span></div>
+                                <div className="flex items-center justify-between mb-3 pl-1"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider break-keep whitespace-nowrap">Travel Style (Max 3)</label><span className="text-[11px] text-white font-black bg-white/10 px-2 py-1 rounded-full shrink-0">{selectedTags.length} / 3</span></div>
                                 <div className="flex flex-wrap gap-2.5">
                                     {TRAVEL_TAGS.map(tag => {
                                         const isSelected = selectedTags.includes(tag);
-                                        return (<button key={tag} onClick={() => toggleTag(tag)} className={`px-4 py-2.5 rounded-[16px] text-sm font-bold transition-all shadow-sm break-keep whitespace-nowrap ${isSelected ? 'bg-gradient-to-r from-slate-800 to-gray-900 text-white scale-105' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>{tag}</button>);
+                                        return (<button key={tag} onClick={() => toggleTag(tag)} className={`px-4 py-2.5 rounded-[16px] text-sm font-bold transition-all shadow-sm break-keep whitespace-nowrap ${isSelected ? 'bg-indigo-600 text-white scale-105' : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'}`}>{tag}</button>);
                                     })}
                                 </div>
                             </div>
@@ -2133,11 +2179,11 @@ export default function MyPage() {
             {showPointModal && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowPointModal(false)}></div>
-                    <div className="bg-white w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl h-[80vh] flex flex-col">
-                        <button onClick={() => setShowPointModal(false)} className="absolute top-6 right-6 w-10 h-10 bg-gray-200/50 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition shrink-0"><X size={20} strokeWidth={2.5} /></button>
+                    <div className="bg-[#121212]/90 backdrop-blur-2xl border border-white/10 w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl h-[80vh] flex flex-col text-white">
+                        <button onClick={() => setShowPointModal(false)} className="absolute top-6 right-6 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-slate-300 hover:bg-white/20 hover:text-white transition shrink-0"><X size={20} strokeWidth={2.5} /></button>
                         <div className="text-center pt-6 mb-8 shrink-0">
                             <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner"><Gem size={40} className="text-purple-600 fill-purple-600/20" /></div>
-                            <h2 className="text-3xl font-black text-gray-900 tracking-tight mb-1 truncate px-4">{(userData?.points || 0).toLocaleString()} P</h2>
+                            <h2 className="text-3xl font-black text-white tracking-tight mb-1 truncate px-4">{(userData?.points || 0).toLocaleString()} P</h2>
                             <p className="text-sm text-gray-500 font-bold break-keep whitespace-nowrap">나의 여행 포인트</p>
                         </div>
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -2147,8 +2193,8 @@ export default function MyPage() {
                             ) : (
                                 <div className="space-y-3">
                                     {actualPointsHistory.map((item) => (
-                                        <div key={item.id} className="flex justify-between items-center bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                                            <div className="overflow-hidden pr-2"><p className="font-bold text-gray-900 text-sm truncate w-full break-keep whitespace-nowrap">{item.reason}</p><p className="text-[10px] text-gray-400 font-bold break-keep whitespace-nowrap">{item.createdAt ? new Date(item.createdAt.seconds * 1000).toLocaleDateString() : "방금"}</p></div>
+                                        <div key={item.id} className="flex justify-between items-center bg-gradient-to-br from-white/10 to-white/5 p-4 rounded-2xl border border-white/10">
+                                            <div className="overflow-hidden pr-2"><p className="font-bold text-white text-sm truncate w-full break-keep whitespace-nowrap">{item.reason}</p><p className="text-[10px] text-gray-400 font-bold break-keep whitespace-nowrap">{item.createdAt ? new Date(item.createdAt.seconds * 1000).toLocaleDateString() : "방금"}</p></div>
                                             <span className="font-black text-purple-600 shrink-0 break-keep whitespace-nowrap">+{item.amount} P</span>
                                         </div>
                                     ))}
@@ -2157,7 +2203,7 @@ export default function MyPage() {
                         </div>
                         <div className="mt-4 pt-4 border-t border-gray-100 shrink-0">
                             {userData?.lastCheckInDate === new Date().toISOString().split('T')[0] ? (
-                                <div className="w-full bg-gray-100 text-gray-500 font-bold py-4 rounded-2xl text-center flex items-center justify-center gap-2 cursor-default break-keep whitespace-nowrap">
+                                <div className="w-full bg-white/5 text-slate-400 font-bold py-4 rounded-2xl text-center flex items-center justify-center gap-2 cursor-default break-keep whitespace-nowrap">
                                     <Check size={18} className="text-emerald-500" /> 오늘 출석 완료
                                 </div>
                             ) : (
@@ -2172,15 +2218,15 @@ export default function MyPage() {
             {showExchangeModal && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowExchangeModal(false)}></div>
-                    <div className="bg-white/95 backdrop-blur-2xl border border-white/60 w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl flex flex-col overflow-hidden">
+                    <div className="bg-[#121212]/90 backdrop-blur-2xl border border-white/10 w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl flex flex-col overflow-hidden text-white">
                         
                         {/* Decorative Gradient Background */}
                         <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-purple-500 via-fuchsia-500 to-indigo-600"></div>
-                        <button onClick={() => setShowExchangeModal(false)} className="absolute top-6 right-6 w-10 h-10 bg-gray-200/50 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition z-20 shrink-0"><X size={20} strokeWidth={2.5} /></button>
+                        <button onClick={() => setShowExchangeModal(false)} className="absolute top-6 right-6 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-slate-300 hover:bg-white/20 hover:text-white transition z-20 shrink-0"><X size={20} strokeWidth={2.5} /></button>
                         
                         <div className="text-center pt-6 mb-6 shrink-0">
                             <div className="w-16 h-16 bg-gradient-to-tr from-purple-500 to-fuchsia-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-500/20 text-white animate-bounce flex items-center justify-center"><Banknote size={32} /></div>
-                            <h3 className="text-2xl font-black text-gray-900 tracking-tight break-keep">실시간 현금 환전 서비스</h3>
+                            <h3 className="text-2xl font-black text-white tracking-tight break-keep">실시간 현금 환전 서비스</h3>
                             <p className="text-xs text-gray-400 font-bold mt-1 uppercase tracking-wider">Point to Cash Exchange</p>
                         </div>
 
@@ -2200,15 +2246,15 @@ export default function MyPage() {
                             </div>
 
                             {/* Service Status Notice */}
-                            <div className="bg-purple-50/70 border border-purple-100 rounded-2xl p-4 text-center">
-                                <p className="text-xs font-bold text-purple-800 leading-relaxed break-keep">
+                            <div className="bg-purple-900/20 border border-purple-500/20 rounded-2xl p-4 text-center">
+                                <p className="text-xs font-bold text-purple-300 leading-relaxed break-keep">
                                     현재 현금 환전 모듈 최종 조율 및 본인인증(KCB) 연동 작업 중입니다. 조금만 기다려주세요! 🛠️
                                 </p>
                             </div>
 
                             {/* Launch Reservation Form */}
                             {!exchangeSubscribed ? (
-                                <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-xs">
+                                <div className="bg-gradient-to-br from-white/10 to-white/5 border border-white/10 rounded-2xl p-4 shadow-xs">
                                     <label className="block text-[10px] font-black text-gray-400 mb-2 uppercase tracking-wider pl-1">환전 기능 오픈 사전 예약</label>
                                     <div className="flex gap-2">
                                         <input 
@@ -2216,7 +2262,7 @@ export default function MyPage() {
                                             value={exchangePhone} 
                                             onChange={e => setExchangePhone(e.target.value)} 
                                             placeholder="알림받을 휴대폰 번호 입력" 
-                                            className="flex-1 bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl text-xs font-bold outline-none focus:bg-white focus:ring-2 focus:ring-purple-500 transition" 
+                                            className="flex-1 bg-white/5 border border-white/10 px-3 py-2.5 rounded-xl text-xs font-bold text-white placeholder-slate-500 outline-none focus:bg-white/10 focus:ring-2 focus:ring-purple-500 transition" 
                                         />
                                         <button 
                                             onClick={handleSubscribeExchange}
@@ -2228,16 +2274,16 @@ export default function MyPage() {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-center animate-in zoom-in-95 duration-300">
+                                <div className="bg-emerald-900/20 border border-emerald-500/20 rounded-2xl p-4 text-center animate-in zoom-in-95 duration-300">
                                     <div className="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-2 shadow-md shadow-emerald-100 animate-pulse"><Check size={16} strokeWidth={3} /></div>
-                                    <p className="text-[11px] font-black text-emerald-800 break-keep">사전 예약 신청이 완료되었습니다! 🎉</p>
+                                    <p className="text-[11px] font-black text-emerald-300 break-keep">사전 예약 신청이 완료되었습니다! 🎉</p>
                                     <p className="text-[9px] font-bold text-emerald-600/80 mt-0.5 break-keep">서비스가 활성화되는 즉시 휴대폰 알림을 전송해 드립니다.</p>
                                 </div>
                             )}
                         </div>
 
                         <div className="mt-4 pt-4 border-t border-gray-100 flex gap-2 shrink-0">
-                            <button onClick={() => setShowExchangeModal(false)} className="flex-1 py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-black text-sm rounded-2xl transition active:scale-95 text-center break-keep">돌아가기</button>
+                            <button onClick={() => setShowExchangeModal(false)} className="flex-1 py-4 bg-white/10 hover:bg-white/20 text-white font-black text-sm rounded-2xl transition active:scale-95 text-center break-keep">돌아가기</button>
                         </div>
                     </div>
                 </div>
@@ -2247,12 +2293,12 @@ export default function MyPage() {
             {showBudgetModal && selectedTrip && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowBudgetModal(false)}></div>
-                    <div className="bg-white/90 backdrop-blur-2xl border border-white/60 w-full max-w-lg rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl h-[95vh] sm:h-[85vh] flex flex-col">
-                        <button onClick={() => setShowBudgetModal(false)} className="absolute top-6 right-6 w-10 h-10 bg-gray-200/50 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition z-20 shrink-0"><X size={20} strokeWidth={2.5} /></button>
+                    <div className="bg-[#121212]/90 backdrop-blur-2xl border border-white/10 w-full max-w-lg rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl h-[95vh] sm:h-[85vh] flex flex-col text-white">
+                        <button onClick={() => setShowBudgetModal(false)} className="absolute top-6 right-6 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-slate-300 hover:bg-white/20 hover:text-white transition z-20 shrink-0"><X size={20} strokeWidth={2.5} /></button>
                         
                         <div className="pt-2 mt-4 shrink-0">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-2xl font-black text-gray-900 tracking-tight break-keep whitespace-nowrap">{selectedTrip.destination || "여행"} 가계부</h3>
+                                <h3 className="text-2xl font-black text-white tracking-tight break-keep whitespace-nowrap">{selectedTrip.destination || "여행"} 가계부</h3>
                                 <div className="flex gap-2">
                                     <span className="text-[10px] font-black bg-indigo-100 text-indigo-600 px-2 py-1 rounded-full border border-indigo-200 uppercase tracking-tighter">Finance Admin</span>
                                 </div>
@@ -2270,13 +2316,13 @@ export default function MyPage() {
                                         ))}
                                     </div>
                                 </div>
-                                <div className="bg-white rounded-[24px] p-5 shadow-sm border border-gray-100 flex flex-col justify-between">
+                                <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-[24px] p-5 shadow-sm border border-white/10 flex flex-col justify-between">
                                     <div>
                                         <p className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">현재 총 지출</p>
-                                        <h2 className="text-xl font-black text-brand-primary tracking-tight">{(totalSpent || 0).toLocaleString()} <span className="text-[10px] text-gray-400 font-bold">원</span></h2>
+                                        <h2 className="text-xl font-black text-indigo-400 tracking-tight">{(totalSpent || 0).toLocaleString()} <span className="text-[10px] text-slate-400 font-bold">원</span></h2>
                                     </div>
-                                    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden mt-3">
-                                        <div className="h-full bg-brand-primary transition-all duration-1000" style={{ width: `${Math.min((totalSpent / (selectedTrip.targetTotalCost || 1)) * 100, 100)}%` }}></div>
+                                    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden mt-3">
+                                        <div className="h-full bg-indigo-600 transition-all duration-1000" style={{ width: `${Math.min((totalSpent / (selectedTrip.targetTotalCost || 1)) * 100, 100)}%` }}></div>
                                     </div>
                                 </div>
                             </div>
@@ -2284,19 +2330,19 @@ export default function MyPage() {
 
                         <div className="flex-1 overflow-y-auto custom-scrollbar space-y-8 pr-1 pb-6">
                             {/* 1. 새로운 영수증 등록 (Moved to Very Top for 1-step depth) */}
-                            <section className="bg-white border border-indigo-100 rounded-3xl p-5 shadow-sm">
+                            <section className="bg-gradient-to-br from-white/10 to-white/5 border border-white/10 rounded-3xl p-5 shadow-sm">
                                 <p className="text-[11px] font-black text-indigo-500 mb-3 uppercase tracking-wider flex items-center gap-1">
                                     <Receipt size={14} className="shrink-0 text-indigo-500" /> 새로운 지출 / 영수증 등록
                                 </p>
                                 <div className="flex w-full gap-2">
-                                    <input type="text" value={newExpenseName} onChange={(e) => setNewExpenseName(e.target.value)} placeholder="지출 사용처 입력" className="flex-[2] min-w-0 bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl font-bold text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-400 text-[13px] transition" />
-                                    <select value={newExpenseCurrency} onChange={e => setNewExpenseCurrency(e.target.value)} className="bg-gray-50 border border-gray-200 rounded-xl text-[10px] font-black text-gray-700 outline-none px-2 shrink-0">
+                                    <input type="text" value={newExpenseName} onChange={(e) => setNewExpenseName(e.target.value)} placeholder="지출 사용처 입력" className="flex-[2] min-w-0 bg-white/5 border border-white/10 px-3 py-2.5 rounded-xl font-bold text-white placeholder-slate-500 outline-none focus:bg-white/10 focus:ring-2 focus:ring-indigo-400 text-[13px] transition" />
+                                    <select value={newExpenseCurrency} onChange={e => setNewExpenseCurrency(e.target.value)} className="bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-white outline-none px-2 shrink-0">
                                         <option value="KRW">KRW</option>
                                         <option value="JPY">JPY</option>
                                         <option value="USD">USD</option>
                                         <option value="EUR">EUR</option>
                                     </select>
-                                    <input type="number" value={newExpenseCost} onChange={(e) => setNewExpenseCost(e.target.value)} placeholder="금액" className="flex-[1.5] min-w-0 bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl font-bold text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-400 text-[13px] transition" />
+                                    <input type="number" value={newExpenseCost} onChange={(e) => setNewExpenseCost(e.target.value)} placeholder="금액" className="flex-[1.5] min-w-0 bg-white/5 border border-white/10 px-3 py-2.5 rounded-xl font-bold text-white placeholder-slate-500 outline-none focus:bg-white/10 focus:ring-2 focus:ring-indigo-400 text-[13px] transition" />
                                     <button onClick={handleAddExpense} disabled={!newExpenseName || !newExpenseCost} className="bg-indigo-600 hover:bg-indigo-700 text-white w-12 shrink-0 rounded-xl flex items-center justify-center active:scale-95 disabled:bg-gray-200 transition shadow-lg shadow-indigo-100"><Plus size={20} strokeWidth={3} /></button>
                                 </div>
                             </section>
@@ -2304,20 +2350,20 @@ export default function MyPage() {
                             {/* 2. 일정별 상세 예산 관리 (Accordion Style) */}
                             <section>
                                 <div className="flex items-center justify-between mb-4 px-1">
-                                    <h4 className="font-black text-gray-900 text-base flex items-center gap-1.5"><Calendar size={18} className="text-indigo-500" /> 일정별 상세 예산</h4>
+                                    <h4 className="font-black text-white text-base flex items-center gap-1.5"><Calendar size={18} className="text-indigo-400" /> 일정별 상세 예산</h4>
                                     <span className="text-[10px] font-bold text-gray-400">Day 카드 터치로 접기/펴기</span>
                                 </div>
                                 <div className="space-y-4">
                                     {(selectedTrip.itinerary || []).map((day, dIdx) => {
                                         const isExpanded = expandedDays[dIdx] ?? (dIdx === 0);
                                         return (
-                                            <div key={dIdx} className="bg-gray-50/50 rounded-[28px] border border-gray-100/80 overflow-hidden shadow-xs">
+                                            <div key={dIdx} className="bg-gradient-to-br from-white/10 to-white/5 rounded-[28px] border border-white/10 overflow-hidden shadow-xs">
                                                 {/* Accordion Trigger Header */}
                                                 <button 
                                                     onClick={() => setExpandedDays(prev => ({ ...prev, [dIdx]: !isExpanded }))}
-                                                    className="w-full flex justify-between items-center p-5 bg-white border-b border-gray-100 hover:bg-gray-50/80 transition"
+                                                    className="w-full flex justify-between items-center p-5 bg-white/5 border-b border-white/10 hover:bg-white/10 transition"
                                                 >
-                                                    <h5 className="text-xs font-black text-gray-800 uppercase tracking-widest flex items-center gap-2">
+                                                    <h5 className="text-xs font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
                                                         <span className={`w-2 h-2 rounded-full ${isExpanded ? 'bg-indigo-500 animate-pulse' : 'bg-gray-300'}`}></span> Day {dIdx + 1}
                                                     </h5>
                                                     <ChevronRight size={16} strokeWidth={3} className={`text-gray-400 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
@@ -2331,11 +2377,11 @@ export default function MyPage() {
                                                             const isExceeded = actual > expected && expected > 0;
                                                             
                                                             return (
-                                                                <div key={pIdx} className={`p-4 rounded-2xl border transition-all hover:border-indigo-100 shadow-xs bg-white ${isExceeded ? 'border-brand-danger/20 bg-brand-danger/5' : 'border-gray-100'}`}>
+                                                                <div key={pIdx} className={`p-4 rounded-2xl border transition-all hover:border-indigo-400 shadow-xs bg-white/5 ${isExceeded ? 'border-rose-500/20 bg-rose-500/10' : 'border-white/10'}`}>
                                                                     <div className="flex items-center justify-between gap-3 mb-3">
                                                                         <div className="flex items-center gap-3 overflow-hidden">
                                                                             <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-[10px] shrink-0 border ${isExceeded ? 'bg-brand-danger/10 text-brand-danger border-brand-danger/20' : 'bg-indigo-50 text-indigo-500 border-indigo-100'}`}>{pIdx + 1}</div>
-                                                                            <p className="font-bold text-gray-900 text-sm truncate">{place.name}</p>
+                                                                            <p className="font-bold text-white text-sm truncate">{place.name}</p>
                                                                         </div>
                                                                         {isExceeded && (
                                                                             <span className="text-[10px] text-brand-danger font-black shrink-0 flex items-center gap-0.5 bg-brand-danger/10 px-2 py-0.5 rounded-full animate-bounce">
@@ -2351,7 +2397,7 @@ export default function MyPage() {
                                                                                 value={place.expectedBudget || ''} 
                                                                                 onChange={(e) => handleUpdateItemBudget(dIdx, pIdx, 'expectedBudget', e.target.value)}
                                                                                 placeholder="0" 
-                                                                                className="w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-black text-gray-900 outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white transition"
+                                                                                className="w-full pl-10 pr-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-black text-white outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white/10 transition"
                                                                             />
                                                                         </div>
                                                                         <div className="relative group text-right">
@@ -2361,7 +2407,7 @@ export default function MyPage() {
                                                                                 value={place.actualExpense || ''} 
                                                                                 onChange={(e) => handleUpdateItemBudget(dIdx, pIdx, 'actualExpense', e.target.value)}
                                                                                 placeholder="0" 
-                                                                                className={`w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-black outline-none focus:ring-2 focus:bg-white transition ${isExceeded ? 'text-brand-primary focus:ring-rose-500 font-black' : 'text-gray-950 focus:ring-indigo-400 font-medium'}`}
+                                                                                className={`w-full pl-10 pr-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-black outline-none focus:ring-2 focus:bg-white/10 transition ${isExceeded ? 'text-rose-400 focus:ring-rose-500 font-black' : 'text-white focus:ring-indigo-400 font-medium'}`}
                                                                             />
                                                                         </div>
                                                                     </div>
@@ -2379,25 +2425,25 @@ export default function MyPage() {
                             {/* 3. 공통 지출 내역 목록 */}
                             <section>
                                 <div className="flex items-center justify-between mb-4 px-1 pb-2 border-b border-gray-100">
-                                    <h4 className="font-black text-gray-900 text-base flex items-center gap-1.5"><Receipt size={18} className="text-gray-400" /> 공통 지출 내역</h4>
+                                    <h4 className="font-black text-white text-base flex items-center gap-1.5"><Receipt size={18} className="text-slate-400" /> 공통 지출 내역</h4>
                                     <span className="text-[10px] font-bold text-gray-400">영수증 및 환전 기록</span>
                                 </div>
 
                                 <div className="space-y-3">
                                     {expenses.length === 0 ? (
-                                        <div className="text-center py-10 text-gray-300 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200"><p className="text-[11px] font-bold break-keep">등록된 공통 지출 내역이 없습니다.</p></div>
+                                        <div className="text-center py-10 text-slate-400 bg-white/5 rounded-2xl border border-dashed border-white/10"><p className="text-[11px] font-bold break-keep">등록된 공통 지출 내역이 없습니다.</p></div>
                                     ) : (
                                         expenses.map(exp => (
-                                            <div key={exp.id} className="flex justify-between items-center bg-white p-4 rounded-2xl border border-gray-50 shadow-xs group hover:border-brand-primary/20 transition">
+                                            <div key={exp.id} className="flex justify-between items-center bg-gradient-to-br from-white/10 to-white/5 p-4 rounded-2xl border border-white/10 shadow-xs group hover:border-indigo-400 transition">
                                                 <div className="flex items-center gap-3 overflow-hidden pr-2">
-                                                    <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 shrink-0">{exp.category === "환전" ? <RefreshCw size={18} /> : <Receipt size={18} />}</div>
+                                                    <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400 shrink-0">{exp.category === "환전" ? <RefreshCw size={18} /> : <Receipt size={18} />}</div>
                                                     <div className="overflow-hidden">
-                                                        <p className="font-bold text-gray-900 text-sm truncate">{exp.name}</p>
+                                                        <p className="font-bold text-white text-sm truncate">{exp.name}</p>
                                                         <p className="text-[10px] text-gray-400 font-bold truncate">{exp.by} · {exp.createdAt ? new Date(exp.createdAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "방금"}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-3 shrink-0">
-                                                    <span className="font-black text-brand-primary text-sm">-{exp.amount.toLocaleString()} <span className="text-[9px] font-normal text-gray-400">{exp.currency}</span></span>
+                                                    <span className="font-black text-indigo-400 text-sm">-{exp.amount.toLocaleString()} <span className="text-[9px] font-normal text-gray-400">{exp.currency}</span></span>
                                                     <button onClick={() => handleDeleteExpense(exp)} className="w-8 h-8 rounded-full bg-brand-primary/5 flex items-center justify-center text-brand-primary/80 opacity-0 group-hover:opacity-100 hover:bg-brand-primary hover:text-white transition shrink-0"><Trash2 size={14} /></button>
                                                 </div>
                                             </div>
@@ -2409,7 +2455,7 @@ export default function MyPage() {
 
                         {/* 하단 요약 및 닫기 */}
                         <div className="pt-6 shrink-0 border-t border-gray-100 flex gap-3">
-                            <button onClick={() => setShowBudgetModal(false)} className="flex-1 bg-gray-900 text-white font-black text-lg py-5 rounded-[24px] shadow-xl hover:bg-black active:scale-[0.98] transition">확인 완료</button>
+                            <button onClick={() => setShowBudgetModal(false)} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-lg py-5 rounded-[24px] shadow-xl active:scale-[0.98] transition">확인 완료</button>
                         </div>
                     </div>
                 </div>
@@ -2419,23 +2465,23 @@ export default function MyPage() {
             {showExchangeModal && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowExchangeModal(false)}></div>
-                    <div className="bg-white/90 backdrop-blur-2xl border border-white/60 w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl">
-                        <button onClick={() => setShowExchangeModal(false)} className="absolute top-6 right-6 w-10 h-10 bg-gray-200/50 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition shrink-0"><X size={20} strokeWidth={2.5} /></button>
+                    <div className="bg-[#121212]/90 backdrop-blur-2xl border border-white/10 w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl text-white">
+                        <button onClick={() => setShowExchangeModal(false)} className="absolute top-6 right-6 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-slate-300 hover:bg-white/20 hover:text-white transition shrink-0"><X size={20} strokeWidth={2.5} /></button>
                         {exchangeStep === 'input' && (
                             <div className="pt-2 mt-4">
-                                <h3 className="text-3xl font-black text-gray-900 mb-2 tracking-tight break-keep whitespace-nowrap">개인 지갑 환전</h3>
+                                <h3 className="text-3xl font-black text-white mb-2 tracking-tight break-keep whitespace-nowrap">개인 지갑 환전</h3>
                                 <p className="text-sm text-emerald-600 font-bold mb-8 flex items-center gap-1.5 break-keep whitespace-nowrap"><Sparkles size={16} className="animate-pulse shrink-0" /> 100% 환율 우대 적용 중</p>
-                                <div className="flex gap-2 mb-6">{['USD', 'JPY', 'EUR'].map(cur => (<button key={cur} onClick={() => setSelectedCurrency(cur)} className={`flex-1 py-3 rounded-xl text-sm font-bold transition break-keep whitespace-nowrap ${selectedCurrency === cur ? 'bg-gray-900 text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{cur}</button>))}</div>
-                                <div className="bg-white/60 rounded-[32px] p-7 mb-6 border border-white/50 shadow-sm relative">
-                                    <div className="flex justify-between items-center mb-4"><span className="text-gray-500 font-bold uppercase tracking-wider text-xs break-keep whitespace-nowrap">환전할 금액</span><span className="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-md break-keep whitespace-nowrap">내 잔고: {currentAsset.toLocaleString()}원</span></div>
-                                    <div className="flex items-center gap-3 mb-6"><span className="text-4xl font-black text-gray-900 shrink-0">{selectedCurrency === 'USD' ? '$' : selectedCurrency === 'JPY' ? '¥' : '€'}</span><input type="number" value={exchangeAmount} onChange={(e) => setExchangeAmount(e.target.value)} placeholder="0" className="w-full bg-transparent text-5xl font-black text-gray-900 outline-none placeholder-gray-300 tracking-tighter" autoFocus /></div>
-                                    {exchangeAmount > 0 && (<div className="pt-5 border-t border-gray-200 animate-in fade-in duration-300"><div className="flex justify-between items-center mb-2"><span className="text-sm text-gray-500 font-bold break-keep whitespace-nowrap">예상 결제 금액</span><span className="text-base font-black text-gray-900 break-keep whitespace-nowrap">{Math.floor(exchangeAmount * CURRENCY_RATES[selectedCurrency]).toLocaleString()} 원</span></div><div className="flex justify-between items-center"><span className="text-sm text-gray-500 font-bold break-keep whitespace-nowrap">적용 환율</span><span className="text-sm font-bold text-gray-500 break-keep whitespace-nowrap">{CURRENCY_RATES[selectedCurrency]}</span></div></div>)}
+                                <div className="flex gap-2 mb-6">{['USD', 'JPY', 'EUR'].map(cur => (<button key={cur} onClick={() => setSelectedCurrency(cur)} className={`flex-1 py-3 rounded-xl text-sm font-bold transition break-keep whitespace-nowrap ${selectedCurrency === cur ? 'bg-indigo-600 text-white shadow-md' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}>{cur}</button>))}</div>
+                                <div className="bg-white/5 rounded-[32px] p-7 mb-6 border border-white/10 shadow-sm relative">
+                                    <div className="flex justify-between items-center mb-4"><span className="text-slate-400 font-bold uppercase tracking-wider text-xs break-keep whitespace-nowrap">환전할 금액</span><span className="text-xs font-bold text-slate-400 bg-white/10 px-2 py-1 rounded-md break-keep whitespace-nowrap">내 잔고: {currentAsset.toLocaleString()}원</span></div>
+                                    <div className="flex items-center gap-3 mb-6"><span className="text-4xl font-black text-white shrink-0">{selectedCurrency === 'USD' ? '$' : selectedCurrency === 'JPY' ? '¥' : '€'}</span><input type="number" value={exchangeAmount} onChange={(e) => setExchangeAmount(e.target.value)} placeholder="0" className="w-full bg-transparent text-5xl font-black text-white outline-none placeholder-slate-600 tracking-tighter" autoFocus /></div>
+                                    {exchangeAmount > 0 && (<div className="pt-5 border-t border-white/10 animate-in fade-in duration-300"><div className="flex justify-between items-center mb-2"><span className="text-sm text-slate-400 font-bold break-keep whitespace-nowrap">예상 결제 금액</span><span className="text-base font-black text-white break-keep whitespace-nowrap">{Math.floor(exchangeAmount * CURRENCY_RATES[selectedCurrency]).toLocaleString()} 원</span></div><div className="flex justify-between items-center"><span className="text-sm text-slate-400 font-bold break-keep whitespace-nowrap">적용 환율</span><span className="text-sm font-bold text-slate-300 break-keep whitespace-nowrap">{CURRENCY_RATES[selectedCurrency]}</span></div></div>)}
                                 </div>
-                                <button onClick={() => setExchangeStep('loading')} disabled={!exchangeAmount} className={`w-full font-black text-lg py-5 rounded-[20px] transition flex items-center justify-center gap-2 break-keep whitespace-nowrap ${exchangeAmount ? 'bg-gradient-to-r from-brand-primary to-brand-secondary text-white shadow-xl shadow-brand-primary/20 hover:from-brand-primary/95 hover:to-brand-secondary/95 active:scale-[0.98]' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}><ArrowRightLeft size={20} strokeWidth={3} className="shrink-0" /> 환전하기</button>
+                                <button onClick={() => setExchangeStep('loading')} disabled={!exchangeAmount} className={`w-full font-black text-lg py-5 rounded-[20px] transition flex items-center justify-center gap-2 break-keep whitespace-nowrap ${exchangeAmount ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl active:scale-[0.98]' : 'bg-white/5 text-slate-500 cursor-not-allowed'}`}><ArrowRightLeft size={20} strokeWidth={3} className="shrink-0" /> 환전하기</button>
                             </div>
                         )}
-                        {exchangeStep === 'loading' && (<div className="py-20 flex flex-col items-center justify-center text-center"><div className="animate-spin rounded-full h-14 w-14 border-4 border-gray-200 border-t-emerald-500 mb-6 shrink-0"></div><h3 className="text-xl font-bold text-gray-900 break-keep whitespace-nowrap">환전 중...</h3></div>)}
-                        {exchangeStep === 'success' && (<div className="py-12 flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-500"><div className="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-white mb-6 shadow-lg shadow-emerald-500/30 shrink-0"><Banknote size={48} strokeWidth={2.5} /></div><h3 className="text-3xl font-black text-gray-900 mb-4 tracking-tight break-keep whitespace-nowrap">환전 완료!</h3><div className="bg-white/60 rounded-[20px] p-6 w-full mb-10 border border-white/50 shadow-sm"><p className="text-sm text-gray-500 font-bold mb-2 uppercase tracking-widest break-keep whitespace-nowrap">내 외화 지갑 ({selectedCurrency})</p><p className="text-4xl font-black text-gray-900 tracking-tighter truncate w-full">{Number(exchangeAmount).toLocaleString()}</p></div><button onClick={() => setShowExchangeModal(false)} className="w-full bg-gray-900 text-white font-black text-lg py-5 rounded-[20px] shadow-xl hover:bg-gray-800 active:scale-[0.98] transition break-keep whitespace-nowrap">확인</button></div>)}
+                        {exchangeStep === 'loading' && (<div className="py-20 flex flex-col items-center justify-center text-center"><div className="animate-spin rounded-full h-14 w-14 border-4 border-white/10 border-t-emerald-400 mb-6 shrink-0"></div><h3 className="text-xl font-bold text-white break-keep whitespace-nowrap">환전 중...</h3></div>)}
+                        {exchangeStep === 'success' && (<div className="py-12 flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-500"><div className="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-white mb-6 shadow-lg shadow-emerald-500/30 shrink-0"><Banknote size={48} strokeWidth={2.5} /></div><h3 className="text-3xl font-black text-white mb-4 tracking-tight break-keep whitespace-nowrap">환전 완료!</h3><div className="bg-white/5 rounded-[20px] p-6 w-full mb-10 border border-white/10 shadow-sm"><p className="text-sm text-slate-400 font-bold mb-2 uppercase tracking-widest break-keep whitespace-nowrap">내 외화 지갑 ({selectedCurrency})</p><p className="text-4xl font-black text-gray-900 tracking-tighter truncate w-full">{Number(exchangeAmount).toLocaleString()}</p></div><button onClick={() => setShowExchangeModal(false)} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black text-lg py-5 rounded-[20px] shadow-xl active:scale-[0.98] transition break-keep whitespace-nowrap">확인</button></div>)}
                     </div>
                 </div>
             )}
@@ -2444,10 +2490,10 @@ export default function MyPage() {
             {editingFeed && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => !isFeedSaving && setEditingFeed(null)}></div>
-                    <div className="bg-white/90 backdrop-blur-2xl border border-white/60 w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl h-[85vh] sm:h-auto overflow-y-auto custom-scrollbar flex flex-col">
+                    <div className="bg-[#121212]/90 backdrop-blur-2xl border border-white/10 w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-8 pb-safe relative z-10 animate-in slide-in-from-bottom-full duration-500 shadow-2xl h-[85vh] sm:h-auto overflow-y-auto custom-scrollbar flex flex-col text-white">
                         <div className="flex items-center justify-between mb-6 shrink-0">
-                            <h3 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2 break-keep whitespace-nowrap"><Edit3 className="text-indigo-500" /> 피드 수정</h3>
-                            <button onClick={() => !isFeedSaving && setEditingFeed(null)} className="w-10 h-10 bg-gray-200/50 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition shrink-0"><X size={20} strokeWidth={2.5} /></button>
+                            <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 break-keep whitespace-nowrap"><Edit3 className="text-indigo-400" /> 피드 수정</h3>
+                            <button onClick={() => !isFeedSaving && setEditingFeed(null)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-slate-300 hover:bg-white/20 hover:text-white transition shrink-0"><X size={20} strokeWidth={2.5} /></button>
                         </div>
 
                         <div className="flex-1 space-y-6">
@@ -2463,7 +2509,7 @@ export default function MyPage() {
                                 <div className="flex gap-3 overflow-x-auto custom-scrollbar pb-2 pt-1 px-1">
                                     {/* 이미지 추가 버튼 */}
                                     {editFeedImages.length < 5 && (
-                                        <div onClick={() => feedFileInputRef.current.click()} className="w-28 h-28 shrink-0 bg-gray-100 rounded-[20px] border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition">
+                                        <div onClick={() => feedFileInputRef.current.click()} className="w-28 h-28 shrink-0 bg-white/5 rounded-[20px] border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer hover:bg-white/10 transition">
                                             <Plus size={28} className="text-gray-400 mb-1" />
                                             <span className="text-[10px] font-bold text-gray-500">사진 추가</span>
                                         </div>
@@ -2494,12 +2540,12 @@ export default function MyPage() {
 
                             <div>
                                 <p className="text-xs font-bold text-gray-500 mb-2 pl-1 uppercase tracking-wider break-keep whitespace-nowrap">Description</p>
-                                <textarea value={editFeedTitle} onChange={(e) => setEditFeedTitle(e.target.value)} placeholder="여행의 감상을 자유롭게 남겨보세요!" rows={4} className="w-full bg-white/50 border border-gray-200 px-5 py-4 rounded-[20px] text-sm font-bold text-gray-900 outline-none focus:ring-2 focus:ring-indigo-400 transition shadow-sm resize-none custom-scrollbar break-keep" />
+                                <textarea value={editFeedTitle} onChange={(e) => setEditFeedTitle(e.target.value)} placeholder="여행의 감상을 자유롭게 남겨보세요!" rows={4} className="w-full bg-white/5 border border-white/10 px-5 py-4 rounded-[20px] text-sm font-bold text-white outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white/10 transition shadow-sm resize-none custom-scrollbar break-keep" />
                             </div>
                         </div>
 
                         <div className="mt-8 pt-4 border-t border-gray-100 shrink-0">
-                            <button onClick={handleSaveFeed} disabled={isFeedSaving || !editFeedTitle.trim() || editFeedImages.length === 0} className="w-full bg-gray-900 text-white font-black text-lg py-5 rounded-[20px] shadow-xl hover:bg-black active:scale-[0.98] transition flex items-center justify-center gap-2 disabled:bg-gray-300 disabled:shadow-none break-keep whitespace-nowrap">
+                            <button onClick={handleSaveFeed} disabled={isFeedSaving || !editFeedTitle.trim() || editFeedImages.length === 0} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black text-lg py-5 rounded-[20px] shadow-xl active:scale-[0.98] transition flex items-center justify-center gap-2 disabled:bg-white/5 disabled:text-slate-500 disabled:shadow-none break-keep whitespace-nowrap">
                                 {isFeedSaving ? (
                                     <><Loader2 className="animate-spin shrink-0" size={22} /> 사진 업로드 중...</>
                                 ) : (
@@ -2515,18 +2561,18 @@ export default function MyPage() {
             {showQuizModal && (
                 <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center pointer-events-auto">
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowQuizModal(false)}></div>
-                    <div className="bg-white w-full sm:max-w-md h-[85vh] sm:h-[650px] rounded-t-[32px] sm:rounded-[32px] flex flex-col relative z-10 animate-in slide-in-from-bottom-full duration-300 shadow-2xl overflow-hidden">
-                        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-white/90 backdrop-blur-md sticky top-0 z-20 shrink-0">
+                    <div className="bg-[#121212]/95 border border-white/10 w-full sm:max-w-md h-[85vh] sm:h-[650px] rounded-t-[32px] sm:rounded-[32px] flex flex-col relative z-10 animate-in slide-in-from-bottom-full duration-300 shadow-2xl overflow-hidden text-white">
+                        <div className="px-6 py-5 border-b border-white/10 flex justify-between items-center bg-transparent backdrop-blur-md sticky top-0 z-20 shrink-0">
                             <div>
-                                <h3 className="font-black text-xl text-gray-900 flex items-center gap-2">
+                                <h3 className="font-black text-xl text-white flex items-center gap-2">
                                     <BrainCircuit size={22} className="text-indigo-600" />
                                     여행지 능력고사
                                 </h3>
                                 <p className="text-xs text-gray-500 font-bold mt-0.5">매일 퀴즈를 풀고 트립 포인트를 적립하세요!</p>
                             </div>
-                            <button onClick={() => setShowQuizModal(false)} className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition shrink-0"><X size={20} strokeWidth={2.5} /></button>
+                            <button onClick={() => setShowQuizModal(false)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-slate-300 hover:bg-white/20 hover:text-white transition shrink-0"><X size={20} strokeWidth={2.5} /></button>
                         </div>
-                        <div className="p-5 flex-1 overflow-y-auto bg-gray-50 custom-scrollbar">
+                        <div className="p-5 flex-1 overflow-y-auto bg-transparent custom-scrollbar">
                             <TravelQuiz aiQuizData={quizData} /> 
                         </div>
                     </div>
@@ -2536,13 +2582,13 @@ export default function MyPage() {
             {feedToFork && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center p-6">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setFeedToFork(null)}></div>
-                    <div className="bg-white w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95">
-                        <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-500 mb-4 shadow-sm"><Download size={32} /></div>
-                        <h3 className="text-xl font-black text-gray-900 mb-2 text-center">일정 가져오기</h3>
+                    <div className="bg-[#121212]/95 border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 text-white">
+                        <div className="w-16 h-16 bg-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400 mb-4 shadow-sm"><Download size={32} /></div>
+                        <h3 className="text-xl font-black text-white mb-2 text-center">일정 가져오기</h3>
                         <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed">이 여행 일정을 내 일정으로<br />복사하시겠습니까?</p>
                         <div className="flex gap-3 w-full">
-                            <button onClick={() => setFeedToFork(null)} className="flex-1 py-4 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">취소</button>
-                            <button onClick={confirmForkItinerary} disabled={isSaving} className="flex-1 py-4 rounded-xl font-bold text-white bg-indigo-500 hover:bg-indigo-600 transition-colors shadow-md disabled:bg-gray-400">
+                            <button onClick={() => setFeedToFork(null)} className="flex-1 py-4 rounded-xl font-bold text-slate-300 bg-white/10 hover:bg-white/20 transition-colors">취소</button>
+                            <button onClick={confirmForkItinerary} disabled={isSaving} className="flex-1 py-4 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-md disabled:bg-white/5">
                                 {isSaving ? <Loader2 size={20} className="animate-spin mx-auto" /> : '가져오기'}
                             </button>
                         </div>
@@ -2554,15 +2600,15 @@ export default function MyPage() {
             {showCommentModal && (
                 <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center">
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={closeCommentModal}></div>
-                    <div className="bg-white w-full sm:max-w-md h-[70vh] sm:h-[600px] rounded-t-[32px] sm:rounded-[32px] relative z-10 flex flex-col animate-in slide-in-from-bottom-full shadow-2xl">
-                        <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-white/90 backdrop-blur-md rounded-t-[32px] shrink-0">
-                            <h3 className="font-black text-lg text-gray-900 flex items-center gap-2">
+                    <div className="bg-[#121212]/95 border border-white/10 w-full sm:max-w-md h-[70vh] sm:h-[600px] rounded-t-[32px] sm:rounded-[32px] relative z-10 flex flex-col animate-in slide-in-from-bottom-full shadow-2xl text-white">
+                        <div className="p-5 border-b border-white/10 flex justify-between items-center bg-transparent backdrop-blur-md rounded-t-[32px] shrink-0">
+                            <h3 className="font-black text-lg text-white flex items-center gap-2">
                                 <MessageCircleIcon size={20} className="text-indigo-500" /> 댓글
                             </h3>
-                            <button onClick={closeCommentModal} className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition"><X size={18} /></button>
+                            <button onClick={closeCommentModal} className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-slate-300 hover:bg-white/20 hover:text-white transition"><X size={18} /></button>
                         </div>
                         
-                        <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar bg-gray-50/50">
+                        <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar bg-transparent">
                             {comments.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-2">
                                     <MessageSquare size={40} className="text-gray-200 mb-2" />
@@ -2572,20 +2618,20 @@ export default function MyPage() {
                                 comments.map(comment => (
                                     <div key={comment.id} className="flex gap-3">
                                         <img src={comment.avatar || "https://i.pravatar.cc/150"} alt="avatar" className="w-8 h-8 rounded-full border border-gray-200 shrink-0" />
-                                        <div className="bg-white p-3 rounded-2xl rounded-tl-sm border border-gray-100 shadow-sm w-full">
+                                        <div className="bg-gradient-to-br from-white/10 to-white/5 p-3 rounded-2xl rounded-tl-sm border border-white/10 shadow-sm w-full">
                                             <div className="flex items-center justify-between mb-1">
-                                                <span className="font-bold text-xs text-gray-900">{comment.name}</span>
+                                                <span className="font-bold text-xs text-white">{comment.name}</span>
                                                 <span className="text-[10px] text-gray-400">{comment.createdAt ? new Date(comment.createdAt.seconds * 1000).toLocaleDateString() : '방금 전'}</span>
                                             </div>
-                                            <p className="text-sm text-gray-700 leading-relaxed break-words">{comment.text}</p>
+                                            <p className="text-sm text-slate-200 leading-relaxed break-words">{comment.text}</p>
                                         </div>
                                     </div>
                                 ))
                             )}
                         </div>
 
-                        <div className="p-4 border-t border-gray-100 bg-white shrink-0 sm:rounded-b-[32px]">
-                            <div className="flex items-end gap-2 bg-gray-50 rounded-2xl border border-gray-200 p-2 focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                        <div className="p-4 border-t border-white/10 bg-[#121212]/95 shrink-0 sm:rounded-b-[32px]">
+                            <div className="flex items-end gap-2 bg-white/5 rounded-2xl border border-white/10 p-2 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-950 transition-all">
                                 <textarea
                                     value={newCommentText}
                                     onChange={(e) => setNewCommentText(e.target.value)}
@@ -2596,7 +2642,7 @@ export default function MyPage() {
                                 <button 
                                     onClick={handleAddComment} 
                                     disabled={!newCommentText.trim() || isSubmittingComment}
-                                    className="mb-1 w-9 h-9 rounded-full bg-indigo-500 text-white flex items-center justify-center shrink-0 disabled:bg-gray-300 transition-colors"
+                                    className="mb-1 w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0 disabled:bg-white/5 transition-colors"
                                 >
                                     {isSubmittingComment ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} className="-ml-0.5" />}
                                 </button>

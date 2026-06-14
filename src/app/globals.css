@@ -29,6 +29,14 @@
   --color-brand-accent: #FF6F61;
   --color-brand-success: #34D399;
   --color-brand-danger: #F43F5E;
+
+  /* Spotify 테마 컬러 정의 */
+  --color-spotify-green: #1DB954;
+  --color-spotify-green-hover: #1ed760;
+  --color-spotify-dark: #121212;
+  --color-spotify-card: #181818;
+  --color-spotify-card-hover: #282828;
+  --color-spotify-text-muted: #a7a7a7;
 }
 
 body {

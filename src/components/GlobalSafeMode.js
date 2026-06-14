@@ -144,6 +144,137 @@ const safeModeTranslations = {
         msg_guardian_registered: "🛡️ [Safe Mode] {name} has registered you as an emergency guardian.",
     }
 };
+
+function FluentShield({ active }) {
+    return (
+        <svg
+            width="100%"
+            height="100%"
+            viewBox="0 0 120 120"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="drop-shadow-[0_10px_20px_rgba(0,0,0,0.35)]"
+        >
+            <defs>
+                {/* Filters */}
+                <filter id="symbolShadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#000000" floodOpacity="0.4" />
+                </filter>
+                
+                {/* Inactive Gradients */}
+                <linearGradient id="shieldBlueLeft" x1="20" y1="20" x2="60" y2="100" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#4FC3F7" />
+                    <stop offset="40%" stopColor="#29B6F6" />
+                    <stop offset="100%" stopColor="#0288D1" />
+                </linearGradient>
+                <linearGradient id="shieldBlueRight" x1="60" y1="20" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#0288D1" />
+                    <stop offset="50%" stopColor="#01579B" />
+                    <stop offset="100%" stopColor="#093170" />
+                </linearGradient>
+                <linearGradient id="shieldBorderBlue" x1="60" y1="17" x2="60" y2="100" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.75" />
+                    <stop offset="30%" stopColor="#4FC3F7" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#0288D1" stopOpacity="0.1" />
+                </linearGradient>
+
+                {/* Active Gradients */}
+                <linearGradient id="shieldRedLeft" x1="20" y1="20" x2="60" y2="100" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#FF8A80" />
+                    <stop offset="40%" stopColor="#FF5252" />
+                    <stop offset="100%" stopColor="#E53935" />
+                </linearGradient>
+                <linearGradient id="shieldRedRight" x1="60" y1="20" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#E53935" />
+                    <stop offset="50%" stopColor="#C62828" stopOpacity="0.95" />
+                    <stop offset="100%" stopColor="#7F0000" />
+                </linearGradient>
+                <linearGradient id="shieldBorderRed" x1="60" y1="17" x2="60" y2="100" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.75" />
+                    <stop offset="30%" stopColor="#FF8A80" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#D50000" stopOpacity="0.1" />
+                </linearGradient>
+
+                {/* Gloss Gradient */}
+                <linearGradient id="shieldGloss" x1="60" y1="15" x2="60" y2="75" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.45" />
+                    <stop offset="40%" stopColor="#FFFFFF" stopOpacity="0.15" />
+                    <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+                </linearGradient>
+
+                {/* Clip Path */}
+                <clipPath id="shieldClip">
+                    <path d="M 60 20 C 46 18 31 15 25 17 C 22 47 27 78 60 100 C 93 78 98 47 95 17 C 89 15 74 18 60 20 Z" />
+                </clipPath>
+            </defs>
+
+            {/* Shield Main Group with Clip Path */}
+            <g clipPath="url(#shieldClip)">
+                {/* Left Side */}
+                <path 
+                    d="M 60 20 C 46 18 31 15 25 17 C 22 47 27 78 60 100 C 53 78 50 47 60 20 Z" 
+                    fill={active ? "url(#shieldRedLeft)" : "url(#shieldBlueLeft)"} 
+                />
+                
+                {/* Right Side */}
+                <path 
+                    d="M 60 20 C 53 47 50 78 60 100 C 93 78 98 47 95 17 C 89 15 74 18 60 20 Z" 
+                    fill={active ? "url(#shieldRedRight)" : "url(#shieldBlueRight)"} 
+                />
+
+                {/* Crease Highlight Line */}
+                <path 
+                    d="M 60 20 C 53 47 50 78 60 100" 
+                    stroke="white" 
+                    strokeWidth="0.75" 
+                    opacity={active ? "0.2" : "0.35"} 
+                />
+
+                {/* Glossy top overlay */}
+                <ellipse cx="60" cy="18" rx="45" ry="25" fill="url(#shieldGloss)" />
+            </g>
+
+            {/* Specular border (rim light) */}
+            <path 
+                d="M 60 20 C 46 18 31 15 25 17 C 22 47 27 78 60 100 C 93 78 98 47 95 17 C 89 15 74 18 60 20 Z" 
+                stroke={active ? "url(#shieldBorderRed)" : "url(#shieldBorderBlue)"} 
+                strokeWidth="2" 
+            />
+
+            {/* Inner Symbol overlay */}
+            {active ? (
+                // Alert Exclamation Symbol
+                <g>
+                    <path
+                        d="M 60 38 L 60 66"
+                        stroke="white"
+                        strokeWidth="7"
+                        strokeLinecap="round"
+                        filter="url(#symbolShadow)"
+                    />
+                    <circle
+                        cx="60"
+                        cy="79"
+                        r="4.5"
+                        fill="white"
+                        filter="url(#symbolShadow)"
+                    />
+                </g>
+            ) : (
+                // Checkmark Symbol
+                <path
+                    d="M 44 60 L 54 70 L 76 46"
+                    stroke="white"
+                    strokeWidth="6.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    filter="url(#symbolShadow)"
+                />
+            )}
+        </svg>
+    );
+}
+
 export default function GlobalSafeMode() {
     const [user, setUser] = useState(null);
     const [isOpen, setIsOpen] = useState(false);
@@ -921,13 +1052,13 @@ export default function GlobalSafeMode() {
                         dragConstraints={{ left: -200, right: 200, top: 0, bottom: 650 }}
                         className="w-full max-w-[480px] pointer-events-auto"
                     >
-                        <div className="w-full bg-brand-success/90 backdrop-blur-md border border-brand-success/30 text-white rounded-2xl py-3 px-4 shadow-[0_8px_32px_rgba(76,201,240,0.3)] flex items-center justify-between ring-2 ring-brand-success/50 cursor-grab active:cursor-grabbing">
+                        <div className="w-full bg-rose-600/90 backdrop-blur-md border border-rose-500/30 text-white rounded-2xl py-3 px-4 shadow-[0_8px_32px_rgba(239,68,68,0.3)] flex items-center justify-between ring-2 ring-rose-500/50 cursor-grab active:cursor-grabbing">
                             <div className="flex items-center gap-2.5">
                                 <span className="relative flex h-3.5 w-3.5 shrink-0">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-white"></span>
                                 </span>
-                                <span className="text-xs font-black tracking-wide uppercase text-brand-accent">{safeModeTranslations[language].island_protecting}</span>
+                                <span className="text-xs font-black tracking-wide uppercase text-white">{safeModeTranslations[language].island_protecting}</span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <span className="bg-black/30 font-black px-2.5 py-1 rounded-lg text-sm tabular-nums tracking-wider border border-white/10 text-white">
@@ -935,7 +1066,7 @@ export default function GlobalSafeMode() {
                                 </span>
                                 <button 
                                     onClick={() => setIsOpen(true)}
-                                    className="bg-white text-brand-accent text-[10px] font-black px-3 py-1 rounded-lg hover:bg-brand-success/20 transition active:scale-95 shadow-sm"
+                                    className="bg-white text-rose-600 text-[10px] font-black px-3 py-1 rounded-lg hover:bg-rose-50 transition active:scale-95 shadow-sm"
                                 >
                                     {safeModeTranslations[language].island_manage}
                                 </button>
@@ -951,43 +1082,44 @@ export default function GlobalSafeMode() {
                 className="fixed bottom-[105px] left-1/2 -translate-x-1/2 z-[998] pointer-events-auto flex flex-col items-center gap-2.5 transition-transform duration-500 ease-[cubic-bezier(0.3,1,0.3,1)]"
             >
                 {isActive && (
-                    <div className="bg-brand-success text-brand-accent text-[9px] font-black px-2.5 py-1 rounded-lg shadow-[0_0_15px_rgba(76,201,240,0.5)] animate-pulse border border-brand-success tracking-wide">
+                    <div className="bg-rose-600 text-white text-[9px] font-black px-2.5 py-1 rounded-lg shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse border border-rose-500 tracking-wide">
                         {safeModeTranslations[language].float_protecting}
                     </div>
                 )}
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="relative group flex items-center justify-center transition-transform duration-300 hover:scale-105 active:scale-95 outline-none"
-                    style={{ width: '60px', height: '60px' }}
+                    className="relative group flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 outline-none"
+                    style={{ width: '70px', height: '70px' }}
                     title={safeModeTranslations[language].float_title}
                 >
                     {isActive ? (
                         <>
-                            {/* [ACTIVE] 강력한 스카이 사이언 세이프티 존 */}
-                            <span className="absolute inset-0 rounded-full bg-brand-success opacity-50 animate-ping" style={{ animationDuration: '2s' }}></span>
-                            <span className="absolute -inset-1 rounded-full bg-gradient-to-tr from-brand-success via-brand-primary to-brand-secondary blur-md opacity-80 animate-pulse"></span>
+                            {/* [ACTIVE] Fluent 3D Red Alert Shield with Pulsing Red Glow */}
+                            <span className="absolute inset-2 rounded-full bg-red-600 opacity-60 animate-ping" style={{ animationDuration: '1.2s' }}></span>
+                            <span className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-red-600 via-rose-500 to-amber-500 blur-md opacity-80 animate-pulse"></span>
                             
-                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-brand-success/10 to-white border-2 border-brand-success shadow-[0_0_25px_rgba(76,201,240,0.5)] z-10 flex items-center justify-center overflow-hidden">
-                                <div className="relative flex items-center justify-center">
-                                    <Shield size={34} className="text-brand-success/25" fill="currentColor" />
-                                    <Heart size={16} className="text-brand-secondary absolute animate-pulse" fill="currentColor" />
-                                </div>
-                            </div>
+                            <motion.div 
+                                className="relative z-10 w-full h-full"
+                                animate={{ 
+                                    scale: [1, 1.08, 1],
+                                    rotate: [0, -2, 2, -2, 2, 0]
+                                }}
+                                transition={{ 
+                                    repeat: Infinity, 
+                                    duration: 1.4, 
+                                    ease: "easeInOut" 
+                                }}
+                            >
+                                <FluentShield active={true} />
+                            </motion.div>
                         </>
                     ) : (
                         <>
-                            {/* [INACTIVE] 시그니처 다크 오로라 글래스 오브 */}
-                            <span className="absolute -inset-2 rounded-full bg-gradient-to-r from-brand-primary via-brand-secondary to-brand-accent blur-lg opacity-40 group-hover:opacity-75 transition-opacity duration-500 animate-pulse"></span>
+                            {/* [INACTIVE] Fluent 3D Blue Security Shield with Soft Shadow */}
+                            <span className="absolute -inset-2 rounded-full bg-gradient-to-r from-cyan-500/20 via-blue-600/15 to-transparent blur-lg opacity-40 group-hover:opacity-75 transition-opacity duration-500"></span>
                             
-                            {/* 메인 비비드 글래스 바디 */}
-                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-brand-primary via-brand-secondary to-brand-accent border border-white/30 shadow-[0_8px_32px_rgba(255,107,53,0.4)] z-10 flex items-center justify-center overflow-hidden">
-                                <div className="absolute top-0 left-0 w-full h-[45%] bg-gradient-to-b from-white/40 to-transparent rounded-t-full"></div>
-                                
-                                <div className="relative flex items-center justify-center">
-                                    <Shield size={32} className="text-white/90" strokeWidth={1.5} />
-                                    <Heart size={14} className="text-white absolute animate-pulse" fill="currentColor" />
-                                    <Sparkles size={12} className="text-yellow-300 absolute -top-1.5 -right-2 opacity-90" />
-                                </div>
+                            <div className="relative z-10 w-full h-full transition-transform duration-300 group-hover:-translate-y-1.5">
+                                <FluentShield active={false} />
                             </div>
                         </>
                     )}
@@ -998,18 +1130,18 @@ export default function GlobalSafeMode() {
             {isOpen && (
                 <div className="fixed inset-0 z-[9999] flex items-end justify-center pointer-events-auto">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsOpen(false)}></div>
-                    <div className="bg-white w-full max-w-[480px] rounded-t-[40px] relative z-10 shadow-2xl flex flex-col p-6 animate-in slide-in-from-bottom duration-300 border-t border-gray-100 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                    <div className="bg-[#181818]/95 backdrop-blur-2xl border-t border-white/10 w-full max-w-[480px] rounded-t-[40px] relative z-10 shadow-2xl flex flex-col p-6 animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar text-white">
                         
                         {/* 헤더 */}
                         <div className="flex justify-between items-start mb-6">
                             <div>
-                                <h3 className="text-2xl font-black text-gray-900 flex items-center gap-2">
-                                    <ShieldCheck className={isActive ? 'text-brand-success' : 'text-brand-primary'} size={26} />
+                                <h3 className="text-2xl font-black text-white flex items-center gap-2">
+                                    <Siren className={isActive ? 'text-rose-500 animate-bounce' : 'text-rose-500/60'} size={26} />
                                     Safe Mode
                                 </h3>
-                                <p className="text-xs text-gray-500 font-bold mt-1">{safeModeTranslations[language].panel_subtitle}</p>
+                                <p className="text-xs text-slate-300 font-bold mt-1">{safeModeTranslations[language].panel_subtitle}</p>
                             </div>
-                            <button onClick={() => setIsOpen(false)} className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition">
+                            <button onClick={() => setIsOpen(false)} className="w-10 h-10 bg-white/10 text-white hover:bg-white/20 rounded-full flex items-center justify-center transition">
                                 <X size={20} strokeWidth={2.5} />
                             </button>
                         </div>
@@ -1018,13 +1150,13 @@ export default function GlobalSafeMode() {
                         {isActive ? (
                             <div className="space-y-5">
                                 {/* 카운트다운 써클 카드 */}
-                                <div className="bg-gradient-to-br from-brand-success/10 to-brand-success/20 p-6 rounded-[28px] border border-brand-success/30 text-center relative overflow-hidden shadow-inner">
-                                    <span className="text-[10px] font-black uppercase text-brand-accent tracking-widest block mb-2">{safeModeTranslations[language].panel_protecting_title}</span>
-                                    <div className="text-4xl sm:text-5xl font-black text-brand-accent tracking-wider tabular-nums font-mono">
+                                <div className="bg-gradient-to-br from-rose-500/10 to-rose-500/20 p-6 rounded-[28px] border border-rose-500/30 text-center relative overflow-hidden shadow-inner">
+                                    <span className="text-[10px] font-black uppercase text-rose-400 tracking-widest block mb-2">{safeModeTranslations[language].panel_protecting_title}</span>
+                                    <div className="text-4xl sm:text-5xl font-black text-rose-500 tracking-wider tabular-nums font-mono">
                                         {formatTime(timeLeft)}
                                     </div>
                                     
-                                    <div className="flex justify-center items-center gap-1.5 mt-3 text-xs font-bold text-brand-accent bg-white/60 inline-flex px-3 py-1 rounded-full border border-brand-accent/20">
+                                    <div className="flex justify-center items-center gap-1.5 mt-3 text-xs font-bold text-white bg-white/10 inline-flex px-3 py-1 rounded-full border border-white/10">
                                         <User size={12} /> {safeModeTranslations[language].panel_guardian}: {guardianName} {guardianPhone && `(${guardianPhone})`}
                                     </div>
                                 </div>
@@ -1045,14 +1177,14 @@ export default function GlobalSafeMode() {
 
                                     <button
                                         onClick={handleSendLocationMessage}
-                                        className="w-full py-4.5 bg-brand-primary text-white rounded-2xl font-black text-base shadow-lg shadow-brand-primary/30 flex items-center justify-center gap-2 hover:bg-brand-primary/95 transition active:scale-95 border-b-4 border-brand-primary/80"
+                                        className="w-full py-4.5 bg-rose-600 text-white rounded-2xl font-black text-base shadow-lg shadow-rose-600/30 flex items-center justify-center gap-2 hover:bg-rose-500 transition active:scale-95 border-b-4 border-rose-700"
                                     >
                                         <Send size={18} /> {safeModeTranslations[language].btn_send_loc}
                                     </button>
                                     
                                     <button
                                         onClick={handleToggleOff}
-                                        className="w-full py-4 bg-brand-success text-brand-accent rounded-2xl font-black text-base shadow-lg shadow-brand-success/20 flex items-center justify-center gap-2 hover:bg-brand-success/95 transition active:scale-95 border-b-4 border-brand-success/80"
+                                        className="w-full py-4 bg-white/10 text-white border border-white/10 rounded-2xl font-black text-base shadow-lg flex items-center justify-center gap-2 hover:bg-white/20 transition active:scale-95"
                                     >
                                         {safeModeTranslations[language].btn_stop_timer}
                                     </button>
@@ -1061,22 +1193,22 @@ export default function GlobalSafeMode() {
                         ) : (
                             <div className="space-y-6">
                                 {/* 보호자 등록 구역 */}
-                                <div className="bg-gray-50 p-5 rounded-[28px] border border-gray-200/60">
-                                    <h4 className="text-sm font-black text-gray-800 mb-3 flex items-center gap-1.5">
-                                        <PhoneCall size={16} className="text-brand-primary" />
+                                <div className="bg-white/5 p-5 rounded-[28px] border border-white/5">
+                                    <h4 className="text-sm font-black text-white mb-3 flex items-center gap-1.5">
+                                        <PhoneCall size={16} className="text-rose-500" />
                                         {safeModeTranslations[language].step1_title}
                                     </h4>
 
                                     {isRegistered ? (
-                                        <div className="bg-white p-4 rounded-2xl border border-gray-100 flex justify-between items-center shadow-sm">
+                                        <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex justify-between items-center shadow-sm">
                                             <div>
-                                                <p className="text-sm font-black text-gray-800">{guardianName}</p>
-                                                {guardianPhone && <p className="text-xs font-bold text-gray-400 mt-0.5">{guardianPhone}</p>}
-                                                {guardianUserId && <span className="inline-block mt-1.5 text-[9px] font-black bg-brand-primary/10 text-brand-primary px-2 py-0.5 rounded">{safeModeTranslations[language].step1_linked}</span>}
+                                                <p className="text-sm font-black text-white">{guardianName}</p>
+                                                {guardianPhone && <p className="text-xs font-bold text-spotify-text-muted mt-0.5">{guardianPhone}</p>}
+                                                {guardianUserId && <span className="inline-block mt-1.5 text-[9px] font-black bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded">{safeModeTranslations[language].step1_linked}</span>}
                                             </div>
                                             <button 
                                                 onClick={handleResetGuardian}
-                                                className="text-xs font-bold text-brand-danger bg-brand-danger/10 hover:bg-brand-danger/20 px-3 py-2 rounded-lg transition"
+                                                className="text-xs font-bold text-brand-danger bg-brand-danger/20 hover:bg-brand-danger/30 px-3 py-2 rounded-lg transition"
                                             >
                                                 {safeModeTranslations[language].step1_edit}
                                             </button>
@@ -1084,18 +1216,18 @@ export default function GlobalSafeMode() {
                                     ) : (
                                         <div className="space-y-4">
                                             {/* 탭 헤더 */}
-                                            <div className="flex border-b border-gray-200 pb-1">
+                                            <div className="flex border-b border-white/10 pb-1">
                                                 <button 
                                                     type="button" 
                                                     onClick={() => setRegisterTab('search')} 
-                                                    className={`flex-1 pb-2 text-xs font-black text-center transition-all ${registerTab === 'search' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-400 hover:text-gray-600'}`}
+                                                    className={`flex-1 pb-2 text-xs font-black text-center transition-all ${registerTab === 'search' ? 'border-b-2 border-rose-500 text-rose-500' : 'text-spotify-text-muted hover:text-white'}`}
                                                 >
                                                     {safeModeTranslations[language].step1_tab_search}
                                                 </button>
                                                 <button 
                                                     type="button" 
                                                     onClick={() => setRegisterTab('manual')} 
-                                                    className={`flex-1 pb-2 text-xs font-black text-center transition-all ${registerTab === 'manual' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-400 hover:text-gray-600'}`}
+                                                    className={`flex-1 pb-2 text-xs font-black text-center transition-all ${registerTab === 'manual' ? 'border-b-2 border-rose-500 text-rose-500' : 'text-spotify-text-muted hover:text-white'}`}
                                                 >
                                                     {safeModeTranslations[language].step1_tab_manual}
                                                 </button>
@@ -1111,13 +1243,13 @@ export default function GlobalSafeMode() {
                                                                 value={searchQuery}
                                                                 onChange={(e) => setSearchQuery(e.target.value)}
                                                                 required
-                                                                className="w-full bg-white border border-gray-200 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/20 rounded-xl pl-9 pr-4 py-3 text-xs font-bold outline-none transition"
+                                                                className="w-full bg-white/5 border border-white/10 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 text-white placeholder:text-spotify-text-muted rounded-xl pl-9 pr-4 py-3 text-xs font-bold outline-none transition"
                                                             />
-                                                            <Search size={14} className="text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                                            <Search size={14} className="text-spotify-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
                                                         </div>
                                                         <button
                                                             type="submit"
-                                                            className="bg-brand-primary hover:bg-brand-primary/90 text-white px-4 py-3 rounded-xl text-xs font-black transition active:scale-95 shadow-sm"
+                                                            className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-3 rounded-xl text-xs font-black transition active:scale-95 shadow-sm"
                                                         >
                                                             {safeModeTranslations[language].step1_search_btn}
                                                         </button>
@@ -1125,33 +1257,33 @@ export default function GlobalSafeMode() {
 
                                                     {searchStatus === 'searching' && (
                                                         <div className="flex justify-center py-4">
-                                                             <Loader2 className="animate-spin text-brand-primary" size={20} />
+                                                             <Loader2 className="animate-spin text-rose-500" size={20} />
                                                         </div>
                                                     )}
 
                                                     {searchStatus === 'result' && (
-                                                        <div className="max-h-40 overflow-y-auto space-y-2 bg-white border border-gray-100 p-2 rounded-xl custom-scrollbar shadow-inner">
+                                                        <div className="max-h-40 overflow-y-auto space-y-2 bg-[#121212] border border-white/10 p-2 rounded-xl custom-scrollbar shadow-inner text-white">
                                                             {searchResults.map((targetUser) => (
                                                                 <div 
                                                                     key={targetUser.id} 
                                                                     onClick={() => handleSelectUserGuardian(targetUser)}
-                                                                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-brand-primary/10 cursor-pointer transition border border-transparent hover:border-brand-primary/20"
+                                                                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/5 cursor-pointer transition border border-transparent hover:border-white/10"
                                                                 >
-                                                                    <div className="w-8 h-8 rounded-full bg-brand-primary/10 text-brand-primary font-black text-xs flex items-center justify-center uppercase shrink-0">
+                                                                    <div className="w-8 h-8 rounded-full bg-white/10 text-white font-black text-xs flex items-center justify-center uppercase shrink-0">
                                                                         {(targetUser.name || targetUser.displayName || 'U').substring(0, 2)}
                                                                     </div>
                                                                     <div className="flex-1 min-w-0">
-                                                                        <p className="text-xs font-black text-gray-800 truncate">{targetUser.name || targetUser.displayName}</p>
-                                                                        <p className="text-[10px] font-bold text-gray-400 truncate">{targetUser.email}</p>
+                                                                        <p className="text-xs font-black text-white truncate">{targetUser.name || targetUser.displayName}</p>
+                                                                        <p className="text-[10px] font-bold text-spotify-text-muted truncate">{targetUser.email}</p>
                                                                     </div>
-                                                                    <span className="text-[9px] font-black bg-brand-primary/10 text-brand-primary px-2 py-1 rounded">{safeModeTranslations[language].step1_search_select}</span>
+                                                                    <span className="text-[9px] font-black bg-rose-500/20 text-rose-400 px-2 py-1 rounded">{safeModeTranslations[language].step1_search_select}</span>
                                                                 </div>
                                                             ))}
                                                         </div>
                                                     )}
 
                                                     {searchStatus === 'no-result' && (
-                                                        <p className="text-center text-[11px] text-gray-400 font-bold py-4">{safeModeTranslations[language].step1_search_no_result}</p>
+                                                        <p className="text-center text-[11px] text-spotify-text-muted font-bold py-4">{safeModeTranslations[language].step1_search_no_result}</p>
                                                     )}
                                                 </div>
                                             ) : (
@@ -1163,7 +1295,7 @@ export default function GlobalSafeMode() {
                                                             value={guardianName}
                                                             onChange={(e) => setGuardianName(e.target.value)}
                                                             required
-                                                            className="w-full bg-white border border-gray-200 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/20 rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
+                                                            className="w-full bg-white/5 border border-white/10 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 text-white placeholder:text-spotify-text-muted rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
                                                         />
                                                         <input
                                                             type="tel"
@@ -1171,12 +1303,12 @@ export default function GlobalSafeMode() {
                                                             value={guardianPhone}
                                                             onChange={(e) => setGuardianPhone(e.target.value)}
                                                             required
-                                                            className="w-full bg-white border border-gray-200 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/20 rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
+                                                            className="w-full bg-white/5 border border-white/10 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 text-white placeholder:text-spotify-text-muted rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
                                                         />
                                                     </div>
                                                     <button
                                                         type="submit"
-                                                        className="w-full py-3.5 bg-brand-accent hover:bg-brand-accent/90 text-white rounded-xl text-xs font-black shadow-md transition active:scale-95"
+                                                        className="w-full py-3.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black shadow-md transition active:scale-95"
                                                     >
                                                         {safeModeTranslations[language].step1_manual_save}
                                                     </button>
@@ -1188,22 +1320,22 @@ export default function GlobalSafeMode() {
 
                                 {/* 타이머 설정 */}
                                 <div className="space-y-3">
-                                    <h4 className="text-sm font-black text-gray-800 flex items-center gap-1.5 px-1">
-                                        <Timer size={16} className="text-brand-primary" />
+                                    <h4 className="text-sm font-black text-white flex items-center gap-1.5 px-1">
+                                        <Timer size={16} className="text-rose-500" />
                                         {safeModeTranslations[language].step2_title}
                                     </h4>
                                     
                                     <div className="flex flex-col gap-2.5">
-                                        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus-within:border-brand-primary focus-within:ring-1 focus-within:ring-brand-primary/20 transition shadow-sm">
+                                        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 focus-within:border-rose-500 focus-within:ring-1 focus-within:ring-rose-500/20 transition shadow-sm">
                                             <input 
                                                 type="number"
                                                 min="1"
                                                 value={duration}
                                                 onChange={(e) => setDuration(e.target.value ? Number(e.target.value) : '')}
-                                                className="flex-1 bg-transparent text-sm font-black text-gray-900 outline-none w-full"
+                                                className="flex-1 bg-transparent text-sm font-black text-white outline-none w-full"
                                                 placeholder={safeModeTranslations[language].step2_duration_placeholder}
                                             />
-                                            <span className="text-xs font-bold text-gray-500 shrink-0">{safeModeTranslations[language].step2_duration_unit}</span>
+                                            <span className="text-xs font-bold text-spotify-text-muted shrink-0">{safeModeTranslations[language].step2_duration_unit}</span>
                                         </div>
                                         <div className="grid grid-cols-4 gap-2">
                                             {[10, 30, 60, 120].map((mins) => (
@@ -1212,8 +1344,8 @@ export default function GlobalSafeMode() {
                                                     onClick={() => setDuration(mins)}
                                                     className={`py-2 rounded-lg text-[11px] font-black border transition active:scale-95 ${
                                                         duration === mins
-                                                            ? 'bg-brand-primary/10 border-brand-primary text-brand-primary'
-                                                            : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                                                            ? 'bg-rose-500/20 border-rose-500 text-rose-400'
+                                                            : 'bg-white/5 border-white/10 text-spotify-text-muted hover:bg-white/10'
                                                     }`}
                                                 >
                                                     {safeModeTranslations[language].step2_duration_btn.replace('{mins}', mins.toString())}
@@ -1221,7 +1353,7 @@ export default function GlobalSafeMode() {
                                             ))}
                                         </div>
                                     </div>
-                                    <p className="text-[10px] text-gray-400 font-bold px-1 leading-relaxed">
+                                    <p className="text-[10px] text-spotify-text-muted font-bold px-1 leading-relaxed">
                                         {safeModeTranslations[language].step2_desc}
                                     </p>
                                 </div>
@@ -1229,9 +1361,9 @@ export default function GlobalSafeMode() {
                                 {/* 활성화 버튼 */}
                                 <button
                                     onClick={handleToggleOn}
-                                    className="w-full py-4.5 bg-gradient-to-r from-brand-primary via-brand-secondary to-brand-accent text-white rounded-2xl font-black text-base shadow-xl hover:opacity-90 transition flex items-center justify-center gap-2 border-b-4 border-brand-accent active:scale-95"
+                                    className="w-full py-4.5 bg-gradient-to-r from-rose-600 via-red-500 to-amber-500 text-white rounded-2xl font-black text-base shadow-xl hover:opacity-90 transition flex items-center justify-center gap-2 border-b-4 border-rose-700 active:scale-95"
                                 >
-                                    <ShieldCheck size={20} className="text-white animate-pulse" />
+                                    <Siren size={20} className="text-white animate-pulse" />
                                     {safeModeTranslations[language].btn_start_safe}
                                 </button>
                             </div>
@@ -1243,16 +1375,16 @@ export default function GlobalSafeMode() {
             {/* 4. 타이머 강제 만료 또는 수동 비상 경보 알림 카드 */}
             {showTimerAlert && (
                 <div className="fixed inset-0 z-[99999] flex items-center justify-center p-6 pointer-events-auto">
-                    <div className="absolute inset-0 bg-brand-danger/85 backdrop-blur-md animate-in fade-in duration-300"></div>
-                    <div className="bg-white w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-brand-danger">
+                    <div className="absolute inset-0 bg-brand-danger/80 backdrop-blur-md animate-in fade-in duration-300"></div>
+                    <div className="bg-[#181818]/95 backdrop-blur-md w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-brand-danger text-white">
                         <div className="w-16 h-16 bg-brand-danger/10 rounded-2xl flex items-center justify-center text-brand-danger mb-4 animate-bounce shadow-md">
                             <AlertTriangle size={36} />
                         </div>
-                        <h3 className="text-xl font-black text-gray-900 mb-1 text-center">
+                        <h3 className="text-xl font-black text-white mb-1 text-center">
                             {isSirenPlaying && timeLeft > 0 ? safeModeTranslations[language].alert_title_siren : safeModeTranslations[language].alert_title_expire}
                         </h3>
                         <p className="text-xs text-brand-danger font-black mb-3">Emergency Alert Triggered</p>
-                        <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed font-semibold">
+                        <p className="text-sm text-slate-300 mb-6 text-center leading-relaxed font-semibold">
                             {isSirenPlaying && timeLeft > 0 ? (
                                 <>
                                     {safeModeTranslations[language].alert_desc_siren.split('\n').map((line, idx) => {
@@ -1275,7 +1407,7 @@ export default function GlobalSafeMode() {
                         </p>
                         <button 
                             onClick={handleToggleOff} 
-                            className="w-full py-4.5 rounded-2xl font-black text-white bg-brand-danger hover:bg-brand-danger/90 transition-colors shadow-lg active:scale-95 text-base border-b-4 border-brand-danger/80"
+                            className="w-full py-4.5 rounded-2xl font-black text-white bg-brand-danger hover:bg-brand-danger/90 hover:scale-105 transition-all shadow-lg active:scale-95 text-base border-b-4 border-brand-danger/80"
                         >
                             {safeModeTranslations[language].btn_stop_alert}
                         </button>
@@ -1287,18 +1419,18 @@ export default function GlobalSafeMode() {
             {showLocationSentModal && (
                 <div className="fixed inset-0 z-[99999] flex items-center justify-center p-6 pointer-events-auto">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowLocationSentModal(false)}></div>
-                    <div className="bg-white w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-brand-primary">
+                    <div className="bg-[#181818]/95 backdrop-blur-md w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-brand-primary text-white">
                         <div className="w-16 h-16 bg-brand-primary/10 rounded-2xl flex items-center justify-center text-brand-primary mb-4 animate-bounce shadow-md">
                             <Send size={28} className="translate-x-0.5" />
                         </div>
-                        <h3 className="text-xl font-black text-gray-900 mb-1 text-center">{safeModeTranslations[language].loc_title}</h3>
+                        <h3 className="text-xl font-black text-white mb-1 text-center">{safeModeTranslations[language].loc_title}</h3>
                         <p className="text-xs text-brand-primary font-black mb-3">Location Shared Successfully</p>
-                        <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed font-semibold font-bold">
+                        <p className="text-sm text-slate-300 mb-6 text-center leading-relaxed font-semibold font-bold">
                             {safeModeTranslations[language].loc_desc.split('\n').map((line, idx) => <React.Fragment key={idx}>{line}<br /></React.Fragment>)}
                         </p>
                         <button 
                             onClick={() => setShowLocationSentModal(false)} 
-                            className="w-full py-4.5 rounded-2xl font-black text-white bg-brand-primary hover:bg-brand-primary/90 transition-colors shadow-lg active:scale-95 text-base border-b-4 border-brand-primary/80"
+                            className="w-full py-4.5 rounded-2xl font-black text-white bg-brand-primary hover:bg-brand-primary/90 hover:scale-105 transition-all shadow-lg active:scale-95 text-base border-b-4 border-brand-primary/80"
                         >
                             {safeModeTranslations[language].btn_confirm}
                         </button>
@@ -1310,35 +1442,35 @@ export default function GlobalSafeMode() {
             {otherExpiredSession && (
                 <div className="fixed inset-0 z-[999999] flex items-center justify-center p-6 pointer-events-auto">
                     <div className="absolute inset-0 bg-brand-danger/90 backdrop-blur-lg animate-in fade-in duration-300"></div>
-                    <div className="bg-white w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-brand-danger ring-4 ring-brand-danger/20">
+                    <div className="bg-[#181818]/95 backdrop-blur-md w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-brand-danger ring-4 ring-brand-danger/20 text-white">
                         <div className="w-16 h-16 bg-brand-danger/10 text-brand-danger rounded-2xl flex items-center justify-center mb-4 animate-pulse shadow-md">
-                            <ShieldAlert size={36} />
+                            <Siren size={36} className="text-brand-danger animate-pulse" />
                         </div>
-                        <h3 className="text-xl font-black text-gray-900 mb-1 text-center">{safeModeTranslations[language].warn_title}</h3>
+                        <h3 className="text-xl font-black text-white mb-1 text-center">{safeModeTranslations[language].warn_title}</h3>
                         <p className="text-xs text-brand-danger font-black mb-3">Guardian Emergency Warning</p>
-                        <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed font-semibold">
+                        <p className="text-sm text-slate-300 mb-6 text-center leading-relaxed font-semibold">
                             {safeModeTranslations[language].warn_desc.replace('{name}', otherExpiredSession.userName).split('\n').map((line, idx) => {
-                                if (line.includes(otherExpiredSession.userName)) {
-                                    const parts = line.split(otherExpiredSession.userName);
-                                    return <React.Fragment key={idx}>{parts[0]}<span className="text-brand-danger font-black">{otherExpiredSession.userName}</span>{parts[1]}<br /></React.Fragment>;
-                                }
-                                return <React.Fragment key={idx}>{line}<br /></React.Fragment>;
-                            })}
+                                    if (line.includes(otherExpiredSession.userName)) {
+                                        const parts = line.split(otherExpiredSession.userName);
+                                        return <React.Fragment key={idx}>{parts[0]}<span className="text-brand-danger font-black">{otherExpiredSession.userName}</span>{parts[1]}<br /></React.Fragment>;
+                                    }
+                                    return <React.Fragment key={idx}>{line}<br /></React.Fragment>;
+                                })}
                         </p>
                         <div className="w-full space-y-2">
                             {otherExpiredSession.guardianPhone && (
                                 <a 
                                     href={`tel:${otherExpiredSession.guardianPhone}`}
-                                    className="w-full py-4 rounded-2xl font-black text-brand-primary bg-brand-primary/10 hover:bg-brand-primary/20 transition-colors flex items-center justify-center gap-2 active:scale-95 text-sm"
+                                    className="w-full py-4 rounded-2xl font-black text-white bg-white/10 border border-white/10 hover:bg-white/20 transition-all flex items-center justify-center gap-2 active:scale-95 text-sm"
                                 >
                                     <PhoneCall size={16} /> {safeModeTranslations[language].btn_call}
                                 </a>
                             )}
                             <a 
                                 href={`/share/live_safemode?userId=${otherExpiredSession.userId}`}
-                                className="w-full py-4 rounded-2xl font-black text-white bg-brand-danger hover:bg-brand-danger/90 transition-colors flex items-center justify-center gap-2 active:scale-95 text-sm shadow-md"
+                                className="w-full py-4 rounded-2xl font-black text-white bg-brand-danger hover:bg-brand-danger/90 hover:scale-105 transition-all flex items-center justify-center gap-2 active:scale-95 text-sm shadow-md"
                             >
-                                <Shield size={16} /> {safeModeTranslations[language].btn_view_map}
+                                <Siren size={16} className="shrink-0" /> {safeModeTranslations[language].btn_view_map}
                             </a>
                         </div>
                     </div>

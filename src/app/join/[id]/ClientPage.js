@@ -6,6 +6,7 @@ import { auth, db } from "../../../lib/firebase";
 import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { Plane, Calendar, MapPin, Sparkles, Loader2, LogIn, ArrowRight } from 'lucide-react';
+import SunSceneBackground from '../../../components/SunSceneBackground';
 
 export default function JoinTripPage() {
     const params = useParams();
@@ -105,9 +106,8 @@ export default function JoinTripPage() {
     const mapImageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(safeDest)}&zoom=11&size=600x300&maptype=roadmap&markers=color:red%7C${encodeURIComponent(safeDest)}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}`;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#0F766E] via-slate-900 to-[#0284C7] flex items-center justify-center p-6 font-sans relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-72 h-72 bg-brand-primary/20 rounded-full blur-[100px] pointer-events-none"></div>
-            <div className="absolute bottom-0 right-0 w-72 h-72 bg-brand-secondary/20 rounded-full blur-[100px] pointer-events-none"></div>
+        <div className="min-h-screen bg-[#121212] flex items-center justify-center p-6 font-sans relative overflow-hidden">
+            <SunSceneBackground scene="beach" />
 
             <div className="w-full max-w-md relative z-10 animate-in zoom-in-95 duration-500">
                 <div className="text-center mb-8">

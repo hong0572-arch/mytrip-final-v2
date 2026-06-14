@@ -231,7 +231,7 @@ const translations = {
     ko: {
         title_pre: "Trip Maker,", title_main: '"냥 프로"', title_sub: "안전하고 편안한 여행",
         tab_schedule: "🗓️ 안심 여행", tab_flight: "실시간 항공권", tab_myflight: "✈️ 내 일정 항공권", tab_choices: "냥프로의 안심 추천!",
-        label_where: "어디로 안심 여행을 떠날까요?", label_when: "언제 떠나세요?", placeholder_dest: "예: 혼자 조용히 쉬고 싶어 (음성 가능)", placeholder_date: "날짜 선택 (최대 30일)",
+        label_where: "어디로 안심 여행을 떠날까요?", label_when: "언제 떠나세요?", placeholder_dest: "", placeholder_date: "날짜 선택 (최대 30일)",
         label_companion: "동행자", label_budget: "1인 예산", label_people: "인원", label_contact: "연락처 (필수)", placeholder_contact: "카톡ID 또는 이메일",
         label_request: "추가 요청사항 (안전 등)", placeholder_request: "예: 여성 혼자 가기 안전한 곳으로 추천해주세요.",
         btn_generate: "✨ 여행 일정 만들기!", btn_luxury_off: "👑 럭셔리 여행 체험하기", btn_luxury_on: "💎 VIP 플랜 생성",
@@ -382,6 +382,44 @@ const getCoachingGuide = (trip) => {
     }
 };
 
+const getTripProgress = (trip) => {
+    if (!trip || !trip.startDate) return 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(trip.startDate);
+    start.setHours(0, 0, 0, 0);
+
+    if (today < start) {
+        // 출발 전: 30일 전을 0%, 출발 당일을 100%로 설정
+        const diffTime = start - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays > 30) return 5;
+        return Math.max(5, Math.min(100, Math.round(((30 - diffDays) / 30) * 100)));
+    }
+
+    const end = trip.endDate ? new Date(trip.endDate) : start;
+    end.setHours(0, 0, 0, 0);
+
+    if (today >= start && today <= end) {
+        // 여행 중
+        const totalDuration = end - start;
+        const elapsed = today - start;
+        if (totalDuration === 0) return 50;
+        return Math.max(10, Math.min(95, Math.round((elapsed / totalDuration) * 100)));
+    }
+
+    return 100; // 여행 완료
+};
+
+const getHomeGradient = (step) => {
+    switch (step) {
+        case 1: return "from-[#3e2170] to-[#121212]"; // Violet/Purple (Step 1)
+        case 2: return "from-[#145775] to-[#121212]"; // Cyan/Blue (Step 2)
+        case 3: return "from-[#116345] to-[#121212]"; // Emerald/Green (Step 3)
+        case 4: return "from-[#781b3b] to-[#121212]"; // Rose/Red (Step 4)
+        default: return "from-[#165c32] to-[#121212]"; // Default Spotify Green
+    }
+};
 
 // --- 3. 메인 Home 컴포넌트 ---
 export default function Home() {
@@ -839,29 +877,29 @@ export default function Home() {
             {/* 스플래시 */}
             <AnimatePresence>{showSplash && <SplashScreen language={language} onFinish={() => { setShowSplash(false); sessionStorage.setItem('hasShownSplash', 'true'); }} />}</AnimatePresence>
 
-            {/* 닉네임 설정 모달 */}
+            {/* 닉네임 설정 모달 (스포티파이 테마) */}
             <AnimatePresence>
                 {showNicknameModal && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl relative">
-                            <button onClick={() => setShowNicknameModal(false)} className="absolute top-4 right-4 p-2 text-gray-400"><X size={20} /></button>
-                            <h3 className="text-xl font-black text-center text-gray-800 mb-2">{translations[language].modal_nickname_title}</h3>
-                            <input type="text" placeholder={translations[language].modal_nickname_placeholder} value={nicknameInput} onChange={(e) => setNicknameInput(e.target.value)} className="w-full px-4 py-4 bg-gray-50 border rounded-2xl outline-none font-bold text-center text-lg mb-4" />
-                            <button onClick={handleCompleteSignUp} className="w-full py-4 bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold text-lg rounded-2xl active:scale-95">{translations[language].modal_nickname_btn}</button>
+                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} className="bg-spotify-card rounded-3xl p-6 w-full max-w-sm shadow-2xl relative border border-white/10 text-white">
+                            <button onClick={() => setShowNicknameModal(false)} className="absolute top-4 right-4 p-2 text-spotify-text-muted hover:text-white"><X size={20} /></button>
+                            <h3 className="text-xl font-black text-center text-white mb-2">{translations[language].modal_nickname_title}</h3>
+                            <input type="text" placeholder={translations[language].modal_nickname_placeholder} value={nicknameInput} onChange={(e) => setNicknameInput(e.target.value)} className="w-full px-4 py-4 bg-[#121212] border border-white/10 rounded-2xl outline-none font-bold text-center text-lg mb-4 text-white placeholder:text-spotify-text-muted focus:border-spotify-green" />
+                            <button onClick={handleCompleteSignUp} className="w-full py-4 bg-spotify-green hover:bg-spotify-green-hover text-black font-extrabold text-lg rounded-2xl active:scale-95 transition-all">{translations[language].modal_nickname_btn}</button>
                         </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* ✨ 로그인 방식 선택 모달 (통합 로그인을 위해 추가됨) */}
+            {/* ✨ 로그인 방식 선택 모달 (스포티파이 테마) */}
             <AnimatePresence>
                 {showLoginModal && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-                        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-[32px] p-8 w-full max-w-sm shadow-2xl relative text-center">
-                            <button onClick={() => setShowLoginModal(false)} className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition"><X size={24} /></button>
+                        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-spotify-card rounded-[32px] p-8 w-full max-w-sm shadow-2xl relative text-center border border-white/10 text-white">
+                            <button onClick={() => setShowLoginModal(false)} className="absolute top-5 right-5 text-spotify-text-muted hover:text-white transition"><X size={24} /></button>
                             <div className="mb-6 flex justify-center"><CatMascot width={100} /></div>
-                            <h3 className="text-2xl font-black text-gray-800 mb-2">{translations[language].modal_login_title}</h3>
-                            <p className="text-sm text-gray-500 mb-8 leading-relaxed">
+                            <h3 className="text-2xl font-black text-white mb-2">{translations[language].modal_login_title}</h3>
+                            <p className="text-sm text-spotify-text-muted mb-8 leading-relaxed">
                                 {translations[language].modal_login_desc.split('\n').map((line, i) => <React.Fragment key={i}>{line}<br /></React.Fragment>)}
                             </p>
 
@@ -878,17 +916,17 @@ export default function Home() {
                 )}
             </AnimatePresence>
 
-            {/* 수동 공항 입력 */}
+            {/* 수동 공항 입력 (스포티파이 테마) */}
             <AnimatePresence>
                 {manualAirport.show && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl relative">
-                            <button onClick={() => setManualAirport({ show: false, trip: null, searchStr: "", error: "" })} className="absolute top-4 right-4 p-2 text-gray-400"><X size={20} /></button>
-                            <h3 className="text-xl font-black text-center text-gray-800 mb-2">{translations[language].modal_airport_title}</h3>
-                            <p className="text-xs text-center text-gray-500 mb-4 font-bold text-brand-danger">{translations[language].modal_airport_desc.replace('{destination}', manualAirport.trip?.destination)}</p>
-                            <input type="text" placeholder={translations[language].modal_airport_placeholder} value={manualAirport.searchStr} onChange={(e) => setManualAirport({ ...manualAirport, searchStr: e.target.value, error: "" })} className="w-full px-4 py-4 bg-gray-50 border rounded-2xl outline-none text-center font-bold" />
+                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} className="bg-spotify-card rounded-3xl p-6 w-full max-w-sm shadow-2xl relative border border-white/10 text-white">
+                            <button onClick={() => setManualAirport({ show: false, trip: null, searchStr: "", error: "" })} className="absolute top-4 right-4 p-2 text-spotify-text-muted hover:text-white"><X size={20} /></button>
+                            <h3 className="text-xl font-black text-center text-white mb-2">{translations[language].modal_airport_title}</h3>
+                            <p className="text-xs text-center text-spotify-text-muted mb-4 font-bold text-brand-danger">{translations[language].modal_airport_desc.replace('{destination}', manualAirport.trip?.destination)}</p>
+                            <input type="text" placeholder={translations[language].modal_airport_placeholder} value={manualAirport.searchStr} onChange={(e) => setManualAirport({ ...manualAirport, searchStr: e.target.value, error: "" })} className="w-full px-4 py-4 bg-[#121212] border border-white/10 rounded-2xl outline-none text-center font-bold text-white placeholder:text-spotify-text-muted focus:border-spotify-green" />
                             {manualAirport.error && <p className="text-[10px] text-brand-danger text-center mt-2">{manualAirport.error}</p>}
-                            <button onClick={handleManualSubmit} className="w-full py-4 bg-brand-accent text-white font-bold rounded-2xl mt-4">{translations[language].modal_airport_btn}</button>
+                            <button onClick={handleManualSubmit} className="w-full py-4 bg-spotify-green hover:bg-spotify-green-hover text-black font-extrabold rounded-2xl mt-4 transition-all">{translations[language].modal_airport_btn}</button>
                         </motion.div>
                     </motion.div>
                 )}
@@ -907,39 +945,52 @@ export default function Home() {
                         className="absolute inset-0 w-full h-full object-cover"
                     />
                 </AnimatePresence>
-                {/* 비네팅 오버레이로 고급스러움 추가 */}
-                <div className="absolute inset-0 bg-linear-to-b from-black/20 via-transparent to-black/40" />
+                {/* 비네팅 오버레이로 스포티파이 느낌의 딥 다크 그라데이션 추가 (사진이 잘 보이도록 투명도 최적화 및 상단 영역 확장) */}
+                <div
+                    className="absolute inset-0 transition-all duration-1000 opacity-35"
+                    style={{ backgroundImage: `linear-gradient(to bottom, ${getHomeGradient(step)} 0%, ${getHomeGradient(step)} 20%, #121212 100%)` }}
+                />
             </div>
 
-            {/* 메인 박스 — 독립형 플로팅 카드 UI로 변경 (배경 투명화) */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[560px] h-full sm:h-[95vh] bg-transparent sm:rounded-[35px] overflow-hidden relative flex flex-col z-10">
+            {/* 메인 박스 — 스포티파이 테마의 독립형 플로팅 카드 UI (배경 그라데이션화 및 뒤편 이미지 투명 반사) */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-[560px] h-full sm:h-[95vh] backdrop-blur-xl border border-white/10 sm:rounded-[35px] overflow-hidden relative flex flex-col z-10 shadow-2xl"
+                style={{ backgroundImage: `linear-gradient(to bottom, ${getHomeGradient(step)}b5 0%, ${getHomeGradient(step)}95 30%, #121212fa 100%)` }}
+            >
+                {/* 상단 Dynamic 그라데이션 빛 (상단 밝은 영역 확장) */}
+                <div
+                    className="absolute top-0 left-0 right-0 h-80 opacity-45 pointer-events-none z-0 transition-all duration-1000"
+                    style={{ backgroundImage: `linear-gradient(to bottom, ${getHomeGradient(step)} 0%, ${getHomeGradient(step)} 40%, transparent 100%)` }}
+                />
                 <div className="px-4 pt-6 pb-2 shrink-0 flex justify-between items-center bg-transparent z-20">
                     <img src="/logo1.png" alt="Logo" className="h-8 w-auto object-contain" />
                     <div className="z-50 flex items-center gap-1.5 sm:gap-2">
-                        <div className="flex bg-white/80 backdrop-blur-sm p-0.5 rounded-full text-[9px] font-black shadow-sm border border-white/50 shrink-0">
+                        <div className="flex bg-white/10 backdrop-blur-md p-0.5 rounded-full text-[9px] font-black shadow-sm border border-white/10 shrink-0">
                             <button
                                 onClick={() => setLanguage('ko')}
-                                className={`px-2 py-1 rounded-full transition-all duration-300 ${language === 'ko' ? 'bg-white text-gray-800 shadow-xs' : 'text-gray-400 hover:text-gray-600'}`}
+                                className={`px-2 py-1 rounded-full transition-all duration-300 ${language === 'ko' ? 'bg-white text-black shadow-xs' : 'text-spotify-text-muted hover:text-white'}`}
                             >
                                 한국어
                             </button>
                             <button
                                 onClick={() => setLanguage('en')}
-                                className={`px-2 py-1 rounded-full transition-all duration-300 ${language === 'en' ? 'bg-white text-gray-800 shadow-xs' : 'text-gray-400 hover:text-gray-600'}`}
+                                className={`px-2 py-1 rounded-full transition-all duration-300 ${language === 'en' ? 'bg-white text-black shadow-xs' : 'text-spotify-text-muted hover:text-white'}`}
                             >
                                 English
                             </button>
                         </div>
                         {user || session ? (
-                            <div onClick={() => router.push('/mypage')} className="flex items-center gap-2 cursor-pointer group hover:bg-white/60 p-1.5 rounded-full transition">
-                                <div className="w-10 h-10 rounded-full border-2 border-white shadow-md overflow-hidden shrink-0">
+                            <div onClick={() => router.push('/mypage')} className="flex items-center gap-2 cursor-pointer group hover:bg-white/10 p-1.5 rounded-full transition">
+                                <div className="w-10 h-10 rounded-full border-2 border-white/20 shadow-md overflow-hidden shrink-0">
                                     <img src={userData?.profileImgBase64 || user?.photoURL || session?.user?.image || "https://via.placeholder.com/40"} alt="Profile" className="w-full h-full object-cover" />
                                 </div>
                             </div>
                         ) : (
                             <button
                                 onClick={() => setShowLoginModal(true)} // ✨ 모달 오픈
-                                className="px-5 py-2.5 rounded-full bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold text-sm shadow-lg shadow-brand-secondary/20 active:scale-95 transition-all"
+                                className="px-5 py-2.5 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black font-extrabold text-sm shadow-lg shadow-spotify-green/20 active:scale-95 transition-all"
                             >
                                 {translations[language].btn_login}
                             </button>
@@ -948,60 +999,103 @@ export default function Home() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto scrollbar-hide pt-2 pb-32">
-                    {/* 🌟 진행 중이거나 가장 가까운 활성 여행에 대한 액티브 컨트롤 타워 (홈 화면 최상단 적용) */}
+                    {/* 🌟 진행 중이거나 가장 가까운 활성 여행에 대한 액티브 컨트롤 타워 (스포티파이 플레이어 스타일 리디자인) */}
                     {(user || session) && mySchedules.length > 0 && (() => {
                         const activeTrip = mySchedules.find(t => calculateDDayNum(t.startDate) >= 0) || mySchedules[0];
                         if (!activeTrip) return null;
+                        const progress = getTripProgress(activeTrip);
+                        const phase = getTripPhase(activeTrip);
                         return (
-                            <div className="mb-2 mt-4 px-2 animate-fadeIn">
-                                <GlassCard className="p-5 bg-emerald-950/85 backdrop-blur-2xl text-white border border-emerald-500/35 shadow-2xl overflow-hidden relative group rounded-[28px]">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                                    <div className="relative z-10 flex flex-col gap-4">
-                                        <div className="flex justify-between items-center">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[13px] sm:text-[14px] font-extrabold bg-emerald-500 text-slate-950 border border-emerald-400 px-3 py-1 rounded-full uppercase tracking-wider">{calculateDDay(activeTrip.startDate)}</span>
-                                                <span className="text-[13px] sm:text-[14px] text-emerald-200 font-extrabold">현재 나의 여행 정보</span>
+                            <div className="mb-4 mt-4 px-3 animate-fadeIn">
+                                <div className="p-5 bg-gradient-to-br from-spotify-green/25 via-[#181818]/95 to-[#121212]/98 backdrop-blur-2xl text-white border border-white/10 shadow-2xl rounded-[24px] overflow-hidden relative group">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-spotify-green/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                                    <div className="relative z-10 flex flex-col">
+                                        <div className="flex items-center gap-3">
+                                            {/* 앨범 커버 스타일 이미지 */}
+                                            <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0 shadow-md border border-white/10 relative">
+                                                <img
+                                                    src={activeTrip.image || "https://images.unsplash.com/photo-1506158669146-619067262a00?q=80&w=150"}
+                                                    alt={activeTrip.destination || activeTrip.title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                <span className="absolute bottom-1 right-1 text-base bg-black/60 px-1 rounded-md">{activeTrip.icon || '✈️'}</span>
                                             </div>
-                                            <span className="text-[22px] font-black">{activeTrip.icon || '✈️'}</span>
+
+                                            {/* 타이틀 및 아티스트 스타일 정보 */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] font-black bg-spotify-green text-black px-2 py-0.5 rounded-full uppercase tracking-wider">{calculateDDay(activeTrip.startDate)}</span>
+                                                    <span className="text-[11px] text-spotify-text-muted font-bold">{translations[language].schedule_trip_suffix}</span>
+                                                </div>
+                                                <h3 className="text-base font-bold text-white truncate mt-1">{activeTrip.destination || activeTrip.title}</h3>
+                                                <p className="text-xs text-spotify-text-muted font-medium truncate mt-0.5">{formatTripDate(activeTrip.startDate, activeTrip.endDate, activeTrip.duration)}</p>
+                                            </div>
+
+                                            {/* 재생/일시정지 모양 퀵 바로가기 버튼 */}
+                                            <button
+                                                onClick={() => router.push('/mypage?tab=coach')}
+                                                className="w-10 h-10 rounded-full bg-white hover:bg-spotify-green text-black flex items-center justify-center shadow-lg active:scale-95 transition-all"
+                                                title="트립코치 바로가기"
+                                            >
+                                                {phase === 'during' ? (
+                                                    <div className="flex items-center gap-0.5">
+                                                        <div className="w-1 h-3 bg-black rounded-full animate-[pulse_1s_infinite]"></div>
+                                                        <div className="w-1 h-3 bg-black rounded-full animate-[pulse_1s_infinite_0.2s]"></div>
+                                                    </div>
+                                                ) : (
+                                                    <Sparkles size={16} fill="black" />
+                                                )}
+                                            </button>
                                         </div>
-                                        <div>
-                                            <h3 className="text-3xl font-black text-white leading-tight">{activeTrip.destination || activeTrip.title}</h3>
-                                            <p className="text-[15px] text-slate-200 font-bold mt-2">{formatTripDate(activeTrip.startDate, activeTrip.endDate, activeTrip.duration)}</p>
+
+                                        {/* 타임라인 프로그레스 바 */}
+                                        <div className="mt-4">
+                                            <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden relative">
+                                                <div
+                                                    className="bg-spotify-green h-full rounded-full transition-all duration-500"
+                                                    style={{ width: `${progress}%` }}
+                                                />
+                                            </div>
+                                            <div className="flex justify-between items-center text-[10px] text-spotify-text-muted font-bold mt-1.5 px-0.5">
+                                                <span>{phase === 'prep' ? `${calculateDDayNum(activeTrip.startDate)}일 전` : phase === 'during' ? '여행 중' : '여행 완료'}</span>
+                                                <span>{progress}%</span>
+                                            </div>
                                         </div>
-                                        
-                                        <div className="bg-emerald-900/40 px-4 py-3 rounded-2xl border border-emerald-500/30 mt-1 text-[13px] sm:text-[14px] font-extrabold text-emerald-100 leading-relaxed flex items-start gap-2 select-none">
-                                            <Sparkles size={15} className="shrink-0 mt-0.5 text-emerald-300" />
+
+                                        {/* 코칭 안내 문구 */}
+                                        <div className="bg-white/5 px-3.5 py-2.5 rounded-xl border border-white/5 mt-3 text-xs font-medium text-slate-300 leading-relaxed flex items-start gap-2 select-none">
+                                            <Sparkles size={13} className="shrink-0 mt-0.5 text-spotify-green animate-pulse" />
                                             <span>{getCoachingGuide(activeTrip)}</span>
                                         </div>
-                                        
+
                                         {/* 퀵 바로가기 그리드 */}
-                                        <div className="grid grid-cols-4 gap-2 pt-3 border-t border-emerald-500/30 mt-1">
-                                            <button onClick={() => router.push('/mypage?tab=coach')} className="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white/10 hover:bg-white/15 transition border border-white/10 active:scale-95 cursor-pointer">
-                                                <Sparkles size={18} className="text-emerald-400" />
-                                                <span className="text-[11px] sm:text-[12px] font-extrabold text-white tracking-tight break-keep whitespace-nowrap">트립코치</span>
+                                        <div className="grid grid-cols-4 gap-2 pt-3 border-t border-white/10 mt-3">
+                                            <button onClick={() => router.push('/mypage?tab=coach')} className="flex flex-col items-center gap-1 p-2 rounded-xl bg-white/5 hover:bg-white/10 transition border border-white/5 active:scale-95 cursor-pointer">
+                                                <Sparkles size={16} className="text-spotify-green" />
+                                                <span className="text-[10px] font-bold text-white tracking-tight break-keep whitespace-nowrap">트립코치</span>
                                             </button>
-                                            <button onClick={() => router.push('/mypage?tab=social')} className="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white/10 hover:bg-white/15 transition border border-white/10 active:scale-95 cursor-pointer">
-                                                <Users size={18} className="text-rose-400" />
-                                                <span className="text-[11px] sm:text-[12px] font-extrabold text-white tracking-tight break-keep whitespace-nowrap">동행 찾기</span>
+                                            <button onClick={() => router.push('/mypage?tab=social')} className="flex flex-col items-center gap-1 p-2 rounded-xl bg-white/5 hover:bg-white/10 transition border border-white/5 active:scale-95 cursor-pointer">
+                                                <Users size={16} className="text-rose-400" />
+                                                <span className="text-[10px] font-bold text-white tracking-tight break-keep whitespace-nowrap">동행 찾기</span>
                                             </button>
-                                            <button onClick={() => router.push('/mypage?tab=wallet')} className="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white/10 hover:bg-white/15 transition border border-white/10 active:scale-95 cursor-pointer">
-                                                <Wallet size={18} className="text-indigo-400" />
-                                                <span className="text-[11px] sm:text-[12px] font-extrabold text-white tracking-tight break-keep whitespace-nowrap">트립머니</span>
+                                            <button onClick={() => router.push('/mypage?tab=wallet')} className="flex flex-col items-center gap-1 p-2 rounded-xl bg-white/5 hover:bg-white/10 transition border border-white/5 active:scale-95 cursor-pointer">
+                                                <Wallet size={16} className="text-indigo-400" />
+                                                <span className="text-[10px] font-bold text-white tracking-tight break-keep whitespace-nowrap">트립머니</span>
                                             </button>
-                                            <button onClick={() => router.push('/mypage?tab=vault')} className="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white/10 hover:bg-white/15 transition border border-white/10 active:scale-95 cursor-pointer">
-                                                <Box size={18} className="text-amber-400" />
-                                                <span className="text-[11px] sm:text-[12px] font-extrabold text-white tracking-tight break-keep whitespace-nowrap">보관함</span>
+                                            <button onClick={() => router.push('/mypage?tab=vault')} className="flex flex-col items-center gap-1 p-2 rounded-xl bg-white/5 hover:bg-white/10 transition border border-white/5 active:scale-95 cursor-pointer">
+                                                <Box size={16} className="text-amber-400" />
+                                                <span className="text-[10px] font-bold text-white tracking-tight break-keep whitespace-nowrap">보관함</span>
                                             </button>
                                         </div>
                                     </div>
-                                </GlassCard>
+                                </div>
                             </div>
                         );
                     })()}
 
-                    {/* 상단 배너 — 냥프로 인사 → 여행 소식 자동 전환 */}
+                    {/* 상단 배너 — 스포티파이 테마 다크 배너 */}
                     <div className="mb-8 mt-6 px-2">
-                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative bg-gradient-to-br from-white to-brand-primary/5 rounded-[1.5rem] p-5 border border-white shadow-lg overflow-hidden min-h-[160px]">
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative bg-gradient-to-br from-spotify-card to-spotify-card-hover rounded-[1.5rem] p-5 border border-white/10 shadow-lg overflow-hidden min-h-[160px]">
                             <AnimatePresence mode="wait">
                                 {!showBannerNews ? (
                                     <motion.div
@@ -1018,9 +1112,9 @@ export default function Home() {
                                         <CatMascot width={90} />
                                         <div className="text-left">
                                             <h2 className="text-3xl sm:text-4xl font-black leading-tight break-keep">
-                                                <span className="block text-gray-700 text-lg font-bold mb-1 opacity-80">{translations[language].title_pre}</span>
-                                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-800 via-brand-accent to-gray-800">{translations[language].title_main}</span>🪄<br />
-                                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary via-brand-secondary to-brand-accent">{translations[language].title_sub}</span>
+                                                <span className="block text-spotify-text-muted text-lg font-bold mb-1 opacity-85">{translations[language].title_pre}</span>
+                                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-spotify-green to-white">{translations[language].title_main}</span>🪄<br />
+                                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-spotify-green via-spotify-green-hover to-white">{translations[language].title_sub}</span>
                                             </h2>
                                         </div>
                                     </motion.div>
@@ -1038,21 +1132,21 @@ export default function Home() {
                         </motion.div>
                     </div>
 
-                    {/* 탭 메뉴 — 프리미엄 슬라이딩 탭 디자인 */}
-                    <div className="sticky top-2 z-30 bg-white/90 backdrop-blur-md mx-4 p-1.5 rounded-[1.25rem] shadow-xl border border-white/40 flex mb-8 gap-1">
+                    {/* 탭 메뉴 — 스포티파이 알약(Pill) 스타일 슬라이딩 탭 디자인 */}
+                    <div className="sticky top-2 z-30 bg-spotify-card/90 backdrop-blur-md mx-4 p-1.5 rounded-[1.25rem] shadow-xl border border-white/10 flex mb-8 gap-1">
                         <button onClick={() => setActiveTab('create')} className="relative flex-1 py-3.5 outline-none transition-all duration-300">
                             {activeTab === 'create' && (
-                                <motion.div layoutId="activeTab" className="absolute inset-0 bg-brand-primary rounded-xl shadow-lg shadow-brand-primary/20" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
+                                <motion.div layoutId="activeTab" className="absolute inset-0 bg-white rounded-xl shadow-lg" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
                             )}
-                            <span className={`relative z-10 text-sm font-black transition-colors duration-300 ${activeTab === 'create' ? 'text-white' : 'text-gray-400'}`}>
+                            <span className={`relative z-10 text-sm font-black transition-colors duration-300 ${activeTab === 'create' ? 'text-black' : 'text-spotify-text-muted hover:text-white'}`}>
                                 {translations[language].tab_schedule}
                             </span>
                         </button>
                         <button onClick={() => setActiveTab('flights')} className="relative flex-1 py-3.5 outline-none transition-all duration-300">
                             {activeTab === 'flights' && (
-                                <motion.div layoutId="activeTab" className="absolute inset-0 bg-brand-accent rounded-xl shadow-lg shadow-brand-accent/20" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
+                                <motion.div layoutId="activeTab" className="absolute inset-0 bg-white rounded-xl shadow-lg" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
                             )}
-                            <span className={`relative z-10 text-sm font-black transition-colors duration-300 ${activeTab === 'flights' ? 'text-white' : 'text-gray-400'}`}>
+                            <span className={`relative z-10 text-sm font-black transition-colors duration-300 ${activeTab === 'flights' ? 'text-black' : 'text-spotify-text-muted hover:text-white'}`}>
                                 {translations[language].tab_myflight}
                             </span>
                         </button>
@@ -1061,8 +1155,8 @@ export default function Home() {
                     <div className="px-4 pb-12">
                         {activeTab === 'create' && (
                             <div className="space-y-6 animate-fadeIn">
-                                {/* 🌟 단계 표시용 진행바 인디케이터 */}
-                                <div className="flex justify-between items-center px-5 py-3.5 bg-white/80 backdrop-blur-md rounded-[20px] shadow-sm border border-gray-100">
+                                {/* 🌟 단계 표시용 진행바 인디케이터 — 스포티파이 다크 디자인 */}
+                                <div className="flex justify-between items-center px-5 py-3.5 bg-spotify-card/90 backdrop-blur-md rounded-[20px] shadow-sm border border-white/10">
                                     {[1, 2, 3, 4].map(num => (
                                         <div key={num} className="flex items-center gap-1.5">
                                             <button
@@ -1072,11 +1166,11 @@ export default function Home() {
                                                     else if (num === 3 && formData.destination && startDate && endDate) setStep(3);
                                                     else if (num === 4 && formData.destination && startDate && endDate) setStep(4);
                                                 }}
-                                                className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs transition-all cursor-pointer select-none ${step === num ? 'bg-brand-primary text-white scale-110 shadow-md shadow-brand-primary/20' : step > num ? 'bg-brand-primary/15 text-brand-primary font-bold' : 'bg-gray-100 text-gray-400'}`}
+                                                className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs transition-all cursor-pointer select-none ${step === num ? 'bg-spotify-green text-black scale-110 shadow-md shadow-spotify-green/20' : step > num ? 'bg-spotify-green/20 text-spotify-green font-bold' : 'bg-[#121212] text-spotify-text-muted border border-white/5'}`}
                                             >
                                                 {num}
                                             </button>
-                                            {num < 4 && <div className={`w-8 sm:w-12 h-0.5 rounded-full ${step > num ? 'bg-brand-primary/30' : 'bg-gray-100'}`} />}
+                                            {num < 4 && <div className={`w-8 sm:w-12 h-0.5 rounded-full ${step > num ? 'bg-spotify-green/30' : 'bg-white/10'}`} />}
                                         </div>
                                     ))}
                                 </div>
@@ -1084,36 +1178,36 @@ export default function Home() {
                                 {/* 🌟 1단계: 목적지 및 지역 타입 */}
                                 {step === 1 && (
                                     <div className="space-y-6 animate-in slide-in-from-left-5 fade-in duration-300">
-                                        <div className="bg-white/95 p-6 rounded-[2rem] shadow-2xl border border-white">
+                                        <div className="bg-gradient-to-br from-white/12 to-white/3 backdrop-blur-md p-6 rounded-[2rem] shadow-2xl border border-white/10 text-white">
                                             <div className="flex items-center justify-between mb-4">
                                                 <div className="flex items-center gap-2">
-                                                    <label className="flex items-center gap-2 text-sm font-bold text-gray-500"><Sparkles size={16} className="text-brand-primary" /> {translations[language].label_where}</label>
-                                                    <button onClick={fetchUserLocation} disabled={isLocationLoading} className="p-1.5 text-brand-primary hover:bg-brand-primary/10 rounded-full transition-all active:scale-95 flex items-center justify-center">
+                                                    <label className="flex items-center gap-2 text-sm font-bold text-spotify-text-muted"><Sparkles size={16} className="text-spotify-green" /> {translations[language].label_where}</label>
+                                                    <button onClick={fetchUserLocation} disabled={isLocationLoading} className="p-1.5 text-spotify-green hover:bg-white/5 rounded-full transition-all active:scale-95 flex items-center justify-center">
                                                         {isLocationLoading ? <RefreshCw size={14} className="animate-spin" /> : <MapPin size={18} />}
                                                     </button>
                                                 </div>
                                             </div>
-                                            
-                                            <div className="relative flex items-center bg-white border-2 border-brand-primary rounded-full px-5 py-3.5 shadow-[0_4px_16px_rgba(22,163,74,0.06)] focus-within:shadow-[0_4px_20px_rgba(22,163,74,0.18)] focus-within:border-brand-primary transition-all duration-300 gap-3 mb-4">
-                                                <Search size={20} className="text-brand-primary shrink-0" />
-                                                <input 
-                                                    type="text" 
-                                                    name="destination" 
-                                                    value={formData.destination} 
-                                                    onChange={handleInputChange} 
-                                                    placeholder={listeningField === 'destination' ? translations[language].msg_listening : translations[language].placeholder_dest} 
-                                                    className="w-full text-base sm:text-lg font-black text-gray-800 bg-transparent outline-none pr-2 placeholder:text-gray-400" 
+
+                                            <div className="relative flex items-center bg-[#121212] border border-white/10 rounded-full px-5 py-3.5 shadow-inner focus-within:border-spotify-green transition-all duration-300 gap-3 mb-4">
+                                                <Search size={20} className="text-spotify-green shrink-0" />
+                                                <input
+                                                    type="text"
+                                                    name="destination"
+                                                    value={formData.destination}
+                                                    onChange={handleInputChange}
+                                                    placeholder={listeningField === 'destination' ? translations[language].msg_listening : translations[language].placeholder_dest}
+                                                    className="w-full text-base sm:text-lg font-black text-white bg-transparent outline-none pr-2 placeholder:text-spotify-text-muted"
                                                 />
-                                                <button 
-                                                    type="button" 
-                                                    onClick={() => handleVoiceInput('destination')} 
-                                                    className={`p-2 rounded-full transition-all shrink-0 hover:bg-gray-100 active:scale-95 ${listeningField === 'destination' ? 'bg-brand-secondary text-white animate-pulse' : 'text-gray-400'}`}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleVoiceInput('destination')}
+                                                    className={`p-2 rounded-full transition-all shrink-0 hover:bg-white/5 active:scale-95 ${listeningField === 'destination' ? 'bg-spotify-green text-black animate-pulse' : 'text-spotify-text-muted'}`}
                                                 >
-                                                    <Mic size={18} />
+                                                    <Mic size={22} />
                                                 </button>
                                             </div>
 
-                                            <div className="flex bg-gray-100 p-1.5 rounded-2xl mb-4 gap-1.5 shadow-inner">
+                                            <div className="flex bg-[#121212] p-1.5 rounded-2xl mb-4 gap-1.5 border border-white/5">
                                                 {['auto', 'domestic', 'international', 'daytrip'].map(type => (
                                                     <button key={type} onClick={() => {
                                                         if (type === 'daytrip') {
@@ -1133,15 +1227,15 @@ export default function Home() {
                                                                 request: prev.request.replace(', 당일치기 여행', '').replace('당일치기 여행', '').replace(', day trip', '').replace('day trip', '').trim()
                                                             }));
                                                         }
-                                                    }} className={`flex-1 text-[11px] sm:text-xs font-black py-3.5 rounded-xl transition-all duration-300 ${formData.regionType === type ? 'bg-white text-brand-primary shadow-md scale-[1.02]' : 'text-gray-500 hover:bg-white/50'}`}>
+                                                    }} className={`flex-1 text-[11px] sm:text-xs font-black py-3.5 rounded-xl transition-all duration-300 ${formData.regionType === type ? 'bg-spotify-card border border-white/10 text-spotify-green shadow-md scale-[1.02]' : 'text-spotify-text-muted hover:bg-white/5'}`}>
                                                         {type === 'auto' ? translations[language].region_auto : type === 'domestic' ? translations[language].region_domestic : type === 'international' ? translations[language].region_international : translations[language].region_daytrip}
                                                     </button>
                                                 ))}
                                             </div>
 
-                                            <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-50">
+                                            <div className="flex flex-wrap gap-2 pt-3 border-t border-white/5">
                                                 {(language === 'en' ? QUICK_TAGS_EN : QUICK_TAGS).map((tag, idx) => (
-                                                    <button key={idx} onClick={() => setFormData(prev => ({ ...prev, destination: prev.destination ? `${prev.destination}, ${cleanTagText(tag, language)}` : cleanTagText(tag, language) }))} className="bg-gray-50 border border-gray-100 text-gray-600 px-3 py-1.5 rounded-xl text-[12px] font-bold transition hover:bg-brand-primary/10 active:scale-95">{tag}</button>
+                                                    <button key={idx} onClick={() => setFormData(prev => ({ ...prev, destination: prev.destination ? `${prev.destination}, ${cleanTagText(tag, language)}` : cleanTagText(tag, language) }))} className="bg-[#121212] border border-white/5 text-spotify-text-muted px-3 py-1.5 rounded-xl text-[12px] font-bold transition hover:bg-spotify-green/10 hover:text-white active:scale-95">{tag}</button>
                                                 ))}
                                             </div>
                                         </div>
@@ -1151,15 +1245,15 @@ export default function Home() {
                                 {/* 🌟 2단계: 날짜 선택 */}
                                 {step === 2 && (
                                     <div className="space-y-6 animate-in slide-in-from-right-5 fade-in duration-300">
-                                        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                                        <div className="bg-gradient-to-br from-white/12 to-white/3 backdrop-blur-md p-6 rounded-3xl shadow-sm border border-white/10 text-white">
                                             <div className="flex items-center justify-between mb-4">
-                                                <label className="flex items-center gap-2 text-sm font-bold text-gray-500"><Calendar size={16} className="text-brand-primary" /> {translations[language].label_when}</label>
-                                                <button onClick={() => handleVoiceInput('date')} className={`p-2 rounded-full ${listeningField === 'date' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={16} /></button>
+                                                <label className="flex items-center gap-2 text-sm font-bold text-spotify-text-muted"><Calendar size={16} className="text-spotify-green" /> {translations[language].label_when}</label>
+                                                <button onClick={() => handleVoiceInput('date')} className={`p-2 rounded-full ${listeningField === 'date' ? 'bg-spotify-green text-black animate-pulse' : 'bg-[#121212] text-spotify-text-muted'}`}><Mic size={16} /></button>
                                             </div>
-                                            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 mb-2">
-                                                <DatePicker selectsRange={true} startDate={startDate} endDate={endDate} onChange={handleDateChange} minDate={new Date()} locale={language === 'en' ? enUS : ko} dateFormat="yyyy.MM.dd" placeholderText={translations[language].placeholder_date} className="w-full text-lg font-black bg-transparent outline-none cursor-pointer text-gray-800" wrapperClassName="w-full" />
+                                            <div className="bg-[#121212] p-4 rounded-2xl border border-white/5 mb-2 text-white">
+                                                <DatePicker selectsRange={true} startDate={startDate} endDate={endDate} onChange={handleDateChange} minDate={new Date()} locale={language === 'en' ? enUS : ko} dateFormat="yyyy.MM.dd" placeholderText={translations[language].placeholder_date} className="w-full text-lg font-black bg-transparent outline-none cursor-pointer text-white placeholder:text-spotify-text-muted" wrapperClassName="w-full" />
                                             </div>
-                                            <p className="text-[10px] text-gray-400 font-bold px-1">달력에서 출발일과 도착일을 연속 터치하여 여행 기간을 지정하세요.</p>
+                                            <p className="text-[10px] text-spotify-text-muted font-bold px-1">달력에서 출발일과 도착일을 연속 터치하여 여행 기간을 지정하세요.</p>
                                         </div>
                                     </div>
                                 )}
@@ -1167,35 +1261,35 @@ export default function Home() {
                                 {/* 🌟 3단계: 동행자 및 여행 스타일 */}
                                 {step === 3 && (
                                     <div className="space-y-6 animate-in slide-in-from-right-5 fade-in duration-300">
-                                        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-5">
+                                        <div className="bg-gradient-to-br from-white/12 to-white/3 backdrop-blur-md p-6 rounded-3xl shadow-sm border border-white/10 text-white space-y-5">
                                             <div>
                                                 <div className="flex items-center justify-between mb-3">
-                                                    <label className="text-sm font-bold text-gray-500 block px-1">{translations[language].label_companion}</label>
-                                                    <button onClick={() => handleVoiceInput('companion')} className={`p-1.5 rounded-full ${listeningField === 'companion' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={14} /></button>
+                                                    <label className="text-sm font-bold text-spotify-text-muted block px-1">{translations[language].label_companion}</label>
+                                                    <button onClick={() => handleVoiceInput('companion')} className={`p-1.5 rounded-full ${listeningField === 'companion' ? 'bg-spotify-green text-black animate-pulse' : 'bg-[#121212] text-spotify-text-muted'}`}><Mic size={14} /></button>
                                                 </div>
                                                 <div className="grid grid-cols-5 gap-2">
                                                     {companionOptions.map((opt) => (
-                                                        <button key={opt.id} onClick={() => setFormData({ ...formData, companion: opt.id })} className={`flex flex-col items-center justify-center py-3 rounded-2xl transition-all gap-1 ${formData.companion === opt.id ? 'bg-brand-primary text-white shadow-md scale-105' : 'bg-gray-50 text-gray-400 hover:bg-gray-100/50'}`}>
+                                                        <button key={opt.id} onClick={() => setFormData({ ...formData, companion: opt.id })} className={`flex flex-col items-center justify-center py-3 rounded-2xl transition-all gap-1 border border-transparent ${formData.companion === opt.id ? 'bg-spotify-green text-black font-extrabold shadow-md scale-105' : 'bg-[#121212] text-spotify-text-muted hover:bg-white/5 border-white/5'}`}>
                                                             {opt.icon} <span className="text-[10px] font-black break-keep">{language === 'en' ? opt.enLabel : opt.label}</span>
                                                         </button>
                                                     ))}
                                                 </div>
                                             </div>
 
-                                            <div className="border-t border-gray-100 pt-4">
+                                            <div className="border-t border-white/5 pt-4">
                                                 <div className="flex items-center gap-2 mb-3">
-                                                    <label className="text-sm font-bold text-gray-500 px-1">{translations[language].label_style}</label>
-                                                    <button onClick={() => handleVoiceInput('tourType')} className={`p-1.5 rounded-full ${listeningField === 'tourType' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={14} /></button>
+                                                    <label className="text-sm font-bold text-spotify-text-muted px-1">{translations[language].label_style}</label>
+                                                    <button onClick={() => handleVoiceInput('tourType')} className={`p-1.5 rounded-full ${listeningField === 'tourType' ? 'bg-spotify-green text-black animate-pulse' : 'bg-[#121212] text-spotify-text-muted'}`}><Mic size={14} /></button>
                                                 </div>
                                                 <div className="grid grid-cols-3 gap-2 mb-3">
                                                     {tourOptions.map((option) => (
-                                                        <button key={option.id} onClick={() => setFormData({ ...formData, tourType: option.id })} className={`py-3 px-2 rounded-2xl border transition-all flex flex-col items-center text-center cursor-pointer ${formData.tourType === option.id ? 'bg-white border-brand-primary text-brand-primary shadow-md ring-1 ring-brand-primary scale-105' : 'bg-white border-gray-100 text-gray-400 hover:bg-gray-50'}`}>
+                                                        <button key={option.id} onClick={() => setFormData({ ...formData, tourType: option.id })} className={`py-3 px-2 rounded-2xl border transition-all flex flex-col items-center text-center cursor-pointer ${formData.tourType === option.id ? 'bg-spotify-green border-spotify-green text-black font-extrabold shadow-md scale-105' : 'bg-[#121212] border-white/5 text-spotify-text-muted hover:bg-white/5'}`}>
                                                             <span className="font-bold text-xs sm:text-sm mb-1">{language === 'en' ? option.enLabel : option.label}</span>
                                                             <span className="text-[9px] opacity-75 leading-tight">{language === 'en' ? option.enDesc : option.desc}</span>
                                                         </button>
                                                     ))}
                                                 </div>
-                                                <button onClick={toggleLuxuryMode} className={`w-full py-3.5 rounded-2xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 border ${isLuxury ? "bg-amber-500 text-white shadow-lg border-amber-600" : "bg-gray-50 text-gray-500 hover:bg-gray-100"}`}>
+                                                <button onClick={toggleLuxuryMode} className={`w-full py-3.5 rounded-2xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 border border-transparent ${isLuxury ? "bg-amber-500 text-white shadow-lg font-extrabold" : "bg-[#121212] text-spotify-text-muted border-white/5 hover:bg-white/5"}`}>
                                                     {isLuxury ? <><Crown size={16} fill="white" /> {translations[language].btn_luxury_on}</> : <><Crown size={16} /> {translations[language].btn_luxury_off}</>}
                                                 </button>
                                             </div>
@@ -1206,50 +1300,50 @@ export default function Home() {
                                 {/* 🌟 4단계: 예산, 인원 및 안심 요청사항 */}
                                 {step === 4 && (
                                     <div className="space-y-6 animate-in slide-in-from-right-5 fade-in duration-300">
-                                        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-5">
-                                            <div className={`p-4 rounded-2xl border transition-all ${isLuxury ? "bg-amber-50 border-amber-200" : "bg-gray-50 border-gray-100"}`}>
+                                        <div className="bg-gradient-to-br from-white/12 to-white/3 backdrop-blur-md p-6 rounded-3xl shadow-sm border border-white/10 text-white space-y-5">
+                                            <div className={`p-4 rounded-2xl border transition-all ${isLuxury ? "bg-[#121212]/50 border-amber-500/20" : "bg-[#121212] border-white/5"}`}>
                                                 <div className="flex gap-4 items-center justify-between">
                                                     {isLuxury ? (
                                                         <div className="flex-1">
-                                                            <div className="flex items-center gap-2 text-amber-600 font-bold mb-1"><Sparkles size={16} /> VIP 예산</div>
-                                                            <p className="text-xs text-gray-500">무제한 (AI 최적화)</p>
+                                                            <div className="flex items-center gap-2 text-amber-500 font-bold mb-1"><Sparkles size={16} /> VIP 예산</div>
+                                                            <p className="text-xs text-spotify-text-muted">무제한 (AI 최적화)</p>
                                                         </div>
                                                     ) : (
                                                         <div className="flex-1">
                                                             <div className="flex items-center gap-1 mb-1">
-                                                                <label className="text-xs font-bold text-gray-500 flex items-center gap-1"><Wallet size={12} /> {translations[language].label_budget}</label>
-                                                                <button onClick={() => handleVoiceInput('budget')} className={`p-1 rounded-full ${listeningField === 'budget' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={12} /></button>
+                                                                <label className="text-xs font-bold text-spotify-text-muted flex items-center gap-1"><Wallet size={12} /> {translations[language].label_budget}</label>
+                                                                <button onClick={() => handleVoiceInput('budget')} className={`p-1 rounded-full ${listeningField === 'budget' ? 'bg-spotify-green text-black animate-pulse' : 'bg-[#121212] text-spotify-text-muted'}`}><Mic size={12} /></button>
                                                             </div>
                                                             <div className="flex items-end gap-1 mb-2">
-                                                                <span className="text-xl font-bold text-brand-primary">
+                                                                <span className="text-xl font-bold text-spotify-green">
                                                                     {language === 'en' ? (formData.budget * 10000).toLocaleString() : formData.budget.toLocaleString()}
                                                                 </span>
-                                                                <span className="text-sm text-gray-400">{language === 'en' ? ' KRW' : '만원'}</span>
+                                                                <span className="text-sm text-spotify-text-muted">{language === 'en' ? ' KRW' : '만원'}</span>
                                                             </div>
-                                                            <input type="range" name="budget" min="50" max="1000" step="10" value={formData.budget} onChange={handleInputChange} className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-primary" />
+                                                            <input type="range" name="budget" min="50" max="1000" step="10" value={formData.budget} onChange={handleInputChange} className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-spotify-green" />
                                                         </div>
                                                     )}
-                                                    <div className="w-[1px] h-10 bg-gray-200"></div>
+                                                    <div className="w-[1px] h-10 bg-white/10"></div>
                                                     <div className="flex flex-col items-center">
                                                         <div className="flex items-center gap-1 mb-1">
-                                                            <label className="text-xs font-bold text-gray-500">{translations[language].label_people}</label>
-                                                            <button onClick={() => handleVoiceInput('people')} className={`p-1 rounded-full ${listeningField === 'people' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={12} /></button>
+                                                            <label className="text-xs font-bold text-spotify-text-muted">{translations[language].label_people}</label>
+                                                            <button onClick={() => handleVoiceInput('people')} className={`p-1 rounded-full ${listeningField === 'people' ? 'bg-spotify-green text-black animate-pulse' : 'bg-[#121212] text-spotify-text-muted'}`}><Mic size={12} /></button>
                                                         </div>
                                                         <div className="flex items-center gap-2">
-                                                            <button onClick={() => updatePeople(-1)} className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 font-bold active:scale-95 transition-all">-</button>
-                                                            <span className="font-bold text-gray-800 w-4 text-center">{formData.people}</span>
-                                                            <button onClick={() => updatePeople(1)} className="w-8 h-8 rounded-full bg-brand-primary text-white font-bold active:scale-95 transition-all">+</button>
+                                                            <button onClick={() => updatePeople(-1)} className="w-8 h-8 rounded-full bg-white/10 text-white font-bold hover:bg-white/20 active:scale-95 transition-all">-</button>
+                                                            <span className="font-bold text-white w-4 text-center">{formData.people}</span>
+                                                            <button onClick={() => updatePeople(1)} className="w-8 h-8 rounded-full bg-spotify-green text-black font-extrabold active:scale-95 transition-all">+</button>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div className="bg-white p-4 rounded-2xl border border-gray-200">
+                                            <div className="bg-[#121212] p-4 rounded-2xl border border-white/5">
                                                 <div className="flex items-center justify-between mb-2">
-                                                    <label className="text-xs font-bold text-gray-400 flex items-center gap-1"><MessageSquare size={12} /> {translations[language].label_request}</label>
-                                                    <button onClick={() => handleVoiceInput('request')} className={`p-1.5 rounded-full ${listeningField === 'request' ? 'bg-brand-secondary text-white animate-pulse' : 'bg-gray-100'}`}><Mic size={14} /></button>
+                                                    <label className="text-xs font-bold text-spotify-text-muted flex items-center gap-1"><MessageSquare size={12} /> {translations[language].label_request}</label>
+                                                    <button onClick={() => handleVoiceInput('request')} className={`p-1.5 rounded-full ${listeningField === 'request' ? 'bg-spotify-green text-black animate-pulse' : 'bg-[#121212] text-spotify-text-muted'}`}><Mic size={14} /></button>
                                                 </div>
-                                                <textarea name="request" value={formData.request} onChange={handleInputChange} placeholder={listeningField === 'request' ? translations[language].msg_listening : translations[language].placeholder_request} className="w-full text-sm font-medium outline-none text-gray-800 resize-none h-24 bg-transparent leading-relaxed" />
+                                                <textarea name="request" value={formData.request} onChange={handleInputChange} placeholder={listeningField === 'request' ? translations[language].msg_listening : translations[language].placeholder_request} className="w-full text-sm font-medium outline-none text-white resize-none h-24 bg-transparent leading-relaxed placeholder:text-spotify-text-muted" />
                                             </div>
                                         </div>
                                     </div>
@@ -1260,56 +1354,61 @@ export default function Home() {
                         {activeTab === 'flights' && (
                             <div className="space-y-6 animate-fadeIn">
                                 <div>
-                                    <h3 className="font-bold text-white text-lg mb-4 flex items-center gap-2 px-1"><Sparkles size={18} className="text-amber-500" /> {translations[language].tab_choices}</h3>
+                                    <h3 className="font-bold text-white text-lg mb-4 flex items-center gap-2 px-1"><Sparkles size={18} className="text-spotify-green" /> {translations[language].tab_choices}</h3>
                                     <div className="flex gap-4 overflow-x-auto pb-6 custom-scrollbar snap-x px-1">
                                         {recommendedTrips.map((trip) => (
-                                            <motion.div key={trip.id} whileTap={{ scale: 0.98 }} onClick={() => handleRecommendedClick(trip)} className="min-w-[180px] h-[260px] rounded-[1.75rem] relative overflow-hidden shadow-2xl cursor-pointer group shrink-0 border border-white/10">
+                                            <motion.div key={trip.id} whileTap={{ scale: 0.98 }} onClick={() => handleRecommendedClick(trip)} className="min-w-[180px] h-[260px] rounded-[1.75rem] relative overflow-hidden shadow-2xl cursor-pointer group shrink-0 border border-white/10 bg-spotify-card">
                                                 <img src={trip.img} alt={trip.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-[#121212]/30 to-transparent" />
 
                                                 {/* 배지 표시 */}
                                                 <div className="absolute top-3 left-3 flex gap-1">
                                                     {trip.isHot && <span className="bg-brand-danger text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">HOT</span>}
-                                                    {trip.isPremium && <span className="bg-brand-accent text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">PREMIUM</span>}
+                                                    {trip.isPremium && <span className="bg-amber-500 text-black text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">PREMIUM</span>}
                                                 </div>
 
-                                                <div className="absolute bottom-0 left-0 right-0 p-5 text-left">
-                                                    <span className="text-[10px] font-black text-amber-400 mb-1.5 block uppercase tracking-wider">{language === 'en' ? (trip.enCity || trip.city) : trip.city}</span>
+                                                {/* Spotify 스타일 호버 재생 버튼 */}
+                                                <div className="absolute bottom-4 right-4 bg-spotify-green text-black rounded-full w-10 h-10 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 pointer-events-auto">
+                                                    <Sparkles size={16} fill="black" />
+                                                </div>
+
+                                                <div className="absolute bottom-0 left-0 right-0 p-5 text-left pr-14">
+                                                    <span className="text-[10px] font-black text-spotify-green mb-1.5 block uppercase tracking-wider">{language === 'en' ? (trip.enCity || trip.city) : trip.city}</span>
                                                     <h4 className="text-white font-bold text-base leading-snug mb-1.5 line-clamp-2">{language === 'en' ? (trip.enTitle || trip.title) : trip.title}</h4>
-                                                    <p className="text-[10px] text-gray-300 font-medium line-clamp-2 opacity-80 leading-relaxed">{language === 'en' ? (trip.enDesc || trip.desc || "Meow Pro Special") : (trip.desc || "냥프로 전용 일정")}</p>
+                                                    <p className="text-[10px] text-spotify-text-muted font-medium line-clamp-2 opacity-80 leading-relaxed">{language === 'en' ? (trip.enDesc || trip.desc || "Meow Pro Special") : (trip.desc || "냥프로 전용 일정")}</p>
                                                 </div>
                                             </motion.div>
                                         ))}
                                     </div>
                                 </div>
 
-                                <div className="bg-brand-primary/5 p-4 rounded-3xl border border-brand-primary/10">
-                                    <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2 mb-4"><Plane className="text-brand-primary" size={20} /> {translations[language].tab_flight}</h3>
+                                <div className="bg-spotify-card p-5 rounded-3xl border border-white/10 shadow-xl">
+                                    <h3 className="font-bold text-white text-lg flex items-center gap-2 mb-4"><Plane className="text-spotify-green" size={20} /> {translations[language].tab_flight}</h3>
                                     {mySchedules.length > 0 ? (
                                         <div className="space-y-3">
                                             {mySchedules.map((item) => (
-                                                <motion.div key={item.id} whileTap={{ scale: 0.98 }} onClick={() => handleTripClick(item)} className="bg-white p-4 rounded-2xl border border-brand-primary/10 shadow-sm cursor-pointer hover:border-brand-primary/30 transition-all relative group overflow-hidden">
-                                                    <button onClick={(e) => handleDeleteTrip(e, item.id, item.destination || item.title)} className="absolute top-4 right-4 z-20 p-2 bg-gray-50 rounded-full text-gray-400 hover:text-brand-danger opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
+                                                <motion.div key={item.id} whileTap={{ scale: 0.98 }} onClick={() => handleTripClick(item)} className="bg-[#121212] p-4 rounded-2xl border border-white/5 shadow-sm cursor-pointer hover:border-spotify-green/30 transition-all relative group overflow-hidden">
+                                                    <button onClick={(e) => handleDeleteTrip(e, item.id, item.destination || item.title)} className="absolute top-4 right-4 z-20 p-2 bg-white/10 rounded-full text-spotify-text-muted hover:text-brand-danger opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
                                                     <div className="flex justify-between items-center">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center text-xl shrink-0">✈️</div>
+                                                            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-xl shrink-0">✈️</div>
                                                             <div>
-                                                                <h4 className="font-bold text-gray-800 text-sm truncate">
+                                                                <h4 className="font-bold text-white text-sm truncate">
                                                                     {language === 'en' ? `Trip to ${item.destination || item.title}` : `${item.destination || item.title} 여행`}
                                                                 </h4>
-                                                                <div className="text-[10px] text-gray-500 flex items-center gap-1">
+                                                                <div className="text-[10px] text-spotify-text-muted flex items-center gap-1 mt-0.5">
                                                                     <span>{item.startDate || translations[language].schedule_tbd}</span>
-                                                                    {item.iata && <span className="bg-gray-100 px-1.5 rounded text-gray-400 font-medium">{item.iata}</span>}
+                                                                    {item.iata && <span className="bg-white/10 px-1.5 rounded text-white/55 font-medium">{item.iata}</span>}
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <ChevronRight className="text-gray-300 group-hover:text-brand-primary transition-colors" size={20} />
+                                                        <ChevronRight className="text-spotify-text-muted group-hover:text-spotify-green transition-colors" size={20} />
                                                     </div>
                                                 </motion.div>
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="text-center py-8 text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200"><p className="text-xs">{translations[language].schedule_empty}</p></div>
+                                        <div className="text-center py-8 text-spotify-text-muted bg-[#121212] rounded-2xl border border-dashed border-white/10"><p className="text-xs">{translations[language].schedule_empty}</p></div>
                                     )}
                                 </div>
                             </div>
@@ -1317,38 +1416,38 @@ export default function Home() {
                     </div>
                 </div>
 
-                {/* 항공권 오버레이 */}
+                {/* 항공권 오버레이 (스포티파이 테마 다크화) */}
                 <AnimatePresence>
                     {selectedTrip && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 bg-gray-100 flex flex-col">
-                            <div className="bg-white px-5 py-4 flex items-center gap-3 shadow-sm z-10 shrink-0">
-                                <button onClick={() => setSelectedTrip(null)} className="p-1 rounded-full hover:bg-gray-100"><ArrowRight className="rotate-180" size={24} /></button>
-                                <h3 className="font-bold text-lg">{language === 'en' ? `Flights to ${selectedTrip.destination}` : `${selectedTrip.destination} 항공권`}</h3>
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 bg-spotify-dark flex flex-col text-white">
+                            <div className="bg-spotify-card px-5 py-4 flex items-center gap-3 shadow-sm z-10 shrink-0 border-b border-white/10">
+                                <button onClick={() => setSelectedTrip(null)} className="p-1 rounded-full hover:bg-white/10"><ArrowRight className="rotate-180 text-white" size={24} /></button>
+                                <h3 className="font-bold text-lg text-white">{language === 'en' ? `Flights to ${selectedTrip.destination}` : `${selectedTrip.destination} 항공권`}</h3>
                             </div>
                             <div className="flex-1 overflow-y-auto p-4 space-y-3">
                                 {isSearching ? (
-                                    [1, 2, 3].map(i => (<div key={i} className="bg-white h-32 rounded-2xl animate-pulse" />))
+                                    [1, 2, 3].map(i => (<div key={i} className="bg-spotify-card h-32 rounded-2xl animate-pulse border border-white/5" />))
                                 ) : flightResults.length > 0 ? (
                                     flightResults.map((flight) => (
-                                        <div key={flight.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 relative">
+                                        <div key={flight.id} className="bg-spotify-card p-4 rounded-2xl shadow-sm border border-white/10 relative text-white">
                                             <div className="flex justify-between items-start mb-4">
-                                                <div className="flex items-center gap-2"><span className="font-bold text-sm text-gray-700">{flight.carrierCode}</span></div>
+                                                <div className="flex items-center gap-2"><span className="font-bold text-sm text-spotify-text-muted">{flight.carrierCode}</span></div>
                                                 <div className="text-right">
-                                                    <span className="block text-lg font-black text-brand-primary">
+                                                    <span className="block text-lg font-black text-spotify-green">
                                                         {language === 'en' ? `from ₩${flight.price.toLocaleString()}` : `${flight.price.toLocaleString()}원~`}
                                                     </span>
                                                 </div>
                                             </div>
                                             <div className="flex gap-2 mt-4">
-                                                <button onClick={() => window.open(flight.linkTripMobile || flight.linkTrip || flight.linkGlobal, '_blank')} className="flex-1 py-3 bg-[#2467F5] text-white font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all text-sm sm:text-base">{translations[language].flight_btn_trip}</button>
-                                                <button onClick={() => window.open(flight.linkGlobal, '_blank')} className="flex-1 py-3 bg-brand-accent text-white font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all text-sm sm:text-base">{translations[language].flight_btn_avia}</button>
+                                                <button onClick={() => window.open(flight.linkTripMobile || flight.linkTrip || flight.linkGlobal, '_blank')} className="flex-1 py-3 bg-[#2467F5] hover:bg-[#1b4ec4] text-white font-extrabold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all text-sm sm:text-base">Trip.com 예약</button>
+                                                <button onClick={() => window.open(flight.linkGlobal, '_blank')} className="flex-1 py-3 bg-white/10 hover:bg-white/20 text-white font-extrabold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all text-sm sm:text-base">Aviasales 예약</button>
                                             </div>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="text-center py-16 text-gray-400 flex flex-col items-center">
+                                    <div className="text-center py-16 text-spotify-text-muted flex flex-col items-center">
                                         <p className="font-bold mb-2">{translations[language].flight_empty}</p>
-                                        <button onClick={() => { const t = selectedTrip; setSelectedTrip(null); setManualAirport({ show: true, trip: t, searchStr: "", error: "" }); }} className="px-4 py-2 bg-brand-primary/10 text-brand-primary font-bold rounded-xl mt-4">{translations[language].flight_empty_btn}</button>
+                                        <button onClick={() => { const t = selectedTrip; setSelectedTrip(null); setManualAirport({ show: true, trip: t, searchStr: "", error: "" }); }} className="px-4 py-2 bg-spotify-green/20 text-spotify-green border border-spotify-green/30 font-bold rounded-xl mt-4 hover:bg-spotify-green/30">{translations[language].flight_empty_btn}</button>
                                     </div>
                                 )}
                             </div>
@@ -1356,11 +1455,11 @@ export default function Home() {
                     )}
                 </AnimatePresence>
 
-                {/* 하단 생성 버튼 */}
+                {/* 하단 생성 버튼 — 스포티파이 스타일 오버레이 및 둥근 초록/골드 버튼 */}
                 {activeTab === 'create' && (
-                    <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-white via-white/95 to-transparent z-30 flex gap-3">
+                    <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-spotify-dark via-spotify-dark/95 to-transparent z-30 flex gap-3">
                         {step > 1 && (
-                            <button onClick={() => setStep(step - 1)} className="px-6 py-4 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-sm sm:text-base rounded-2xl active:scale-95 transition-all cursor-pointer">
+                            <button onClick={() => setStep(step - 1)} className="px-6 py-4 bg-white/10 hover:bg-white/20 text-white font-bold text-sm sm:text-base rounded-2xl active:scale-95 transition-all cursor-pointer border border-white/5">
                                 이전
                             </button>
                         )}
@@ -1378,7 +1477,7 @@ export default function Home() {
                             } else {
                                 generatePlan();
                             }
-                        }} disabled={loading} className={`flex-1 py-4 rounded-2xl font-bold text-base sm:text-lg shadow-xl transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer ${isLuxury ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white" : "bg-gradient-to-r from-brand-primary to-brand-secondary text-white"}`}>
+                        }} disabled={loading} className={`flex-1 py-4 rounded-2xl font-black text-base sm:text-lg shadow-xl transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer ${isLuxury ? "bg-amber-400 text-black border border-amber-500 hover:bg-amber-500 shadow-amber-400/20" : "bg-spotify-green hover:bg-spotify-green-hover text-black shadow-spotify-green/20"}`}>
                             {loading ? (
                                 <><Sparkles className="animate-spin" size={20} /> {loadingText}</>
                             ) : step < 4 ? (

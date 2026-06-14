@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     MessageCircle, Share2, Download, ExternalLink, BedDouble, Loader2,
     Sun, Lightbulb, RotateCcw, Pencil, Check, Trash2, Plus,
@@ -9,7 +10,8 @@ import {
     Calendar, BrainCircuit, Save, User, RefreshCw, ChevronUp, ChevronDown, Home,
     UserPlus, X, MessageSquare, Sparkles, ChevronRight, ChevronLeft, CheckSquare, Square, Send, Wallet,
     ShieldCheck, PhoneCall,
-    Car, Footprints, Train, Receipt
+    Car, Footprints, Train, Receipt,
+    Compass, Map
 } from 'lucide-react';
 
 import { db, auth } from '../lib/firebase';
@@ -20,6 +22,13 @@ import { getApiUrl } from '../utils/api';
 
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
+
+const backgroundImages = [
+    "/1.jpg",
+    "/2.jpg",
+    "/3.jpg",
+    "/4.JPG",
+];
 
 const getTripLink = (keyword, destination, language) => {
     // ✨ 검색어 정제: 괄호 안의 설명이나 불필요한 수식어 제거
@@ -58,11 +67,38 @@ const getKlookLink = (keyword, language) => {
             .replace(/시간/g, 'h');
     };
 
+const getThemeGradient = (theme) => {
+    const t = theme?.toLowerCase() || '';
+    if (t.includes('힐링') || t.includes('휴양') || t.includes('relax')) return '#14665f';
+    if (t.includes('액티비티') || t.includes('익스트림') || t.includes('adventure')) return '#8f4e0d';
+    if (t.includes('맛집') || t.includes('식도락') || t.includes('food')) return '#8c182c';
+    if (t.includes('문화') || t.includes('역사') || t.includes('culture')) return '#253287';
+    if (t.includes('쇼핑') || t.includes('shopping')) return '#821d70';
+    return '#146631';
+};
+
+const getInfoModalGradient = (tab) => {
+    switch(tab) {
+        case 'budget': return '#15548c';
+        case 'hotels': return '#4d4f52';
+        case 'tips': return '#571370';
+        default: return '#121212';
+    }
+};
+
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 const DAY_COLORS = ['#FF4B4B', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
 
 export default function AIResult({ data, userInfo, tripId, onReset, language = 'ko' }) {
     const router = useRouter();
+    const [bgIndex, setBgIndex] = useState(0);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setBgIndex((prev) => (prev + 1) % backgroundImages.length);
+        }, 5000);
+        return () => clearInterval(timer);
+    }, []);
 
     const [tripPlan, setTripPlan] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -88,17 +124,28 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const [safetyFilterActive, setSafetyFilterActive] = useState(false);
     const [customToast, setCustomToast] = useState(null);
 
-    const isSavingRef = useRef(false);
-    const isDragging = useRef(false);
-    const hasAutoFixed = useRef(false);
-    const mapRef = useRef(null);
-    const googleMapRef = useRef(null);
-    const markersRef = useRef([]);
-    const polylineRef = useRef([]);
-    const scrollContainerRef = useRef(null);
-    const observerRef = useRef(null);
-    const dialRef = useRef(null);
+    // Bottom Sheet State Variables
+    const [sheetState, setSheetState] = useState('half'); // 'min' | 'half' | 'full'
+    const [mapType, setMapType] = useState('roadmap');
+    const [recommendLoading, setRecommendLoading] = useState(false);
+    const [recommendInput, setRecommendInput] = useState('');
+
     const [selectedIndex, setSelectedIndex] = useState(0);
+
+    const flatPlaces = React.useMemo(() => {
+        if (!tripPlan || !tripPlan.itinerary) return [];
+        let list = [];
+        tripPlan.itinerary.forEach((dayItem, dIdx) => {
+            dayItem.places.forEach((place, pIdx) => {
+                list.push({ dayIdx: dIdx, placeIdx: pIdx, day: dayItem.day, place: place, dayColor: DAY_COLORS[dIdx % DAY_COLORS.length] });
+            });
+        });
+        return list;
+    }, [tripPlan]);
+
+    const currentDayIdx = React.useMemo(() => {
+        return flatPlaces[selectedIndex]?.dayIdx ?? 0;
+    }, [flatPlaces, selectedIndex]);
 
     const handleSelectPlace = (idx) => {
         setSelectedIndex(idx);
@@ -112,20 +159,182 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
             }
         }
     };
+
+    const handleRecenterMap = () => {
+        if (!googleMapRef.current || !window.google || !tripPlan) return;
+        const bounds = new window.google.maps.LatLngBounds();
+        const activeDayItem = tripPlan.itinerary[currentDayIdx];
+        if (!activeDayItem) return;
+        const validPlaces = activeDayItem.places.filter(p => p.coordinates?.lat && p.coordinates?.lng);
+        if (validPlaces.length === 0) return;
+        
+        validPlaces.forEach(p => bounds.extend(p.coordinates));
+        googleMapRef.current.fitBounds(bounds);
+        
+        const listener = googleMapRef.current.addListener('bounds_changed', () => {
+            if (googleMapRef.current.getZoom() > 17) {
+                googleMapRef.current.setZoom(16);
+            }
+            window.google.maps.event.removeListener(listener);
+        });
+        triggerCustomToast(language === 'en' ? "Map recentered to active day's locations!" : "오늘 일정에 맞춰 지도를 정렬했습니다!");
+    };
+
+    const handleToggleMapType = () => {
+        if (!googleMapRef.current || !window.google) return;
+        const nextType = mapType === 'roadmap' ? 'hybrid' : 'roadmap';
+        setMapType(nextType);
+        googleMapRef.current.setMapTypeId(
+            nextType === 'roadmap' 
+                ? window.google.maps.MapTypeId.ROADMAP 
+                : window.google.maps.MapTypeId.HYBRID
+        );
+        triggerCustomToast(language === 'en' ? `Map style changed to ${nextType}!` : `지도 스타일이 ${nextType === 'roadmap' ? '일반' : '위성'}으로 변경되었습니다!`);
+    };
+
+
+
+    const transitSegments = React.useMemo(() => {
+        if (!tripPlan || !tripPlan.itinerary) return [];
+        const activeDayItem = tripPlan.itinerary[currentDayIdx];
+        if (!activeDayItem) return [];
+
+        const segments = [];
+        activeDayItem.places.forEach((place, idx) => {
+            if (idx === activeDayItem.places.length - 1) return;
+            const transit = place.transitToNext;
+            if (!transit) return;
+
+            let type = 'drive';
+            let icon = '🚗';
+            let label = language === 'en' ? 'Drive' : '이동';
+            
+            if (transit.includes('도보') || transit.toLowerCase().includes('walk') || transit.includes('🚶')) {
+                type = 'walk';
+                icon = '🚶';
+                label = language === 'en' ? 'Walk' : '도보';
+            } else if (transit.includes('버스') || transit.includes('지하철') || transit.includes('대중교통') || transit.toLowerCase().includes('transit') || transit.toLowerCase().includes('bus') || transit.includes('🚌') || transit.includes('🚇')) {
+                type = 'transit';
+                icon = '🚌';
+                label = language === 'en' ? 'Transit' : '대중교통';
+            }
+
+            const timeMatch = transit.match(/\d+/);
+            const duration = timeMatch ? `${timeMatch[0]}${language === 'en' ? 'm' : '분'}` : (language === 'en' ? '15m' : '15분');
+
+            segments.push({ type, icon, label, duration, raw: transit });
+        });
+
+        return segments;
+    }, [tripPlan, currentDayIdx, language]);
+
+    const totalTransitTime = React.useMemo(() => {
+        let total = 0;
+        transitSegments.forEach(seg => {
+            const time = parseInt(seg.duration);
+            if (!isNaN(time)) total += time;
+        });
+        return total > 0 ? `${total}${language === 'en' ? 'm' : '분'}` : (language === 'en' ? '30m' : '30분');
+    }, [transitSegments, language]);
+
+    const handleAddAIRecommendation = async (categoryStr) => {
+        if (!categoryStr || categoryStr.trim() === '') return;
+        const dest = tripPlan.destination || userInfo?.destination || "Seoul";
+        const cleanDest = dest.split('#')[0].trim();
+        setRecommendLoading(true);
+        triggerCustomToast(language === 'en' ? `Asking AI for safety-first ${categoryStr} recommendations...` : `AI에게 안심 ${categoryStr} 추천을 요청하고 있습니다...`);
+        
+        try {
+            const response = await fetch('/api/recommend', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    destination: cleanDest,
+                    category: categoryStr,
+                    language: language
+                })
+            });
+            
+            const resData = await response.json();
+            if (!resData.result || !resData.result.places) {
+                throw new Error("Invalid response format");
+            }
+
+            const recommendedPlaces = resData.result.places;
+            const newPlan = { ...tripPlan };
+            const activeDayItem = newPlan.itinerary[currentDayIdx];
+            
+            if (activeDayItem) {
+                const startIndex = activeDayItem.places.length;
+                recommendedPlaces.forEach((p, idx) => {
+                    const newPlace = {
+                        order: startIndex + idx + 1,
+                        name: p.name,
+                        category: p.category || categoryStr,
+                        description: p.description || p.reason || "",
+                        reason: p.reason || "",
+                        address: p.address || "",
+                        phone: p.phone || "",
+                        coordinates: {
+                            lat: parseFloat(p.lat) || 37.5665,
+                            lng: parseFloat(p.lng) || 126.9780
+                        },
+                        transitToNext: ""
+                    };
+                    
+                    if (activeDayItem.places.length > 0) {
+                        const lastPlace = activeDayItem.places[activeDayItem.places.length - 1];
+                        lastPlace.transitToNext = travelMode === 'WALKING' 
+                            ? (language === 'en' ? "🚶‍♂️ 10 min walk" : "🚶‍♂️ 도보 10분") 
+                            : (language === 'en' ? "🚗 15 min drive" : "🚗 이동 15분");
+                    }
+                    
+                    activeDayItem.places.push(newPlace);
+                });
+
+                if (activeDayItem.places.length > 0) {
+                    activeDayItem.places[activeDayItem.places.length - 1].transitToNext = "";
+                }
+
+                setTripPlan(newPlan);
+                
+                if (tripId) {
+                    const tripRef = doc(db, "trips", tripId);
+                    const sanitizedItinerary = JSON.parse(JSON.stringify(newPlan.itinerary));
+                    await updateDoc(tripRef, {
+                        itinerary: sanitizedItinerary,
+                        isEdited: true,
+                        updatedAt: serverTimestamp()
+                    });
+                }
+                
+                triggerCustomToast(language === 'en' ? `Added 3 recommendations to Day ${currentDayIdx + 1}! Check the map. 📍` : `Day ${currentDayIdx + 1} 일정에 3개의 추천 장소가 추가되었습니다! 지도를 확인하세요. 📍`);
+                setRecommendInput("");
+            }
+        } catch (err) {
+            console.error("Failed to fetch recommendation:", err);
+            triggerCustomToast(language === 'en' ? "Failed to fetch AI recommendations." : "AI 추천 장소를 가져오는 데 실패했습니다.");
+        } finally {
+            setRecommendLoading(false);
+        }
+    };
+
+    const isSavingRef = useRef(false);
+    const isDragging = useRef(false);
+    const hasAutoFixed = useRef(false);
+    const mapRef = useRef(null);
+    const googleMapRef = useRef(null);
+    const markersRef = useRef([]);
+    const polylineRef = useRef([]);
+    const scrollContainerRef = useRef(null);
+    const observerRef = useRef(null);
+    const dialRef = useRef(null);
+
     const infoWindowRef = useRef(null);
     const [showInfoModal, setShowInfoModal] = useState(false);
     const [infoModalTab, setInfoModalTab] = useState('budget');
 
-    const flatPlaces = React.useMemo(() => {
-        if (!tripPlan || !tripPlan.itinerary) return [];
-        let list = [];
-        tripPlan.itinerary.forEach((dayItem, dIdx) => {
-            dayItem.places.forEach((place, pIdx) => {
-                list.push({ dayIdx: dIdx, placeIdx: pIdx, day: dayItem.day, place: place, dayColor: DAY_COLORS[dIdx % DAY_COLORS.length] });
-            });
-        });
-        return list;
-    }, [tripPlan]);
+
 
     useEffect(() => {
         if (!window.google || !googleMapRef.current || flatPlaces.length === 0 || markersRef.current.length === 0) return;
@@ -343,9 +552,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
         return (R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)))).toFixed(1);
     };
 
-    const currentDayIdx = React.useMemo(() => {
-        return flatPlaces[selectedIndex]?.dayIdx ?? 0;
-    }, [flatPlaces, selectedIndex]);
+
 
     useEffect(() => {
         if (!tripPlan || !tripPlan.itinerary) return;
@@ -921,6 +1128,12 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const safetyAdvice = tripPlan.safetyAdvice || null; // 🛡️ 안전 정보 추가
     const destName = tripPlan.destination?.split('#')[0]?.trim() || "여행지";
 
+    const toggleSheetState = () => {
+        if (sheetState === 'min') setSheetState('half');
+        else if (sheetState === 'half') setSheetState('full');
+        else setSheetState('min');
+    };
+
     return (
         <div className="fixed inset-0 w-full z-[100] bg-[#030712] flex items-center justify-center font-sans overflow-hidden selection:bg-indigo-500/30">
             <div id={CAPTURE_ID} className="w-full max-w-[480px] h-full sm:h-[92vh] sm:rounded-[48px] bg-black relative shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col border border-white/10 ring-1 ring-white/5">
@@ -933,7 +1146,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {/* Top Overlay */}
                 <div className="absolute top-0 left-0 w-full p-6 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none z-10 flex flex-col items-start pt-10 sm:pt-6">
                     {theme && (
-                        <span className="px-2 py-1 bg-brand-primary text-white text-xs font-black rounded-lg mb-2 shadow-sm">
+                        <span className="px-2 py-1 bg-spotify-green text-black text-xs font-black rounded-lg mb-2 shadow-sm">
                             {theme}
                         </span>
                     )}
@@ -941,11 +1154,11 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 </div>
 
                 {/* Right Top Buttons - Unified Vertical Toolbar */}
-                <div className="absolute top-8 right-4 sm:right-6 z-50 pointer-events-auto flex flex-col items-center bg-black/40 backdrop-blur-xl border border-white/20 rounded-[32px] p-2 shadow-2xl gap-2">
-                    <button onClick={() => router.push('/mypage')} className="p-2.5 rounded-full text-white hover:bg-white/20 transition-colors" title={language === 'en' ? "My Page" : "마이페이지"}>
+                <div className="absolute top-8 right-4 sm:right-6 z-50 pointer-events-auto flex flex-col items-center bg-[#121212]/80 backdrop-blur-xl border border-white/10 rounded-[32px] p-2 shadow-2xl gap-2">
+                    <button onClick={() => router.push('/mypage')} className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" title={language === 'en' ? "My Page" : "마이페이지"}>
                         <User size={20} />
                     </button>
-                    <button onClick={() => setShowInfoModal(true)} className="p-2.5 rounded-full text-brand-accent hover:bg-white/20 transition-colors relative" title={language === 'en' ? "Trip Info" : "여행 정보"}>
+                    <button onClick={() => setShowInfoModal(true)} className="p-2.5 rounded-full text-spotify-green hover:bg-white/10 transition-colors relative" title={language === 'en' ? "Trip Info" : "여행 정보"}>
                         <Sparkles size={20} className="animate-pulse" />
                     </button>
                     <button onClick={() => {
@@ -954,253 +1167,467 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         } else {
                             setIsEditMode(!isEditMode);
                         }
-                    }} className={`p-2.5 rounded-full transition-colors ${isEditMode ? 'bg-indigo-500 text-white shadow-lg' : 'text-white hover:bg-white/20'}`} title={language === 'en' ? "Edit Itinerary" : "일정 편집"}>
+                    }} className={`p-2.5 rounded-full transition-colors ${isEditMode ? 'bg-spotify-green text-black shadow-lg font-black' : 'text-white hover:bg-white/10 hover:text-spotify-green'}`} title={language === 'en' ? "Edit Itinerary" : "일정 편집"}>
                         {loadingAction === 'save' ? <Loader2 className="animate-spin" size={20} /> : (isEditMode ? <Check size={20} /> : <Pencil size={20} />)}
                     </button>
 
+
+
                     {!isEditMode && (
                         <>
-                            <div className="w-8 h-[1px] bg-white/20 my-1"></div>
+                            <div className="w-8 h-[1px] bg-white/10 my-1"></div>
 
                             <button
                                 onClick={() => setTravelMode('DRIVING')}
-                                className={`p-2 rounded-full transition-colors ${travelMode === 'DRIVING' ? 'bg-indigo-500 text-white shadow-md' : 'text-gray-300 hover:bg-white/20 hover:text-white'}`}
+                                className={`p-2 rounded-full transition-all ${travelMode === 'DRIVING' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
                                 title={language === 'en' ? "Driving" : "자동차"}
                             >
                                 <Car size={18} />
                             </button>
                             <button
                                 onClick={() => setTravelMode('WALKING')}
-                                className={`p-2 rounded-full transition-colors ${travelMode === 'WALKING' ? 'bg-emerald-500 text-white shadow-md' : 'text-gray-300 hover:bg-white/20 hover:text-white'}`}
+                                className={`p-2 rounded-full transition-all ${travelMode === 'WALKING' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
                                 title={language === 'en' ? "Walking" : "도보"}
                             >
                                 <Footprints size={18} />
                             </button>
                             <button
                                 onClick={() => setTravelMode('TRANSIT')}
-                                className={`p-2 rounded-full transition-colors ${travelMode === 'TRANSIT' ? 'bg-amber-500 text-white shadow-md' : 'text-gray-300 hover:bg-white/20 hover:text-white'}`}
+                                className={`p-2 rounded-full transition-all ${travelMode === 'TRANSIT' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
                                 title={language === 'en' ? "Transit" : "대중교통"}
                             >
                                 <Train size={18} />
                             </button>
 
-                            <div className="w-8 h-[1px] bg-white/20 my-1"></div>
+                            <div className="w-8 h-[1px] bg-white/10 my-1"></div>
 
                             <button
                                 onClick={handleOptimizeItineraryRoute}
                                 disabled={loadingAction === 'optimize'}
-                                className="p-2.5 bg-gradient-to-br from-violet-500 to-indigo-600 text-amber-300 rounded-full shadow-lg hover:shadow-indigo-500/50 transition-all hover:scale-110 active:scale-95 border border-white/20"
+                                className="p-2.5 bg-spotify-green text-black rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all disabled:opacity-50 border border-white/10 hover:bg-spotify-green-hover"
                                 title={language === 'en' ? "AI Route Optimization" : "AI 동선 자동 최적화"}
                             >
                                 {loadingAction === 'optimize' ? (
-                                    <Loader2 className="animate-spin text-white" size={20} />
+                                    <Loader2 className="animate-spin text-black" size={20} />
                                 ) : (
                                     <Wand2 size={20} />
                                 )}
                             </button>
+
+                            <div className="w-8 h-[1px] bg-white/10 my-1"></div>
+
+                            <button 
+                                onClick={handleReset} 
+                                className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" 
+                                title={language === 'en' ? 'Home' : '처음으로'}
+                            >
+                                <Home size={20} />
+                            </button>
+                            <button 
+                                onClick={handleKakaoConsult} 
+                                className="p-2.5 rounded-full text-yellow-400 hover:text-yellow-300 hover:bg-white/10 transition-colors" 
+                                title={language === 'en' ? 'Kakao Chat' : '카톡상담'}
+                            >
+                                <MessageCircle size={20} />
+                            </button>
+                            <button 
+                                onClick={handleDownloadPDF} 
+                                className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" 
+                                title={language === 'en' ? 'PDF Export' : 'PDF저장'}
+                            >
+                                <Download size={20} />
+                            </button>
+                            <button 
+                                onClick={handleShare} 
+                                className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" 
+                                title={language === 'en' ? 'Share' : '공유하기'}
+                            >
+                                <Share2 size={20} />
+                            </button>
                         </>
                     )}
                 </div>
-                {/* Right Sliding Panel */}
+                {/* Drag-based Bottom Sheet — 모바일 최적화 바텀 시트 */}
                 {!isEditMode && (
-                    <div className={`absolute top-0 right-0 h-full w-[75%] sm:w-[320px] bg-white/95 backdrop-blur-xl shadow-[-10px_0_30px_rgba(0,0,0,0.3)] z-40 transition-transform duration-500 ease-[cubic-bezier(0.3,1,0.3,1)] flex flex-col ${isPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-                        {/* Toggle Button */}
-                        <button
-                            onClick={() => setIsPanelOpen(!isPanelOpen)}
-                            className={`absolute bottom-61 ${isPanelOpen ? '-left-10' : '-left-[76px]'} bg-white/95 backdrop-blur-md p-2 rounded-l-2xl shadow-[-8px_0_15px_rgba(0,0,0,0.15)] text-indigo-600 hover:text-indigo-800 transition-all duration-300 z-[60] flex items-center ${!isPanelOpen ? 'animate-pulse ring-2 ring-indigo-500/50' : ''}`}
+                    <div 
+                        className={`absolute bottom-0 left-0 w-full backdrop-blur-2xl shadow-[0_-20px_40px_rgba(0,0,0,0.6)] z-40 transition-all duration-500 ease-[cubic-bezier(0.3,1,0.3,1)] flex flex-col border-t border-white/10 rounded-t-[32px] overflow-hidden text-white`}
+                        style={{ 
+                            backgroundImage: `linear-gradient(to bottom, ${getThemeGradient(theme)}d0 0%, ${getThemeGradient(theme)}b0 40%, #121212f2 100%)`,
+                            height: sheetState === 'min' ? '115px' : sheetState === 'half' ? '50%' : '85%'
+                        }}
+                    >
+                        {/* Drag Handle Bar */}
+                        <div 
+                            onClick={toggleSheetState}
+                            className="w-full py-3 flex justify-center cursor-row-resize select-none shrink-0"
                         >
-                            {isPanelOpen ? (
-                                <ChevronRight size={24} />
-                            ) : (
-                                <>
-                                    <ChevronLeft size={24} className="shrink-0" />
-                                    <span className="text-xs font-black pr-1.5 whitespace-nowrap">{language === 'en' ? 'Plan' : '일정'}</span>
-                                </>
-                            )}
-                        </button>
-
-                        {/* Panel Header */}
-                        <div className="p-5 border-b border-gray-100/50 pt-12 sm:pt-6">
-                            <h2 className="text-xl font-black text-gray-800 leading-tight">{tripPlan.tripTitle}</h2>
-                            {estimatedCost && <p className="text-sm font-bold text-indigo-600 mt-1">{language === 'en' ? 'Estimated Cost' : '예상 비용'}: {estimatedCost}</p>}
+                            <div className="w-12 h-1.5 bg-white/20 hover:bg-white/40 rounded-full transition-colors" />
                         </div>
 
-                        {/* Vertical List */}
-                        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-32">
-                            {flatPlaces.map((item, i) => {
-                                const isSelected = i === selectedIndex;
-                                const nextItem = flatPlaces[i + 1];
-                                const isSameDay = nextItem && nextItem.dayIdx === item.dayIdx;
-                                const showTransit = isSameDay && item.place.transitToNext;
+                        {/* Top Header Section (Always Visible) */}
+                        <div className="px-5 pb-3 flex justify-between items-center shrink-0 border-b border-white/5">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-black px-2 py-0.5 bg-white/10 text-spotify-green rounded-full">
+                                        Day {currentDayIdx + 1}
+                                    </span>
+                                    <h2 className="text-base font-black truncate max-w-[200px]">
+                                        {tripPlan.itinerary[currentDayIdx]?.day ? `${tripPlan.itinerary[currentDayIdx].day}일차` : tripTitle}
+                                    </h2>
+                                </div>
+                                <p className="text-[11px] font-bold text-spotify-text-muted mt-1">
+                                    {language === 'en' ? 'Total transit time: ' : '총 이동 시간: '}
+                                    <span className="text-spotify-green">{totalTransitTime}</span>
+                                </p>
+                            </div>
 
-                                return (
-                                    <React.Fragment key={i}>
-                                        <div
-                                            data-index={i}
-                                            onClick={() => handleSelectPlace(i)}
-                                            className={`vertical-place-card relative p-4 rounded-2xl border-2 transition-all cursor-pointer ${isSelected ? 'border-indigo-500 bg-white shadow-md' : 'border-transparent bg-gray-50/80 hover:bg-white hover:border-gray-200'}`}
+                        </div>
+
+                        {/* Transit Segment Bar (Always Visible) */}
+                        <div className="px-5 py-2 border-b border-white/5 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0 min-h-[46px]">
+                            {transitSegments.length > 0 ? (
+                                transitSegments.map((seg, idx) => (
+                                    <React.Fragment key={idx}>
+                                        <div 
+                                            className="bg-white/5 border border-white/10 px-2.5 py-1 rounded-full flex items-center gap-1 text-[11px] font-bold shrink-0 shadow-sm"
+                                            title={seg.raw}
                                         >
-                                            <div className="flex items-start gap-3">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs shrink-0 ${isSelected ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'}`} style={isSelected ? { backgroundColor: item.dayColor } : {}}>
-                                                    {item.placeIdx + 1}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center justify-between mb-1">
-                                                        <span className="text-[10px] font-black uppercase text-gray-400">Day {item.dayIdx + 1}</span>
-                                                        {item.place.budget && <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">💰 {item.place.budget}</span>}
+                                            <span>{seg.icon}</span>
+                                            <span className="text-spotify-text-muted">{seg.label}</span>
+                                            <span className="text-spotify-green">{seg.duration}</span>
+                                        </div>
+                                        {idx < transitSegments.length - 1 && (
+                                            <span className="text-white/20 text-xs shrink-0 font-bold">›</span>
+                                        )}
+                                    </React.Fragment>
+                                ))
+                            ) : (
+                                <p className="text-[10px] text-spotify-text-muted font-bold py-1">
+                                    {language === 'en' ? 'No transit segments for today.' : '오늘 일정의 이동 수단 정보가 없습니다.'}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Expandable Body Section */}
+                        {sheetState !== 'min' && (
+                            <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+                                
+                                {/* 1. Place Detail Card (Visible in FULL state and when a place is selected) */}
+                                {sheetState === 'full' && flatPlaces[selectedIndex] && (() => {
+                                    const selectedPlace = flatPlaces[selectedIndex].place;
+                                    const mockImages = [
+                                        `https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=300&q=80`,
+                                        `https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=300&q=80`,
+                                        `https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=300&q=80`
+                                    ];
+                                    return (
+                                        <div className="p-4 mx-4 mt-3 bg-white/5 border border-white/10 rounded-2xl shrink-0 flex flex-col gap-3 shadow-xl backdrop-blur-md">
+                                            <div className="flex justify-between items-start gap-2">
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="bg-spotify-green text-black text-[9px] font-black px-1.5 py-0.5 rounded-md">
+                                                            {selectedPlace.category || (language === 'en' ? 'Place' : '장소')}
+                                                        </span>
+                                                        <h3 className="font-black text-sm text-white truncate max-w-[220px]">
+                                                            {selectedPlace.name}
+                                                        </h3>
                                                     </div>
-                                                    <h3 className="text-sm font-bold text-gray-800 truncate mb-1">{item.place.name}</h3>
-                                                    <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{item.place.description}</p>
+                                                    <p className="text-[10px] text-spotify-text-muted font-bold mt-1 truncate max-w-[280px]">
+                                                        📍 {selectedPlace.address || (language === 'en' ? 'Address unavailable' : '주소 정보 없음')}
+                                                    </p>
+                                                </div>
+                                                {selectedPlace.budget && (
+                                                    <span className="text-[11px] font-bold text-spotify-green bg-spotify-green/10 px-2 py-0.5 rounded-full border border-spotify-green/20">
+                                                        💰 {selectedPlace.budget}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Action Buttons */}
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => window.open(getTripLink(selectedPlace.name, destName, language), '_blank')}
+                                                    className="flex-1 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
+                                                >
+                                                    <ExternalLink size={12} />
+                                                    <span>{language === 'en' ? 'Info' : '장소정보'}</span>
+                                                </button>
+                                                <a
+                                                    href={`tel:${selectedPlace.phone || '02-123-4567'}`}
+                                                    className="flex-1 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
+                                                >
+                                                    <PhoneCall size={12} />
+                                                    <span>{language === 'en' ? 'Call' : '전화'}</span>
+                                                </a>
+                                                <button
+                                                    onClick={() => handleOpenGoogleMaps(selectedPlace)}
+                                                    className="flex-1 py-1.5 rounded-xl bg-spotify-green/20 hover:bg-spotify-green/30 border border-spotify-green/30 text-spotify-green text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
+                                                >
+                                                    <Navigation size={12} />
+                                                    <span>{language === 'en' ? 'Route' : '길찾기'}</span>
+                                                </button>
+                                            </div>
+
+                                            {/* Image Carousel */}
+                                            <div className="flex gap-2 overflow-x-auto py-1 no-scrollbar shrink-0">
+                                                {mockImages.map((src, idx) => (
+                                                    <img
+                                                        key={idx}
+                                                        src={src}
+                                                        alt={`place_preview_${idx}`}
+                                                        className="w-24 h-16 rounded-xl object-cover border border-white/10 shrink-0 shadow-md hover:scale-105 transition-transform duration-300"
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* 2. Timeline List */}
+                                <div 
+                                    ref={scrollContainerRef} 
+                                    className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 pb-24"
+                                >
+                                    {flatPlaces.map((item, i) => {
+                                        const isSelected = i === selectedIndex;
+                                        const nextItem = flatPlaces[i + 1];
+                                        const isSameDay = nextItem && nextItem.dayIdx === item.dayIdx;
+                                        const showTransit = isSameDay && item.place.transitToNext;
+
+                                        return (
+                                            <React.Fragment key={i}>
+                                                <div
+                                                    data-index={i}
+                                                    onClick={() => handleSelectPlace(i)}
+                                                    className={`vertical-place-card relative p-4 rounded-2xl border transition-all duration-300 cursor-pointer ${
+                                                        isSelected 
+                                                            ? 'border-spotify-green bg-gradient-to-br from-spotify-green/20 to-white/5 shadow-lg shadow-spotify-green/5 scale-[1.02] opacity-100' 
+                                                            : 'border-white/5 bg-gradient-to-br from-white/5 to-white/0 hover:border-white/10 hover:from-white/10 hover:to-white/5 opacity-70'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className={`w-7 h-7 rounded-full flex items-center justify-center font-black text-xs shrink-0 transition-colors duration-300 ${isSelected ? 'bg-spotify-green text-black' : 'bg-white/10 text-spotify-text-muted'}`}>
+                                                            {item.placeIdx + 1}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <span className="text-[10px] font-black uppercase text-spotify-text-muted">Day {item.dayIdx + 1}</span>
+                                                                {item.place.budget && <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isSelected ? 'text-spotify-green bg-spotify-green/10' : 'text-spotify-text-muted bg-white/5'}`}>💰 {item.place.budget}</span>}
+                                                            </div>
+                                                            <h3 className={`text-sm font-bold truncate mb-1 transition-colors duration-300 ${isSelected ? 'text-white' : 'text-spotify-text-muted'}`}>{item.place.name}</h3>
+                                                            <p className={`text-xs leading-relaxed transition-colors duration-300 ${isSelected ? 'text-white/90 line-clamp-none' : 'text-spotify-text-muted/65 line-clamp-1'}`}>{item.place.description}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {showTransit && (
+                                                    <div className="flex flex-col items-center justify-center -my-2 z-10 relative pointer-events-none">
+                                                        <div className="h-3 border-l border-dashed border-white/10"></div>
+                                                        <div className="bg-gradient-to-r from-spotify-green/20 to-[#121212]/90 text-spotify-green text-[10px] font-bold px-3 py-1 rounded-full border border-white/10 shadow-md flex items-center gap-1">
+                                                            {formatTransitText(item.place.transitToNext, language)}
+                                                        </div>
+                                                        <div className="h-3 border-l border-dashed border-white/10"></div>
+                                                    </div>
+                                                )}
+                                            </React.Fragment>
+                                        );
+                                    })}
+
+                                    {/* 3. AI Recommendation Form (Visible inside Full state at the bottom of list) */}
+                                    {sheetState === 'full' && (
+                                        <div className="pt-4 border-t border-white/10 mt-6 pb-12">
+                                            <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col gap-3 backdrop-blur-md">
+                                                <div className="flex items-center gap-2 text-spotify-green">
+                                                    <Sparkles size={16} className="animate-pulse" />
+                                                    <h4 className="text-xs font-black uppercase tracking-wider">
+                                                        {language === 'en' ? '🪄 Nyang-Pro AI Recommendation' : '🪄 냥프로 AI 추가 추천 요청'}
+                                                    </h4>
+                                                </div>
+                                                <p className="text-[10px] text-spotify-text-muted font-bold">
+                                                    {language === 'en' 
+                                                        ? 'Request restaurant, cafe, or shopping recommendations near your destination!'
+                                                        : '현재 여행지 주변의 맞춤형 맛집, 카페, 쇼핑 장소를 추가 추천받아 일정에 반영해보세요.'}
+                                                </p>
+                                                
+                                                {/* Category Action Badges */}
+                                                <div className="flex gap-1.5 flex-wrap">
+                                                    <button
+                                                        onClick={() => handleAddAIRecommendation('맛집')}
+                                                        disabled={recommendLoading}
+                                                        className="px-3 py-1.5 bg-white/5 hover:bg-spotify-green hover:text-black border border-white/10 text-[11px] font-extrabold rounded-full transition-all shrink-0 disabled:opacity-50"
+                                                    >
+                                                        🍔 {language === 'en' ? 'Restaurants' : '맛집 추가'}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleAddAIRecommendation('쇼핑')}
+                                                        disabled={recommendLoading}
+                                                        className="px-3 py-1.5 bg-white/5 hover:bg-spotify-green hover:text-black border border-white/10 text-[11px] font-extrabold rounded-full transition-all shrink-0 disabled:opacity-50"
+                                                    >
+                                                        🛍️ {language === 'en' ? 'Shopping' : '쇼핑 추가'}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleAddAIRecommendation('카페')}
+                                                        disabled={recommendLoading}
+                                                        className="px-3 py-1.5 bg-white/5 hover:bg-spotify-green hover:text-black border border-white/10 text-[11px] font-extrabold rounded-full transition-all shrink-0 disabled:opacity-50"
+                                                    >
+                                                        ☕ {language === 'en' ? 'Cafes' : '카페 추가'}
+                                                    </button>
+                                                </div>
+
+                                                {/* Direct Text Input */}
+                                                <div className="flex gap-2 bg-black/40 border border-white/10 p-1 rounded-xl">
+                                                    <input
+                                                        type="text"
+                                                        value={recommendInput}
+                                                        onChange={(e) => setRecommendInput(e.target.value)}
+                                                        disabled={recommendLoading}
+                                                        placeholder={language === 'en' ? 'e.g. Places with great night views' : '예: 야경이 예쁜 루프탑'}
+                                                        className="flex-1 bg-transparent px-2.5 py-2 text-xs text-white border-none outline-none placeholder:text-spotify-text-muted"
+                                                    />
+                                                    <button
+                                                        onClick={() => handleAddAIRecommendation(recommendInput)}
+                                                        disabled={recommendLoading || !recommendInput.trim()}
+                                                        className="bg-spotify-green text-black px-3.5 py-2 rounded-lg text-xs font-black transition-transform active:scale-95 disabled:opacity-50 shrink-0 flex items-center justify-center"
+                                                    >
+                                                        {recommendLoading ? (
+                                                            <Loader2 size={14} className="animate-spin text-black" />
+                                                        ) : (
+                                                            <Send size={14} />
+                                                        )}
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
-                                        {showTransit && (
-                                            <div className="flex flex-col items-center justify-center -my-2 z-10 relative pointer-events-none">
-                                                <div className="h-4 border-l-2 border-dashed border-gray-300"></div>
-                                                <div className="bg-white text-gray-600 text-[11px] font-bold px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center gap-1">
-                                                    {formatTransitText(item.place.transitToNext, language)}
-                                                </div>
-                                                <div className="h-4 border-l-2 border-dashed border-gray-300"></div>
-                                            </div>
-                                        )}
-                                    </React.Fragment>
-                                );
-                            })}
-                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
                 {/* Edit Mode Overlay container */}
+                {/* Edit Mode Overlay container */}
                 {isEditMode && (
-                    <div className="absolute bottom-[100px] left-4 right-4 bg-white/95 backdrop-blur-xl p-4 rounded-[24px] shadow-2xl z-20 max-h-[50vh] overflow-y-auto custom-scrollbar border border-gray-200">
+                    <div className="absolute bottom-[100px] left-4 right-4 bg-spotify-card/95 backdrop-blur-xl p-4 rounded-[24px] shadow-2xl z-20 max-h-[50vh] overflow-y-auto custom-scrollbar border border-white/10 text-white">
                         <div className="flex justify-between items-center mb-3">
-                            <h3 className="font-black text-indigo-600 flex items-center gap-1"><Pencil size={18} /> {language === 'en' ? 'Edit Itinerary' : '일정 편집'}</h3>
-                            <button onClick={(e) => { e.stopPropagation(); handleAutoFixAll(); }} disabled={loadingAction === 'autoFix'} className="bg-violet-100 text-violet-600 py-1 px-3 rounded-full text-xs font-bold flex items-center gap-1 hover:bg-violet-200" title={language === 'en' ? "Calibrate Locations" : "위치 보정"}>
-                                {loadingAction === 'autoFix' ? <Loader2 className="animate-spin" size={14} /> : <Wand2 size={14} />} {language === 'en' ? 'Recalculate All' : '전체 경로 재탐색'}
+                            <h3 className="font-black text-spotify-green flex items-center gap-1"><Pencil size={18} /> {language === 'en' ? 'Edit Itinerary' : '일정 편집'}</h3>
+                            <button onClick={(e) => { e.stopPropagation(); handleAutoFixAll(); }} disabled={loadingAction === 'autoFix'} className="bg-spotify-green text-black py-1 px-3 rounded-full text-xs font-black flex items-center gap-1 hover:bg-spotify-green-hover" title={language === 'en' ? "Calibrate Locations" : "위치 보정"}>
+                                {loadingAction === 'autoFix' ? <Loader2 className="animate-spin text-black" size={14} /> : <Wand2 size={14} />} {language === 'en' ? 'Recalculate All' : '전체 경로 재탐색'}
                             </button>
                         </div>
                         {tripPlan.itinerary?.map((dayItem, dayIdx) => (
                             <div key={dayIdx} className="mb-6">
-                                <h4 className="font-bold text-sm bg-gray-100 inline-block px-2 py-1 rounded text-gray-700 mb-2">Day {dayItem.day}</h4>
+                                <h4 className="font-bold text-sm bg-white/5 border border-white/10 inline-block px-3 py-1 rounded text-spotify-text-muted mb-2">Day {dayItem.day}</h4>
                                 <div className="space-y-3">
                                     {dayItem.places.map((place, placeIdx) => (
-                                        <div key={placeIdx} className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
+                                        <div key={placeIdx} className="bg-[#282828] p-3 rounded-xl border border-white/5 shadow-md">
                                             <div className="flex gap-2 mb-2">
-                                                <input type="text" value={place.name} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'name', e.target.value)} className="flex-1 font-bold text-sm p-1.5 border-b border-indigo-200 outline-none bg-indigo-50/50 rounded-t" placeholder={language === 'en' ? "Place Name" : "장소명"} />
-                                                <button onClick={() => handleUpdateLocation(dayIdx, placeIdx, place.name)} className="p-1.5 rounded bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"><Search size={14} /></button>
+                                                <input type="text" value={place.name} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'name', e.target.value)} className="flex-1 font-bold text-sm p-1.5 border-b border-white/10 outline-none bg-white/5 rounded-t text-white focus:border-spotify-green transition" placeholder={language === 'en' ? "Place Name" : "장소명"} />
+                                                <button onClick={() => handleUpdateLocation(dayIdx, placeIdx, place.name)} className="p-1.5 rounded bg-white/5 text-spotify-green border border-white/10 hover:bg-white/10 transition"><Search size={14} /></button>
                                             </div>
-                                            <textarea value={place.description} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'description', e.target.value)} className="w-full text-xs p-1.5 border border-gray-200 rounded bg-gray-50 h-12 resize-none mb-2" placeholder={language === 'en' ? "Please enter description" : "설명을 입력해주세요"} />
+                                            <textarea value={place.description} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'description', e.target.value)} className="w-full text-xs p-1.5 border border-white/10 rounded bg-white/5 text-white h-12 resize-none mb-2 focus:border-spotify-green outline-none transition" placeholder={language === 'en' ? "Please enter description" : "설명을 입력해주세요"} />
 
                                             {/* ✨ 일정별 예산/지출 입력 필드 고도화 (MyPage와 동기화) */}
                                             <div className="space-y-2 mb-3">
-                                                <div className="flex items-center gap-2 bg-brand-secondary/5 p-2 rounded-lg border border-brand-secondary/20">
-                                                    <Wallet size={12} className="text-brand-secondary shrink-0" />
-                                                    <span className="text-[9px] font-black text-brand-secondary/80 uppercase shrink-0 w-8">Exp</span>
+                                                <div className="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-white/10">
+                                                    <Wallet size={12} className="text-spotify-green shrink-0" />
+                                                    <span className="text-[9px] font-black text-spotify-text-muted uppercase shrink-0 w-8">Exp</span>
                                                     <input
                                                         type="number"
                                                         value={place.expectedBudget || ""}
                                                         onChange={(e) => handleEditChange(dayIdx, placeIdx, 'expectedBudget', parseInt(e.target.value) || 0)}
                                                         placeholder={language === 'en' ? "Expected Budget (KRW)" : "예상 경비 (원)"}
-                                                        className="flex-1 bg-transparent border-none outline-none text-[11px] font-bold text-gray-700 placeholder:text-gray-300"
+                                                        className="flex-1 bg-transparent border-none outline-none text-[11px] font-bold text-white placeholder:text-spotify-text-muted"
                                                     />
                                                 </div>
-                                                <div className="flex items-center gap-2 bg-brand-danger/5 p-2 rounded-lg border border-brand-danger/20">
-                                                    <Receipt size={12} className="text-brand-danger shrink-0" />
-                                                    <span className="text-[9px] font-black text-brand-danger/80 uppercase shrink-0 w-8">Act</span>
+                                                <div className="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-white/10">
+                                                    <Receipt size={12} className="text-spotify-green shrink-0" />
+                                                    <span className="text-[9px] font-black text-spotify-text-muted uppercase shrink-0 w-8">Act</span>
                                                     <input
                                                         type="number"
                                                         value={place.actualExpense || ""}
                                                         onChange={(e) => handleEditChange(dayIdx, placeIdx, 'actualExpense', parseInt(e.target.value) || 0)}
                                                         placeholder={language === 'en' ? "Actual Expense (KRW)" : "실제 지출 (원)"}
-                                                        className="flex-1 bg-transparent border-none outline-none text-[11px] font-bold text-brand-danger placeholder:text-brand-danger/40"
+                                                        className="flex-1 bg-transparent border-none outline-none text-[11px] font-bold text-white placeholder:text-spotify-text-muted"
                                                     />
                                                 </div>
                                             </div>
 
                                             <div className="flex gap-2">
-                                                <button onClick={() => handleMovePlace(dayIdx, placeIdx, -1)} disabled={placeIdx === 0} className="flex-1 py-1 rounded bg-gray-50 flex justify-center disabled:opacity-30"><ArrowUp size={14} /></button>
-                                                <button onClick={() => handleMovePlace(dayIdx, placeIdx, 1)} disabled={placeIdx === dayItem.places.length - 1} className="flex-1 py-1 rounded bg-gray-50 flex justify-center disabled:opacity-30"><ArrowDown size={14} /></button>
-                                                <button onClick={() => handleDeletePlace(dayIdx, placeIdx)} className="flex-1 py-1 bg-red-50 text-red-500 rounded flex justify-center items-center"><Trash2 size={14} /></button>
+                                                <button onClick={() => handleMovePlace(dayIdx, placeIdx, -1)} disabled={placeIdx === 0} className="flex-1 py-1 rounded bg-white/5 hover:bg-white/10 flex justify-center text-white disabled:opacity-20 transition"><ArrowUp size={14} /></button>
+                                                <button onClick={() => handleMovePlace(dayIdx, placeIdx, 1)} disabled={placeIdx === dayItem.places.length - 1} className="flex-1 py-1 rounded bg-white/5 hover:bg-white/10 flex justify-center text-white disabled:opacity-20 transition"><ArrowDown size={14} /></button>
+                                                <button onClick={() => handleDeletePlace(dayIdx, placeIdx)} className="flex-1 py-1 bg-red-500/20 text-red-400 hover:bg-red-500/35 border border-red-500/10 rounded flex justify-center items-center transition"><Trash2 size={14} /></button>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
-                                <button onClick={() => handleAddPlace(dayIdx)} className="w-full mt-3 py-2 border-2 border-dashed border-brand-primary/20 rounded-xl text-brand-primary text-xs font-bold flex items-center justify-center gap-1 hover:bg-brand-primary/5"><Plus size={14} /> {language === 'en' ? 'Add Place' : '장소 추가'}</button>
+                                <button onClick={() => handleAddPlace(dayIdx)} className="w-full mt-3 py-2 border-2 border-dashed border-spotify-green/20 rounded-xl text-spotify-green text-xs font-bold flex items-center justify-center gap-1 hover:bg-spotify-green/5 transition"><Plus size={14} /> {language === 'en' ? 'Add Place' : '장소 추가'}</button>
                             </div>
                         ))}
                     </div>
                 )}
 
                 {/* Bottom Center Gradient for fade effect */}
-                <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none z-10"></div>
-
-
-                {/* 노란색 버튼을 저장 버튼으로 활용 (브랜드 컬러 대비) */}
+                <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-spotify-dark via-spotify-dark/70 to-transparent pointer-events-none z-10"></div>
+ 
+ 
+                {/* Spotify 초록색 저장 버튼 */}
                 {!tripId && (
                     <div className="absolute bottom-[240px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
-                        <div className="bg-yellow-400 text-black text-[11px] font-bold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">{language === 'en' ? 'Save' : '저장하기'}<div className="absolute -bottom-1 right-1 w-3 h-3 bg-yellow-400 transform rotate-45"></div></div>
-                        <button onClick={handleSaveClick} disabled={isSaving} className="w-14 h-14 bg-yellow-400 rounded-full shadow-2xl flex items-center justify-center text-[#3c1e1e] pointer-events-auto hover:bg-yellow-300 transition-transform active:scale-95 border-2 border-white">
+                        <div className="bg-spotify-green text-black text-[11px] font-extrabold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">{language === 'en' ? 'Save' : '저장하기'}<div className="absolute -bottom-1 right-1 w-3 h-3 bg-spotify-green transform rotate-45"></div></div>
+                        <button onClick={handleSaveClick} disabled={isSaving} className="w-14 h-14 bg-spotify-green rounded-full shadow-2xl flex items-center justify-center text-black pointer-events-auto hover:bg-spotify-green-hover hover:scale-105 transition-transform active:scale-95 border-2 border-white/20">
                             {isSaving ? <Loader2 className="animate-spin" size={24} /> : <Save size={24} strokeWidth={2.5} />}
                         </button>
                     </div>
                 )}
 
-                {/* Floating Bottom Navigation */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] sm:w-[85%] z-50 pointer-events-auto">
-                    <nav className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-[32px] py-2 px-2 flex justify-around items-center">
-                        <button onClick={handleReset} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-brand-accent transition active:scale-95">
-                            <Home size={22} /><span className="text-[10px] font-bold">{language === 'en' ? 'Home' : '홈으로'}</span>
-                        </button>
-                        <button onClick={handleKakaoConsult} className="flex flex-col items-center gap-1 p-2 w-[65px] text-yellow-400 hover:text-yellow-300 transition active:scale-95 text-center">
-                            <MessageCircle size={22} /><span className="text-[10px] font-bold">{language === 'en' ? 'Kakao Chat' : '카톡상담'}</span>
-                        </button>
+                {/* Floating Bottom Navigation removed and moved to right vertical toolbar */}
 
-                        {/* 🏨 안전 안심 숙소 찾기 단축 버튼 */}
-                        <button
-                            onClick={() => { setInfoModalTab('hotels'); setShowInfoModal(true); }}
-                            className="flex flex-col items-center gap-1 p-2 w-[65px] text-emerald-400 hover:text-emerald-300 transition active:scale-95 text-center"
-                        >
-                            <BedDouble size={22} />
-                            <span className="text-[10px] font-bold">{language === 'en' ? 'Hotels' : '숙소찾기'}</span>
-                        </button>
-
-                        <button onClick={handleShare} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-brand-secondary transition active:scale-95">
-                            <Share2 size={22} /><span className="text-[10px] font-bold">{language === 'en' ? 'Share' : '공유하기'}</span>
-                        </button>
-                        <button onClick={handleDownloadPDF} className="flex flex-col items-center gap-1 p-2 w-[65px] text-white hover:text-blue-400 transition active:scale-95 relative">
-                            {loadingAction === 'pdf' ? <Loader2 className="animate-spin text-white mb-1" size={20} /> : <Download size={22} />}
-                            <span className="text-[10px] font-bold">{language === 'en' ? 'Save PDF' : 'PDF저장'}</span>
-                        </button>
-                    </nav>
-                </div>
-
-                {/* Info Modal (Budget, Hotels, Tips) */}
+                {/* Info Modal (Budget, Hotels, Tips) — 스포티파이 스타일 */}
                 {showInfoModal && (
                     <div className="absolute inset-0 z-[60] flex items-end sm:items-center justify-center">
-                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowInfoModal(false)}></div>
-                        <div className="bg-white w-full sm:w-[90%] h-[75vh] sm:h-[80vh] rounded-t-[32px] sm:rounded-[32px] relative z-20 shadow-2xl flex flex-col p-5 animate-in slide-in-from-bottom-full sm:zoom-in-95">
-                            <button onClick={() => setShowInfoModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200">
+                        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowInfoModal(false)}></div>
+                        <div 
+                            className={`w-full sm:w-[90%] h-[75vh] sm:h-[80vh] rounded-t-[32px] sm:rounded-[32px] relative z-20 shadow-2xl flex flex-col p-5 animate-in slide-in-from-bottom-full sm:zoom-in-95 border border-white/10 text-white transition-all duration-700`}
+                            style={{ backgroundImage: `linear-gradient(to bottom, ${getInfoModalGradient(infoModalTab)}d0 0%, ${getInfoModalGradient(infoModalTab)}b0 60%, #121212f2 100%)` }}
+                        >
+                            {/* Ken Burns background for info modal */}
+                            <div className="absolute inset-0 z-[-2] overflow-hidden rounded-t-[32px] sm:rounded-[32px]">
+                                <AnimatePresence mode='wait'>
+                                    <motion.img
+                                        key={bgIndex}
+                                        src={backgroundImages[bgIndex]}
+                                        initial={{ opacity: 0, scale: 1.1 }}
+                                        animate={{ opacity: 1, scale: 1.0 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 1.5, ease: "easeOut" }}
+                                        className="absolute inset-0 w-full h-full object-cover"
+                                    />
+                                </AnimatePresence>
+                            </div>
+                            <div className="absolute inset-0 z-[-1] bg-slate-950/35 backdrop-blur-[12px] rounded-t-[32px] sm:rounded-[32px]"></div>
+
+                            <button onClick={() => setShowInfoModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-spotify-text-muted hover:text-white relative z-10">
                                 <X size={18} />
                             </button>
-                            <h2 className="text-xl font-black mb-4 pr-10 text-gray-800 flex items-center gap-2"><Sparkles className="text-brand-accent" size={20} /> {language === 'en' ? 'Trip Info Box' : '여정 꿀팁 박스'}</h2>
-
-                            <div className="flex bg-gray-100 p-1 rounded-xl mb-4">
-                                <button onClick={() => setInfoModalTab('budget')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'budget' ? 'bg-white text-brand-primary shadow-sm' : 'text-gray-500'}`}>{language === 'en' ? 'Budget' : '예산'}</button>
-                                <button onClick={() => setInfoModalTab('hotels')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'hotels' ? 'bg-white text-brand-primary shadow-sm' : 'text-gray-500'}`}>{language === 'en' ? 'Stays' : '추천 숙소'}</button>
-                                <button onClick={() => setInfoModalTab('tips')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'tips' ? 'bg-white text-brand-primary shadow-sm' : 'text-gray-500'}`}>{language === 'en' ? 'Tips & Weather' : '팁 & 날씨'}</button>
+                            <h2 className="text-xl font-black mb-4 pr-10 text-white flex items-center gap-2 relative z-10"><Sparkles className="text-spotify-green" size={20} /> {language === 'en' ? 'Trip Info Box' : '여정 꿀팁 박스'}</h2>
+ 
+                            <div className="flex bg-[#121212]/80 backdrop-blur-md p-1 rounded-xl mb-4 border border-white/5 relative z-10">
+                                <button onClick={() => setInfoModalTab('budget')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'budget' ? 'bg-[#282828] text-spotify-green border border-white/10 shadow-sm' : 'text-spotify-text-muted hover:text-white'}`}>{language === 'en' ? 'Budget' : '예산'}</button>
+                                <button onClick={() => setInfoModalTab('hotels')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'hotels' ? 'bg-[#282828] text-spotify-green border border-white/10 shadow-sm' : 'text-spotify-text-muted hover:text-white'}`}>{language === 'en' ? 'Stays' : '추천 숙소'}</button>
+                                <button onClick={() => setInfoModalTab('tips')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'tips' ? 'bg-[#282828] text-spotify-green border border-white/10 shadow-sm' : 'text-spotify-text-muted hover:text-white'}`}>{language === 'en' ? 'Tips & Weather' : '팁 & 날씨'}</button>
                             </div>
-
-                            <div className="flex-1 overflow-y-auto custom-scrollbar pb-6">
+ 
+                            <div className="flex-1 overflow-y-auto custom-scrollbar pb-6 text-white relative z-10">
                                 {infoModalTab === 'budget' && (
                                     <div className="space-y-3">
-                                        <div className="bg-brand-primary/5 p-4 rounded-xl border border-brand-primary/10 flex justify-between items-center mb-4">
-                                            <span className="font-bold text-brand-primary">{language === 'en' ? 'Total Estimated Cost' : '총 예상 비용'}</span>
-                                            <span className="font-black text-brand-primary text-lg">{estimatedCost || (language === 'en' ? 'No budget info' : "예산 정보 없음")}</span>
+                                        <div className="bg-spotify-green/10 p-4 rounded-xl border border-spotify-green/20 flex justify-between items-center mb-4">
+                                            <span className="font-bold text-spotify-green">{language === 'en' ? 'Total Estimated Cost' : '총 예상 비용'}</span>
+                                            <span className="font-black text-spotify-green text-lg">{estimatedCost || (language === 'en' ? 'No budget info' : "예산 정보 없음")}</span>
                                         </div>
                                         {tripPlan.budgetBreakdown?.map((item, idx) => (
-                                            <div key={idx} className="flex gap-2 items-center p-3 bg-white border border-gray-100 rounded-xl shadow-sm">
-                                                <div className="w-6 h-6 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold text-xs shrink-0">{idx + 1}</div>
-                                                <p className="flex-1 text-sm font-medium text-gray-700">{item}</p>
+                                            <div key={idx} className="flex gap-2 items-center p-3 bg-gradient-to-br from-white/10 to-white/5 border border-white/10 rounded-xl shadow-md">
+                                                <div className="w-6 h-6 rounded-full bg-spotify-green text-black flex items-center justify-center font-bold text-xs shrink-0">{idx + 1}</div>
+                                                <p className="flex-1 text-sm font-medium text-white/95">{item}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -1217,24 +1644,24 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                             soloFriendly: solo
                                         };
                                     });
-
+ 
                                     const displayedHotels = safetyFilterActive
                                         ? processedHotels
                                             .filter(h => h.safetyScore >= 9.5 || h.isMainStreet || h.soloFriendly)
                                             .sort((a, b) => b.safetyScore - a.safetyScore)
                                         : processedHotels;
-
+ 
                                     return (
                                         <div className="space-y-4">
                                             {/* 🛡️ 안전 최우선 안심 필터 스위치 */}
-                                            <div className="bg-gradient-to-r from-emerald-500/10 to-indigo-500/5 p-4 rounded-2xl border border-emerald-500/20 flex items-center justify-between shadow-sm backdrop-blur-md">
+                                            <div className="bg-gradient-to-br from-white/10 to-white/5 p-4 rounded-2xl border border-white/10 flex items-center justify-between shadow-md">
                                                 <div className="flex items-center gap-2.5">
-                                                    <div className="w-9 h-9 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600 shrink-0">
+                                                    <div className="w-9 h-9 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 shrink-0">
                                                         <ShieldCheck size={20} />
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs font-black text-gray-800">{language === 'en' ? "🛡️ Women & Solo 'Safety First' Filter" : "🛡️ 여성 & 솔로 '안전 최우선' 필터"}</p>
-                                                        <p className="text-[10px] text-gray-500 font-bold mt-0.5">{language === 'en' ? "Curation of stays with excellent safety and main street/downtown proximity" : "대로변·번화가 인접성 및 실시간 치안 우수 숙소 큐레이션"}</p>
+                                                        <p className="text-xs font-black text-white">{language === 'en' ? "🛡️ Women & Solo 'Safety First' Filter" : "🛡️ 여성 & 솔로 '안전 최우선' 필터"}</p>
+                                                        <p className="text-[10px] text-spotify-text-muted font-bold mt-0.5">{language === 'en' ? "Curation of stays with excellent safety and main street/downtown proximity" : "대로변·번화가 인접성 및 실시간 치안 우수 숙소 큐레이션"}</p>
                                                     </div>
                                                 </div>
                                                 <label className="relative inline-flex items-center cursor-pointer">
@@ -1244,50 +1671,50 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                         onChange={(e) => setSafetyFilterActive(e.target.checked)}
                                                         className="sr-only peer"
                                                     />
-                                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                                                    <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#121212] after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-spotify-green"></div>
                                                 </label>
                                             </div>
-
+ 
                                             {displayedHotels.length > 0 ? displayedHotels.map((hotel, idx) => (
                                                 <div
                                                     key={idx}
-                                                    className="place-card bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative group cursor-pointer hover:border-indigo-500 hover:shadow-md transition-all duration-300"
+                                                    className="place-card bg-gradient-to-br from-white/10 to-white/5 p-4 rounded-2xl border border-white/10 shadow-md relative group cursor-pointer hover:border-spotify-green/30 hover:shadow-lg transition-all duration-300"
                                                     onClick={() => { const link = getTripLink(hotel.name, userInfo?.destination || "", language); window.open(link, '_blank'); }}
                                                 >
                                                     <div className="flex items-center justify-between gap-2 mb-2">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="bg-brand-primary text-white text-[9px] font-black px-1.5 py-0.5 rounded-md">{language === 'en' ? `Rec ${idx + 1}` : `추천 ${idx + 1}`}</span>
-                                                            <h4 className="font-bold text-sm sm:text-base text-gray-800 group-hover:text-brand-primary transition-colors">{hotel.name}</h4>
+                                                            <span className="bg-spotify-green text-black text-[9px] font-black px-1.5 py-0.5 rounded-md">{language === 'en' ? `Rec ${idx + 1}` : `추천 ${idx + 1}`}</span>
+                                                            <h4 className="font-bold text-sm sm:text-base text-white group-hover:text-spotify-green transition-colors">{hotel.name}</h4>
                                                         </div>
-                                                        <span className="text-xs text-brand-primary font-bold bg-brand-primary/10 px-2.5 py-1 rounded-full shrink-0">{hotel.priceRange}</span>
+                                                        <span className="text-xs text-spotify-green font-bold bg-spotify-green/10 px-2.5 py-1 rounded-full shrink-0">{hotel.priceRange}</span>
                                                     </div>
-
+ 
                                                     {/* 🌟 안전 마이크로 배지 그룹 */}
                                                     <div className="flex flex-wrap gap-1.5 mb-3">
-                                                        <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-md flex items-center gap-0.5">
+                                                        <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md flex items-center gap-0.5">
                                                             🛡️ {language === 'en' ? `Safety Score ${hotel.safetyScore}` : `치안 안전 ${hotel.safetyScore}점`}
                                                         </span>
                                                         {hotel.isMainStreet && (
-                                                            <span className="text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100 px-2 py-0.5 rounded-md flex items-center gap-0.5">
+                                                            <span className="text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-md flex items-center gap-0.5">
                                                                 📍 {language === 'en' ? 'Main Street/Downtown' : '대로변·번화가 인접'}
                                                             </span>
                                                         )}
                                                         {hotel.soloFriendly && (
-                                                            <span className="text-[10px] font-bold bg-purple-50 text-purple-600 border border-purple-100 px-2 py-0.5 rounded-md flex items-center gap-0.5">
+                                                            <span className="text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-md flex items-center gap-0.5">
                                                                 🏆 {language === 'en' ? 'Solo Traveler Friendly' : '1인 혼행족 맞춤형'}
                                                             </span>
                                                         )}
                                                     </div>
-
-                                                    <p className="text-xs text-gray-500 leading-relaxed bg-gray-50 p-2.5 rounded-xl border border-gray-100">{hotel.description}</p>
-
-                                                    <div className="mt-3 flex justify-end gap-3.5 border-t border-gray-100 pt-3">
-                                                        <a href={getTripLink(hotel.name, userInfo?.destination || "", language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-extrabold text-brand-primary flex items-center gap-0.5 hover:underline">{language === 'en' ? 'Trip.com Lowest' : 'Trip.com 최저가'} <ExternalLink size={12} /></a>
-                                                        <a href={getKlookLink(hotel.name, language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-extrabold text-orange-500 flex items-center gap-0.5 hover:underline">{language === 'en' ? 'Klook Activities' : 'Klook 액티비티'} <ExternalLink size={12} /></a>
+ 
+                                                    <p className="text-xs text-slate-300 leading-relaxed bg-white/5 p-2.5 rounded-xl border border-white/5">{hotel.description}</p>
+ 
+                                                    <div className="mt-3 flex justify-end gap-3.5 border-t border-white/5 pt-3">
+                                                        <a href={getTripLink(hotel.name, userInfo?.destination || "", language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-extrabold text-spotify-green flex items-center gap-0.5 hover:underline">{language === 'en' ? 'Trip.com Lowest' : 'Trip.com 최저가'} <ExternalLink size={12} /></a>
+                                                        <a href={getKlookLink(hotel.name, language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-extrabold text-orange-400 flex items-center gap-0.5 hover:underline">{language === 'en' ? 'Klook Activities' : 'Klook 액티비티'} <ExternalLink size={12} /></a>
                                                     </div>
                                                 </div>
                                             )) : (
-                                                <div className="text-center text-gray-400 p-10 text-sm font-medium">{language === 'en' ? 'No recommended stays available.' : '추천 숙소 정보가 없습니다.'}</div>
+                                                <div className="text-center text-spotify-text-muted p-10 text-sm font-medium">{language === 'en' ? 'No recommended stays available.' : '추천 숙소 정보가 없습니다.'}</div>
                                             )}
                                         </div>
                                     );
@@ -1295,29 +1722,29 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                 {infoModalTab === 'tips' && (
                                     <div className="space-y-4">
                                         {safetyAdvice && (
-                                            <div className="bg-gradient-to-br from-cyan-50 to-blue-50 p-4 rounded-2xl border border-cyan-100 flex items-start gap-4 mb-4">
-                                                <div className="bg-white p-3 rounded-full text-cyan-500 shadow-sm shrink-0"><ShieldCheck size={24} /></div>
+                                            <div className="bg-gradient-to-br from-cyan-950/40 via-cyan-900/10 to-white/5 p-4 rounded-2xl border border-cyan-500/30 flex items-start gap-4 mb-4">
+                                                <div className="bg-[#121212]/80 border border-white/5 p-3 rounded-full text-cyan-400 shadow-sm shrink-0"><ShieldCheck size={24} /></div>
                                                 <div>
-                                                    <p className="font-black text-cyan-900 mb-1">{language === 'en' ? 'Safety Guide' : '안심 & 안전 가이드'}</p>
-                                                    <p className="text-sm text-cyan-800 leading-relaxed font-medium whitespace-pre-wrap">{safetyAdvice}</p>
+                                                    <p className="font-black text-cyan-200 mb-1">{language === 'en' ? 'Safety Guide' : '안심 & 안전 가이드'}</p>
+                                                    <p className="text-sm text-cyan-100/80 leading-relaxed font-medium whitespace-pre-wrap">{safetyAdvice}</p>
                                                 </div>
                                             </div>
                                         )}
                                         {weather && (
-                                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-2xl border border-blue-100 flex items-start gap-4 mb-4">
-                                                <div className="bg-white p-3 rounded-full text-amber-500 shadow-sm shrink-0"><Sun size={24} /></div>
+                                            <div className="bg-gradient-to-br from-blue-950/40 via-blue-900/10 to-white/5 p-4 rounded-2xl border border-blue-500/30 flex items-start gap-4 mb-4">
+                                                <div className="bg-[#121212]/80 border border-white/5 p-3 rounded-full text-amber-400 shadow-sm shrink-0"><Sun size={24} /></div>
                                                 <div>
-                                                    <p className="font-black text-blue-900 mb-1">{language === 'en' ? 'Weather Info' : '날씨 정보'}</p>
-                                                    <p className="text-sm text-blue-800 leading-relaxed">{weather}</p>
+                                                    <p className="font-black text-blue-200 mb-1">{language === 'en' ? 'Weather Info' : '날씨 정보'}</p>
+                                                    <p className="text-sm text-blue-100/80 leading-relaxed">{weather}</p>
                                                 </div>
                                             </div>
                                         )}
                                         {travelTips && travelTips.length > 0 && (
-                                            <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-2xl border border-amber-100 flex items-start gap-4">
-                                                <div className="bg-white p-3 rounded-full text-amber-500 shadow-sm shrink-0"><Lightbulb size={24} /></div>
+                                            <div className="bg-gradient-to-br from-amber-950/40 via-amber-900/10 to-white/5 p-4 rounded-2xl border border-amber-500/30 flex items-start gap-4">
+                                                <div className="bg-[#121212]/80 border border-white/5 p-3 rounded-full text-amber-400 shadow-sm shrink-0"><Lightbulb size={24} /></div>
                                                 <div>
-                                                    <p className="font-black text-amber-900 mb-2">{language === 'en' ? 'Travel Tips' : '여행 꿀팁'}</p>
-                                                    <ul className="text-sm text-amber-800 space-y-2 list-disc list-inside">
+                                                    <p className="font-black text-amber-200 mb-2">{language === 'en' ? 'Travel Tips' : '여행 꿀팁'}</p>
+                                                    <ul className="text-sm text-amber-100/80 space-y-2 list-disc list-inside">
                                                         {travelTips.map((tip, i) => <li key={i}>{tip}</li>)}
                                                     </ul>
                                                 </div>
@@ -1330,33 +1757,33 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     </div>
                 )}
 
-                {/* 매칭 모달 (원본 유지) */}
+                {/* 매칭 모달 */}
                 {showMatchModal && (
                     <div className="fixed inset-0 z-70 flex items-center justify-center p-4">
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowMatchModal(false)}></div>
-                        <div className="bg-white/90 backdrop-blur-2xl w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl animate-in zoom-in-95">
-                            <button onClick={() => setShowMatchModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500"><X size={18} /></button>
+                        <div className="bg-[#121212]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl animate-in zoom-in-95 text-white">
+                            <button onClick={() => setShowMatchModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:text-white"><X size={18} /></button>
                             <div className="text-center mb-6 mt-2">
                                 <div className="w-16 h-16 bg-gradient-to-tr from-brand-primary to-brand-secondary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-primary/30 animate-bounce"><Sparkles size={32} className="text-white" /></div>
-                                <h3 className="text-xl font-black text-gray-900 mb-1">{language === 'en' ? 'Travel Mate Recommendations' : '여행 메이트 추천'}</h3>
-                                <p className="text-sm text-gray-500 font-bold">{language === 'en' ? 'We found travelers with similar styles!' : '비슷한 성향의 여행자를 찾았어요!'}</p>
+                                <h3 className="text-xl font-black text-white mb-1">{language === 'en' ? 'Travel Mate Recommendations' : '여행 메이트 추천'}</h3>
+                                <p className="text-sm text-slate-400 font-bold">{language === 'en' ? 'We found travelers with similar styles!' : '비슷한 성향의 여행자를 찾았어요!'}</p>
                             </div>
                             <div className="space-y-3 mb-6">
                                 {realMates.length === 0 ? (
-                                    <p className="text-center text-sm text-gray-400 font-bold py-4">{language === 'en' ? 'No recommended users yet.' : '아직 추천할 만한 유저가 없습니다.'}</p>
+                                    <p className="text-center text-sm text-slate-400 font-bold py-4">{language === 'en' ? 'No recommended users yet.' : '아직 추천할 만한 유저가 없습니다.'}</p>
                                 ) : (
                                     realMates.map(mate => (
-                                        <div key={mate.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+                                        <div key={mate.id} className="bg-white/5 p-4 rounded-2xl border border-white/10 shadow-sm flex items-center justify-between">
                                             <div className="flex items-center gap-3">
                                                 <img src={mate.profileImgBase64 || "https://i.pravatar.cc/150?u=" + mate.id} className="w-12 h-12 rounded-full object-cover border-2 border-brand-primary/20" />
-                                                <div><p className="font-bold text-gray-900">{mate.name}</p><p className="text-[10px] text-gray-400 font-bold truncate max-w-[120px]">{mate.bio || (language === 'en' ? "Hello!" : "반가워요!")}</p></div>
+                                                <div><p className="font-bold text-white">{mate.name}</p><p className="text-[10px] text-slate-400 font-bold truncate max-w-[120px]">{mate.bio || (language === 'en' ? "Hello!" : "반가워요!")}</p></div>
                                             </div>
                                             <button onClick={() => handleRequestRealMate(mate)} className="bg-brand-primary/10 text-brand-primary w-10 h-10 rounded-full flex items-center justify-center hover:bg-brand-primary hover:text-white transition"><Send size={16} /></button>
                                         </div>
                                     ))
                                 )}
                             </div>
-                            <button onClick={() => setShowMatchModal(false)} className="w-full bg-gray-100 text-gray-600 font-bold py-3.5 rounded-2xl">{language === 'en' ? 'Maybe Later' : '나중에 할게요'}</button>
+                            <button onClick={() => setShowMatchModal(false)} className="w-full bg-white/10 text-white/80 hover:bg-white/20 transition py-3.5 rounded-xl font-bold border border-white/5">{language === 'en' ? 'Maybe Later' : '나중에 할게요'}</button>
                         </div>
                     </div>
                 )}
@@ -1375,42 +1802,44 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {showResetConfirm && (
                     <div className="absolute inset-0 z-70 flex items-center justify-center p-6">
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowResetConfirm(false)}></div>
-                        <div className="bg-white w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95">
+                        <div className="bg-[#121212]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 text-white">
                             <div className="w-16 h-16 bg-brand-danger/10 rounded-2xl flex items-center justify-center text-brand-danger mb-4 shadow-sm"><RotateCcw size={32} /></div>
-                            <h3 className="text-xl font-black text-gray-900 mb-2 text-center">{language === 'en' ? 'Start New Trip' : '새로운 여행 시작'}</h3>
-                            <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed">{language === 'en' ? <>Go back to the main screen<br />to plan a new trip?</> : <>초기 화면으로 돌아가서<br />새로운 여행 일정을 계획하시겠습니까?</>}</p>
+                            <h3 className="text-xl font-black text-white mb-2 text-center">{language === 'en' ? 'Start New Trip' : '새로운 여행 시작'}</h3>
+                            <p className="text-sm text-slate-400 mb-6 text-center leading-relaxed">{language === 'en' ? <>Go back to the main screen<br />to plan a new trip?</> : <>초기 화면으로 돌아가서<br />새로운 여행 일정을 계획하시겠습니까?</>}</p>
                             <div className="flex gap-3 w-full">
-                                <button onClick={() => setShowResetConfirm(false)} className="flex-1 py-4 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">{language === 'en' ? 'Cancel' : '취소'}</button>
+                                <button onClick={() => setShowResetConfirm(false)} className="flex-1 py-4 rounded-xl font-bold text-white/80 bg-white/10 hover:bg-white/20 border border-white/5 transition-colors">{language === 'en' ? 'Cancel' : '취소'}</button>
                                 <button onClick={confirmReset} className="flex-1 py-4 rounded-xl font-bold text-white bg-brand-danger hover:bg-brand-danger/90 transition-colors shadow-md">{language === 'en' ? 'Confirm' : '확인'}</button>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* 저장 모달 (원본 유지) */}
+                {/* 저장 모달 */}
                 {showSaveModal && (
                     <div className="absolute inset-0 z-70 flex items-center justify-center p-6">
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSaveModal(false)}></div>
-                        <div className="bg-white w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95">
-                            <button onClick={() => setShowSaveModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500"><X size={18} /></button>
-                            <div className="w-16 h-16 bg-linear-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg"><Save size={32} /></div>
-                            <h3 className="text-xl font-black text-gray-900 mb-1">{language === 'en' ? 'Save Itinerary' : '일정을 저장할까요?'}</h3>
-                            <p className="text-sm text-gray-500 mb-6 text-center">{language === 'en' ? <>Saved itineraries can be<br />edited in My Page.</> : <>저장된 일정은 마이페이지에서<br />수정할 수 있어요.</>}</p>
-                            <div onClick={() => setShareToFeed(!shareToFeed)} className={`w-full p-4 rounded-xl border-2 flex items-center gap-3 cursor-pointer transition-all mb-6 ${shareToFeed ? 'border-brand-primary bg-brand-primary/5' : 'border-gray-200 bg-gray-50'}`}>
-                                <div className={`w-6 h-6 rounded-md flex items-center justify-center ${shareToFeed ? 'bg-brand-primary text-white' : 'bg-gray-300'}`}><Check size={16} strokeWidth={3} /></div>
+                        <div className="bg-[#121212]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 text-white">
+                            <button onClick={() => setShowSaveModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:text-white"><X size={18} /></button>
+                            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg"><Save size={32} /></div>
+                            <h3 className="text-xl font-black text-white mb-1">{language === 'en' ? 'Save Itinerary' : '일정을 저장할까요?'}</h3>
+                            <p className="text-sm text-slate-400 mb-6 text-center">{language === 'en' ? <>Saved itineraries can be<br />edited in My Page.</> : <>저장된 일정은 마이페이지에서<br />수정할 수 있어요.</>}</p>
+                            <div onClick={() => setShareToFeed(!shareToFeed)} className={`w-full p-4 rounded-xl border flex items-center gap-3 cursor-pointer transition-all mb-6 ${shareToFeed ? 'border-brand-primary bg-brand-primary/10' : 'border-white/10 bg-white/5'}`}>
+                                <div className={`w-6 h-6 rounded-md flex items-center justify-center ${shareToFeed ? 'bg-brand-primary text-white' : 'bg-white/10 text-white/50'}`}><Check size={16} strokeWidth={3} /></div>
                                 <div className="text-left flex-1">
-                                    <p className={`text-sm font-bold ${shareToFeed ? 'text-brand-primary' : 'text-gray-600'}`}>
+                                    <p className={`text-sm font-bold ${shareToFeed ? 'text-brand-primary' : 'text-slate-300'}`}>
                                         {language === 'en' ? 'Share to Traveler Feed (+100P)' : '여행자 피드 공유 (100P 적립)'}
                                     </p>
-                                    <p className="text-[10px] text-gray-400">
+                                    <p className="text-[10px] text-slate-400">
                                         {language === 'en' ? 'Inspire other travelers!' : '다른 여행자들에게 영감을 주세요!'}
                                     </p>
                                 </div>
                             </div>
-                            <button onClick={executeSave} disabled={isSaving} className="w-full bg-gray-900 text-white font-bold text-lg py-4 rounded-2xl shadow-xl hover:bg-black transition">{isSaving ? <Loader2 className="animate-spin" size={20} /> : (language === 'en' ? "Save" : "저장 완료")}</button>
+                            <button onClick={executeSave} disabled={isSaving} className="w-full bg-spotify-green text-black font-black text-lg py-4 rounded-2xl shadow-xl hover:bg-spotify-green-hover transition flex items-center justify-center">{isSaving ? <Loader2 className="animate-spin text-black" size={20} /> : (language === 'en' ? "Save" : "저장 완료")}</button>
                         </div>
                     </div>
                 )}
+
+
             </div>
 
             {/* PDF 변환용 숨겨진 A4 서식 유지 */}
