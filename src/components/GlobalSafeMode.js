@@ -635,7 +635,7 @@ export default function GlobalSafeMode() {
                     text: safeModeTranslations[language].msg_chat_expire.replace('{name}', user.displayName || (language === 'en' ? 'Traveler' : '여행자')),
                     senderId: 'system_safemode',
                     senderName: '🛡️ Safe Mode 시스템',
-                    senderAvatar: '/logo1.png',
+                    senderAvatar: '/logo1.png?v=2',
                     createdAt: serverTimestamp()
                 });
             }

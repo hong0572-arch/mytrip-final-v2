@@ -964,7 +964,7 @@ export default function Home() {
                     style={{ backgroundImage: `linear-gradient(to bottom, ${getHomeGradient(step)} 0%, ${getHomeGradient(step)} 40%, transparent 100%)` }}
                 />
                 <div className="px-4 pt-6 pb-2 shrink-0 flex justify-between items-center bg-transparent z-20">
-                    <img src="/logo1.png" alt="Logo" className="h-11 w-auto object-contain" />
+                    <img src="/logo1.png?v=2" alt="Logo" className="h-11 w-auto object-contain" />
                     <div className="z-50 flex items-center gap-1.5 sm:gap-2">
                         <div className="flex bg-white/10 backdrop-blur-md p-0.5 rounded-full text-[9px] font-black shadow-sm border border-white/10 shrink-0">
                             <button

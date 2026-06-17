@@ -76,12 +76,12 @@ export async function sendLocalNotification(title, body, notificationId = Math.f
     if (!('Notification' in window)) return false;
 
     if (Notification.permission === 'granted') {
-      new Notification(title, { body: body, icon: '/logo1.png' });
+      new Notification(title, { body: body, icon: '/logo1.png?v=2' });
       return true;
     } else if (Notification.permission !== 'denied') {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
-        new Notification(title, { body: body, icon: '/logo1.png' });
+        new Notification(title, { body: body, icon: '/logo1.png?v=2' });
         return true;
       }
     }
@@ -119,7 +119,7 @@ export async function sendScheduledNotification(title, body, delaySeconds = 3, n
     // Web 브라우저에서는 setTimeout으로 시뮬레이션
     setTimeout(() => {
       if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-        new Notification(title, { body: body, icon: '/logo1.png' });
+        new Notification(title, { body: body, icon: '/logo1.png?v=2' });
       } else {
         console.log(`[Web Alert Fallback] ${title}: ${body}`);
       }
