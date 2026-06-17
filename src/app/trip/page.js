@@ -27,6 +27,13 @@ function TripDetailContent() {
     const [newMessage, setNewMessage] = useState("");
     const messagesEndRef = useRef(null);
 
+    // ✨ 채팅 플로팅 버튼 드래그 이동 관련 상태
+    const [chatPos, setChatPos] = useState({ x: 0, y: 0 });
+    const [isDraggingChat, setIsDraggingChat] = useState(false);
+    const chatDragStart = useRef({ x: 0, y: 0 });
+    const chatElementStart = useRef({ x: 0, y: 0 });
+    const chatHasMoved = useRef(false);
+
     // 1. 유저 인증 상태 및 여행 데이터 가져오기
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
@@ -88,6 +95,55 @@ function TripDetailContent() {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [messages, showChat]);
+
+    // ✨ 채팅 플로팅 버튼 드래그 이동 관련 로직
+    useEffect(() => {
+        if (!isDraggingChat) return;
+        const onMove = (e) => {
+            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+            const dx = clientX - chatDragStart.current.x;
+            const dy = clientY - chatDragStart.current.y;
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                chatHasMoved.current = true;
+            }
+            setChatPos({
+                x: chatElementStart.current.x + dx,
+                y: chatElementStart.current.y + dy
+            });
+        };
+        const onEnd = () => {
+            setIsDraggingChat(false);
+        };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+        window.addEventListener('touchmove', onMove, { passive: false });
+        window.addEventListener('touchend', onEnd);
+        return () => {
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onEnd);
+            window.removeEventListener('touchmove', onMove);
+            window.removeEventListener('touchend', onEnd);
+        };
+    }, [isDraggingChat]);
+
+    const handleChatDragStart = (e) => {
+        setIsDraggingChat(true);
+        chatHasMoved.current = false;
+        const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+        chatDragStart.current = { x: clientX, y: clientY };
+        chatElementStart.current = { x: chatPos.x, y: chatPos.y };
+    };
+
+    const handleChatClick = (e) => {
+        if (chatHasMoved.current) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+        setShowChat(true);
+    };
 
     // 4. 메시지 전송 로직
     const handleSendMessage = async (e) => {
@@ -154,12 +210,21 @@ function TripDetailContent() {
                 </button>
             </div>
 
-            {/* 채팅 플로팅 버튼 (✨ z-index 상향: 일정 모달 위로) */}
+            {/* 채팅 플로팅 버튼 (✨ z-index 상향: 일정 모달 위로, 드래그 이동 가능) */}
             {user && tripData.memberIds?.includes(user.uid) && (
-                <div className="fixed bottom-44 right-6 z-[110] sm:bottom-44 sm:right-10 pointer-events-auto">
+                <div 
+                    className="fixed bottom-44 right-6 z-[110] sm:bottom-44 sm:right-10 pointer-events-auto select-none"
+                    style={{
+                        transform: `translate(${chatPos.x}px, ${chatPos.y}px)`,
+                        cursor: isDraggingChat ? 'grabbing' : 'grab',
+                        touchAction: 'none'
+                    }}
+                    onMouseDown={handleChatDragStart}
+                    onTouchStart={handleChatDragStart}
+                >
                     <button
-                        onClick={() => setShowChat(true)}
-                        className="w-16 h-16 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-full shadow-[0_8px_30px_rgba(15,118,110,0.4)] flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-all border-2 border-white"
+                        onClick={handleChatClick}
+                        className="w-16 h-16 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-full shadow-[0_8px_30px_rgba(15,118,110,0.4)] flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-all border-2 border-white pointer-events-auto"
                         title="동행자 채팅방 열기"
                     >
                         <MessageCircle size={30} className="drop-shadow-sm" />

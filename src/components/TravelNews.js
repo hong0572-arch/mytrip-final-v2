@@ -23,7 +23,7 @@ export default function TravelNews({ language = 'ko' }) {
     const fetchNews = useCallback(async () => {
         try {
             setError(null);
-            const res = await fetch(getApiUrl(`/api/tourism/?type=festival&numOfRows=10&t=${Date.now()}`));
+            const res = await fetch(getApiUrl(`/api/tourism/?type=festival&numOfRows=10&lang=${language}&t=${Date.now()}`));
             
             if (!res.ok) {
                 throw new Error(`API Error: ${res.status}`);
@@ -48,7 +48,7 @@ export default function TravelNews({ language = 'ko' }) {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [language]);
 
     // 초기 로드 + 30분마다 자동 갱신
     useEffect(() => {

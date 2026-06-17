@@ -10,8 +10,8 @@
 :root {
   --background: #F4F5F7; /* A안 뉴트럴 백그라운드 */
   --foreground: #1E1E24; /* A안 차콜 텍스트 */
-  --brand-gradient: linear-gradient(135deg, #16A34A 0%, #2563EB 50%, #FF6F61 100%);
-  --brand-gradient-main: linear-gradient(135deg, #16A34A 0%, #2563EB 50%, #FF6F61 100%);
+  --brand-gradient: linear-gradient(135deg, #2AC1DB 0%, #1B75BB 50%, #0E4EA1 100%);
+  --brand-gradient-main: linear-gradient(135deg, #2AC1DB 0%, #1B75BB 50%, #0E4EA1 100%);
 }
 
 @theme inline {
@@ -19,24 +19,24 @@
   --color-foreground: var(--foreground);
   --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
 
-  --color-brand-start: #16A34A;
-  --color-brand-middle: #2563EB;
-  --color-brand-end: #FF6F61;
+  --color-brand-start: #2AC1DB;
+  --color-brand-middle: #1B75BB;
+  --color-brand-end: #0E4EA1;
 
   /* 하이브리드 브랜드 및 시스템 토큰 확장 */
-  --color-brand-primary: #16A34A;
-  --color-brand-secondary: #2563EB;
-  --color-brand-accent: #FF6F61;
+  --color-brand-primary: #1B75BB;
+  --color-brand-secondary: #2AC1DB;
+  --color-brand-accent: #0E4EA1;
   --color-brand-success: #34D399;
   --color-brand-danger: #F43F5E;
 
   /* Spotify 테마 컬러 정의 */
-  --color-spotify-green: #1DB954;
-  --color-spotify-green-hover: #1ed760;
+  --color-spotify-green: #2AC1DB;
+  --color-spotify-green-hover: #1CB0CB;
   --color-spotify-dark: #121212;
   --color-spotify-card: #181818;
   --color-spotify-card-hover: #282828;
-  --color-spotify-text-muted: #a7a7a7;
+  --color-spotify-text-muted: #cbd5e1;
 }
 
 body {

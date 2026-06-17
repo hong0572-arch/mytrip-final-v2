@@ -44,13 +44,58 @@ const FALLBACK_NEWS = [
   }
 ];
 
+const FALLBACK_NEWS_EN = [
+  {
+    id: "mock-1",
+    title: "Jeju Hallim Park Hydrangea Festival",
+    addr: "300 Hallim-ro, Hallim-eup, Jeju-si, Jeju-do",
+    image: "https://images.unsplash.com/photo-1522383225653-ed111181a951?w=600&auto=format&fit=crop",
+    eventStartDate: "20260601",
+    eventEndDate: "20260630",
+    tag: "🎉 Festival/Event",
+    detailUrl: "https://english.visitkorea.or.kr"
+  },
+  {
+    id: "mock-2",
+    title: "Busan Gijang Anchovy Festival",
+    addr: "Daebyeon Port Area, Gijang-eup, Gijang-gun, Busan",
+    image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop",
+    eventStartDate: "20260612",
+    eventEndDate: "20260614",
+    tag: "🎉 Festival/Event",
+    detailUrl: "https://english.visitkorea.or.kr"
+  },
+  {
+    id: "mock-3",
+    title: "Seoul Jungnang Rose Festival",
+    addr: "332 Jungnangcheon-ro, Jungnang-gu, Seoul",
+    image: "https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=600&auto=format&fit=crop",
+    eventStartDate: "20260515",
+    eventEndDate: "20260615",
+    tag: "🎉 Festival/Event",
+    detailUrl: "https://english.visitkorea.or.kr"
+  },
+  {
+    id: "mock-4",
+    title: "Gangneung Danoje Festival",
+    addr: "1 Danojang-gil, Gangneung-si, Gangwon-do",
+    image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&auto=format&fit=crop",
+    eventStartDate: "20260618",
+    eventEndDate: "20260625",
+    tag: "🎉 Festival/Event",
+    detailUrl: "https://english.visitkorea.or.kr"
+  }
+];
+
 // VisitKorea KorService2 축제/행사 데이터 프록시
 export async function GET(request) {
   const isFallbackRequest = request.headers.get("x-fallback") === "true";
+  let lang = "ko";
 
   try {
     const { searchParams } = new URL(request.url);
     const numOfRows = searchParams.get("numOfRows") || "10";
+    lang = searchParams.get("lang") || "ko";
 
     // 1. 공공데이터포털 발급 서비스키 (일반 인증키 - Decoding/Encoding 동일한 hex 값)
     const serviceKey = "a4b7729944fec19e456ea3c89d4009106447e1fbd2dbdbb4db0cff882b6bf98c";
@@ -74,7 +119,8 @@ export async function GET(request) {
       eventStartDate: eventStartDate,
     });
 
-    const apiUrl = `https://apis.data.go.kr/B551011/KorService2/searchFestival2?${params.toString()}`;
+    const serviceType = lang === "en" ? "EngService2" : "KorService2";
+    const apiUrl = `https://apis.data.go.kr/B551011/${serviceType}/searchFestival2?${params.toString()}`;
 
     // 4. API 요청 전송
     const res = await fetch(apiUrl, {
@@ -136,7 +182,9 @@ export async function GET(request) {
     // 7. 프론트엔드가 요구하는 데이터 스키마로 가공 및 매핑
     let items = rawItems
       .map((item) => {
-        const detailUrl = `https://search.naver.com/search.naver?query=${encodeURIComponent(item.title || "")}+축제`;
+        const detailUrl = lang === 'en'
+          ? `https://www.google.com/search?q=${encodeURIComponent(item.title || "")}+festival`
+          : `https://search.naver.com/search.naver?query=${encodeURIComponent(item.title || "")}+축제`;
 
         return {
           id: item.contentid || String(Math.random()),
@@ -145,7 +193,7 @@ export async function GET(request) {
           image: item.firstimage || item.firstimage2 || "",
           eventStartDate: item.eventstartdate || "",
           eventEndDate: item.eventenddate || "",
-          tag: "🎉 축제/행사",
+          tag: lang === 'en' ? "🎉 Festival/Event" : "🎉 축제/행사",
           detailUrl: detailUrl,
         };
       })
@@ -168,7 +216,7 @@ export async function GET(request) {
     if (!isFallbackRequest) {
       try {
         console.log("Attempting to fetch cached actual data from production CDN (https://tripmaker.tips)...");
-        const prodRes = await fetch("https://tripmaker.tips/api/tourism/?type=festival&numOfRows=10", {
+        const prodRes = await fetch(`https://tripmaker.tips/api/tourism/?type=festival&numOfRows=10&lang=${lang}`, {
           headers: { "x-fallback": "true" },
           next: { revalidate: 3600 }
         });
@@ -189,10 +237,11 @@ export async function GET(request) {
     }
 
     // 프로덕션 캐시도 없거나 실패 시, 최종 보루로 고품질 Mock 데이터 반환
+    const fallbackData = lang === "en" ? FALLBACK_NEWS_EN : FALLBACK_NEWS;
     console.warn("Both data.go.kr and production cache failed. Serving fallback mock data.");
     return NextResponse.json({
-      items: FALLBACK_NEWS,
-      totalCount: FALLBACK_NEWS.length,
+      items: fallbackData,
+      totalCount: fallbackData.length,
       warning: "Serving fallback mock data"
     });
   }

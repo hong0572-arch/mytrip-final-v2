@@ -1497,14 +1497,14 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             <SunSceneBackground scene={['mountain', 'beach', 'city', 'cruise', 'sky'][currentDayIdx % 5]} />
                             <div className="relative z-10 w-full flex flex-col gap-6">
                                 {/* AI Recommendation Widget specifically for Restaurants (Moved to Top) */}
-                                <div className="bg-[#121212]/80 border border-white/10 rounded-3xl p-5 backdrop-blur-xl shadow-2xl flex flex-col gap-3 mt-4">
+                                <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur-xl shadow-2xl flex flex-col gap-3 mt-4">
                                     <div className="flex items-center gap-2 text-spotify-green">
                                         <Sparkles size={16} className="animate-pulse" />
                                         <h4 className="text-xs font-black uppercase tracking-wider">
                                             {language === 'en' ? '🪄 AI Food & Cafe Recommendation' : '🪄 냥프로 AI 맛집/카페 추가 추천'}
                                         </h4>
                                     </div>
-                                    <p className="text-[10px] text-spotify-text-muted font-bold">
+                                    <p className="text-xs text-slate-700 font-bold">
                                         {language === 'en' 
                                             ? 'Add delicious restaurants or cafes near your destination!'
                                             : '현재 여행지 주변의 맛집이나 이색 카페를 추천받아 일정에 반영해보세요.'}
@@ -1513,48 +1513,48 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                         <button
                                             onClick={() => handleTriggerRecommendation('맛집')}
                                             disabled={recommendLoading}
-                                            className="px-3 py-1.5 bg-white/5 hover:bg-spotify-green hover:text-black border border-white/10 text-[11px] font-extrabold rounded-full transition-all disabled:opacity-50"
+                                            className="px-3 py-1.5 bg-white hover:bg-spotify-green hover:text-white border border-slate-200 text-xs font-extrabold rounded-full transition-all disabled:opacity-50 text-slate-700"
                                         >
                                             🍔 {language === 'en' ? 'Add Restaurant' : '맛집 추가'}
                                         </button>
                                         <button
                                             onClick={() => handleTriggerRecommendation('카페')}
                                             disabled={recommendLoading}
-                                            className="px-3 py-1.5 bg-white/5 hover:bg-spotify-green hover:text-black border border-white/10 text-[11px] font-extrabold rounded-full transition-all disabled:opacity-50"
+                                            className="px-3 py-1.5 bg-white hover:bg-spotify-green hover:text-white border border-slate-200 text-xs font-extrabold rounded-full transition-all disabled:opacity-50 text-slate-700"
                                         >
                                             ☕ {language === 'en' ? 'Add Cafe' : '카페 추가'}
                                         </button>
                                     </div>
-                                    <div className="flex gap-2 bg-black/40 border border-white/10 p-1 rounded-xl">
+                                    <div className="flex gap-2 bg-white border border-slate-200 p-1 rounded-xl">
                                         <input
                                             type="text"
                                             value={recommendInputFood}
                                             onChange={(e) => setRecommendInputFood(e.target.value)}
                                             disabled={recommendLoading}
                                             placeholder={language === 'en' ? 'e.g. Cozy local noodle restaurants' : '예: 현지인들이 가는 아늑한 일식당'}
-                                            className="flex-1 bg-transparent px-2.5 py-2 text-xs text-white border-none outline-none placeholder:text-spotify-text-muted"
+                                            className="flex-1 bg-transparent px-2.5 py-2 text-xs text-slate-800 border-none outline-none placeholder:text-slate-400"
                                         />
                                         <button
                                             onClick={() => {
                                                 handleTriggerRecommendation(recommendInputFood);
                                             }}
                                             disabled={recommendLoading || !recommendInputFood.trim()}
-                                            className="bg-spotify-green text-black px-3.5 py-2 rounded-lg text-xs font-black transition-all active:scale-95 disabled:opacity-50 shrink-0 flex items-center justify-center"
+                                            className="bg-spotify-green text-white px-3.5 py-2 rounded-lg text-xs font-black transition-all active:scale-95 disabled:opacity-50 shrink-0 flex items-center justify-center"
                                         >
-                                            {recommendLoading ? <Loader2 size={14} className="animate-spin text-black" /> : <Send size={14} />}
+                                            {recommendLoading ? <Loader2 size={14} className="animate-spin text-white" /> : <Send size={14} />}
                                         </button>
                                     </div>
                                 </div>
 
-                                <div className="text-center py-4 bg-black/40 backdrop-blur-md rounded-2xl border border-white/5 p-4 shadow-xl">
-                                    <h2 className="text-lg font-black text-white">{tripPlan.tripTitle}</h2>
-                                    <p className="text-[11px] font-bold text-spotify-text-muted mt-1">{destName} • {estimatedCost} • {language === 'en' ? 'Restaurants & Cafes' : '여행지 추천 맛집 리스트'}</p>
+                                <div className="text-center py-4 bg-white/50 backdrop-blur-md rounded-2xl border border-slate-200 p-4 shadow-lg">
+                                    <h2 className="text-lg font-black text-slate-900">{tripPlan.tripTitle}</h2>
+                                    <p className="text-xs font-bold text-slate-600 mt-1">{destName} • {estimatedCost} • {language === 'en' ? 'Restaurants & Cafes' : '여행지 추천 맛집 리스트'}</p>
                                 </div>
 
-                                <div className="bg-[#121212]/80 border border-white/10 rounded-3xl p-5 backdrop-blur-xl shadow-2xl flex flex-col gap-4">
+                                <div className="bg-white/50 border border-slate-200 rounded-3xl p-5 shadow-lg flex flex-col gap-4">
                                     <div className="space-y-4">
                                         {allFoodPlaces.length === 0 ? (
-                                            <div className="text-xs text-spotify-text-muted/60 text-center py-8 italic">
+                                            <div className="text-xs text-slate-500 text-center py-8 italic">
                                                 {language === 'en' ? 'No restaurant/cafe recommended for this trip.' : '이 여행에는 등록된 맛집/카페 일정이 없습니다.'}
                                             </div>
                                         ) : (
@@ -1569,28 +1569,28 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                             setSheetState('full');
                                                         }
                                                     }}
-                                                    className="group p-4 bg-white/[0.02] hover:bg-white/[0.08] border border-white/5 hover:border-spotify-green/20 rounded-2xl transition-all duration-300 cursor-pointer flex gap-3.5 items-start text-left"
+                                                    className="group p-4 bg-white/80 hover:bg-white border border-slate-200 hover:border-spotify-green/50 rounded-2xl transition-all duration-300 cursor-pointer flex gap-3.5 items-start text-left"
                                                 >
-                                                    <div className="w-7 h-7 rounded-full bg-white/10 group-hover:bg-spotify-green group-hover:text-black flex items-center justify-center text-xs font-black text-spotify-text-muted transition-colors shrink-0">
+                                                    <div className="w-7 h-7 rounded-full bg-slate-200 group-hover:bg-spotify-green group-hover:text-white flex items-center justify-center text-xs font-black text-slate-600 transition-colors shrink-0">
                                                         {idx + 1}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex justify-between items-start gap-2 mb-1">
                                                             <div className="flex items-center gap-2 min-w-0">
-                                                                <h4 className="font-extrabold text-white text-sm truncate group-hover:text-spotify-green transition-colors">{place.name}</h4>
-                                                                <span className="bg-spotify-green/10 text-spotify-green text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase shrink-0">
+                                                                <h4 className="font-extrabold text-slate-900 text-sm truncate group-hover:text-spotify-green transition-colors">{place.name}</h4>
+                                                                <span className="bg-spotify-green/10 text-spotify-green text-xs font-black px-1.5 py-0.5 rounded-md uppercase shrink-0">
                                                                     Day {dayIdx + 1}
                                                                 </span>
                                                             </div>
                                                             {place.category && (
-                                                                <span className="bg-white/10 text-spotify-text-muted text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0">
+                                                                <span className="bg-slate-200 text-slate-600 text-xs font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0">
                                                                     {place.category}
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <p className="text-xs text-spotify-text-muted leading-relaxed line-clamp-2">{place.description}</p>
+                                                        <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">{place.description}</p>
                                                         {place.budget && (
-                                                            <div className="text-[10px] font-bold text-spotify-green mt-2 flex items-center gap-1">
+                                                            <div className="text-xs font-bold text-spotify-green mt-2 flex items-center gap-1">
                                                                 💰 {place.budget}
                                                             </div>
                                                         )}
@@ -1617,18 +1617,18 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     });
 
                     return (
-                        <div className="absolute inset-0 z-0 bg-[#121212] overflow-y-auto pt-36 pb-24 px-4 custom-scrollbar flex flex-col pointer-events-auto">
+                        <div className="absolute inset-0 z-0 bg-slate-50 overflow-y-auto pt-36 pb-24 px-4 custom-scrollbar flex flex-col pointer-events-auto">
                             <SunSceneBackground scene="sky" />
                             <div className="relative z-10 w-full flex flex-col gap-6">
                                 {/* AI Recommendation Widget specifically for Shopping & Attractions */}
-                                <div className="bg-[#121212]/80 border border-white/10 rounded-3xl p-5 backdrop-blur-xl shadow-2xl flex flex-col gap-3 mt-4">
+                                <div className="bg-slate-100/50 border border-slate-200 rounded-3xl p-5 shadow-lg flex flex-col gap-3 mt-4">
                                     <div className="flex items-center gap-2 text-spotify-green">
                                         <Sparkles size={16} className="animate-pulse" />
                                         <h4 className="text-xs font-black uppercase tracking-wider">
                                             {language === 'en' ? '🪄 AI Shopping & Sights Recommendation' : '🪄 냥프로 AI 쇼핑/볼거리 추가 추천'}
                                         </h4>
                                     </div>
-                                    <p className="text-[10px] text-spotify-text-muted font-bold">
+                                    <p className="text-xs text-slate-700 font-bold">
                                         {language === 'en' 
                                             ? 'Request shopping spots, landmarks, or parks near your destination!'
                                             : '현재 여행지 주변의 기념품 숍, 랜드마크, 공원 등을 추천받아 일정에 반영해보세요.'}
@@ -1637,14 +1637,14 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                         <button
                                             onClick={() => handleTriggerRecommendation('쇼핑')}
                                             disabled={recommendLoading}
-                                            className="px-3 py-1.5 bg-white/5 hover:bg-spotify-green hover:text-black border border-white/10 text-[11px] font-extrabold rounded-full transition-all disabled:opacity-50"
+                                            className="px-3 py-1.5 bg-white hover:bg-spotify-green hover:text-white border border-slate-200 text-xs font-extrabold rounded-full transition-all disabled:opacity-50 text-slate-700"
                                         >
                                             🛍️ {language === 'en' ? 'Add Shopping' : '쇼핑 추가'}
                                         </button>
                                         <button
                                             onClick={() => handleTriggerRecommendation('관광명소')}
                                             disabled={recommendLoading}
-                                            className="px-3 py-1.5 bg-white/5 hover:bg-spotify-green hover:text-black border border-white/10 text-[11px] font-extrabold rounded-full transition-all disabled:opacity-50"
+                                            className="px-3 py-1.5 bg-white/5 hover:bg-spotify-green hover:text-black border border-white/10 text-xs font-extrabold rounded-full transition-all disabled:opacity-50"
                                         >
                                             🏛️ {language === 'en' ? 'Add Attraction' : '볼거리/명소 추가'}
                                         </button>
@@ -1732,7 +1732,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {/* Edit Mode Overlay container */}
                 {/* Edit Mode Overlay container */}
                 {isEditMode && (
-                    <div className="absolute bottom-[100px] left-4 right-4 bg-spotify-card/95 backdrop-blur-xl p-4 rounded-[24px] shadow-2xl z-20 max-h-[50vh] overflow-y-auto custom-scrollbar border border-white/10 text-white">
+                    <div className="absolute bottom-[100px] left-4 right-4 bg-black/80 backdrop-blur-xl p-4 rounded-[24px] shadow-2xl z-20 max-h-[50vh] overflow-y-auto custom-scrollbar border border-white/10 text-white">
                         <div className="flex justify-between items-center mb-3">
                             <h3 className="font-black text-spotify-green flex items-center gap-1"><Pencil size={18} /> {language === 'en' ? 'Edit Itinerary' : '일정 편집'}</h3>
                             <button onClick={(e) => { e.stopPropagation(); handleAutoFixAll(); }} disabled={loadingAction === 'autoFix'} className="bg-spotify-green text-black py-1 px-3 rounded-full text-xs font-black flex items-center gap-1 hover:bg-spotify-green-hover" title={language === 'en' ? "Calibrate Locations" : "위치 보정"}>
@@ -1744,7 +1744,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                 <h4 className="font-bold text-sm bg-white/5 border border-white/10 inline-block px-3 py-1 rounded text-spotify-text-muted mb-2">Day {dayItem.day}</h4>
                                 <div className="space-y-3">
                                     {dayItem.places.map((place, placeIdx) => (
-                                        <div key={placeIdx} className="bg-[#282828] p-3 rounded-xl border border-white/5 shadow-md">
+                                        <div key={placeIdx} className="bg-white/5 p-3 rounded-xl border border-white/10 shadow-md">
                                             <div className="flex gap-2 mb-2">
                                                 <input type="text" value={place.name} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'name', e.target.value)} className="flex-1 font-bold text-sm p-1.5 border-b border-white/10 outline-none bg-white/5 rounded-t text-white focus:border-spotify-green transition" placeholder={language === 'en' ? "Place Name" : "장소명"} />
                                                 <button onClick={() => handleUpdateLocation(dayIdx, placeIdx, place.name)} className="p-1.5 rounded bg-white/5 text-spotify-green border border-white/10 hover:bg-white/10 transition"><Search size={14} /></button>
@@ -1798,7 +1798,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {/* Spotify 초록색 저장 버튼 */}
                 {!tripId && (
                     <div className="absolute bottom-[240px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
-                        <div className="bg-spotify-green text-black text-[11px] font-extrabold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">{language === 'en' ? 'Save' : '저장하기'}<div className="absolute -bottom-1 right-1 w-3 h-3 bg-spotify-green transform rotate-45"></div></div>
+                        <div className="bg-spotify-green text-black text-xs font-extrabold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">{language === 'en' ? 'Save' : '저장하기'}<div className="absolute -bottom-1 right-1 w-3 h-3 bg-spotify-green transform rotate-45"></div></div>
                         <button onClick={handleSaveClick} disabled={isSaving} className="w-14 h-14 bg-spotify-green rounded-full shadow-2xl flex items-center justify-center text-black pointer-events-auto hover:bg-spotify-green-hover hover:scale-105 transition-transform active:scale-95 border-2 border-white/20">
                             {isSaving ? <Loader2 className="animate-spin" size={24} /> : <Save size={24} strokeWidth={2.5} />}
                         </button>
@@ -1836,10 +1836,10 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             </button>
                             <h2 className="text-xl font-black mb-4 pr-10 text-white flex items-center gap-2 relative z-10"><Sparkles className="text-spotify-green" size={20} /> {language === 'en' ? 'Trip Info Box' : '여정 꿀팁 박스'}</h2>
  
-                            <div className="flex bg-[#121212]/80 backdrop-blur-md p-1 rounded-xl mb-4 border border-white/5 relative z-10">
-                                <button onClick={() => setInfoModalTab('budget')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'budget' ? 'bg-[#282828] text-spotify-green border border-white/10 shadow-sm' : 'text-spotify-text-muted hover:text-white'}`}>{language === 'en' ? 'Budget' : '예산'}</button>
-                                <button onClick={() => setInfoModalTab('hotels')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'hotels' ? 'bg-[#282828] text-spotify-green border border-white/10 shadow-sm' : 'text-spotify-text-muted hover:text-white'}`}>{language === 'en' ? 'Stays' : '추천 숙소'}</button>
-                                <button onClick={() => setInfoModalTab('tips')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'tips' ? 'bg-[#282828] text-spotify-green border border-white/10 shadow-sm' : 'text-spotify-text-muted hover:text-white'}`}>{language === 'en' ? 'Tips & Weather' : '팁 & 날씨'}</button>
+                            <div className="flex bg-black/40 backdrop-blur-md p-1 rounded-xl mb-4 border border-white/5 relative z-10">
+                                <button onClick={() => setInfoModalTab('budget')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'budget' ? 'bg-white/15 text-spotify-green border border-white/10 shadow-sm' : 'text-slate-300 hover:text-white'}`}>{language === 'en' ? 'Budget' : '예산'}</button>
+                                <button onClick={() => setInfoModalTab('hotels')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'hotels' ? 'bg-white/15 text-spotify-green border border-white/10 shadow-sm' : 'text-slate-300 hover:text-white'}`}>{language === 'en' ? 'Stays' : '추천 숙소'}</button>
+                                <button onClick={() => setInfoModalTab('tips')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'tips' ? 'bg-white/15 text-spotify-green border border-white/10 shadow-sm' : 'text-slate-300 hover:text-white'}`}>{language === 'en' ? 'Tips & Weather' : '팁 & 날씨'}</button>
                             </div>
  
                             <div className="flex-1 overflow-y-auto custom-scrollbar pb-6 text-white relative z-10">
@@ -1916,16 +1916,16 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
  
                                                     {/* 🌟 안전 마이크로 배지 그룹 */}
                                                     <div className="flex flex-wrap gap-1.5 mb-3">
-                                                        <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md flex items-center gap-0.5">
+                                                        <span className="text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md flex items-center gap-0.5">
                                                             🛡️ {language === 'en' ? `Safety Score ${hotel.safetyScore}` : `치안 안전 ${hotel.safetyScore}점`}
                                                         </span>
                                                         {hotel.isMainStreet && (
-                                                            <span className="text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-md flex items-center gap-0.5">
+                                                            <span className="text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-md flex items-center gap-0.5">
                                                                 📍 {language === 'en' ? 'Main Street/Downtown' : '대로변·번화가 인접'}
                                                             </span>
                                                         )}
                                                         {hotel.soloFriendly && (
-                                                            <span className="text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-md flex items-center gap-0.5">
+                                                            <span className="text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-md flex items-center gap-0.5">
                                                                 🏆 {language === 'en' ? 'Solo Traveler Friendly' : '1인 혼행족 맞춤형'}
                                                             </span>
                                                         )}
@@ -1934,8 +1934,8 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                     <p className="text-xs text-slate-300 leading-relaxed bg-white/5 p-2.5 rounded-xl border border-white/5">{hotel.description}</p>
  
                                                     <div className="mt-3 flex justify-end gap-3.5 border-t border-white/5 pt-3">
-                                                        <a href={getTripLink(hotel.name, userInfo?.destination || "", language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-extrabold text-spotify-green flex items-center gap-0.5 hover:underline">{language === 'en' ? 'Trip.com Lowest' : 'Trip.com 최저가'} <ExternalLink size={12} /></a>
-                                                        <a href={getKlookLink(hotel.name, language)} target="_blank" rel="noopener noreferrer" className="text-[11px] font-extrabold text-orange-400 flex items-center gap-0.5 hover:underline">{language === 'en' ? 'Klook Activities' : 'Klook 액티비티'} <ExternalLink size={12} /></a>
+                                                        <a href={getTripLink(hotel.name, userInfo?.destination || "", language)} target="_blank" rel="noopener noreferrer" className="text-xs font-extrabold text-spotify-green flex items-center gap-0.5 hover:underline">{language === 'en' ? 'Trip.com Lowest' : 'Trip.com 최저가'} <ExternalLink size={12} /></a>
+                                                        <a href={getKlookLink(hotel.name, language)} target="_blank" rel="noopener noreferrer" className="text-xs font-extrabold text-orange-400 flex items-center gap-0.5 hover:underline">{language === 'en' ? 'Klook Activities' : 'Klook 액티비티'} <ExternalLink size={12} /></a>
                                                     </div>
                                                 </div>
                                             )) : (
@@ -1948,7 +1948,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                     <div className="space-y-4">
                                         {safetyAdvice && (
                                             <div className="bg-gradient-to-br from-cyan-950/40 via-cyan-900/10 to-white/5 p-4 rounded-2xl border border-cyan-500/30 flex items-start gap-4 mb-4">
-                                                <div className="bg-[#121212]/80 border border-white/5 p-3 rounded-full text-cyan-400 shadow-sm shrink-0"><ShieldCheck size={24} /></div>
+                                                <div className="bg-black/60 border border-white/5 p-3 rounded-full text-cyan-400 shadow-sm shrink-0"><ShieldCheck size={24} /></div>
                                                 <div>
                                                     <p className="font-black text-cyan-200 mb-1">{language === 'en' ? 'Safety Guide' : '안심 & 안전 가이드'}</p>
                                                     <p className="text-sm text-cyan-100/80 leading-relaxed font-medium whitespace-pre-wrap">{safetyAdvice}</p>
@@ -1957,7 +1957,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                         )}
                                         {weather && (
                                             <div className="bg-gradient-to-br from-blue-950/40 via-blue-900/10 to-white/5 p-4 rounded-2xl border border-blue-500/30 flex items-start gap-4 mb-4">
-                                                <div className="bg-[#121212]/80 border border-white/5 p-3 rounded-full text-amber-400 shadow-sm shrink-0"><Sun size={24} /></div>
+                                                <div className="bg-black/60 border border-white/5 p-3 rounded-full text-amber-400 shadow-sm shrink-0"><Sun size={24} /></div>
                                                 <div>
                                                     <p className="font-black text-blue-200 mb-1">{language === 'en' ? 'Weather Info' : '날씨 정보'}</p>
                                                     <p className="text-sm text-blue-100/80 leading-relaxed">{weather}</p>
@@ -1966,7 +1966,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                         )}
                                         {travelTips && travelTips.length > 0 && (
                                             <div className="bg-gradient-to-br from-amber-950/40 via-amber-900/10 to-white/5 p-4 rounded-2xl border border-amber-500/30 flex items-start gap-4">
-                                                <div className="bg-[#121212]/80 border border-white/5 p-3 rounded-full text-amber-400 shadow-sm shrink-0"><Lightbulb size={24} /></div>
+                                                <div className="bg-black/60 border border-white/5 p-3 rounded-full text-amber-400 shadow-sm shrink-0"><Lightbulb size={24} /></div>
                                                 <div>
                                                     <p className="font-black text-amber-200 mb-2">{language === 'en' ? 'Travel Tips' : '여행 꿀팁'}</p>
                                                     <ul className="text-sm text-amber-100/80 space-y-2 list-disc list-inside">
@@ -1986,12 +1986,12 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {showMatchModal && (
                     <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 80 }}>
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowMatchModal(false)}></div>
-                        <div className="bg-[#121212]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl animate-in zoom-in-95 text-white">
+                        <div className="bg-black/80 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl animate-in zoom-in-95 text-white">
                             <button onClick={() => setShowMatchModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:text-white"><X size={18} /></button>
                             <div className="text-center mb-6 mt-2">
                                 <div className="w-16 h-16 bg-gradient-to-tr from-brand-primary to-brand-secondary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-primary/30 animate-bounce"><Sparkles size={32} className="text-white" /></div>
                                 <h3 className="text-xl font-black text-white mb-1">{language === 'en' ? 'Travel Mate Recommendations' : '여행 메이트 추천'}</h3>
-                                <p className="text-sm text-slate-400 font-bold">{language === 'en' ? 'We found travelers with similar styles!' : '비슷한 성향의 여행자를 찾았어요!'}</p>
+                                <p className="text-sm text-slate-300 font-bold">{language === 'en' ? 'We found travelers with similar styles!' : '비슷한 성향의 여행자를 찾았어요!'}</p>
                             </div>
                             <div className="space-y-3 mb-6">
                                 {realMates.length === 0 ? (
@@ -2001,7 +2001,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                         <div key={mate.id} className="bg-white/5 p-4 rounded-2xl border border-white/10 shadow-sm flex items-center justify-between">
                                             <div className="flex items-center gap-3">
                                                 <img src={mate.profileImgBase64 || "https://i.pravatar.cc/150?u=" + mate.id} className="w-12 h-12 rounded-full object-cover border-2 border-brand-primary/20" />
-                                                <div><p className="font-bold text-white">{mate.name}</p><p className="text-[10px] text-slate-400 font-bold truncate max-w-[120px]">{mate.bio || (language === 'en' ? "Hello!" : "반가워요!")}</p></div>
+                                                <div><p className="font-bold text-white">{mate.name}</p><p className="text-xs text-slate-300 font-bold truncate max-w-[120px]">{mate.bio || (language === 'en' ? "Hello!" : "반가워요!")}</p></div>
                                             </div>
                                             <button onClick={() => handleRequestRealMate(mate)} className="bg-brand-primary/10 text-brand-primary w-10 h-10 rounded-full flex items-center justify-center hover:bg-brand-primary hover:text-white transition"><Send size={16} /></button>
                                         </div>

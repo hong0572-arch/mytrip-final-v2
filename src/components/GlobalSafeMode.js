@@ -261,15 +261,16 @@ function FluentShield({ active }) {
                     />
                 </g>
             ) : (
-                // Checkmark Symbol
-                <path
-                    d="M 44 60 L 54 70 L 76 46"
-                    stroke="white"
-                    strokeWidth="6.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    filter="url(#symbolShadow)"
-                />
+                // Paw Print Symbol (Scaled down to 80% and centered)
+                <g fill="white" filter="url(#symbolShadow)" transform="translate(12, 12) scale(0.8)">
+                    {/* Central Pad */}
+                    <path d="M 60 62 C 54 62 49 64 47 67 C 45 71 45 76 49 78 C 53 80 56 77 60 77 C 64 77 67 80 71 78 C 75 76 75 71 73 67 C 71 64 66 62 60 62 Z" />
+                    {/* Toes */}
+                    <ellipse cx="44" cy="56" rx="5" ry="7" transform="rotate(-25 44 56)" />
+                    <ellipse cx="53" cy="47" rx="5" ry="7.5" transform="rotate(-8 53 47)" />
+                    <ellipse cx="67" cy="47" rx="5" ry="7.5" transform="rotate(8 67 47)" />
+                    <ellipse cx="76" cy="56" rx="5" ry="7" transform="rotate(25 76 56)" />
+                </g>
             )}
         </svg>
     );
@@ -279,6 +280,13 @@ export default function GlobalSafeMode() {
     const [user, setUser] = useState(null);
     const [isOpen, setIsOpen] = useState(false);
     const [language, setLanguage] = useState('ko');
+
+    // ✨ Safe Mode 버튼 드래그 이동 관련 상태
+    const [pos, setPos] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const dragStart = useRef({ x: 0, y: 0 });
+    const elementStart = useRef({ x: 0, y: 0 });
+    const hasMoved = useRef(false);
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -295,6 +303,55 @@ export default function GlobalSafeMode() {
             return () => window.removeEventListener('languageChanged', handleLangChange);
         }
     }, []);
+
+    // ✨ Safe Mode 버튼 드래그 이동 관련 로직
+    useEffect(() => {
+        if (!isDragging) return;
+        const onMove = (e) => {
+            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+            const dx = clientX - dragStart.current.x;
+            const dy = clientY - dragStart.current.y;
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                hasMoved.current = true;
+            }
+            setPos({
+                x: elementStart.current.x + dx,
+                y: elementStart.current.y + dy
+            });
+        };
+        const onEnd = () => {
+            setIsDragging(false);
+        };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+        window.addEventListener('touchmove', onMove, { passive: false });
+        window.addEventListener('touchend', onEnd);
+        return () => {
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onEnd);
+            window.removeEventListener('touchmove', onMove);
+            window.removeEventListener('touchend', onEnd);
+        };
+    }, [isDragging]);
+
+    const handleDragStart = (e) => {
+        setIsDragging(true);
+        hasMoved.current = false;
+        const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+        dragStart.current = { x: clientX, y: clientY };
+        elementStart.current = { x: pos.x, y: pos.y };
+    };
+
+    const handleSafeModeClick = (e) => {
+        if (hasMoved.current) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+        setIsOpen(true);
+    };
     
     // 안전 모드 핵심 상태
     const [isActive, setIsActive] = useState(false);
@@ -578,7 +635,7 @@ export default function GlobalSafeMode() {
                     text: safeModeTranslations[language].msg_chat_expire.replace('{name}', user.displayName || (language === 'en' ? 'Traveler' : '여행자')),
                     senderId: 'system_safemode',
                     senderName: '🛡️ Safe Mode 시스템',
-                    senderAvatar: '/logo.png',
+                    senderAvatar: '/logo1.png',
                     createdAt: serverTimestamp()
                 });
             }
@@ -1076,19 +1133,26 @@ export default function GlobalSafeMode() {
                 </div>
             )}
 
-            {/* 2. 하단 중앙 플로팅 안심 가드 버튼 (시그니처 디자인: 가디언 하트 오브) */}
+            {/* 2. 하단 중앙 플로팅 안심 가드 버튼 (시그니처 디자인: 가디언 하트 오브, 드래그 이동 가능) */}
             <div 
                 id="safe-mode-float"
-                className="fixed bottom-[105px] left-1/2 -translate-x-1/2 z-[998] pointer-events-auto flex flex-col items-center gap-2.5 transition-transform duration-500 ease-[cubic-bezier(0.3,1,0.3,1)]"
+                className="fixed bottom-[105px] left-1/2 z-[998] pointer-events-auto flex flex-col items-center gap-2.5 transition-transform duration-100 select-none"
+                style={{
+                    transform: `translate(calc(-50% + ${pos.x}px), ${pos.y}px)`,
+                    cursor: isDragging ? 'grabbing' : 'grab',
+                    touchAction: 'none'
+                }}
+                onMouseDown={handleDragStart}
+                onTouchStart={handleDragStart}
             >
                 {isActive && (
-                    <div className="bg-rose-600 text-white text-[9px] font-black px-2.5 py-1 rounded-lg shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse border border-rose-500 tracking-wide">
+                    <div className="bg-rose-600 text-white text-[9px] font-black px-2.5 py-1 rounded-lg shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse border border-rose-500 tracking-wide select-none">
                         {safeModeTranslations[language].float_protecting}
                     </div>
                 )}
                 <button
-                    onClick={() => setIsOpen(true)}
-                    className="relative group flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 outline-none"
+                    onClick={handleSafeModeClick}
+                    className="relative group flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 outline-none pointer-events-auto"
                     style={{ width: '70px', height: '70px' }}
                     title={safeModeTranslations[language].float_title}
                 >
