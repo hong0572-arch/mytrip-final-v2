@@ -120,6 +120,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const [shareUrl, setShareUrl] = useState(null);
     const [activeTab, setActiveTab] = useState('itinerary');
     const [viewMode, setViewMode] = useState('map'); // 'map' | 'timeline' | 'summary'
+    const [isToolbarVisible, setIsToolbarVisible] = useState(true); // Right vertical toolbar visibility state
     const [isSaving, setIsSaving] = useState(false);
     const [mapHeight, setMapHeight] = useState(40);
     const [isPanelOpen, setIsPanelOpen] = useState(true);
@@ -1172,17 +1173,25 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 </div>
 
                 {/* Top Overlay */}
-                <div className="absolute top-0 left-0 w-full p-6 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none z-10 flex flex-col items-start pt-10 sm:pt-6">
+                <div className={`absolute top-0 left-0 w-full p-6 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none z-10 flex flex-col items-start transition-all duration-300 ${
+                    viewMode === 'map' ? 'pt-4 sm:pt-4' : 'pt-10 sm:pt-6'
+                }`}>
                     {theme && (
                         <span className="px-2 py-1 bg-spotify-green text-black text-xs font-black rounded-lg mb-2 shadow-sm">
                             {theme}
                         </span>
                     )}
-                    <h1 className="text-xl sm:text-2xl font-bold text-white drop-shadow-lg w-full pr-12 leading-tight">{tripPlan.tripTitle}</h1>
+                    {viewMode !== 'map' && (
+                        <h1 className="text-xl sm:text-2xl font-bold text-white drop-shadow-lg w-full pr-12 leading-tight">{tripPlan.tripTitle}</h1>
+                    )}
                 </div>
 
                 {/* View Mode Switcher Tab Bar */}
-                <div className="absolute top-20 left-4 right-4 z-30 flex bg-[#121212]/20 border border-white/10 p-1 rounded-xl pointer-events-auto backdrop-blur-md">
+                <div className={`absolute left-4 z-30 flex bg-[#121212]/20 border border-white/10 p-1 rounded-xl pointer-events-auto backdrop-blur-md transition-all duration-300 ${
+                    viewMode === 'map' 
+                        ? `top-12 ${isToolbarVisible ? 'right-16' : 'right-4'}` 
+                        : 'top-20 right-4'
+                }`}>
                     <button 
                         onClick={() => setViewMode('map')} 
                         className={`flex-1 py-1.5 text-xs font-black rounded-lg transition-all ${
@@ -1216,103 +1225,122 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 </div>
 
                 {/* Right Top Buttons - Unified Vertical Toolbar */}
-                <div className="absolute top-8 right-4 sm:right-6 z-50 pointer-events-auto flex flex-col items-center bg-[#121212]/80 backdrop-blur-xl border border-white/10 rounded-[32px] p-2 shadow-2xl gap-2">
-                    <button onClick={() => router.push('/mypage')} className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" title={language === 'en' ? "My Page" : "마이페이지"}>
-                        <User size={20} />
+                {isToolbarVisible ? (
+                    <div className="absolute top-8 right-4 sm:right-6 z-50 pointer-events-auto flex flex-col items-center bg-[#121212]/80 backdrop-blur-xl border border-white/10 rounded-[32px] p-2 shadow-2xl gap-2 transition-all duration-300">
+                        {/* Collapse Button */}
+                        <button 
+                            onClick={() => setIsToolbarVisible(false)} 
+                            className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" 
+                            title={language === 'en' ? 'Hide Menu' : '메뉴 숨기기'}
+                        >
+                            <ChevronRight size={20} />
+                        </button>
+                        <div className="w-8 h-[1px] bg-white/10 my-0.5"></div>
+
+                        <button onClick={() => router.push('/mypage')} className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" title={language === 'en' ? "My Page" : "마이페이지"}>
+                            <User size={20} />
+                        </button>
+                        <button onClick={() => setShowInfoModal(true)} className="p-2.5 rounded-full text-spotify-green hover:bg-white/10 transition-colors relative" title={language === 'en' ? "Trip Info" : "여행 정보"}>
+                            <Sparkles size={20} className="animate-pulse" />
+                        </button>
+                        <button onClick={() => {
+                            if (isEditMode && tripId) {
+                                handleUpdateItinerary();
+                            } else {
+                                setIsEditMode(!isEditMode);
+                            }
+                        }} className={`p-2.5 rounded-full transition-colors ${isEditMode ? 'bg-spotify-green text-black shadow-lg font-black' : 'text-white hover:bg-white/10 hover:text-spotify-green'}`} title={language === 'en' ? "Edit Itinerary" : "일정 편집"}>
+                            {loadingAction === 'save' ? <Loader2 className="animate-spin" size={20} /> : (isEditMode ? <Check size={20} /> : <Pencil size={20} />)}
+                        </button>
+
+                        {!isEditMode && (
+                            <>
+                                {viewMode === 'map' && (
+                                    <>
+                                        <div className="w-8 h-[1px] bg-white/10 my-1"></div>
+
+                                        <button
+                                            onClick={() => setTravelMode('DRIVING')}
+                                            className={`p-2 rounded-full transition-all ${travelMode === 'DRIVING' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
+                                            title={language === 'en' ? "Driving" : "자동차"}
+                                        >
+                                            <Car size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setTravelMode('WALKING')}
+                                            className={`p-2 rounded-full transition-all ${travelMode === 'WALKING' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
+                                            title={language === 'en' ? "Walking" : "도보"}
+                                        >
+                                            <Footprints size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setTravelMode('TRANSIT')}
+                                            className={`p-2 rounded-full transition-all ${travelMode === 'TRANSIT' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
+                                            title={language === 'en' ? "Transit" : "대중교통"}
+                                        >
+                                            <Train size={18} />
+                                        </button>
+
+                                        <div className="w-8 h-[1px] bg-white/10 my-1"></div>
+
+                                        <button
+                                            onClick={handleOptimizeItineraryRoute}
+                                            disabled={loadingAction === 'optimize'}
+                                            className="p-2.5 bg-spotify-green text-black rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all disabled:opacity-50 border border-white/10 hover:bg-spotify-green-hover"
+                                            title={language === 'en' ? "AI Route Optimization" : "AI 동선 자동 최적화"}
+                                        >
+                                            {loadingAction === 'optimize' ? (
+                                                <Loader2 className="animate-spin text-black" size={20} />
+                                            ) : (
+                                                <Wand2 size={20} />
+                                            )}
+                                        </button>
+                                    </>
+                                )}
+
+                                <div className="w-8 h-[1px] bg-white/10 my-1"></div>
+
+                                <button 
+                                    onClick={handleReset} 
+                                    className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" 
+                                    title={language === 'en' ? 'Home' : '처음으로'}
+                                >
+                                    <Home size={20} />
+                                </button>
+                                <button 
+                                    onClick={handleKakaoConsult} 
+                                    className="p-2.5 rounded-full text-yellow-400 hover:text-yellow-300 hover:bg-white/10 transition-colors" 
+                                    title={language === 'en' ? 'Kakao Chat' : '카톡상담'}
+                                >
+                                    <MessageCircle size={20} />
+                                </button>
+                                <button 
+                                    onClick={handleDownloadPDF} 
+                                    className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" 
+                                    title={language === 'en' ? 'PDF Export' : 'PDF저장'}
+                                >
+                                    <Download size={20} />
+                                </button>
+                                <button 
+                                    onClick={handleShare} 
+                                    className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" 
+                                    title={language === 'en' ? 'Share' : '공유하기'}
+                                >
+                                    <Share2 size={20} />
+                                </button>
+                            </>
+                        )}
+                    </div>
+                ) : (
+                    /* Expand Button when Collapsed */
+                    <button 
+                        onClick={() => setIsToolbarVisible(true)} 
+                        className="absolute top-8 right-4 sm:right-6 z-50 pointer-events-auto flex items-center justify-center bg-[#121212]/80 backdrop-blur-xl border border-white/10 rounded-full p-2.5 shadow-2xl text-white hover:text-spotify-green hover:scale-110 transition-all duration-300"
+                        title={language === 'en' ? 'Show Menu' : '메뉴 보이기'}
+                    >
+                        <ChevronLeft size={20} />
                     </button>
-                    <button onClick={() => setShowInfoModal(true)} className="p-2.5 rounded-full text-spotify-green hover:bg-white/10 transition-colors relative" title={language === 'en' ? "Trip Info" : "여행 정보"}>
-                        <Sparkles size={20} className="animate-pulse" />
-                    </button>
-                    <button onClick={() => {
-                        if (isEditMode && tripId) {
-                            handleUpdateItinerary();
-                        } else {
-                            setIsEditMode(!isEditMode);
-                        }
-                    }} className={`p-2.5 rounded-full transition-colors ${isEditMode ? 'bg-spotify-green text-black shadow-lg font-black' : 'text-white hover:bg-white/10 hover:text-spotify-green'}`} title={language === 'en' ? "Edit Itinerary" : "일정 편집"}>
-                        {loadingAction === 'save' ? <Loader2 className="animate-spin" size={20} /> : (isEditMode ? <Check size={20} /> : <Pencil size={20} />)}
-                    </button>
-
-
-
-                    {!isEditMode && (
-                        <>
-                            {viewMode === 'map' && (
-                                <>
-                                    <div className="w-8 h-[1px] bg-white/10 my-1"></div>
-
-                                    <button
-                                        onClick={() => setTravelMode('DRIVING')}
-                                        className={`p-2 rounded-full transition-all ${travelMode === 'DRIVING' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
-                                        title={language === 'en' ? "Driving" : "자동차"}
-                                    >
-                                        <Car size={18} />
-                                    </button>
-                                    <button
-                                        onClick={() => setTravelMode('WALKING')}
-                                        className={`p-2 rounded-full transition-all ${travelMode === 'WALKING' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
-                                        title={language === 'en' ? "Walking" : "도보"}
-                                    >
-                                        <Footprints size={18} />
-                                    </button>
-                                    <button
-                                        onClick={() => setTravelMode('TRANSIT')}
-                                        className={`p-2 rounded-full transition-all ${travelMode === 'TRANSIT' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
-                                        title={language === 'en' ? "Transit" : "대중교통"}
-                                    >
-                                        <Train size={18} />
-                                    </button>
-
-                                    <div className="w-8 h-[1px] bg-white/10 my-1"></div>
-
-                                    <button
-                                        onClick={handleOptimizeItineraryRoute}
-                                        disabled={loadingAction === 'optimize'}
-                                        className="p-2.5 bg-spotify-green text-black rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all disabled:opacity-50 border border-white/10 hover:bg-spotify-green-hover"
-                                        title={language === 'en' ? "AI Route Optimization" : "AI 동선 자동 최적화"}
-                                    >
-                                        {loadingAction === 'optimize' ? (
-                                            <Loader2 className="animate-spin text-black" size={20} />
-                                        ) : (
-                                            <Wand2 size={20} />
-                                        )}
-                                    </button>
-                                </>
-                            )}
-
-                            <div className="w-8 h-[1px] bg-white/10 my-1"></div>
-
-                            <button 
-                                onClick={handleReset} 
-                                className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" 
-                                title={language === 'en' ? 'Home' : '처음으로'}
-                            >
-                                <Home size={20} />
-                            </button>
-                            <button 
-                                onClick={handleKakaoConsult} 
-                                className="p-2.5 rounded-full text-yellow-400 hover:text-yellow-300 hover:bg-white/10 transition-colors" 
-                                title={language === 'en' ? 'Kakao Chat' : '카톡상담'}
-                            >
-                                <MessageCircle size={20} />
-                            </button>
-                            <button 
-                                onClick={handleDownloadPDF} 
-                                className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" 
-                                title={language === 'en' ? 'PDF Export' : 'PDF저장'}
-                            >
-                                <Download size={20} />
-                            </button>
-                            <button 
-                                onClick={handleShare} 
-                                className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" 
-                                title={language === 'en' ? 'Share' : '공유하기'}
-                            >
-                                <Share2 size={20} />
-                            </button>
-                        </>
-                    )}
-                </div>
+                )}
                 {/* Drag-based Bottom Sheet — 모바일 최적화 바텀 시트 */}
                 {!isEditMode && viewMode === 'map' && (
                     <div 
@@ -1797,7 +1825,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
  
                 {/* Spotify 초록색 저장 버튼 */}
                 {!tripId && (
-                    <div className="absolute bottom-[240px] right-6 z-40 flex flex-col items-end gap-2 pointer-events-none">
+                    <div className="absolute bottom-[240px] right-6 z-50 flex flex-col items-end gap-2 pointer-events-none">
                         <div className="bg-spotify-green text-black text-xs font-extrabold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">{language === 'en' ? 'Save' : '저장하기'}<div className="absolute -bottom-1 right-1 w-3 h-3 bg-spotify-green transform rotate-45"></div></div>
                         <button onClick={handleSaveClick} disabled={isSaving} className="w-14 h-14 bg-spotify-green rounded-full shadow-2xl flex items-center justify-center text-black pointer-events-auto hover:bg-spotify-green-hover hover:scale-105 transition-transform active:scale-95 border-2 border-white/20">
                             {isSaving ? <Loader2 className="animate-spin" size={24} /> : <Save size={24} strokeWidth={2.5} />}
