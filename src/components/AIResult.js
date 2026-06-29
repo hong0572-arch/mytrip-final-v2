@@ -151,6 +151,13 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     const [selectedInsertDay, setSelectedInsertDay] = useState(0);
     const [selectedInsertPos, setSelectedInsertPos] = useState(-1);
 
+    // Google Places Search States
+    const [googlePlacesResults, setGooglePlacesResults] = useState([]);
+    const [isSearchingPlaces, setIsSearchingPlaces] = useState(false);
+    const [showPlacesModal, setShowPlacesModal] = useState(false);
+    const [selectedPlaceToInsert, setSelectedPlaceToInsert] = useState(null);
+    const [searchQueryText, setSearchQueryText] = useState('');
+
     const [selectedIndex, setSelectedIndex] = useState(0);
 
     const flatPlaces = React.useMemo(() => {
@@ -345,6 +352,99 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
             triggerCustomToast(language === 'en' ? "Failed to fetch AI recommendations." : "AI 추천 장소를 가져오는 데 실패했습니다.");
         } finally {
             setRecommendLoading(false);
+        }
+    };
+
+    const getPlacePhotoUrl = (place) => {
+        if (place.photos && place.photos.length > 0) {
+            try {
+                return place.photos[0].getUrl({ maxWidth: 100, maxHeight: 100 });
+            } catch (e) {
+                return null;
+            }
+        }
+        return null;
+    };
+
+    const handleSearchQuery = (queryText) => {
+        if (!queryText || queryText.trim() === '') return;
+        setSearchQueryText(queryText);
+        if (window.google && googleMapRef.current) {
+            setIsSearchingPlaces(true);
+            setShowPlacesModal(true);
+            setGooglePlacesResults([]);
+            
+            const service = new window.google.maps.places.PlacesService(googleMapRef.current);
+            const center = googleMapRef.current.getCenter();
+            
+            service.textSearch({
+                query: queryText,
+                location: center,
+                radius: 10000
+            }, (results, status) => {
+                setIsSearchingPlaces(false);
+                if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
+                    setGooglePlacesResults(results.slice(0, 10));
+                } else {
+                    setGooglePlacesResults([]);
+                }
+            });
+        } else {
+            alert(language === 'en' ? "Google Maps service is not ready yet." : "구글 지도 서비스가 아직 준비되지 않았습니다.");
+        }
+    };
+
+    const handleAddGooglePlace = async (place, targetDayIdx, targetPosIdx) => {
+        if (!place) return;
+        const newPlan = { ...tripPlan };
+        const activeDayItem = newPlan.itinerary[targetDayIdx];
+        if (activeDayItem) {
+            const newPlaces = [...activeDayItem.places];
+            const insertIdx = targetPosIdx === -1 || targetPosIdx > newPlaces.length ? newPlaces.length : targetPosIdx;
+            
+            const categoryStr = isRestaurant(place) 
+                ? (language === 'en' ? 'Restaurant' : '맛집') 
+                : (language === 'en' ? 'Attraction' : '관광명소');
+            
+            const formattedPlace = {
+                name: place.name,
+                category: place.types?.includes('cafe') ? (language === 'en' ? 'Cafe' : '카페') : categoryStr,
+                description: place.formatted_address || place.vicinity || "",
+                address: place.formatted_address || place.vicinity || "",
+                phone: place.formatted_phone_number || "",
+                coordinates: {
+                    lat: place.geometry.location.lat(),
+                    lng: place.geometry.location.lng()
+                },
+                rating: place.rating || null,
+                user_ratings_total: place.user_ratings_total || null,
+                transitToNext: ""
+            };
+            
+            newPlaces.splice(insertIdx, 0, formattedPlace);
+            newPlaces.forEach((p, idx) => {
+                p.order = idx + 1;
+                if (idx < newPlaces.length - 1) {
+                    p.transitToNext = travelMode === 'WALKING' 
+                        ? (language === 'en' ? "🚶‍♂️ 10 min walk" : "🚶‍♂️ 도보 10분") 
+                        : (language === 'en' ? "🚗 15 min drive" : "🚗 이동 15분");
+                } else {
+                    p.transitToNext = "";
+                }
+            });
+            activeDayItem.places = newPlaces;
+            setTripPlan(newPlan);
+            if (tripId) {
+                const tripRef = doc(db, "trips", tripId);
+                const sanitizedItinerary = JSON.parse(JSON.stringify(newPlan.itinerary));
+                await updateDoc(tripRef, {
+                    itinerary: sanitizedItinerary,
+                    isEdited: true,
+                    updatedAt: serverTimestamp()
+                });
+            }
+            triggerCustomToast(language === 'en' ? `Added "${place.name}" to Day ${targetDayIdx + 1}! 📍` : `Day ${targetDayIdx + 1} 일정에 "${place.name}"이(가) 추가되었습니다! 📍`);
+            setSelectedPlaceToInsert(null);
         }
     };
 
@@ -1164,8 +1264,8 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     };
 
     return (
-        <div className="fixed inset-0 w-full bg-[#030712] flex items-center justify-center font-sans overflow-hidden selection:bg-indigo-500/30" style={{ zIndex: 100 }}>
-            <div id={CAPTURE_ID} className="w-full max-w-[480px] h-full sm:h-[92vh] sm:rounded-[48px] bg-black relative shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col border border-white/10 ring-1 ring-white/5">
+        <div className="fixed inset-0 w-full bg-black flex items-center justify-center font-sans overflow-hidden selection:bg-indigo-500/30" style={{ zIndex: 100 }}>
+            <div id={CAPTURE_ID} className="w-full max-w-[480px] h-full bg-black relative shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col border-x border-white/10 ring-1 ring-white/5">
 
                 {/* Full screen Map */}
                 <div className={`absolute inset-0 z-0 bg-gray-900 pointer-events-auto ${viewMode === 'map' ? 'block' : 'hidden'}`}>
@@ -1173,11 +1273,11 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 </div>
 
                 {/* Top Overlay */}
-                <div className={`absolute top-0 left-0 w-full p-6 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none z-10 flex flex-col items-start transition-all duration-300 ${
-                    viewMode === 'map' ? 'pt-4 sm:pt-4' : 'pt-10 sm:pt-6'
+                <div className={`absolute top-0 left-0 w-full p-4 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none z-10 flex flex-col items-start transition-all duration-300 ${
+                    viewMode === 'map' ? 'pt-2 sm:pt-2' : 'pt-10 sm:pt-6'
                 }`}>
                     {theme && (
-                        <span className="px-2 py-1 bg-spotify-green text-black text-xs font-black rounded-lg mb-2 shadow-sm">
+                        <span className="px-2 py-1 bg-spotify-green text-black text-xs font-black rounded-lg mb-1 shadow-sm">
                             {theme}
                         </span>
                     )}
@@ -1189,8 +1289,8 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {/* View Mode Switcher Tab Bar */}
                 <div className={`absolute left-4 z-30 flex bg-[#121212]/20 border border-white/10 p-1 rounded-xl pointer-events-auto backdrop-blur-md transition-all duration-300 ${
                     viewMode === 'map' 
-                        ? `top-12 ${isToolbarVisible ? 'right-16' : 'right-4'}` 
-                        : 'top-20 right-4'
+                        ? `top-9 ${isToolbarVisible ? 'right-16' : 'right-4'}` 
+                        : 'top-16 right-4'
                 }`}>
                     <button 
                         onClick={() => setViewMode('map')} 
@@ -1346,7 +1446,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     <div 
                         className={`absolute bottom-0 left-0 w-full bg-white/8 backdrop-blur-2xl shadow-[0_-20px_40px_rgba(0,0,0,0.15)] z-40 transition-all duration-500 ease-[cubic-bezier(0.3,1,0.3,1)] flex flex-col border-t border-white/40 rounded-t-[32px] overflow-hidden text-slate-800`}
                         style={{ 
-                            height: sheetState === 'min' ? '140px' : sheetState === 'half' ? '50%' : '85%'
+                            height: sheetState === 'min' ? '140px' : sheetState === 'half' ? '38%' : '85%'
                         }}
                     >
                         {/* Drag Handle Bar */}
@@ -1558,18 +1658,23 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                             type="text"
                                             value={recommendInputFood}
                                             onChange={(e) => setRecommendInputFood(e.target.value)}
-                                            disabled={recommendLoading}
-                                            placeholder={language === 'en' ? 'e.g. Cozy local noodle restaurants' : '예: 현지인들이 가는 아늑한 일식당'}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && recommendInputFood.trim() && !isSearchingPlaces) {
+                                                    handleSearchQuery(recommendInputFood);
+                                                }
+                                            }}
+                                            disabled={recommendLoading || isSearchingPlaces}
+                                            placeholder={language === 'en' ? 'e.g. Cozy local noodle restaurants' : '예: 경동시장 맛집, 오사카 스시 등'}
                                             className="flex-1 bg-transparent px-2.5 py-2 text-xs text-slate-800 border-none outline-none placeholder:text-slate-400"
                                         />
                                         <button
                                             onClick={() => {
-                                                handleTriggerRecommendation(recommendInputFood);
+                                                handleSearchQuery(recommendInputFood);
                                             }}
-                                            disabled={recommendLoading || !recommendInputFood.trim()}
+                                            disabled={recommendLoading || isSearchingPlaces || !recommendInputFood.trim()}
                                             className="bg-spotify-green text-white px-3.5 py-2 rounded-lg text-xs font-black transition-all active:scale-95 disabled:opacity-50 shrink-0 flex items-center justify-center"
                                         >
-                                            {recommendLoading ? <Loader2 size={14} className="animate-spin text-white" /> : <Send size={14} />}
+                                            {isSearchingPlaces ? <Loader2 size={14} className="animate-spin text-white" /> : <Search size={14} />}
                                         </button>
                                     </div>
                                 </div>
@@ -1682,18 +1787,23 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                             type="text"
                                             value={recommendInputSight}
                                             onChange={(e) => setRecommendInputSight(e.target.value)}
-                                            disabled={recommendLoading}
-                                            placeholder={language === 'en' ? 'e.g. Landmarks with great sunset views' : '예: 노을이 잘 보이고 조용한 공원'}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && recommendInputSight.trim() && !isSearchingPlaces) {
+                                                    handleSearchQuery(recommendInputSight);
+                                                }
+                                            }}
+                                            disabled={recommendLoading || isSearchingPlaces}
+                                            placeholder={language === 'en' ? 'e.g. Landmarks with great sunset views' : '예: 오사카 성, 우메다 스카이 빌딩 등'}
                                             className="flex-1 bg-transparent px-2.5 py-2 text-xs text-white border-none outline-none placeholder:text-spotify-text-muted"
                                         />
                                         <button
                                             onClick={() => {
-                                                handleTriggerRecommendation(recommendInputSight);
+                                                handleSearchQuery(recommendInputSight);
                                             }}
-                                            disabled={recommendLoading || !recommendInputSight.trim()}
+                                            disabled={recommendLoading || isSearchingPlaces || !recommendInputSight.trim()}
                                             className="bg-spotify-green text-black px-3.5 py-2 rounded-lg text-xs font-black transition-all active:scale-95 disabled:opacity-50 shrink-0 flex items-center justify-center"
                                         >
-                                            {recommendLoading ? <Loader2 size={14} className="animate-spin text-black" /> : <Send size={14} />}
+                                            {isSearchingPlaces ? <Loader2 size={14} className="animate-spin text-black" /> : <Search size={14} />}
                                         </button>
                                     </div>
                                 </div>
@@ -2052,11 +2162,88 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 )}
 
                 {/* AI 추천 일정 추가 위치 선택 모달 */}
+                {/* Google Places 검색 결과 모달 */}
+                {showPlacesModal && (
+                    <div className="absolute inset-0 flex items-center justify-center p-6" style={{ zIndex: 90 }}>
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowPlacesModal(false); setSelectedPlaceToInsert(null); setRecommendInputFood(''); setRecommendInputSight(''); }}></div>
+                        <div className="bg-[#121212]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl text-white flex flex-col max-h-[80vh]">
+                            <button 
+                                onClick={() => { setShowPlacesModal(false); setSelectedPlaceToInsert(null); setRecommendInputFood(''); setRecommendInputSight(''); }} 
+                                className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:text-white"
+                            >
+                                <X size={18} />
+                            </button>
+                            <div className="w-12 h-12 bg-spotify-green/10 rounded-xl flex items-center justify-center text-spotify-green mb-3 shrink-0">
+                                <Search size={24} />
+                            </div>
+                            <h3 className="text-lg font-black text-white mb-1 shrink-0">
+                                {language === 'en' ? 'Google Place Search' : '구글 장소 검색 결과'}
+                            </h3>
+                            <p className="text-xs text-slate-400 mb-4 shrink-0 truncate">
+                                "{searchQueryText}" {language === 'en' ? 'Search results' : '검색 결과'}
+                            </p>
+                            
+                            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1 min-h-0 mb-4">
+                                {isSearchingPlaces ? (
+                                    <div className="flex flex-col items-center justify-center py-10 gap-3">
+                                        <Loader2 size={36} className="animate-spin text-spotify-green" />
+                                        <p className="text-xs text-slate-400 font-bold">{language === 'en' ? 'Searching...' : '검색 중입니다...'}</p>
+                                    </div>
+                                ) : googlePlacesResults.length === 0 ? (
+                                    <div className="text-center py-10 text-xs text-slate-500 italic">
+                                        {language === 'en' ? 'No results found.' : '검색 결과가 없습니다.'}
+                                    </div>
+                                ) : (
+                                    googlePlacesResults.map((place, idx) => {
+                                        const photoUrl = getPlacePhotoUrl(place);
+                                        return (
+                                            <div
+                                                key={idx}
+                                                onClick={() => {
+                                                    setSelectedPlaceToInsert(place);
+                                                    setInsertCategory(place.name);
+                                                    setShowPlacesModal(false);
+                                                    setSelectedInsertDay(currentDayIdx);
+                                                    setSelectedInsertPos(-1);
+                                                    setShowInsertModal(true);
+                                                }}
+                                                className="flex gap-3 p-3 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl cursor-pointer transition-all items-center text-left"
+                                            >
+                                                {photoUrl ? (
+                                                    <img 
+                                                        src={photoUrl} 
+                                                        alt={place.name} 
+                                                        className="w-12 h-12 object-cover rounded-xl shrink-0" 
+                                                    />
+                                                ) : (
+                                                    <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-slate-400 shrink-0">
+                                                        <MapPin size={20} />
+                                                    </div>
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-extrabold text-sm text-white truncate">{place.name}</h4>
+                                                    {place.rating && (
+                                                        <div className="flex items-center gap-1 text-[11px] text-amber-400 font-bold mt-0.5">
+                                                            <span>⭐ {place.rating}</span>
+                                                            {place.user_ratings_total && <span className="text-slate-400">({place.user_ratings_total})</span>}
+                                                        </div>
+                                                    )}
+                                                    <p className="text-[10px] text-slate-400 truncate mt-0.5">{place.formatted_address}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {showInsertModal && (
                     <div className="absolute inset-0 flex items-center justify-center p-6" style={{ zIndex: 80 }}>
-                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowInsertModal(false); setRecommendInputFood(''); setRecommendInputSight(''); }}></div>
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowInsertModal(false); setSelectedPlaceToInsert(null); setRecommendInputFood(''); setRecommendInputSight(''); }}></div>
                         <div className="bg-[#121212]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl text-white">
-                            <button onClick={() => { setShowInsertModal(false); setRecommendInputFood(''); setRecommendInputSight(''); }} className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:text-white"><X size={18} /></button>
+                            <button onClick={() => { setShowInsertModal(false); setSelectedPlaceToInsert(null); setRecommendInputFood(''); setRecommendInputSight(''); }} className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:text-white"><X size={18} /></button>
                             <div className="w-12 h-12 bg-spotify-green/10 rounded-xl flex items-center justify-center text-spotify-green mb-3"><Sparkles size={24} /></div>
                             <h3 className="text-lg font-black text-white mb-2">{language === 'en' ? 'Add Recommendation Position' : '일정 추가 위치 설정'}</h3>
                             
@@ -2133,6 +2320,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                 <button
                                     onClick={() => {
                                         setShowInsertModal(false);
+                                        setSelectedPlaceToInsert(null);
                                         setRecommendInputFood('');
                                         setRecommendInputSight('');
                                     }}
@@ -2143,7 +2331,11 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                 <button
                                     onClick={async () => {
                                         setShowInsertModal(false);
-                                        await handleAddAIRecommendation(insertCategory, selectedInsertDay, selectedInsertPos);
+                                        if (selectedPlaceToInsert) {
+                                            await handleAddGooglePlace(selectedPlaceToInsert, selectedInsertDay, selectedInsertPos);
+                                        } else {
+                                            await handleAddAIRecommendation(insertCategory, selectedInsertDay, selectedInsertPos);
+                                        }
                                         setRecommendInputFood('');
                                         setRecommendInputSight('');
                                     }}
@@ -2201,7 +2393,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
             </div>
 
             {/* PDF 변환용 숨겨진 A4 서식 유지 */}
-            <div id={PDF_TEMPLATE_ID} style={{ position: 'fixed', top: 0, left: 0, zIndex: -9999, width: '210mm', minHeight: '297mm', padding: '15mm', backgroundColor: 'white', color: 'black', fontFamily: 'sans-serif' }}>
+            <div id={PDF_TEMPLATE_ID} style={{ position: 'fixed', top: '-9999px', left: '-9999px', zIndex: -9999, width: '210mm', minHeight: '297mm', padding: '15mm', backgroundColor: 'white', color: 'black', fontFamily: 'sans-serif' }}>
                 {tripPlan && (
                     <>
                         <div className="pdf-item text-center border-b-2 border-black pb-5 mb-8">
