@@ -171,7 +171,7 @@ function TripDetailContent() {
     // 로딩 화면
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white">
+            <div className="min-h-screen bg-sand-light flex flex-col items-center justify-center text-slate-800">
                 <Loader2 className="animate-spin mb-4 text-brand-primary" size={48} />
                 <h2 className="text-xl font-bold animate-pulse">일정을 불러오는 중...</h2>
             </div>
@@ -181,9 +181,9 @@ function TripDetailContent() {
     // 에러 화면
     if (error || !tripData) {
         return (
-            <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white p-6">
-                <div className="bg-gray-800 p-8 rounded-3xl text-center max-w-sm w-full shadow-2xl">
-                    <div className="w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-400">
+            <div className="min-h-screen bg-sand-light flex flex-col items-center justify-center text-slate-800 p-6">
+                <div className="bg-white/80 backdrop-blur-md border border-slate-200/50 p-8 rounded-3xl text-center max-w-sm w-full shadow-2xl">
+                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-400">
                         <Map size={32} />
                     </div>
                     <h2 className="text-2xl font-black mb-2">일정을 찾을 수 없어요</h2>
@@ -199,7 +199,7 @@ function TripDetailContent() {
     }
 
     return (
-        <div className="relative w-full h-full bg-gray-100 pb-32"> {/* ✨ 하단 여백(pb-32) 추가해서 메뉴바에 내용이 안 가려지게 함 */}
+        <div className="relative w-full h-full bg-sand-light pb-32"> {/* ✨ 하단 여백(pb-32) 추가해서 메뉴바에 내용이 안 가려지게 함 */}
             {/* 뒤로가기 버튼 */}
             <div className="absolute top-6 left-6 z-40 pointer-events-auto sm:top-10 sm:left-10">
                 <button
@@ -321,7 +321,7 @@ function TripDetailContent() {
 export default function TripDetailPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+            <div className="min-h-screen bg-sand-light flex items-center justify-center">
                 <Loader2 className="animate-spin text-brand-primary" size={48} />
             </div>
         }>

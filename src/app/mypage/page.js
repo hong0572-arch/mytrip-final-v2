@@ -466,47 +466,47 @@ export default function MyPage() {
         return (
             <div className="animate-in fade-in duration-500 p-4 pt-10">
                 <div className="flex items-center justify-between mb-6 px-2">
-                    <h1 className="text-3xl font-black text-white tracking-tight">내 보관함</h1>
+                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">내 보관함</h1>
                 </div>
                 <div className="flex gap-2 mb-6 px-2 overflow-x-auto custom-scrollbar pb-2">
                     {[ { id: 'ticket', label: '🎟️ 예약/티켓' }, { id: 'coupon', label: '🎫 쿠폰' }, { id: 'photo', label: '📸 사진첩' } ].map(cat => (
-                        <button key={cat.id} onClick={() => setVaultCategory(cat.id)} className={`px-5 py-2.5 rounded-[20px] font-bold text-sm whitespace-nowrap transition-all shadow-sm ${vaultCategory === cat.id ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white scale-105' : 'bg-white/10 border border-white/10 text-slate-300 hover:bg-white/20'}`}>{cat.label}</button>
+                        <button key={cat.id} onClick={() => setVaultCategory(cat.id)} className={`px-5 py-2.5 rounded-[20px] font-bold text-sm whitespace-nowrap transition-all shadow-sm ${vaultCategory === cat.id ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white scale-105' : 'bg-white/80 border border-slate-200 text-slate-600 hover:bg-white'}`}>{cat.label}</button>
                     ))}
                 </div>
                 {filteredItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-4"><Box className="text-spotify-text-muted w-10 h-10" /></div>
-                        <p className="text-slate-200 font-bold mb-1">아직 보관된 항목이 없습니다</p>
-                        <p className="text-xs text-spotify-text-muted">우측 하단의 + 버튼을 눌러 추가해보세요!</p>
+                        <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4"><Box className="text-slate-400 w-10 h-10" /></div>
+                        <p className="text-slate-600 font-bold mb-1">아직 보관된 항목이 없습니다</p>
+                        <p className="text-xs text-slate-400">우측 하단의 + 버튼을 눌러 추가해보세요!</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 gap-4 px-2">
                         {filteredItems.map(item => (
-                            <div key={item.id} className="bg-[#181818] p-2 rounded-[24px] shadow-sm border border-white/10 relative group transition-all hover:shadow-md">
-                                <div className="aspect-[4/5] rounded-[18px] overflow-hidden bg-white/5 mb-3 relative cursor-pointer" onClick={() => setViewVaultImage(item.image)}>
+                            <div key={item.id} className="bg-white/80 p-2 rounded-[24px] shadow-sm border border-slate-200/80 relative group transition-all hover:shadow-md">
+                                <div className="aspect-[4/5] rounded-[18px] overflow-hidden bg-slate-100 mb-3 relative cursor-pointer" onClick={() => setViewVaultImage(item.image)}>
                                     <img src={item.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={item.title} />
-                                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </div>
-                                <p className="text-sm font-black text-white px-2 pb-1 truncate">{item.title}</p>
-                                <button onClick={() => deleteVault(item.id)} className="absolute top-4 right-4 w-8 h-8 bg-[#181818]/90 backdrop-blur-md rounded-full text-brand-danger flex items-center justify-center shadow-lg transform scale-0 group-hover:scale-100 transition-all"><Trash2 size={16} strokeWidth={2.5} /></button>
+                                <p className="text-sm font-black text-slate-800 px-2 pb-1 truncate">{item.title}</p>
+                                <button onClick={() => deleteVault(item.id)} className="absolute top-4 right-4 w-8 h-8 bg-white/95 border border-slate-200 rounded-full text-brand-danger flex items-center justify-center shadow-md transform scale-0 group-hover:scale-100 transition-all"><Trash2 size={16} strokeWidth={2.5} /></button>
                             </div>
                         ))}
                     </div>
                 )}
                 {showVaultUpload && (
                     <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col justify-end">
-                        <div className="bg-[#181818] border-t border-white/10 w-full rounded-t-[40px] p-8 pb-safe animate-in slide-in-from-bottom-full duration-300 text-white">
+                        <div className="bg-white border-t border-slate-200 w-full rounded-t-[40px] p-8 pb-safe animate-in slide-in-from-bottom-full duration-300 text-slate-800">
                             <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-2xl font-black text-white">새 항목 추가</h3>
-                                <button onClick={() => {setShowVaultUpload(false); setVaultImageBase64(''); setVaultTitle('');}} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition"><X size={20} strokeWidth={2.5} /></button>
+                                <h3 className="text-2xl font-black text-slate-800">새 항목 추가</h3>
+                                <button onClick={() => {setShowVaultUpload(false); setVaultImageBase64(''); setVaultTitle('');}} className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-800 hover:bg-slate-200 transition"><X size={20} strokeWidth={2.5} /></button>
                             </div>
                             <div className="space-y-5">
                                 <div className="flex gap-2">
                                     {[ { id: 'ticket', label: '🎟️ 예약/티켓' }, { id: 'coupon', label: '🎫 쿠폰' }, { id: 'photo', label: '📸 사진첩' } ].map(cat => (
-                                        <button key={cat.id} onClick={() => setVaultCategory(cat.id)} className={`flex-1 py-3 rounded-[16px] text-sm font-bold transition-all border ${vaultCategory === cat.id ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-white/5 text-spotify-text-muted border-white/5 hover:bg-white/10'}`}>{cat.label}</button>
+                                        <button key={cat.id} onClick={() => setVaultCategory(cat.id)} className={`flex-1 py-3 rounded-[16px] text-sm font-bold transition-all border ${vaultCategory === cat.id ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'}`}>{cat.label}</button>
                                     ))}
                                 </div>
-                                <input type="text" placeholder="제목이나 메모를 입력하세요" value={vaultTitle} onChange={e => setVaultTitle(e.target.value)} className="w-full bg-white/5 border border-white/10 px-5 py-4 rounded-[20px] font-bold text-white outline-none focus:ring-2 focus:ring-emerald-400 placeholder:text-spotify-text-muted transition" />
+                                <input type="text" placeholder="제목이나 메모를 입력하세요" value={vaultTitle} onChange={e => setVaultTitle(e.target.value)} className="w-full bg-slate-50 border border-slate-200 px-5 py-4 rounded-[20px] font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-400 focus:bg-white placeholder:text-slate-400 transition" />
                                 <div>
                                     <input type="file" accept="image/*" className="hidden" ref={vaultFileInputRef} onChange={handleVaultImageChange} />
                                     {vaultImageBase64 ? (
@@ -515,9 +515,9 @@ export default function MyPage() {
                                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => vaultFileInputRef.current.click()}><p className="text-white font-bold flex items-center gap-2"><Camera size={20} /> 사진 변경</p></div>
                                         </div>
                                     ) : (
-                                        <div onClick={() => vaultFileInputRef.current.click()} className="w-full aspect-video bg-white/5 border-2 border-dashed border-white/10 rounded-[24px] flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-white/10 transition-colors">
-                                            <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center shadow-sm text-white"><Camera size={24} /></div>
-                                            <p className="text-sm font-bold text-spotify-text-muted">사진 업로드</p>
+                                        <div onClick={() => vaultFileInputRef.current.click()} className="w-full aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-[24px] flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-slate-100 transition-colors">
+                                            <div className="w-14 h-14 bg-slate-200 rounded-full flex items-center justify-center shadow-sm text-slate-700"><Camera size={24} /></div>
+                                            <p className="text-sm font-bold text-slate-500">사진 업로드</p>
                                         </div>
                                     )}
                                 </div>
@@ -1122,14 +1122,9 @@ export default function MyPage() {
     // --- UI 렌더 시작 ---
     const renderSchedule = () => (
         <div className="animate-in fade-in duration-500">
-            <header className="flex justify-between items-center px-3 pt-12 pb-4 sticky top-0 z-40 bg-gradient-to-b from-[#121212]/80 to-transparent backdrop-blur-md border-b border-white/10">
-                <button onClick={() => router.push('/?mode=new')} className="text-white bg-white/10 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/20"><ArrowLeft size={22} strokeWidth={2.5} /></button>
-                <h1 className="text-lg font-black text-white tracking-tight break-keep whitespace-nowrap">트립허브 (Trip Hub)</h1>
-                <button onClick={() => setShowSearchModal(true)} className="text-white bg-white/10 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/20"><Search size={22} strokeWidth={2.5} /></button>
-            </header>
             <div className="px-3 pt-4 pb-6">
                 <div className="inline-flex items-center gap-1.5 bg-brand-primary/10 text-brand-primary text-xs font-black tracking-wide mb-2 px-3 py-1.5 rounded-full backdrop-blur-md border border-brand-primary/20 shadow-sm break-keep whitespace-nowrap"><Sparkles size={14} className="fill-brand-primary" /> AI TRIPS & WORKSPACE</div>
-                <h2 className="text-3xl font-black text-white tracking-tight break-keep whitespace-nowrap">나의 여행 일정</h2>
+                <h2 className="text-3xl font-black text-slate-800 tracking-tight break-keep whitespace-nowrap">나의 여행 일정</h2>
             </div>
             <main className="px-3 space-y-6 pb-6">
                 {/* 🌟 진행 중이거나 가장 가까운 활성 여행에 대한 액티브 컨트롤 타워 */}
@@ -1241,44 +1236,21 @@ export default function MyPage() {
 
     const renderSocial = () => (
         <div className="animate-in fade-in duration-500">
-            <header className="flex justify-between items-center px-3 pt-12 pb-4 sticky top-0 z-40 bg-gradient-to-b from-[#121212]/80 to-transparent backdrop-blur-md border-b border-white/10">
-                <div onClick={openProfileModal} className="flex items-center gap-3 cursor-pointer group hover:bg-white/10 p-2 -ml-2 rounded-2xl transition w-full pr-4 overflow-hidden">
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 text-brand-primary flex items-center justify-center overflow-hidden border-2 border-white shadow-md shrink-0">
-                        {previewImage || user?.photoURL ? (<img src={previewImage || user?.photoURL} alt="Profile" className="w-full h-full object-cover" />) : (<User size={20} />)}
-                    </div>
-                    <div className="overflow-hidden">
-                        <h1 className="text-lg font-black text-white flex items-center gap-1 drop-shadow-sm break-keep whitespace-nowrap truncate w-full">
-                            {userData?.name || user?.displayName || "여행자"} <ChevronRight size={16} className="text-spotify-text-muted group-hover:text-brand-primary transition shrink-0" />
-                        </h1>
-                        <div className="text-[10px] text-slate-200 font-bold mt-0.5 flex gap-1">
-                            {userData?.travelTags?.length > 0 ? userData.travelTags.slice(0, 2).map((tag, i) => <span key={i} className="bg-white/10 backdrop-blur-sm border border-white/20 px-2.5 py-0.5 rounded-full shadow-sm break-keep whitespace-nowrap">{tag}</span>) : <span className="text-spotify-text-muted bg-white/10 backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm break-keep whitespace-nowrap"><Edit3 size={10} className="shrink-0" /> 프로필 꾸미기</span>}
-                        </div>
-                    </div>
-                </div>
-                <div className="flex items-center gap-3 text-white shrink-0">
-                    <button onClick={() => setShowSearchModal(true)} className="bg-white/10 border border-white/10 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/20"><Search size={20} /></button>
-                    <div onClick={() => setShowInboxModal(true)} className="relative bg-white/10 border border-white/10 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/20 cursor-pointer">
-                        <Bell size={20} />
-                        {matchRequests.filter(r => r.status === 'pending').length > 0 && (<span className="absolute top-1 right-1 w-2.5 h-2.5 bg-brand-accent rounded-full border-2 border-white animate-pulse"></span>)}
-                    </div>
-                </div>
-            </header>
-
             <div className="px-3 pt-2 space-y-6 pb-8">
-                <div onClick={() => setShowInboxModal(true)} className="bg-gradient-to-br from-white/12 to-white/3 backdrop-blur-md border border-white/10 shadow-lg rounded-[20px] p-5 flex items-center justify-between cursor-pointer hover:bg-white/20 transition active:scale-95">
+                <div onClick={() => setShowInboxModal(true)} className="bg-white/85 border border-slate-200/80 shadow-md rounded-[20px] p-5 flex items-center justify-between cursor-pointer hover:bg-white/95 transition active:scale-95 text-slate-800">
                     <div className="flex items-center gap-4 w-full pr-4 overflow-hidden">
                         <div className="relative shrink-0">
                             <div className="w-12 h-12 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-full flex items-center justify-center text-white shadow-md"><Inbox size={22} strokeWidth={2.5} /></div>
                             {matchRequests.filter(r => r.status === 'pending').length > 0 && (<div className="absolute -top-1 -right-1 bg-gray-900 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">{matchRequests.filter(r => r.status === 'pending').length}</div>)}
                         </div>
-                        <div className="overflow-hidden"><h3 className="font-black text-white text-lg mb-0.5 break-keep whitespace-nowrap truncate w-full">내 동행 요청함</h3><p className="text-xs text-slate-300 font-medium break-keep whitespace-nowrap truncate w-full">{matchRequests.filter(r => r.status === 'pending').length > 0 ? `새로운 요청이 도착했어요!` : `아직 주고받은 찌르기가 없어요.`}</p></div>
+                        <div className="overflow-hidden"><h3 className="font-black text-slate-800 text-lg mb-0.5 break-keep whitespace-nowrap truncate w-full">내 동행 요청함</h3><p className="text-xs text-slate-500 font-medium break-keep whitespace-nowrap truncate w-full">{matchRequests.filter(r => r.status === 'pending').length > 0 ? `새로운 요청이 도착했어요!` : `아직 주고받은 찌르기가 없어요.`}</p></div>
                     </div>
-                    <ChevronRight size={20} className="text-white/60 shrink-0" />
+                    <ChevronRight size={20} className="text-slate-400 shrink-0" />
                 </div>
 
                 <section className="mb-8">
-                    <h3 className="text-lg font-black text-white mb-4 flex items-center justify-between break-keep whitespace-nowrap">
-                        AI 동행 추천 <button className="text-xs font-bold text-slate-300 bg-white/10 border border-white/10 px-3 py-1.5 rounded-full hover:bg-white/20 shrink-0">전체보기</button>
+                    <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center justify-between break-keep whitespace-nowrap">
+                        AI 동행 추천 <button className="text-xs font-bold text-slate-600 bg-white/80 border border-slate-200/80 px-3 py-1.5 rounded-full hover:bg-white shrink-0 shadow-sm">전체보기</button>
                     </h3>
                     <div className="space-y-3">
                         {recommendedMates.length === 0 ? (
@@ -1291,24 +1263,24 @@ export default function MyPage() {
                             recommendedMates.map((mate, idx) => {
                                 const randomMatch = Math.floor(Math.random() * 20) + 80;
                                 return (
-                                    <div key={mate.id} className="bg-gradient-to-br from-white/12 to-white/3 backdrop-blur-md p-4 rounded-[20px] border border-white/10 shadow-sm flex items-center justify-between group hover:border-white/20 hover:shadow-md transition">
+                                    <div key={mate.id} className="bg-white/85 p-4 rounded-[20px] border border-slate-200/80 shadow-sm flex items-center justify-between group hover:border-slate-300/80 hover:shadow-md transition text-slate-800">
                                         <div className="flex items-center gap-4 w-full pr-4 overflow-hidden">
                                             <div className="relative shrink-0">
-                                                <img src={mate.profileImgBase64 || `https://i.pravatar.cc/150?u=${mate.id}`} alt="avatar" className="w-14 h-14 rounded-full object-cover border-2 border-white/10" />
+                                                <img src={mate.profileImgBase64 || `https://i.pravatar.cc/150?u=${mate.id}`} alt="avatar" className="w-14 h-14 rounded-full object-cover border border-slate-200" />
                                             </div>
                                             <div className="overflow-hidden">
                                                 <div className="flex items-center gap-1.5 mb-1">
-                                                    <span className="font-bold text-white text-base break-keep whitespace-nowrap truncate max-w-[100px] sm:max-w-[150px]">{mate.name}</span>
+                                                    <span className="font-bold text-slate-800 text-base break-keep whitespace-nowrap truncate max-w-[100px] sm:max-w-[150px]">{mate.name}</span>
                                                     <span className="text-[10px] bg-brand-accent text-white px-2 py-0.5 rounded-full font-bold shrink-0">{randomMatch}% 일치</span>
                                                 </div>
-                                                <p className="text-xs text-slate-300 font-medium truncate w-full">
+                                                <p className="text-xs text-slate-500 font-medium truncate w-full">
                                                     {mate.travelTags && mate.travelTags.length > 0 ? mate.travelTags.join(' · ') : (mate.bio || "새로운 여행자입니다 👋")}
                                                 </p>
                                             </div>
                                         </div>
                                         <button
                                             onClick={() => { handleRequestMate(mate); alert(`${mate.name}님에게 동행 신청을 보냈습니다! 💌`); }}
-                                            className="bg-white text-black text-xs font-black px-4 py-2.5 rounded-xl hover:bg-spotify-green hover:scale-105 active:scale-95 transition flex items-center gap-1 shadow-sm shrink-0 break-keep whitespace-nowrap"
+                                            className="bg-brand-primary text-white text-xs font-black px-4 py-2.5 rounded-xl hover:bg-brand-primary/95 hover:scale-105 active:scale-95 transition flex items-center gap-1 shadow-sm shrink-0 break-keep whitespace-nowrap"
                                         >
                                             <UserPlus size={14} className="shrink-0" /> 신청
                                         </button>
@@ -1349,14 +1321,14 @@ export default function MyPage() {
                                     const isLiked = feed.likedBy?.includes(user?.uid);
                                     const isMyFeed = feed.author === (userData?.name || user?.displayName);
                                     return (
-                                        <div key={feed.id} className="bg-gradient-to-br from-white/12 to-white/3 backdrop-blur-md border border-white/10 rounded-[32px] overflow-hidden shadow-lg">
+                                        <div key={feed.id} className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-[32px] overflow-hidden shadow-lg">
                                             {/* 기존 피드 헤더 */}
                                             <div className="p-4 flex items-center justify-between">
-                                                <div className="flex items-center gap-3 w-full pr-4 overflow-hidden"><img src={feed.avatar || "https://i.pravatar.cc/150?u=default"} alt="avatar" className="w-11 h-11 rounded-full border-2 border-white/10 object-cover shrink-0" /><div className="overflow-hidden"><div className="flex items-center gap-2 mb-0.5"><span className="font-bold text-white text-[15px] truncate max-w-[100px] sm:max-w-[150px]">{feed.author}</span></div><p className="text-[11px] text-spotify-text-muted font-medium break-keep whitespace-nowrap">{feed.createdAt ? new Date(feed.createdAt.seconds * 1000).toLocaleDateString() : '방금 전'}</p></div></div>
+                                                <div className="flex items-center gap-3 w-full pr-4 overflow-hidden"><img src={feed.avatar || "https://i.pravatar.cc/150?u=default"} alt="avatar" className="w-11 h-11 rounded-full border-2 border-slate-200/50 object-cover shrink-0" /><div className="overflow-hidden"><div className="flex items-center gap-2 mb-0.5"><span className="font-bold text-slate-900 text-[15px] truncate max-w-[100px] sm:max-w-[150px]">{feed.author}</span></div><p className="text-[11px] text-slate-500 font-medium break-keep whitespace-nowrap">{feed.createdAt ? new Date(feed.createdAt.seconds * 1000).toLocaleDateString() : '방금 전'}</p></div></div>
                                                 {isMyFeed && (
                                                     <div className="flex items-center gap-1 shrink-0">
-                                                        <button onClick={() => openEditFeedModal(feed)} className="text-spotify-text-muted hover:text-white p-2 transition" title="피드 수정"><Edit3 size={18} /></button>
-                                                        <button onClick={() => handleDeleteFeed(feed)} className="text-spotify-text-muted hover:text-brand-danger p-2 transition" title="피드 삭제"><Trash2 size={18} /></button>
+                                                        <button onClick={() => openEditFeedModal(feed)} className="text-slate-500 hover:text-slate-800 p-2 transition" title="피드 수정"><Edit3 size={18} /></button>
+                                                        <button onClick={() => handleDeleteFeed(feed)} className="text-slate-500 hover:text-brand-danger p-2 transition" title="피드 삭제"><Trash2 size={18} /></button>
                                                     </div>
                                                 )}
                                             </div>
@@ -1368,16 +1340,16 @@ export default function MyPage() {
                                             <div className="p-5">
                                                 <div className="flex items-center justify-between mb-4">
                                                     <div className="flex items-center gap-4 shrink-0">
-                                                        <button onClick={() => handleToggleLike(feed)} className={`transition-transform active:scale-75 ${isLiked ? 'text-brand-danger' : 'text-white hover:text-brand-danger'}`}><Heart size={28} className={isLiked ? "fill-brand-danger" : ""} /></button>
-                                                        <button onClick={() => openCommentModal(feed)} className="text-white hover:text-spotify-text-muted transition relative">
-                                                            <MessageCircleIcon size={28} />
-                                                            {feed.commentCount > 0 && <span className="absolute -top-1 -right-1 bg-indigo-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{feed.commentCount}</span>}
+                                                        <button onClick={() => handleToggleLike(feed)} className={`transition-transform active:scale-75 ${isLiked ? 'text-brand-danger' : 'text-slate-800 hover:text-brand-danger'}`}><Heart size={28} className={isLiked ? "fill-brand-danger" : ""} /></button>
+                                                        <button onClick={() => openCommentModal(feed)} className="text-slate-800 hover:text-slate-600 transition relative">
+                                                             <MessageCircleIcon size={28} />
+                                                             {feed.commentCount > 0 && <span className="absolute -top-1 -right-1 bg-indigo-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{feed.commentCount}</span>}
                                                         </button>
                                                     </div>
-                                                    <button onClick={() => handleForkClick(feed)} disabled={isSaving} className="bg-white/10 text-white border border-white/10 hover:bg-white/20 px-4 py-2.5 rounded-2xl text-[12px] font-black transition-all active:scale-95 flex items-center gap-1.5 shadow-sm shrink-0 break-keep whitespace-nowrap"><Download size={16} className="shrink-0" /> 일정 가져오기 ({feed.forks || 0})</button>
+                                                    <button onClick={() => handleForkClick(feed)} disabled={isSaving} className="bg-brand-primary/10 text-brand-primary border border-brand-primary/20 hover:bg-brand-primary/20 px-4 py-2.5 rounded-2xl text-[12px] font-black transition-all active:scale-95 flex items-center gap-1.5 shadow-sm shrink-0 break-keep whitespace-nowrap"><Download size={16} className="shrink-0" /> 일정 가져오기 ({feed.forks || 0})</button>
                                                 </div>
-                                                <p className="font-bold text-sm text-white mb-2 break-keep whitespace-nowrap">좋아요 {(feed.likes || 0).toLocaleString()}개</p>
-                                                <p className="text-[14px] text-slate-200 leading-relaxed break-keep"><span className="font-black mr-2 text-white">{feed.author}</span>{feed.title}</p>
+                                                <p className="font-bold text-sm text-slate-800 mb-2 break-keep whitespace-nowrap">좋아요 {(feed.likes || 0).toLocaleString()}개</p>
+                                                <p className="text-[14px] text-slate-700 leading-relaxed break-keep"><span className="font-black mr-2 text-slate-900">{feed.author}</span>{feed.title}</p>
                                             </div>
                                         </div>
                                     );
@@ -1388,7 +1360,7 @@ export default function MyPage() {
                                     <div className="pt-4 flex justify-center">
                                         <button
                                             onClick={() => setFeedLimit(prev => prev + 5)}
-                                            className="bg-white/10 border border-white/10 text-white font-bold text-sm px-6 py-3 rounded-full shadow-sm hover:bg-white/20 active:scale-95 transition flex items-center gap-2"
+                                            className="bg-white/80 border border-slate-200 text-slate-700 font-bold text-sm px-6 py-3 rounded-full shadow-sm hover:bg-white active:scale-95 transition flex items-center gap-2"
                                         >
                                             <Loader2 size={16} className="text-gray-400" /> 피드 5개 더 보기
                                         </button>
@@ -1418,11 +1390,6 @@ export default function MyPage() {
 
         return (
             <div className="animate-in fade-in duration-500 pb-10">
-                <header className="flex justify-between items-center px-3 pt-12 pb-4 sticky top-0 z-40 bg-gradient-to-b from-[#121212]/50 to-transparent backdrop-blur-md">
-                    <div className="flex items-center gap-2 shrink-0"><div className="w-10 h-10 bg-gradient-to-br from-brand-primary via-brand-secondary to-brand-accent rounded-[14px] flex items-center justify-center text-white shadow-lg shrink-0"><Wallet size={20} /></div><h1 className="text-xl font-black text-white tracking-tight break-keep whitespace-nowrap">Trip Money</h1></div>
-                    <div className="flex items-center gap-3 text-white shrink-0"><button className="bg-white/10 hover:bg-white/20 backdrop-blur-md p-2 rounded-full shadow-sm transition"><Search size={20} /></button><div className="relative bg-white/10 hover:bg-white/20 backdrop-blur-md p-2 rounded-full shadow-sm transition cursor-pointer" onClick={() => alert("현재 엔화(JPY) 환율이 많이 내렸어요! 📉")}><BellRing size={20} className="text-brand-primary animate-pulse" /><span className="absolute top-1 right-1 w-2.5 h-2.5 bg-brand-danger rounded-full border-2 border-white"></span></div></div>
-                </header>
-
                 <div className="px-3 pt-4 space-y-6">
                     {/* ✨ 미납 정산금(N빵) 알림 배너 */}
                     {pendingDeposits.map(req => (
@@ -1457,12 +1424,12 @@ export default function MyPage() {
                         </div>
                     </GlassCard>
 
-                    <div className="bg-gradient-to-br from-brand-primary/20 to-white/5 border border-white/10 rounded-[20px] p-5 shadow-lg relative overflow-hidden animate-pulse">
+                    <div className="bg-gradient-to-br from-brand-primary/15 to-white border border-slate-200 rounded-[20px] p-5 shadow-md relative overflow-hidden animate-pulse">
                         <div className="absolute -right-4 -bottom-4 text-brand-primary/10 opacity-50"><BrainCircuit size={100} /></div>
                         <div className="relative z-10">
                             <div className="flex items-center gap-1.5 mb-2"><Sparkles size={16} className="text-brand-primary shrink-0" /><span className="text-xs font-black text-brand-primary tracking-wider break-keep whitespace-nowrap">AI FUNDING COACH</span></div>
-                            <h3 className="text-lg font-black text-white leading-tight mb-1 break-keep">{advice.title}</h3>
-                            <p className="text-sm text-slate-300 font-medium leading-relaxed mb-4 break-keep">{advice.message}</p>
+                            <h3 className="text-lg font-black text-slate-800 leading-tight mb-1 break-keep">{advice.title}</h3>
+                            <p className="text-sm text-slate-500 font-medium leading-relaxed mb-4 break-keep">{advice.message}</p>
                             <button onClick={() => { if (advice.trip) { setSelectedTrip(advice.trip); setShowGroupManageModal(true); } }} className="w-full py-3.5 bg-brand-primary hover:bg-brand-primary/90 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 break-keep whitespace-nowrap">
                                 {advice.isGroup ? <Users size={18} className="shrink-0" /> : <TrendingDown size={18} className="shrink-0" />} {advice.action}
                             </button>
@@ -1470,10 +1437,10 @@ export default function MyPage() {
                     </div>
 
                     <section>
-                        <div className="flex justify-between items-end mb-4 px-1"><h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest break-keep whitespace-nowrap">My Travel Funds</h3></div>
+                        <div className="flex justify-between items-end mb-4 px-1"><h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest break-keep whitespace-nowrap">My Travel Funds</h3></div>
                         <div className="space-y-4">
                             {itineraries.length === 0 ? (
-                                <div className="text-center py-10 text-slate-400 bg-white/5 rounded-2xl border border-dashed border-white/10"><ShoppingBag size={32} className="mx-auto mb-2 opacity-50" /><p className="text-sm break-keep">목표로 할 여행이 없어요.</p></div>
+                                <div className="text-center py-10 text-slate-500 bg-black/5 rounded-2xl border border-dashed border-slate-200"><ShoppingBag size={32} className="mx-auto mb-2 opacity-50" /><p className="text-sm break-keep">목표로 할 여행이 없어요.</p></div>
                             ) : (
                                     itineraries.map((trip) => {
                                         const actualMembers = trip.membersInfo || [{ avatar: user?.photoURL || "https://i.pravatar.cc/150", name: user?.displayName || "나" }];
@@ -1493,7 +1460,7 @@ export default function MyPage() {
                                         else if (percent > 0) statusMsg = "차곡차곡 모으는 중이에요! 💪";
 
                                         return (
-                                            <GlassCard key={trip.id} className="p-6 flex flex-col group transition-all hover:ring-2 hover:ring-brand-primary/30 hover:shadow-2xl relative overflow-hidden backdrop-blur-3xl border-white/10 mb-4 bg-white/5">
+                                            <GlassCard key={trip.id} className="p-6 flex flex-col group transition-all hover:ring-2 hover:ring-brand-primary/30 hover:shadow-xl relative overflow-hidden mb-4 bg-white/90 border border-slate-200/80 text-slate-800 shadow-sm">
                                                 {/* ✨ 상단 장식 오버레이 */}
                                                 <div className={`absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl opacity-20 transition-all group-hover:opacity-40 ${isGroup ? 'bg-brand-secondary/40' : 'bg-brand-primary/40'}`}></div>
                                                 
@@ -1504,48 +1471,48 @@ export default function MyPage() {
                                                         </div>
                                                         <div className="overflow-hidden">
                                                             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                                                                <h4 className="font-black text-white text-xl tracking-tight truncate max-w-[150px]">{trip.destination || "여행"}</h4>
+                                                                <h4 className="font-black text-slate-800 text-xl tracking-tight truncate max-w-[150px]">{trip.destination || "여행"}</h4>
                                                                 <div className="flex gap-1.5">
                                                                     {isGroup && <span className="bg-brand-secondary/15 text-brand-secondary text-[10px] font-black px-2.5 py-1 rounded-full border border-brand-secondary/20 uppercase tracking-tighter">Group</span>}
-                                                                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border uppercase tracking-tighter shadow-xs ${dDayNum <= 7 ? 'bg-brand-danger text-white border-brand-danger/50 animate-pulse' : 'bg-white/10 text-white border-white/10'}`}>
+                                                                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border uppercase tracking-tighter shadow-xs ${dDayNum <= 7 ? 'bg-brand-danger text-white border-brand-danger/50 animate-pulse' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>
                                                                         {dDay}
                                                                     </span>
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-1.5 cursor-help">
                                                                 <Target size={12} className="text-slate-400" />
-                                                                <p className="text-[11px] text-slate-400 font-bold tracking-tight">목표: <span className="text-white">{targetCost.toLocaleString()}원</span></p>
+                                                                <p className="text-[11px] text-slate-500 font-bold tracking-tight">목표: <span className="text-slate-800">{targetCost.toLocaleString()}원</span></p>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <button onClick={() => { setSelectedTrip(trip); setShowGroupManageModal(true); }} className="w-10 h-10 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/20 transition-all shrink-0"><ChevronRight size={20} strokeWidth={3} /></button>
+                                                    <button onClick={() => { setSelectedTrip(trip); setShowGroupManageModal(true); }} className="w-10 h-10 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-800 hover:bg-slate-200 transition-all shrink-0"><ChevronRight size={20} strokeWidth={3} /></button>
                                                 </div>
 
-                                                <div className="bg-white/5 backdrop-blur-md rounded-[24px] p-5 border border-white/10 shadow-inner relative z-10">
+                                                <div className="bg-slate-50 rounded-[24px] p-5 border border-slate-200/80 shadow-inner relative z-10 text-slate-800">
                                                     <div className="flex justify-between items-end text-xs font-black mb-3">
                                                         <div className="flex flex-col gap-0.5">
                                                             <span className="text-slate-400 text-[10px] uppercase tracking-widest">Available Balance</span>
-                                                            <span className={`text-lg font-black tracking-tight ${isGroup ? "text-brand-primary" : "text-indigo-400"}`}>{savedAmount.toLocaleString()}원</span>
+                                                            <span className={`text-lg font-black tracking-tight ${isGroup ? "text-brand-primary" : "text-indigo-600"}`}>{savedAmount.toLocaleString()}원</span>
                                                         </div>
                                                         <div className="flex flex-col items-end gap-0.5">
                                                             <span className="text-slate-400 text-[10px] uppercase tracking-widest">Progress</span>
-                                                            <span className="text-white text-sm">{percent}%</span>
+                                                            <span className="text-slate-800 text-sm">{percent}%</span>
                                                         </div>
                                                     </div>
                                                     
-                                                    <div className="h-3 w-full bg-white/10 rounded-full overflow-hidden mb-4 p-0.5 border border-white/5">
+                                                    <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden mb-4 p-0.5 border border-slate-300/40">
                                                         <div className={`h-full rounded-full transition-all duration-1000 ease-out relative ${isGroup ? "bg-gradient-to-r from-brand-primary to-brand-secondary" : "bg-linear-to-r from-indigo-600 to-indigo-400"}`} style={{ width: `${percent}%` }}>
                                                             {percent > 5 && <div className="absolute top-0 right-0 w-4 h-full bg-white/30 blur-xs"></div>}
                                                         </div>
                                                     </div>
 
-                                                    <p className={`text-[10px] font-bold mb-4 flex items-center gap-1 ${percent >= 100 ? 'text-emerald-400' : 'text-slate-400'}`}>
-                                                        {percent >= 100 ? <CheckCircle size={12} /> : <Sparkles size={12} className="text-amber-400" />}
+                                                    <p className={`text-[10px] font-bold mb-4 flex items-center gap-1 ${percent >= 100 ? 'text-emerald-500' : 'text-slate-500'}`}>
+                                                        {percent >= 100 ? <CheckCircle size={12} className="text-emerald-500" /> : <Sparkles size={12} className="text-amber-500" />}
                                                         {statusMsg}
                                                     </p>
 
                                                     {isGroup && (
-                                                        <div className="flex items-center justify-between mt-1 pt-4 border-t border-white/10">
+                                                        <div className="flex items-center justify-between mt-1 pt-4 border-t border-slate-200">
                                                             <div className="flex -space-x-2.5 shrink-0">
                                                                 {actualMembers.slice(0, 4).map((m, i) => (
                                                                     <div key={i} className="relative group/avatar">
@@ -1553,26 +1520,26 @@ export default function MyPage() {
                                                                     </div>
                                                                 ))}
                                                                 {actualMembers.length > 4 && (
-                                                                    <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-900 flex items-center justify-center text-[10px] font-black text-white shadow-sm">+{actualMembers.length - 4}</div>
+                                                                    <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-800 shadow-sm">+{actualMembers.length - 4}</div>
                                                                 )}
                                                             </div>
                                                             <div className="flex gap-2">
-                                                                <button onClick={() => openBudgetModal(trip)} className="text-[11px] font-black bg-white/10 border border-white/10 text-white px-3.5 py-2.5 rounded-xl shadow-xs hover:bg-white/20 active:scale-95 transition-all flex items-center gap-1.5 break-keep whitespace-nowrap">
+                                                                <button onClick={() => openBudgetModal(trip)} className="text-[11px] font-black bg-white border border-slate-200 text-slate-700 px-3.5 py-2.5 rounded-xl shadow-xs hover:bg-slate-50 active:scale-95 transition-all flex items-center gap-1.5 break-keep whitespace-nowrap">
                                                                     <Plus size={14} className="text-brand-primary shrink-0" /> 지출 추가
                                                                 </button>
-                                                                <button onClick={() => { setSelectedTrip(trip); setShowGroupManageModal(true); }} className={`text-[11px] font-black px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all active:scale-95 ${isHost ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200' : 'bg-white/10 border border-white/10 text-white hover:bg-white/20 shadow-white/5'}`}>
+                                                                <button onClick={() => { setSelectedTrip(trip); setShowGroupManageModal(true); }} className={`text-[11px] font-black px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all active:scale-95 ${isHost ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm'}`}>
                                                                     {isHost ? <><Settings size={14} className="shrink-0" /> 관리</> : <><Wallet size={14} className="shrink-0" /> 입금</>}
                                                                 </button>
                                                             </div>
                                                         </div>
                                                     )}
                                                     {!isGroup && (
-                                                        <div className="mt-1 pt-4 border-t border-white/10 flex justify-end gap-2">
-                                                            <button onClick={() => openBudgetModal(trip)} className="text-[11px] font-black bg-white/10 border border-white/10 text-white px-3.5 py-2.5 rounded-xl shadow-xs hover:bg-white/20 active:scale-95 transition-all flex items-center gap-1.5 break-keep whitespace-nowrap">
-                                                                <Plus size={14} className="text-indigo-400 shrink-0" /> 지출 추가
+                                                        <div className="mt-1 pt-4 border-t border-slate-200 flex justify-end gap-2">
+                                                            <button onClick={() => openBudgetModal(trip)} className="text-[11px] font-black bg-white border border-slate-200 text-slate-700 px-3.5 py-2.5 rounded-xl shadow-xs hover:bg-slate-50 active:scale-95 transition-all flex items-center gap-1.5 break-keep whitespace-nowrap">
+                                                                <Plus size={14} className="text-indigo-600 shrink-0" /> 지출 추가
                                                             </button>
-                                                            <button onClick={() => { setSelectedTrip(trip); setShowGroupManageModal(true); }} className="text-[11px] font-black bg-white/25 text-white px-5 py-2.5 rounded-xl shadow-xl hover:bg-white/35 transition-all active:scale-95 flex items-center gap-2 border border-white/10">
-                                                                <Wallet size={14} className="shrink-0 text-indigo-400" /> 지갑 관리
+                                                            <button onClick={() => { setSelectedTrip(trip); setShowGroupManageModal(true); }} className="text-[11px] font-black bg-slate-100 border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl shadow-md hover:bg-slate-200 transition-all active:scale-95 flex items-center gap-2">
+                                                                <Wallet size={14} className="shrink-0 text-indigo-600" /> 지갑 관리
                                                             </button>
                                                         </div>
                                                     )}
@@ -1642,10 +1609,78 @@ export default function MyPage() {
 
             {/* ✨ 메인 래퍼 주 박스 (배경 그라데이션화 및 뒤편 이미지 투명 반사) */}
             <div 
-                className="w-full max-w-[560px] h-full relative text-white border-x border-white/10 shadow-2xl overflow-hidden flex flex-col transition-all duration-700 bg-[#121212]"
+                className="w-full max-w-[560px] h-full relative text-slate-800 border-x border-slate-200 shadow-2xl overflow-hidden flex flex-col transition-all duration-700 bg-sand-light"
             >
-                <SunSceneBackground scene={activeTab === 'schedule' ? 'mountain' : activeTab === 'social' ? 'beach' : activeTab === 'coach' ? 'city' : activeTab === 'wallet' ? 'cruise' : 'sky'} />
+                <div
+                    className="absolute top-0 left-0 right-0 h-48 opacity-20 pointer-events-none z-0"
+                    style={{ backgroundImage: `linear-gradient(to bottom, #EADCB9 0%, transparent 100%)` }}
+                />
                 
+                {/* 🌟 통합 스포티파이 스타일 헤더 */}
+                <header className="flex justify-between items-center px-4 pt-12 pb-3 shrink-0 bg-gradient-to-b from-sand-light/95 to-transparent backdrop-blur-md z-40 border-b border-slate-200/50 gap-3">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        <button type="button" onClick={() => router.push('/?tab=home')} className="text-slate-800 bg-white/60 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/80 active:scale-95 cursor-pointer shrink-0 border border-slate-200/50"><ArrowLeft size={18} /></button>
+                        
+                        <div onClick={openProfileModal} className="flex items-center gap-2 cursor-pointer group hover:bg-black/5 p-1 rounded-xl transition overflow-hidden">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 text-brand-primary flex items-center justify-center overflow-hidden border border-white/20 shadow-md shrink-0">
+                                {previewImage || user?.photoURL ? (<img src={previewImage || user?.photoURL} alt="Profile" className="w-full h-full object-cover" />) : (<User size={16} />)}
+                            </div>
+                            <div className="overflow-hidden text-left max-w-[120px] sm:max-w-[160px]">
+                                <h1 className="text-sm font-black text-slate-800 flex items-center gap-1 truncate">
+                                    {userData?.name || user?.displayName || "여행자"}
+                                </h1>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-slate-800 shrink-0">
+                        {/* 검색 버튼 */}
+                        <button type="button" onClick={() => setShowSearchModal(true)} className="bg-white/60 border border-slate-200/50 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/80 active:scale-95 cursor-pointer"><Search size={18} /></button>
+                        
+                        {/* 동행 편지함 (Inbox) */}
+                        <button 
+                            type="button"
+                            onClick={() => setShowInboxModal(true)} 
+                            className="relative bg-white/60 border border-slate-200/50 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/80 active:scale-95 cursor-pointer"
+                        >
+                            <MessageCircleIcon size={18} />
+                            {user && matchRequests.filter(r => r.type === 'match_request' && r.status === 'pending' && r.toUid === user?.uid).length > 0 && (
+                                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-brand-danger rounded-full border border-white animate-pulse"></span>
+                            )}
+                        </button>
+
+                        {/* 알림 벨 */}
+                        <button 
+                            type="button"
+                            onClick={() => alert("현재 여행 알림이 없습니다. 🔔")} 
+                            className="bg-white/60 border border-slate-200/50 backdrop-blur-md p-2 rounded-full shadow-sm transition hover:bg-white/80 active:scale-95 cursor-pointer"
+                        >
+                            <Bell size={18} />
+                        </button>
+                    </div>
+                </header>
+
+                {/* 🌟 Spotify 알약(Pill) 스타일 가로 스크롤 메뉴바 */}
+                <div className="px-4 py-3 bg-sand-light/50 backdrop-blur-md z-40 border-b border-slate-200/50 flex gap-2 overflow-x-auto scrollbar-hide shrink-0">
+                    {[
+                        { id: 'schedule', name: '일정', icon: '📅' },
+                        { id: 'social', name: '동행', icon: '👥' },
+                        { id: 'coach', name: '코치', icon: '🐾' },
+                        { id: 'wallet', name: '트립머니', icon: '💳' },
+                        { id: 'vault', name: '보관함', icon: '📦' }
+                    ].map((tab) => (
+                        <button 
+                            type="button"
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`px-4 py-2 rounded-full text-xs font-black transition-all flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer ${activeTab === tab.id ? 'bg-brand-primary text-white font-extrabold shadow-sm scale-105' : 'bg-white/80 border border-slate-200/80 text-slate-600 hover:text-slate-900'}`}
+                        >
+                            <span>{tab.icon}</span>
+                            <span>{tab.name}</span>
+                        </button>
+                    ))}
+                </div>
+
                 <div className="pb-32 flex-1 overflow-y-auto custom-scrollbar relative z-10">
                     {activeTab === 'schedule' && renderSchedule()}
                     {activeTab === 'social' && renderSocial()}
@@ -1654,14 +1689,50 @@ export default function MyPage() {
                     {activeTab === 'vault' && renderVault()}
                 </div>
 
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-[570px] px-6 z-50">
-                    <nav className="bg-[#121212]/80 backdrop-blur-2xl border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.5)] rounded-[32px] px-2 py-2.5 flex justify-around items-center">
-                        <button onClick={() => router.push('/?mode=new')} className="flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] text-spotify-text-muted hover:text-white transition"><HomeIcon size={24} strokeWidth={2} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">홈</span></button>
-                        <button onClick={() => setActiveTab('social')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'social' ? 'text-spotify-green scale-110 font-bold' : 'text-spotify-text-muted hover:text-white'}`}><Users size={24} strokeWidth={activeTab === 'social' ? 2.5 : 2} className={activeTab === 'social' ? 'text-spotify-green' : 'text-spotify-text-muted'} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">동행</span></button>
-                        <button onClick={() => setActiveTab('schedule')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'schedule' ? 'text-spotify-green scale-110 font-bold' : 'text-spotify-text-muted hover:text-white'}`}><Calendar size={24} strokeWidth={activeTab === 'schedule' ? 2.5 : 2} className={activeTab === 'schedule' ? 'text-spotify-green' : 'text-spotify-text-muted'} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">일정</span></button>
-                        <button onClick={() => setActiveTab('coach')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'coach' ? 'text-spotify-green scale-110 font-bold' : 'text-spotify-text-muted hover:text-white'}`}><Sparkles size={24} strokeWidth={activeTab === 'coach' ? 2.5 : 2} className={activeTab === 'coach' ? 'text-spotify-green' : 'text-spotify-text-muted'} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">코치</span></button>
-                        <button onClick={() => setActiveTab('wallet')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'wallet' ? 'text-spotify-green scale-110 font-bold' : 'text-spotify-text-muted hover:text-white'}`}><Wallet size={24} strokeWidth={activeTab === 'wallet' ? 2.5 : 2} className={activeTab === 'wallet' ? 'text-spotify-green' : 'text-spotify-text-muted'} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">트립머니</span></button>
-                        <button onClick={() => setActiveTab('vault')} className={`flex flex-col items-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'vault' ? 'text-spotify-green scale-110 font-bold' : 'text-spotify-text-muted hover:text-white'}`}><Box size={24} strokeWidth={activeTab === 'vault' ? 2.5 : 2} className={activeTab === 'vault' ? 'text-spotify-green' : 'text-spotify-text-muted'} /><span className="text-[9px] sm:text-[10px] font-bold break-keep whitespace-nowrap">보관함</span></button>
+                {/* 하단 5대 탭 내비게이션 바 (홈 화면과 완벽 일치) */}
+                {/* 하단 5대 탭 내비게이션 바 (홈 화면과 완벽 일치) */}
+                <div className="absolute bottom-0 left-0 right-0 w-full bg-white border-t border-slate-200 shadow-2xl z-50 shrink-0">
+                    <nav className="flex justify-around items-center h-[72px] px-2 text-slate-800">
+                        <button 
+                            type="button" 
+                            onClick={() => router.push('/?tab=home')} 
+                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-slate-500 hover:text-slate-900 transition"
+                        >
+                            <HomeIcon size={21} strokeWidth={2} className="text-slate-500" />
+                            <span className="text-[11px] sm:text-[12.5px] font-black break-keep whitespace-nowrap">홈</span>
+                        </button>
+                        <button 
+                            type="button" 
+                            onClick={() => router.push('/?tab=flights_search')} 
+                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-slate-500 hover:text-slate-900 transition"
+                        >
+                            <Search size={21} strokeWidth={2} className="text-slate-500" />
+                            <span className="text-[11px] sm:text-[12.5px] font-black break-keep whitespace-nowrap">항공권</span>
+                        </button>
+                        <button 
+                            type="button" 
+                            onClick={() => router.push('/?tab=create')} 
+                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-slate-500 hover:text-slate-900 transition"
+                        >
+                            <Sparkles size={21} strokeWidth={2} className="text-slate-500" />
+                            <span className="text-[11px] sm:text-[12.5px] font-black break-keep whitespace-nowrap">만들기</span>
+                        </button>
+                        <button 
+                            type="button" 
+                            onClick={() => setActiveTab('schedule')} 
+                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] transition text-spotify-green font-bold"
+                        >
+                            <Calendar size={21} strokeWidth={2} className="text-spotify-green" />
+                            <span className="text-[11px] sm:text-[12.5px] font-black break-keep whitespace-nowrap">내 일정</span>
+                        </button>
+                        <button 
+                            type="button" 
+                            onClick={() => router.push('/?tab=around_me')} 
+                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-slate-500 hover:text-slate-900 transition"
+                        >
+                            <Compass size={21} strokeWidth={2} className="text-slate-500" />
+                            <span className="text-[11px] sm:text-[12.5px] font-black break-keep whitespace-nowrap">내 주변</span>
+                        </button>
                     </nav>
                 </div>
             </div>

@@ -1621,11 +1621,11 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     });
 
                     return (
-                        <div className="absolute inset-0 z-0 bg-[#121212] overflow-y-auto pt-36 pb-24 px-4 custom-scrollbar flex flex-col pointer-events-auto">
+                        <div className="absolute inset-0 z-0 bg-sand-light overflow-y-auto pt-36 pb-24 px-4 custom-scrollbar flex flex-col pointer-events-auto">
                             <SunSceneBackground scene={['mountain', 'beach', 'city', 'cruise', 'sky'][currentDayIdx % 5]} />
                             <div className="relative z-10 w-full flex flex-col gap-6">
                                 {/* AI Recommendation Widget specifically for Restaurants (Moved to Top) */}
-                                <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur-xl shadow-2xl flex flex-col gap-3 mt-4">
+                                <div className="bg-white/80 border border-slate-200 rounded-3xl p-5 backdrop-blur-xl shadow-2xl flex flex-col gap-3 mt-4">
                                     <div className="flex items-center gap-2 text-spotify-green">
                                         <Sparkles size={16} className="animate-pulse" />
                                         <h4 className="text-xs font-black uppercase tracking-wider">
@@ -1750,11 +1750,11 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     });
 
                     return (
-                        <div className="absolute inset-0 z-0 bg-slate-50 overflow-y-auto pt-36 pb-24 px-4 custom-scrollbar flex flex-col pointer-events-auto">
+                        <div className="absolute inset-0 z-0 bg-sand-light overflow-y-auto pt-36 pb-24 px-4 custom-scrollbar flex flex-col pointer-events-auto">
                             <SunSceneBackground scene="sky" />
                             <div className="relative z-10 w-full flex flex-col gap-6">
                                 {/* AI Recommendation Widget specifically for Shopping & Attractions */}
-                                <div className="bg-slate-100/50 border border-slate-200 rounded-3xl p-5 shadow-lg flex flex-col gap-3 mt-4">
+                                <div className="bg-white/80 border border-slate-200 rounded-3xl p-5 shadow-lg flex flex-col gap-3 mt-4">
                                     <div className="flex items-center gap-2 text-spotify-green">
                                         <Sparkles size={16} className="animate-pulse" />
                                         <h4 className="text-xs font-black uppercase tracking-wider">
@@ -1777,12 +1777,12 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                         <button
                                             onClick={() => handleTriggerRecommendation('관광명소')}
                                             disabled={recommendLoading}
-                                            className="px-3 py-1.5 bg-white/5 hover:bg-spotify-green hover:text-black border border-white/10 text-xs font-extrabold rounded-full transition-all disabled:opacity-50"
+                                            className="px-3 py-1.5 bg-white hover:bg-spotify-green hover:text-white border border-slate-200 text-xs font-extrabold rounded-full transition-all disabled:opacity-50 text-slate-700"
                                         >
                                             🏛️ {language === 'en' ? 'Add Attraction' : '볼거리/명소 추가'}
                                         </button>
                                     </div>
-                                    <div className="flex gap-2 bg-black/40 border border-white/10 p-1 rounded-xl">
+                                    <div className="flex gap-2 bg-white border border-slate-200 p-1 rounded-xl">
                                         <input
                                             type="text"
                                             value={recommendInputSight}
@@ -1794,29 +1794,29 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                             }}
                                             disabled={recommendLoading || isSearchingPlaces}
                                             placeholder={language === 'en' ? 'e.g. Landmarks with great sunset views' : '예: 오사카 성, 우메다 스카이 빌딩 등'}
-                                            className="flex-1 bg-transparent px-2.5 py-2 text-xs text-white border-none outline-none placeholder:text-spotify-text-muted"
+                                            className="flex-1 bg-transparent px-2.5 py-2 text-xs text-slate-800 border-none outline-none placeholder:text-slate-400"
                                         />
                                         <button
                                             onClick={() => {
                                                 handleSearchQuery(recommendInputSight);
                                             }}
                                             disabled={recommendLoading || isSearchingPlaces || !recommendInputSight.trim()}
-                                            className="bg-spotify-green text-black px-3.5 py-2 rounded-lg text-xs font-black transition-all active:scale-95 disabled:opacity-50 shrink-0 flex items-center justify-center"
+                                            className="bg-spotify-green text-white px-3.5 py-2 rounded-lg text-xs font-black transition-all active:scale-95 disabled:opacity-50 shrink-0 flex items-center justify-center"
                                         >
-                                            {isSearchingPlaces ? <Loader2 size={14} className="animate-spin text-black" /> : <Search size={14} />}
+                                            {isSearchingPlaces ? <Loader2 size={14} className="animate-spin text-white" /> : <Search size={14} />}
                                         </button>
                                     </div>
                                 </div>
 
-                                <div className="text-center py-4 bg-black/40 backdrop-blur-md rounded-2xl border border-white/5 p-4 shadow-xl">
-                                    <h2 className="text-lg font-black text-white">{tripPlan.tripTitle}</h2>
-                                    <p className="text-[11px] font-bold text-spotify-text-muted mt-1">{destName} • {estimatedCost} • {language === 'en' ? 'Shopping & Sights' : '여행지 추천 쇼핑 및 볼거리 리스트'}</p>
+                                <div className="text-center py-4 bg-white/50 backdrop-blur-md rounded-2xl border border-slate-200 p-4 shadow-lg">
+                                    <h2 className="text-lg font-black text-slate-900">{tripPlan.tripTitle}</h2>
+                                    <p className="text-xs font-bold text-slate-600 mt-1">{destName} • {estimatedCost} • {language === 'en' ? 'Shopping & Sights' : '여행지 추천 쇼핑 및 볼거리 리스트'}</p>
                                 </div>
 
-                                <div className="bg-[#121212]/80 border border-white/10 rounded-3xl p-5 backdrop-blur-xl shadow-2xl flex flex-col gap-4">
+                                <div className="bg-white/50 border border-slate-200 rounded-3xl p-5 shadow-lg flex flex-col gap-4">
                                     <div className="space-y-4">
                                         {allSightPlaces.length === 0 ? (
-                                            <div className="text-xs text-spotify-text-muted/60 text-center py-8 italic">
+                                            <div className="text-xs text-slate-500 text-center py-8 italic">
                                                 {language === 'en' ? 'No shopping or attractions registered.' : '등록된 쇼핑/볼거리 일정이 없습니다.'}
                                             </div>
                                         ) : (
@@ -1831,26 +1831,26 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                             setSheetState('full');
                                                         }
                                                     }}
-                                                    className="group p-4 bg-white/[0.02] hover:bg-white/[0.08] border border-white/5 hover:border-spotify-green/20 rounded-2xl transition-all duration-300 cursor-pointer flex gap-3.5 items-start text-left"
+                                                    className="group p-4 bg-white/80 hover:bg-white border border-slate-200 hover:border-spotify-green/50 rounded-2xl transition-all duration-300 cursor-pointer flex gap-3.5 items-start text-left"
                                                 >
-                                                    <div className="w-7 h-7 rounded-full bg-white/10 group-hover:bg-spotify-green group-hover:text-black flex items-center justify-center text-xs font-black text-spotify-text-muted transition-colors shrink-0">
+                                                    <div className="w-7 h-7 rounded-full bg-slate-200 group-hover:bg-spotify-green group-hover:text-white flex items-center justify-center text-xs font-black text-slate-600 transition-colors shrink-0">
                                                         {idx + 1}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex justify-between items-start gap-2 mb-1">
                                                             <div className="flex items-center gap-2 min-w-0">
-                                                                <h4 className="font-extrabold text-white text-sm truncate group-hover:text-spotify-green transition-colors">{place.name}</h4>
-                                                                <span className="bg-spotify-green/10 text-spotify-green text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0">
+                                                                <h4 className="font-extrabold text-slate-900 text-sm truncate group-hover:text-spotify-green transition-colors">{place.name}</h4>
+                                                                <span className="bg-spotify-green/10 text-spotify-green text-xs font-black px-1.5 py-0.5 rounded-md uppercase shrink-0">
                                                                     Day {dayIdx + 1}
                                                                 </span>
                                                             </div>
                                                             {place.category && (
-                                                                <span className="bg-white/10 text-spotify-text-muted text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0">
+                                                                <span className="bg-slate-200 text-slate-600 text-xs font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0">
                                                                     {place.category}
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <p className="text-xs text-spotify-text-muted leading-relaxed line-clamp-2">{place.description}</p>
+                                                        <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">{place.description}</p>
                                                         {place.budget && (
                                                             <div className="text-[10px] font-bold text-spotify-green mt-2 flex items-center gap-1">
                                                                 💰 {place.budget}
@@ -1930,7 +1930,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 )}
 
                 {/* Bottom Center Gradient for fade effect */}
-                <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-spotify-dark via-spotify-dark/70 to-transparent pointer-events-none z-10"></div>
+                <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-sand-light via-sand-light/70 to-transparent pointer-events-none z-10"></div>
  
  
                 {/* Spotify 초록색 저장 버튼 */}

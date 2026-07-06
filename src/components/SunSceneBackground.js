@@ -4,30 +4,8 @@ import React from 'react';
 
 export default function SunSceneBackground({ scene }) {
     // Determine the background gradient for the largest box (based on the scene)
-    let containerGradient = '';
-    switch(scene) {
-        case 'mountain':
-            // Green theme gradient (Vivid green down to dark forest green)
-            containerGradient = 'linear-gradient(to bottom, #1b5e20 0%, #004d40 40%, #001810 100%)';
-            break;
-        case 'beach':
-            // Blue theme gradient (Vivid blue down to dark ocean blue)
-            containerGradient = 'linear-gradient(to bottom, #0d47a1 0%, #1a237e 40%, #05081f 100%)';
-            break;
-        case 'city':
-            // Purple/indigo theme gradient (Vivid indigo down to deep dark purple/black)
-            containerGradient = 'linear-gradient(to bottom, #311b92 0%, #1a0f4e 40%, #080315 100%)';
-            break;
-        case 'cruise':
-            // Magenta/orange/warm theme gradient (Vivid magenta down to deep wine/charcoal)
-            containerGradient = 'linear-gradient(to bottom, #880e4f 0%, #4a0072 40%, #150025 100%)';
-            break;
-        case 'sky':
-        default:
-            // Golden yellow/orange theme gradient (Vivid gold down to dark amber/black)
-            containerGradient = 'linear-gradient(to bottom, #e65100 0%, #5d2000 40%, #1c0600 100%)';
-            break;
-    }
+    // 모래색 테마로 단일 통합하여 일관성 있는 비주얼 연출
+    const containerGradient = 'linear-gradient(to bottom, #F3E5D0 0%, #E8D3B9 50%, #D8BEA3 100%)';
 
     return (
         <div 
@@ -109,12 +87,7 @@ export default function SunSceneBackground({ scene }) {
                         </linearGradient>
                     </defs>
 
-                    {/* 1. Sky Color Gradients */}
-                    {scene === 'mountain' && <rect width="100" height="100" fill="url(#mtnSky)" />}
-                    {scene === 'beach' && <rect width="100" height="100" fill="url(#beachSky)" />}
-                    {scene === 'city' && <rect width="100" height="100" fill="url(#citySky)" />}
-                    {scene === 'cruise' && <rect width="100" height="100" fill="url(#cruiseSky)" />}
-                    {(!scene || scene === 'sky') && <rect width="100" height="100" fill="url(#mtnSky)" />}
+                    {/* 1. Sky Color Gradients (모래색 배경이 비치도록 투명 처리) */}
 
                     {/* Birds flying in the distance */}
                     <g opacity="0.4">
@@ -158,25 +131,25 @@ export default function SunSceneBackground({ scene }) {
                             <circle cx="50" cy="38" r="26" fill="url(#warmSun)" />
                             <circle cx="50" cy="38" r="10" fill="#FFFF00" />
 
-                            {/* Deep Sea (Pure Saturated Blue) - Raised and enlarged */}
+                            {/* Deep Sea (차분한 청록빛 딥 블루) */}
                             <path
                                 d="M -10 48 H 110 V 100 H -10 Z"
-                                fill="#0D47A1"
+                                fill="#2A6F86"
                             />
-                            {/* Mid Sea Wave (Vibrant Electric Blue) */}
+                            {/* Mid Sea Wave (파스텔 오션 블루) */}
                             <path
                                 d="M -10 60 Q 25 50 50 62 T 110 55 V 100 H -10 Z"
-                                fill="#2979FF"
+                                fill="#5C9EAD"
                             />
-                            {/* Near Wave (Vivid Neon Cyan) */}
+                            {/* Near Wave (은은한 베이비 아쿠아 블루) */}
                             <path
                                 d="M -10 74 Q 20 80 48 68 T 110 72 V 100 H -10 Z"
-                                fill="#00E5FF"
+                                fill="#A2D2FF"
                             />
-                            {/* Coastline Beach Sand (Vivid Golden Yellow) */}
+                            {/* Coastline Beach Sand (차분한 해변 모래빛 베이지) */}
                             <path
                                 d="M -10 82 Q 25 76 42 91 T 90 100 H -10 Z"
-                                fill="#FFD600"
+                                fill="#DDB892"
                             />
                             
                             {/* Palm Tree trunk (Solid Dark Brown) */}
@@ -346,8 +319,8 @@ export default function SunSceneBackground({ scene }) {
                 </svg>
             </div>
 
-            {/* A gentle black vignette fade overlay on top of the SVG to merge it perfectly into the gradient background */}
-            <div className="absolute inset-x-0 top-0 h-[320px] bg-gradient-to-b from-transparent via-transparent to-black/75 z-10" />
+            {/* A gentle sand vignette fade overlay on top of the SVG to merge it perfectly into the sand-light background */}
+            <div className="absolute inset-x-0 top-0 h-[320px] bg-gradient-to-b from-transparent via-transparent to-[#F3E5D0] z-10" />
         </div>
     );
 }
