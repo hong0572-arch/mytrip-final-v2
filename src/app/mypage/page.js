@@ -1197,20 +1197,20 @@ export default function MyPage() {
                                 </div>
                                 <div className="p-5">
                                     <div className="flex justify-between items-start mb-1">
-                                        <h3 className="text-[24px] font-black text-white break-keep">{trip.destination || "여행지"}</h3>
-                                        <div className="flex items-center gap-1.5 text-brand-primary/70 bg-brand-primary/5 px-2 py-1 rounded-lg mt-1 shrink-0"><Plane size={16} strokeWidth={2.5} /><Bed size={16} strokeWidth={2.5} /><Utensils size={16} strokeWidth={2.5} /></div>
+                                        <h3 className="text-[24px] font-black text-slate-900 break-keep">{trip.destination || "여행지"}</h3>
+                                        <div className="flex items-center gap-1.5 text-brand-primary bg-brand-primary/10 px-2.5 py-1.5 rounded-xl mt-1 shrink-0"><Plane size={16} strokeWidth={2.5} /><Bed size={16} strokeWidth={2.5} /><Utensils size={16} strokeWidth={2.5} /></div>
                                     </div>
-                                    <p className="text-slate-300 text-sm font-semibold mb-4 break-keep whitespace-nowrap">{formatTripDate(trip.startDate, trip.endDate, trip.duration)}</p>
-                                    <div className="flex items-center justify-between bg-white/5 p-3 rounded-[16px] mb-5 border border-white/10 shadow-inner">
+                                    <p className="text-slate-500 text-sm font-semibold mb-4 break-keep whitespace-nowrap">{formatTripDate(trip.startDate, trip.endDate, trip.duration)}</p>
+                                    <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-[16px] mb-5 border border-slate-200/60 shadow-inner">
                                         <div className="flex items-center gap-3 w-full pr-4 overflow-hidden">
                                             <div className="flex -space-x-2 shrink-0">
-                                                {actualMembers.slice(0, 3).map((m, i) => (<img key={i} src={m.avatar || "https://i.pravatar.cc/150"} alt={m.name} title={m.name} className="w-8 h-8 rounded-full border-2 border-white/10 object-cover shadow-sm" />))}
-                                                {actualMembers.length > 3 && (<div className="w-8 h-8 rounded-full border-2 border-white/10 bg-white/10 flex items-center justify-center text-[10px] font-bold text-slate-300 shadow-sm z-10">+{actualMembers.length - 3}</div>)}
-                                                <button onClick={() => openInviteModal(trip)} className="w-8 h-8 rounded-full border-2 border-dashed border-white/20 bg-white/5 flex items-center justify-center text-slate-400 hover:text-indigo-400 hover:border-indigo-400 hover:bg-white/15 transition shadow-sm z-10" title="동행자 초대하기"><Plus size={14} strokeWidth={3} /></button>
+                                                {actualMembers.slice(0, 3).map((m, i) => (<img key={i} src={m.avatar || "https://i.pravatar.cc/150"} alt={m.name} title={m.name} className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-sm" />))}
+                                                {actualMembers.length > 3 && (<div className="w-8 h-8 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-800 shadow-sm z-10">+{actualMembers.length - 3}</div>)}
+                                                <button onClick={() => openInviteModal(trip)} className="w-8 h-8 rounded-full border-2 border-dashed border-slate-300 bg-white flex items-center justify-center text-slate-400 hover:text-brand-primary hover:border-brand-primary hover:bg-brand-primary/5 transition shadow-sm z-10" title="동행자 초대하기"><Plus size={14} strokeWidth={3} /></button>
                                             </div>
-                                            <div className="flex flex-col"><span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider break-keep whitespace-nowrap">Members</span><span className="text-xs font-bold text-slate-200 break-keep whitespace-nowrap">{actualMembers.length}명 참여 중</span></div>
+                                            <div className="flex flex-col"><span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider break-keep whitespace-nowrap">Members</span><span className="text-xs font-bold text-slate-700 break-keep whitespace-nowrap">{actualMembers.length}명 참여 중</span></div>
                                         </div>
-                                        <span className="text-[10px] bg-white/10 border border-white/10 text-slate-300 px-2 py-1 rounded-md font-bold shadow-sm shrink-0 break-keep whitespace-nowrap">{isHost ? '관리자(나)' : '동행인'}</span>
+                                        <span className="text-[10px] bg-slate-100 border border-slate-200 text-slate-600 px-2 py-1 rounded-md font-bold shadow-xs shrink-0 break-keep whitespace-nowrap">{isHost ? '관리자(나)' : '동행인'}</span>
                                     </div>
                                     <div className="flex gap-2.5">
                                         <button onClick={() => {
@@ -1219,8 +1219,8 @@ export default function MyPage() {
                                             } else {
                                                 console.error("일정 ID를 찾을 수 없습니다.");
                                             }
-                                        }} className="flex-1 bg-gradient-to-r from-slate-800 to-gray-900 text-white py-3.5 rounded-[16px] flex items-center justify-center gap-2 font-bold text-sm hover:from-slate-900 hover:to-black shadow-md active:scale-[0.98] transition break-keep whitespace-nowrap"><Calendar size={16} strokeWidth={2.5} className="shrink-0" /> 일정 보기</button>
-                                        <button onClick={() => handleShareTrip(trip)} className="flex-1 bg-gradient-to-br from-white/10 to-white/2 border border-white/10 text-white py-3.5 rounded-[16px] flex items-center justify-center gap-2 font-bold text-sm hover:from-white/15 hover:to-white/5 transition active:scale-[0.98] shadow-sm break-keep whitespace-nowrap"><Share2 size={16} strokeWidth={2.5} className="shrink-0" /> 외부 공유</button>
+                                        }} className="flex-1 bg-slate-900 text-white py-3.5 rounded-[16px] flex items-center justify-center gap-2 font-bold text-sm hover:bg-black shadow-md active:scale-[0.98] transition break-keep whitespace-nowrap"><Calendar size={16} strokeWidth={2.5} className="shrink-0" /> 일정 보기</button>
+                                        <button onClick={() => handleShareTrip(trip)} className="flex-1 bg-white border border-slate-200 text-slate-700 py-3.5 rounded-[16px] flex items-center justify-center gap-2 font-bold text-sm hover:bg-slate-50 transition active:scale-[0.98] shadow-xs break-keep whitespace-nowrap"><Share2 size={16} strokeWidth={2.5} className="shrink-0" /> 외부 공유</button>
                                     </div>
                                 </div>
                             </GlassCard>
@@ -1609,7 +1609,7 @@ export default function MyPage() {
 
             {/* ✨ 메인 래퍼 주 박스 (배경 그라데이션화 및 뒤편 이미지 투명 반사) */}
             <div 
-                className="w-full max-w-[560px] h-full relative text-slate-800 border-x border-slate-200 shadow-2xl overflow-hidden flex flex-col transition-all duration-700 bg-sand-light"
+                className="w-full max-w-[560px] h-screen relative text-slate-800 border-x border-slate-200 shadow-2xl overflow-hidden flex flex-col transition-all duration-700 bg-sand-light"
             >
                 <div
                     className="absolute top-0 left-0 right-0 h-48 opacity-20 pointer-events-none z-0"

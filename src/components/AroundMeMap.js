@@ -267,8 +267,8 @@ export default function AroundMeMap({ language = 'ko' }) {
                 </div>
             )}
 
-            {/* 구글 지도 본체 */}
-            <div className="w-full h-96 rounded-3xl overflow-hidden border border-slate-200 relative z-0 shadow-lg" ref={mapRef} style={{ minHeight: "384px" }} />
+            {/* 구글 지도 본체 (높이를 384px -> 500px로 증가) */}
+            <div className="w-full h-[500px] rounded-3xl overflow-hidden border border-slate-200 relative z-0 shadow-lg" ref={mapRef} style={{ minHeight: "500px" }} />
         </div>
     );
 }
