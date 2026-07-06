@@ -47,15 +47,13 @@ const getTripLink = (keyword, destination, language) => {
     const query = `${cleanKeyword}`.trim();
     const encodedKeyword = encodeURIComponent(query);
 
-    // ✨ 제공해주신 링크(https://www.trip.com/t/ZNx7SJcMgU2)에서 추출한 트래킹 파라미터 적용
-    // Allianceid: 7681311, SID: 287502125
-    return `https://kr.trip.com/travel-guide/search/?keyword=${encodedKeyword}&locale=${language === 'en' ? 'en-XX' : 'ko-KR'}&Allianceid=7681311&SID=287502125`;
+    return `https://kr.trip.com/things-to-do/list?pagetype=city&keyword=${encodedKeyword}&kwdfrom=srch&ext-searchpage=1&Allianceid=7681311&SID=287502125`;
 };
 
 const getKlookLink = (keyword, language) => {
     const cleanKeyword = keyword.replace(/\([^)]*\)/g, '').split(',')[0].trim();
     const encodedKeyword = encodeURIComponent(cleanKeyword);
-    return `https://www.klook.com/${language === 'en' ? 'en-US' : 'ko'}/search?q=${encodedKeyword}`;
+    return `https://www.klook.com/${language === 'en' ? 'en-US' : 'ko'}/search/result/?query=${encodedKeyword}&search_scope=main_search`;
 };
 
     const formatTransitText = (txt, language) => {
@@ -492,10 +490,8 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     ${place.reason ? `<div style="font-size: 11px; color: #0891b2; background: #ecfeff; padding: 6px 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #cffafe;"><strong>🛡️ ${language === 'en' ? 'Safe Point!' : '안심 포인트!'}</strong><br />${place.reason}</div>` : ''}
                     <div style="display: flex; gap: 8px; margin-top: 10px;">
                         <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&hl=${language}" target="_blank" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #4f46e5; background: #e0e7ff; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🗺️ ${language === 'en' ? 'Directions' : '길찾기'}</a>
-                        ${(!place.category?.includes("Restaurant") && !place.category?.includes("Cafe")) ? `
-                            <a href="${getTripLink(place.name, userInfo?.destination || "", language)}" target="_blank" rel="nofollow noopener noreferrer" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #0087ff; background: #e6f3ff; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🎟️ Trip.com</a>
-                            <a href="${getKlookLink(place.name, language)}" target="_blank" rel="nofollow noopener noreferrer" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #ff5b00; background: #fff2e6; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🎟️ Klook</a>
-                        ` : ''}
+                        <a href="${getTripLink(place.name, userInfo?.destination || "", language)}" target="_blank" rel="nofollow noopener noreferrer" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #0087ff; background: #e6f3ff; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🎟️ Trip.com</a>
+                        <a href="${getKlookLink(place.name, language)}" target="_blank" rel="nofollow noopener noreferrer" style="text-decoration: none; font-size: 11px; font-weight: bold; color: #ff5b00; background: #fff2e6; padding: 6px 10px; border-radius: 6px; flex: 1; text-align: center;">🎟️ Klook</a>
                     </div>
                 </div>
             `;
@@ -1221,7 +1217,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
         setShowSaveModal(true);
     };
 
-    const handleReset = () => { setShowResetConfirm(true); };
+    const handleReset = () => { window.location.href = '/'; };
     const confirmReset = () => { window.location.href = '/'; };
     const handleOpenGoogleMaps = (place) => {
         const { name } = place;

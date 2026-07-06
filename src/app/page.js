@@ -536,6 +536,7 @@ export default function Home() {
     const [isStandalone, setIsStandalone] = useState(false);
     const [mySchedules, setMySchedules] = useState([]);
     const [isButtonHovered, setIsButtonHovered] = useState(false);
+    const [showFlightNotice, setShowFlightNotice] = useState(false); // ✨ 최저가 알림 커스텀 모달 상태 추가
     const [selectedTrip, setSelectedTrip] = useState(null);
     const [selectedPromoFlight, setSelectedPromoFlight] = useState(null); // 최저가 대행사 비교 모달용
     const [flightResults, setFlightResults] = useState([]);
@@ -1352,7 +1353,7 @@ export default function Home() {
                                         {language === 'en' ? "Real-time Lowest Flights" : "실시간 최저가 항공권"}
                                         <button
                                             type="button"
-                                            onClick={() => alert(language === 'en' ? "Due to real-time price fluctuations, the lowest price and date may differ from the actual ones." : "실시간 가격변동으로 최저가와 날짜가 실제와 차이가 있을 수 있습니다.")}
+                                            onClick={() => setShowFlightNotice(true)}
                                             className="text-slate-400 hover:text-spotify-green transition-colors ml-0.5 flex items-center justify-center p-1 rounded-full hover:bg-slate-100"
                                             title={language === 'en' ? "Real-time pricing notice" : "실시간 가격 변동 안내"}
                                         >
@@ -2064,6 +2065,33 @@ export default function Home() {
                         </motion.div>
                     )}
                 </AnimatePresence>
+
+                {/* 실시간 가격 변동 안내 커스텀 모달 */}
+                {showFlightNotice && (
+                    <div className="fixed inset-0 z-[120] flex items-center justify-center p-6">
+                        <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px] animate-in fade-in duration-200" onClick={() => setShowFlightNotice(false)}></div>
+                        <div className="bg-[#F3E5D0] border border-[#E0D0B0] w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 duration-200 text-slate-800 text-center">
+                            <div className="w-14 h-14 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 mb-4 shadow-inner">
+                                <AlertCircle size={28} />
+                            </div>
+                            <h3 className="text-lg font-black text-slate-900 mb-2">
+                                {language === 'en' ? 'Flight Price Notice' : '실시간 가격 변동 안내'}
+                            </h3>
+                            <p className="text-sm text-slate-700 mb-6 leading-relaxed font-semibold">
+                                {language === 'en' 
+                                    ? 'Due to real-time price fluctuations, the lowest price and date may differ from the actual ones.' 
+                                    : '실시간 가격 변동으로 인해 예상 최저가 및 날짜가 실제 항공사 가격과 다를 수 있습니다.'}
+                            </p>
+                            <button
+                                onClick={() => setShowFlightNotice(false)}
+                                className="w-full py-3.5 bg-spotify-green hover:bg-spotify-green-hover text-black font-extrabold rounded-2xl active:scale-95 transition-all text-sm shadow-md"
+                            >
+                                {language === 'en' ? 'Close' : '확인'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* 하단 생성 버튼 — 스포티파이 스타일 오버레이 및 둥근 초록/골드 버튼 */}
             </motion.div >
             <style jsx global>{`
