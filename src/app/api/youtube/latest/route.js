@@ -15,15 +15,26 @@ const fallbackVideos = [
     { id: 'y10', title: '스위스에서 가장 예쁜 동네 : 뮤렌 🏔️', channel: '스위스에서 가장 예쁜 동네 : 뮤렌', yid: 'pTqmzCvzUOc', url: 'https://www.youtube.com/watch?v=pTqmzCvzUOc', date: '4일 전', viewCount: '조회수 1800회' }
 ];
 
+// 인메모리 캐시 변수 (Next.js Data Cache 2MB 초과 에러 방지용)
+let cachedVideos = null;
+let cacheTime = 0;
+
 export async function GET() {
     const url = 'https://www.youtube.com/results?search_query=%EC%97%AC%ED%96%89&sp=CAI%3D';
+    const now = Date.now();
+
+    // 5분(300,000ms) 동안은 유튜브 스크래핑 부하를 막기 위해 인메모리 캐시 반환
+    if (cachedVideos && (now - cacheTime < 300000)) {
+        return NextResponse.json({ success: true, data: cachedVideos });
+    }
+
     try {
         const response = await fetch(url, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7'
             },
-            next: { revalidate: 300 } // Cache results for 5 minutes
+            cache: 'no-store' // ✨ 중요: Next.js의 2MB 캐시 크기 제한 에러 예방을 위해 fetch 캐싱 비활성화
         });
         const html = await response.text();
         const match = html.match(/var ytInitialData\s*=\s*({.+?});/);
@@ -53,7 +64,7 @@ export async function GET() {
                 const date = vr.publishedTimeText?.simpleText || "최근";
                 const viewCount = vr.viewCountText?.simpleText || "조회수 없음";
                 
-                // Exclude videos older than 1 month
+                // 1달 이상 경과한 비디오 필터링
                 if (date.includes("년 전") || date.includes("개월 전")) {
                     continue;
                 }
@@ -74,7 +85,13 @@ export async function GET() {
             return NextResponse.json({ success: false, data: fallbackVideos });
         }
         
-        return NextResponse.json({ success: true, data: videos.slice(0, 10) });
+        const finalVideos = videos.slice(0, 10);
+        
+        // 인메모리 캐싱 데이터 업데이트
+        cachedVideos = finalVideos;
+        cacheTime = now;
+
+        return NextResponse.json({ success: true, data: finalVideos });
     } catch (err) {
         console.error("YouTube scrape error:", err);
         return NextResponse.json({ success: false, data: fallbackVideos });

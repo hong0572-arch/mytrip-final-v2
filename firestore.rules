@@ -65,5 +65,10 @@ service cloud.firestore {
       allow write: if request.auth.uid == userId;
     }
         
+    // 8. ✈️ 항공 최저가 캐시 데이터
+    match /flight_deals_cache/{docId} {
+      allow read: if true;  // 비로그인 상태의 읽기 요청도 에러 없이 허용 (Permission Error 방지)
+      allow write: if isAuthenticated(); // 쓰기는 로그인한 회원만 가능
+    }
   }
 }

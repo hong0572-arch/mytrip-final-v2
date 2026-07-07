@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { admin } from '../../../lib/firebaseAdmin';
 
 // 🔑 Travelpayouts 설정
 const TP_TOKEN = '4c01a895965a510253489b6eef1e5fde';
@@ -12,7 +13,7 @@ const TRIP_SUB3 = 'D11411381';
 export async function POST(req) {
     try {
         const body = await req.json();
-        const { destinationCode, destinationName, returnOriginCode, departureDate, returnDate, language } = body;
+        const { destinationCode, destinationName, returnOriginCode, departureDate, returnDate, language, isMember } = body;
 
         if (!destinationCode || !departureDate) {
             return NextResponse.json({ error: "필수 정보 누락" }, { status: 400 });
@@ -133,6 +134,55 @@ export async function POST(req) {
                 linkGlobal: aviaUrl,
                 isFallback: true
             });
+        }
+
+        // 🌟 [서버 사이드 캐싱] 사용자가 회원(isMember === true)인 경우에만 Firebase Admin 권한으로 Firestore 캐시 저장
+        if (isMember && flights.length > 0) {
+            const validFlights = flights.filter(f => !f.isFallback && f.price > 0);
+            if (validFlights.length > 0) {
+                const cheapestFlight = validFlights[0];
+                try {
+                    const db = admin.firestore();
+                    const parsedDate = new Date(departureDate);
+                    
+                    const weekDaysKo = ['일', '월', '화', '수', '목', '금', '토'];
+                    const weekDaysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    const dayNameKo = weekDaysKo[parsedDate.getDay()];
+                    const dayNameEn = weekDaysEn[parsedDate.getDay()];
+
+                    const CITY_NAME_MAP = {
+                        'ICN': { ko: '서울', en: 'Seoul' },
+                        'CJU': { ko: '제주', en: 'Jeju' },
+                        'NRT': { ko: '도쿄', en: 'Tokyo' },
+                        'KIX': { ko: '오사카', en: 'Osaka' },
+                        'PVG': { ko: '상하이', en: 'Shanghai' },
+                        'DAD': { ko: '다낭', en: 'Da Nang' },
+                        'DPS': { ko: '발리', en: 'Bali' },
+                        'BKK': { ko: '방콕', en: 'Bangkok' },
+                        'CDG': { ko: '파리', en: 'Paris' },
+                        'LHR': { ko: '런던', en: 'London' },
+                        'FCO': { ko: '로마', en: 'Rome' },
+                        'HNL': { ko: '하와이', en: 'Honolulu' }
+                    };
+
+                    const matchedNames = CITY_NAME_MAP[destinationCode] || { ko: destinationName || destinationCode, en: destinationCode };
+
+                    await db.collection('flight_deals_cache').doc(destinationCode).set({
+                        city: matchedNames.ko,
+                        enCity: matchedNames.en,
+                        code: destinationCode,
+                        price: cheapestFlight.price,
+                        depDate: departureDate,
+                        displayDate: `${parsedDate.getMonth() + 1}/${parsedDate.getDate()}(${dayNameKo}) 출발`,
+                        displayDateEn: `${parsedDate.getMonth() + 1}/${parsedDate.getDate()}(${dayNameEn}) Dep`,
+                        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                        isReal: true
+                    });
+                    console.log(`[Server Flight Cache] Successfully saved ${destinationCode} cheapest deal: ₩${cheapestFlight.price}`);
+                } catch (dbErr) {
+                    console.error("🚨 [Server Flight Cache] Firebase Admin DB Save failed:", dbErr);
+                }
+            }
         }
 
         return NextResponse.json({ flights });

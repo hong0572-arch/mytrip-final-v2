@@ -408,7 +408,7 @@ const getHomeGradient = (step) => {
         default: return "from-[#165c32] to-[#121212]"; // Default Spotify Green
     }
 };
-// 🌟 오늘부터 6개월 내 도시별 편도 최저가 항공 정보 생성 헬퍼
+// 🌟 오늘부터 3개월 내 도시별 편도 최저가 항공 정보 생성 헬퍼 (대안 2 고도화)
 const getCheapestFlightInfo = (cityCode, basePrice) => {
     const today = new Date();
 
@@ -418,20 +418,61 @@ const getCheapestFlightInfo = (cityCode, basePrice) => {
         const x = Math.sin(seed + offset) * 10000;
         return x - Math.floor(x);
     };
-    // 오늘 기준 15일 후 ~ 150일 후(6개월 이내) 사이의 임의의 출발일 설정
-    const minDays = 15;
-    const maxDays = 150;
-    const depOffset = Math.floor(minDays + pseudoRandom(1) * (maxDays - minDays));
+
+    // 오늘 기준 14일 후 ~ 90일 후(약 3개월 이내) 사이의 임의의 출발일 설정
+    const minDays = 14;
+    const maxDays = 90;
+    let depOffset = Math.floor(minDays + pseudoRandom(1) * (maxDays - minDays));
 
     const depDate = new Date(today);
     depDate.setDate(today.getDate() + depOffset);
-    // 기본 요금 기준 80% ~ 95% 사이에서 편도 최저가가 결정되도록 시뮬레이션
-    const priceMultiplier = 0.80 + pseudoRandom(3) * 0.15;
+
+    // 항공권이 대체로 가장 저렴한 화요일(2) 또는 수요일(3)로 출발일 보정
+    const currentDayOfWeek = depDate.getDay();
+    if (currentDayOfWeek !== 2 && currentDayOfWeek !== 3) {
+        const diffToCheapestDay = 2 - currentDayOfWeek;
+        depDate.setDate(depDate.getDate() + diffToCheapestDay);
+    }
+
+    // 보정한 날짜가 오늘보다 이전이 되지 않도록 안전장치 설정
+    if (depDate < today) {
+        depDate.setDate(today.getDate() + 14);
+    }
+
+    // 요일 이름 매핑
+    const weekDaysKo = ['일', '월', '화', '수', '목', '금', '토'];
+    const weekDaysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayNameKo = weekDaysKo[depDate.getDay()];
+    const dayNameEn = weekDaysEn[depDate.getDay()];
+
+    // 요일별 가격 멀티플라이어 시뮬레이션:
+    // 실제 화요일, 수요일 출발은 기본 요금의 62% ~ 74% 수준으로 대폭 할인
+    // 주말(금, 토) 및 목요일은 기본 요금의 95% ~ 110% 수준
+    const dayOfWeek = depDate.getDay();
+    let priceMultiplier = 0.85;
+    if (dayOfWeek === 2 || dayOfWeek === 3) {
+        priceMultiplier = 0.62 + pseudoRandom(3) * 0.12; // 62% ~ 74%
+    } else if (dayOfWeek === 5 || dayOfWeek === 6) {
+        priceMultiplier = 0.95 + pseudoRandom(3) * 0.15; // 95% ~ 110%
+    } else {
+        priceMultiplier = 0.78 + pseudoRandom(3) * 0.12; // 78% ~ 90%
+    }
+
+    // 시즌별 극성수기 보정 (7월 15일 ~ 8월 20일 여름휴가, 12월 24일 ~ 1월 3일 연말)
+    const month = depDate.getMonth() + 1;
+    const date = depDate.getDate();
+    const isPeakSeason = (month === 7 && date >= 15) || (month === 8 && date <= 20) || (month === 12 && date >= 24) || (month === 1 && date <= 5);
+    if (isPeakSeason) {
+        priceMultiplier *= 1.25; // 성수기 25% 가격 상승 적용
+    }
+
     const cheapestPrice = Math.floor((basePrice * priceMultiplier) / 1000) * 1000;
+
     return {
         depDate,
         price: cheapestPrice,
-        displayDate: `${depDate.getMonth() + 1}/${depDate.getDate()} 출발`
+        displayDate: `${depDate.getMonth() + 1}/${depDate.getDate()}(${dayNameKo}) 출발`,
+        displayDateEn: `${depDate.getMonth() + 1}/${depDate.getDate()}(${dayNameEn}) Dep`
     };
 };
 // --- 3. 메인 Home 컴포넌트 ---
@@ -537,6 +578,7 @@ export default function Home() {
     const [mySchedules, setMySchedules] = useState([]);
     const [isButtonHovered, setIsButtonHovered] = useState(false);
     const [showFlightNotice, setShowFlightNotice] = useState(false); // ✨ 최저가 알림 커스텀 모달 상태 추가
+    const [flightCache, setFlightCache] = useState({}); // ✨ 최근 14일 실조회 항공권 데이터 캐시
     const [selectedTrip, setSelectedTrip] = useState(null);
     const [selectedPromoFlight, setSelectedPromoFlight] = useState(null); // 최저가 대행사 비교 모달용
     const [flightResults, setFlightResults] = useState([]);
@@ -565,6 +607,28 @@ export default function Home() {
         { id: 'y9', title: '여름 제주 동쪽 여행 브이로그 | 맛집, 카페, 소품샵 🌊', channel: '제주 여행기', yid: 'Zuh810k6nsI', url: 'https://www.youtube.com/watch?v=Zuh810k6nsI', likes: 2450, date: '5일 전' },
         { id: 'y10', title: '스위스에서 가장 예쁜 동네 : 뮤렌 🏔️', channel: '스위스에서 가장 예쁜 동네 : 뮤렌', yid: 'pTqmzCvzUOc', url: 'https://www.youtube.com/watch?v=pTqmzCvzUOc', likes: 1890, date: '4일 전' }
     ]);
+    const loadFlightCache = async (currentUser) => {
+        const targetUser = currentUser || auth.currentUser || user || session;
+        const isMemberUser = !!targetUser;
+
+        // 🌟 비로그인(비회원) 상태일 경우 API 호출을 원천 배제하여 로딩 속도 최적화 및 불필요한 요청 차단
+        if (!isMemberUser) {
+            return;
+        }
+
+        try {
+            const res = await fetch(getApiUrl(`/api/flights/cache?isMember=${isMemberUser}`));
+            const data = await res.json();
+            if (data.cache) {
+                setFlightCache(data.cache);
+            }
+        } catch (err) {
+            console.warn("Failed to load flight cache via server API:", err);
+        }
+    };
+    useEffect(() => {
+        loadFlightCache();
+    }, []);
     useEffect(() => {
         const fetchLatestVideos = async () => {
             try {
@@ -930,6 +994,9 @@ export default function Home() {
             setUser(currentUser);
             if (unsubscribeTrips) { unsubscribeTrips(); unsubscribeTrips = null; }
             if (currentUser) {
+                // 🌟 로그인 유저 확인 시점에 Firestore에서 항공 최저가 캐시 데이터 조회
+                loadFlightCache(currentUser);
+
                 // ✨ [추가] FCM 토큰이 있고 유저가 있으면 DB에 업데이트 (푸시 알림용)
                 if (token) {
                     try {
@@ -1120,9 +1187,53 @@ export default function Home() {
         if (!retDateStr) { const d = new Date(depDateStr); d.setDate(d.getDate() + 4); retDateStr = d.toISOString().split('T')[0]; }
         setSelectedTrip({ ...trip, iata: arrivalCode, returnIata: returnOriginCode, returnDateCalc: retDateStr });
         setIsSearching(true); setFlightResults([]);
+
+        const isMemberUser = !!(auth.currentUser || user || session);
+
         try {
-            const res = await fetch(getApiUrl('/api/flights/'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ destinationCode: arrivalCode, returnOriginCode, departureDate: depDateStr, returnDate: retDateStr, language, destinationName: trip.destination || trip.title }) });
-            const data = await res.json(); setFlightResults(data.flights || []);
+            const res = await fetch(getApiUrl('/api/flights/'), { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ 
+                    destinationCode: arrivalCode, 
+                    returnOriginCode, 
+                    departureDate: depDateStr, 
+                    returnDate: retDateStr, 
+                    language, 
+                    destinationName: trip.destination || trip.title,
+                    isMember: isMemberUser // 🌟 회원 여부 전송
+                }) 
+            });
+            const data = await res.json(); 
+            setFlightResults(data.flights || []);
+
+            // 🌟 [최근 14일 실조회 항공 최저가 로컬 상태 갱신]
+            // 클라이언트 사이드 setDoc는 완전히 걷어내고, 사용자가 실시간 조회를 완수했을 때
+            // 화면 갱신이 즉시 일어나도록 로컬 상태만 갱신해 줍니다. (DB 기록은 서버가 성공적으로 처리함)
+            if (data.flights && data.flights.length > 0) {
+                const validFlights = data.flights.filter(f => !f.isFallback && f.price > 0);
+                if (validFlights.length > 0) {
+                    validFlights.sort((a, b) => a.price - b.price);
+                    const cheapestFlight = validFlights[0];
+                    
+                    const parsedDate = new Date(depDateStr);
+                    const weekDaysKo = ['일', '월', '화', '수', '목', '금', '토'];
+                    const weekDaysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    const dayNameKo = weekDaysKo[parsedDate.getDay()];
+                    const dayNameEn = weekDaysEn[parsedDate.getDay()];
+
+                    setFlightCache(prev => ({
+                        ...prev,
+                        [arrivalCode]: {
+                            price: cheapestFlight.price,
+                            displayDate: `${parsedDate.getMonth() + 1}/${parsedDate.getDate()}(${dayNameKo}) 출발`,
+                            displayDateEn: `${parsedDate.getMonth() + 1}/${parsedDate.getDate()}(${dayNameEn}) Dep`,
+                            isReal: true
+                        }
+                    }));
+                }
+            }
+
         } catch (error) { console.error(error); } finally { setIsSearching(false); }
     };
     const handleTripClick = async (trip) => {
@@ -1372,6 +1483,19 @@ export default function Home() {
                                         className="flex gap-3 overflow-x-auto scrollbar-hide px-1 select-none cursor-grab active:cursor-grabbing w-full"
                                     >
                                         {promoDeals.concat(promoDeals).map((deal, idx) => {
+                                            const cached = flightCache[deal.code];
+                                            const isUserLoggedIn = !!(auth.currentUser || user || session);
+                                            const isReal = isUserLoggedIn && cached && cached.isReal;
+                                            
+                                            // 🌟 가격 곱하기 연산 적용: 실시간 카드 1.5배, 일반 카드 2.5배 (천원 단위 올림)
+                                            const basePrice = isReal ? cached.price : deal.price;
+                                            const multiplier = isReal ? 1.5 : 2.5;
+                                            const price = Math.floor((basePrice * multiplier) / 1000) * 1000;
+
+                                            const displayDateText = language === 'en'
+                                                ? (isReal ? cached.displayDateEn : (deal.displayDateEn || `${deal.displayDate} Dep`))
+                                                : (isReal ? cached.displayDate : deal.displayDate);
+
                                             return (
                                                 <div
                                                     key={`${deal.id}-${idx}`}
@@ -1384,11 +1508,21 @@ export default function Home() {
                                                         <img src={deal.img} alt={deal.city} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                                                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                                                         <span className="absolute bottom-2 left-2.5 text-xs font-black text-white">{language === 'en' ? deal.enCity : deal.city} ({deal.code})</span>
+
+                                                        {/* 🌟 실시간 데이터 마이크로 뱃지 */}
+                                                        {isReal && (
+                                                            <span className="absolute top-2 left-2 text-[8px] font-black bg-spotify-green text-black px-1.5 py-0.5 rounded-md border border-white/20 uppercase tracking-wider animate-pulse shadow-md">
+                                                                {language === 'en' ? 'Live' : '실시간'}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <div className="p-3 text-left">
-                                                        <span className="text-[9px] text-slate-500 font-bold block leading-tight">{language === 'en' ? "Google Flights Est. Min" : "구글 예상 최저가"}</span>
-                                                        <span className="text-sm font-black text-spotify-green block">₩{deal.price.toLocaleString()}~</span>
-                                                        <span className="text-[9px] text-slate-600 font-semibold block mt-0.5">📅 {deal.displayDate}</span>
+                                                        <span className="text-[9px] text-slate-500 font-bold block leading-tight">
+                                                            {isReal 
+                                                                ? (language === 'en' ? "Google Flights Est." : "구글 예상가") 
+                                                                : (language === 'en' ? "Google Flights Est. Min" : "구글 예상 최저가")}
+                                                        </span>
+                                                        <span className="text-sm font-black text-spotify-green block">₩{price.toLocaleString()}~</span>
                                                     </div>
                                                 </div>
                                             );
