@@ -579,6 +579,8 @@ export default function Home() {
     const [isButtonHovered, setIsButtonHovered] = useState(false);
     const [showFlightNotice, setShowFlightNotice] = useState(false); // ✨ 최저가 알림 커스텀 모달 상태 추가
     const [flightCache, setFlightCache] = useState({}); // ✨ 최근 14일 실조회 항공권 데이터 캐시
+    const [aiRecommendations, setAiRecommendations] = useState([]); // 🤖 AI 실시간 인접 공항 추천 데이터
+    const [isAiLoading, setIsAiLoading] = useState(false); // 🤖 AI 추천 로딩 상태
     const [selectedTrip, setSelectedTrip] = useState(null);
     const [selectedPromoFlight, setSelectedPromoFlight] = useState(null); // 최저가 대행사 비교 모달용
     const [flightResults, setFlightResults] = useState([]);
@@ -1181,6 +1183,24 @@ export default function Home() {
         if (parts && parts.length >= 3) return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
         return null;
     };
+    const fetchAiAirportRecommendations = async (destinationStr) => {
+        if (!destinationStr) return;
+        setIsAiLoading(true);
+        try {
+            const res = await fetch(getApiUrl(`/api/flights/recommend-airport?destination=${encodeURIComponent(destinationStr)}&lang=${language}`));
+            const data = await res.json();
+            if (data.recommendations && data.recommendations.length > 0) {
+                setAiRecommendations(data.recommendations);
+            } else {
+                setAiRecommendations([]);
+            }
+        } catch (err) {
+            console.error("AI Airport Recommendation load fail:", err);
+            setAiRecommendations([]);
+        } finally {
+            setIsAiLoading(false);
+        }
+    };
     const proceedFlightSearch = async (trip, arrivalCode, returnOriginCode) => {
         const depDateStr = formatDateForAPI(trip.startDate); if (!depDateStr) return;
         let retDateStr = formatDateForAPI(trip.endDate);
@@ -1239,15 +1259,30 @@ export default function Home() {
     const handleTripClick = async (trip) => {
         let arrivalCode = findIataCode(`${trip.destination || ''} ${trip.title || ''}`);
         if (!arrivalCode) { arrivalCode = trip.arrivalIata || trip.iata; }
-        if (!arrivalCode || arrivalCode.length !== 3) { setManualAirport({ show: true, trip, searchStr: "", error: "" }); return; }
+        if (!arrivalCode || arrivalCode.length !== 3) { 
+            setAiRecommendations([]);
+            setManualAirport({ show: true, trip, searchStr: "", error: "" }); 
+            fetchAiAirportRecommendations(trip.destination || trip.title);
+            return; 
+        }
         proceedFlightSearch(trip, arrivalCode, arrivalCode);
     };
     const handleManualSubmit = () => {
         const input = manualAirport.searchStr.trim();
         let resolvedCode = /^[A-Za-z]{3}$/.test(input) ? input.toUpperCase() : findIataCode(input);
         if (resolvedCode) {
-            const trip = manualAirport.trip; setManualAirport({ show: false, trip: null, searchStr: "", error: "" });
-            proceedFlightSearch(trip, resolvedCode, resolvedCode);
+            const trip = manualAirport.trip; 
+            setManualAirport({ show: false, trip: null, searchStr: "", error: "" });
+            if (trip && trip.isFromSearchForm) {
+                let googleFlightsLink = `https://www.google.com/travel/flights?hl=ko&gl=KR&q=Flights from Seoul to ${resolvedCode} on ${trip.startDate}`;
+                if (trip.endDate) {
+                    googleFlightsLink += ` through ${trip.endDate}`;
+                }
+                googleFlightsLink += ` with ${trip.adults || 1} adults`;
+                window.open(googleFlightsLink, '_blank');
+            } else {
+                proceedFlightSearch(trip, resolvedCode, resolvedCode);
+            }
         } else { setManualAirport(prev => ({ ...prev, error: translations[language].modal_airport_error })); }
     };
     const toggleLuxuryMode = () => { setIsLuxury(!isLuxury); setFormData(prev => ({ ...prev, hotelType: !isLuxury ? "5성급 스위트룸/풀빌라" : "호텔" })); };
@@ -1385,6 +1420,64 @@ export default function Home() {
                             <p className="text-xs text-center text-slate-300 mb-4 font-bold text-brand-danger">{translations[language].modal_airport_desc.replace('{destination}', manualAirport.trip?.destination)}</p>
                             <input type="text" placeholder={translations[language].modal_airport_placeholder} value={manualAirport.searchStr} onChange={(e) => setManualAirport({ ...manualAirport, searchStr: e.target.value, error: "" })} className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-center font-bold text-slate-950 placeholder:text-slate-400 focus:border-spotify-green" />
                             {manualAirport.error && <p className="text-[10px] text-brand-danger text-center mt-2">{manualAirport.error}</p>}
+                            
+                            {/* 🌟 AI 실시간 인접 대체 공항 추천 칩 섹션 */}
+                            <div className="mt-4 p-3 bg-slate-50/80 border border-slate-100 rounded-2xl text-center">
+                                <span className="text-xs font-black text-slate-500 block mb-2 uppercase tracking-wider">
+                                    {language === 'en' ? "🤖 AI Nearby Airport Guide" : "🤖 AI 실시간 추천 공항"}
+                                </span>
+                                
+                                {isAiLoading ? (
+                                    <div className="flex flex-col items-center justify-center py-4 space-y-2">
+                                        <RefreshCw className="animate-spin text-spotify-green" size={20} />
+                                        <span className="text-[9px] font-bold text-slate-400">
+                                            {language === 'en' ? "Analyzing nearest airports..." : "가장 가까운 공항 분석 중..."}
+                                        </span>
+                                    </div>
+                                ) : aiRecommendations && aiRecommendations.length > 0 ? (
+                                    <div className="flex flex-wrap gap-1.5 justify-center max-h-[160px] overflow-y-auto scrollbar-hide py-1">
+                                        {aiRecommendations.map((rec) => (
+                                            <button
+                                                key={rec.code}
+                                                onClick={() => {
+                                                    const trip = manualAirport.trip;
+                                                    setManualAirport({ show: false, trip: null, searchStr: "", error: "" });
+                                                    if (trip && trip.isFromSearchForm) {
+                                                        let googleFlightsLink = `https://www.google.com/travel/flights?hl=ko&gl=KR&q=Flights from Seoul to ${rec.code} on ${trip.startDate}`;
+                                                        if (trip.endDate) {
+                                                            googleFlightsLink += ` through ${trip.endDate}`;
+                                                        }
+                                                        googleFlightsLink += ` with ${trip.adults || 1} adults`;
+                                                        window.open(googleFlightsLink, '_blank');
+                                                    } else {
+                                                        proceedFlightSearch(trip, rec.code, rec.code);
+                                                    }
+                                                }}
+                                                className="px-3.5 py-2 bg-white hover:bg-spotify-green hover:text-black border border-slate-200 hover:border-spotify-green rounded-full text-xs font-bold text-slate-700 transition duration-200 active:scale-95 shadow-sm"
+                                                title={`${rec.name} (${rec.code})`}
+                                            >
+                                                {rec.desc ? `${rec.name} (${rec.code}) - ${rec.desc}` : `${rec.name} (${rec.code})`}
+                                            </button>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="py-2 text-[10px] font-bold text-slate-400">
+                                        {language === 'en' ? "No recommendations found. Try searching with a city name." : "추천된 공항이 없습니다. 아래 입력창에 도시명을 치고 AI 추천을 검색해 보세요."}
+                                    </div>
+                                )}
+
+                                {/* 사용자가 직접 텍스트를 입력했을 때 AI 추천 결과를 갱신할 수 있는 스마트 트리거 */}
+                                {manualAirport.searchStr && manualAirport.searchStr.trim().length >= 2 && (
+                                    <button
+                                        onClick={() => fetchAiAirportRecommendations(manualAirport.searchStr)}
+                                        className="mt-2.5 text-xs font-black text-spotify-green hover:underline flex items-center justify-center gap-1.5 mx-auto"
+                                    >
+                                        <Search size={12} />
+                                        <span>"{manualAirport.searchStr}" {language === 'en' ? "Search with AI" : "AI로 인근 공항 실시간 검색"}</span>
+                                    </button>
+                                )}
+                            </div>
+
                             <button onClick={handleManualSubmit} className="w-full py-4 bg-gradient-to-r from-brand-start via-brand-middle to-brand-end text-white font-extrabold rounded-2xl mt-4 transition-all hover:brightness-110 shadow-lg shadow-brand-primary/20">{translations[language].modal_airport_btn}</button>
                         </motion.div>
                     </motion.div>
@@ -1801,7 +1894,16 @@ export default function Home() {
                                             const query = flightTo.trim();
                                             let resolvedCode = /^[A-Za-z]{3}$/.test(query) ? query.toUpperCase() : findIataCode(query);
                                             if (!resolvedCode) {
-                                                setFlightSearchError(language === 'en' ? "Could not find airport code. Try city name or 3-letter IATA code." : "도착지 공항 코드를 찾을 수 없습니다. 도시명 또는 IATA 3글자 코드를 입력해 주세요.");
+                                                setAiRecommendations([]);
+                                                const tempTrip = {
+                                                    destination: query,
+                                                    startDate: flightDateRange[0] ? flightDateRange[0].toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                                                    endDate: flightDateRange[1] ? flightDateRange[1].toISOString().split('T')[0] : null,
+                                                    isFromSearchForm: true,
+                                                    adults: flightAdults
+                                                };
+                                                setManualAirport({ show: true, trip: tempTrip, searchStr: query, error: "" });
+                                                fetchAiAirportRecommendations(query);
                                                 return;
                                             }
                                             setFlightSearchError("");
