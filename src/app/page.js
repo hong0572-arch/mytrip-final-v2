@@ -487,7 +487,7 @@ export default function Home() {
     // 🌟 오늘부터 6개월 내 도시별 최저가 및 날짜 생성 (1회만 생성하여 가격 요동 방지)
     const promoDeals = React.useMemo(() => {
         const rawDeals = [
-            { id: 'p1', city: '제주', enCity: 'Jeju', code: 'CJU', basePrice: 45000, img: 'https://images.unsplash.com/photo-1579169326371-8c1e16563982?w=400&q=80' },
+            { id: 'p1', city: '제주', enCity: 'Jeju', code: 'CJU', basePrice: 45000, img: '/jeju.jpg' },
             { id: 'p2', city: '도쿄', enCity: 'Tokyo', code: 'NRT', basePrice: 89000, img: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&q=80' },
             { id: 'p3', city: '오사카', enCity: 'Osaka', code: 'KIX', basePrice: 79000, img: 'https://images.unsplash.com/photo-1590559899731-a382839e5549?w=400&q=80' },
             { id: 'p4', city: '상하이', enCity: 'Shanghai', code: 'PVG', basePrice: 95000, img: 'https://images.unsplash.com/photo-1537531383496-f4749b8032cf?w=400&q=80' },
@@ -1211,20 +1211,20 @@ export default function Home() {
         const isMemberUser = !!(auth.currentUser || user || session);
 
         try {
-            const res = await fetch(getApiUrl('/api/flights/'), { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ 
-                    destinationCode: arrivalCode, 
-                    returnOriginCode, 
-                    departureDate: depDateStr, 
-                    returnDate: retDateStr, 
-                    language, 
+            const res = await fetch(getApiUrl('/api/flights/'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    destinationCode: arrivalCode,
+                    returnOriginCode,
+                    departureDate: depDateStr,
+                    returnDate: retDateStr,
+                    language,
                     destinationName: trip.destination || trip.title,
                     isMember: isMemberUser // 🌟 회원 여부 전송
-                }) 
+                })
             });
-            const data = await res.json(); 
+            const data = await res.json();
             setFlightResults(data.flights || []);
 
             // 🌟 [최근 14일 실조회 항공 최저가 로컬 상태 갱신]
@@ -1235,7 +1235,7 @@ export default function Home() {
                 if (validFlights.length > 0) {
                     validFlights.sort((a, b) => a.price - b.price);
                     const cheapestFlight = validFlights[0];
-                    
+
                     const parsedDate = new Date(depDateStr);
                     const weekDaysKo = ['일', '월', '화', '수', '목', '금', '토'];
                     const weekDaysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -1259,11 +1259,11 @@ export default function Home() {
     const handleTripClick = async (trip) => {
         let arrivalCode = findIataCode(`${trip.destination || ''} ${trip.title || ''}`);
         if (!arrivalCode) { arrivalCode = trip.arrivalIata || trip.iata; }
-        if (!arrivalCode || arrivalCode.length !== 3) { 
+        if (!arrivalCode || arrivalCode.length !== 3) {
             setAiRecommendations([]);
-            setManualAirport({ show: true, trip, searchStr: "", error: "" }); 
+            setManualAirport({ show: true, trip, searchStr: "", error: "" });
             fetchAiAirportRecommendations(trip.destination || trip.title);
-            return; 
+            return;
         }
         proceedFlightSearch(trip, arrivalCode, arrivalCode);
     };
@@ -1271,7 +1271,7 @@ export default function Home() {
         const input = manualAirport.searchStr.trim();
         let resolvedCode = /^[A-Za-z]{3}$/.test(input) ? input.toUpperCase() : findIataCode(input);
         if (resolvedCode) {
-            const trip = manualAirport.trip; 
+            const trip = manualAirport.trip;
             setManualAirport({ show: false, trip: null, searchStr: "", error: "" });
             if (trip && trip.isFromSearchForm) {
                 let googleFlightsLink = `https://www.google.com/travel/flights?hl=ko&gl=KR&q=Flights from Seoul to ${resolvedCode} on ${trip.startDate}`;
@@ -1420,13 +1420,13 @@ export default function Home() {
                             <p className="text-xs text-center text-slate-300 mb-4 font-bold text-brand-danger">{translations[language].modal_airport_desc.replace('{destination}', manualAirport.trip?.destination)}</p>
                             <input type="text" placeholder={translations[language].modal_airport_placeholder} value={manualAirport.searchStr} onChange={(e) => setManualAirport({ ...manualAirport, searchStr: e.target.value, error: "" })} className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-center font-bold text-slate-950 placeholder:text-slate-400 focus:border-spotify-green" />
                             {manualAirport.error && <p className="text-[10px] text-brand-danger text-center mt-2">{manualAirport.error}</p>}
-                            
+
                             {/* 🌟 AI 실시간 인접 대체 공항 추천 칩 섹션 */}
                             <div className="mt-4 p-3 bg-slate-50/80 border border-slate-100 rounded-2xl text-center">
                                 <span className="text-xs font-black text-slate-500 block mb-2 uppercase tracking-wider">
                                     {language === 'en' ? "🤖 AI Nearby Airport Guide" : "🤖 AI 실시간 추천 공항"}
                                 </span>
-                                
+
                                 {isAiLoading ? (
                                     <div className="flex flex-col items-center justify-center py-4 space-y-2">
                                         <RefreshCw className="animate-spin text-spotify-green" size={20} />
@@ -1579,7 +1579,7 @@ export default function Home() {
                                             const cached = flightCache[deal.code];
                                             const isUserLoggedIn = !!(auth.currentUser || user || session);
                                             const isReal = isUserLoggedIn && cached && cached.isReal;
-                                            
+
                                             // 🌟 가격 곱하기 연산 적용: 실시간 카드 1.5배, 일반 카드 2.5배 (천원 단위 올림)
                                             const basePrice = isReal ? cached.price : deal.price;
                                             const multiplier = isReal ? 1.5 : 2.5;
@@ -1611,8 +1611,8 @@ export default function Home() {
                                                     </div>
                                                     <div className="p-3 text-left">
                                                         <span className="text-[9px] text-slate-500 font-bold block leading-tight">
-                                                            {isReal 
-                                                                ? (language === 'en' ? "Google Flights Est." : "구글 예상가") 
+                                                            {isReal
+                                                                ? (language === 'en' ? "Google Flights Est." : "구글 예상가")
                                                                 : (language === 'en' ? "Google Flights Est. Min" : "구글 예상 최저가")}
                                                         </span>
                                                         <span className="text-sm font-black text-spotify-green block">₩{price.toLocaleString()}~</span>
@@ -2216,48 +2216,48 @@ export default function Home() {
                         </div>
                     )}
                 </div>
-                {/* 하단 내비게이션 바 (가독성 높은 라이트 모드 디자인) */}
-                <div className="absolute bottom-0 left-0 right-0 w-full bg-white border-t border-slate-200 shadow-2xl z-50 shrink-0">
-                    <nav className="flex justify-around items-center h-[72px] px-2 text-slate-800">
+                {/* 하단 내비게이션 바 (프리미엄 반투명 유리 바다색 디자인) */}
+                <div className="absolute bottom-0 left-0 right-0 w-full bg-[#0E4EA1]/80 backdrop-blur-md border-t border-white/20 shadow-2xl z-50 shrink-0">
+                    <nav className="flex justify-around items-center h-[72px] px-2 text-white">
                         <button
                             type="button"
                             onClick={() => setActiveTab('home')}
-                            className={`flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'home' ? 'text-spotify-green font-bold' : 'text-slate-500 hover:text-slate-900'}`}
+                            className={`flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] transition-all duration-300 ${activeTab === 'home' ? 'text-white' : 'text-white/60 hover:text-white'}`}
                         >
-                            <HomeIcon size={21} strokeWidth={2} className={activeTab === 'home' ? 'text-spotify-green' : 'text-slate-500'} />
-                            <span className="text-[11px] sm:text-[12.5px] font-black break-keep whitespace-nowrap">{language === 'en' ? 'Home' : '홈'}</span>
+                            <HomeIcon size={21} strokeWidth={2} className={`transition-all duration-300 ${activeTab === 'home' ? 'text-white scale-110' : 'text-white/60'}`} />
+                            <span className={`break-keep whitespace-nowrap transition-all duration-300 ${activeTab === 'home' ? 'text-[12.5px] sm:text-[14px] font-black' : 'text-[10.5px] sm:text-[11.5px] font-medium'}`}>{language === 'en' ? 'Home' : '홈'}</span>
                         </button>
                         <button
                             type="button"
                             onClick={() => setActiveTab('flights_search')}
-                            className={`flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'flights_search' ? 'text-spotify-green font-bold' : 'text-slate-500 hover:text-slate-900'}`}
+                            className={`flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] transition-all duration-300 ${activeTab === 'flights_search' ? 'text-white' : 'text-white/60 hover:text-white'}`}
                         >
-                            <Search size={21} strokeWidth={2} className={activeTab === 'flights_search' ? 'text-spotify-green' : 'text-slate-500'} />
-                            <span className="text-[11px] sm:text-[12.5px] font-black break-keep whitespace-nowrap">{language === 'en' ? 'Flights' : '항공권'}</span>
+                            <Search size={21} strokeWidth={2} className={`transition-all duration-300 ${activeTab === 'flights_search' ? 'text-white scale-110' : 'text-white/60'}`} />
+                            <span className={`break-keep whitespace-nowrap transition-all duration-300 ${activeTab === 'flights_search' ? 'text-[12.5px] sm:text-[14px] font-black' : 'text-[10.5px] sm:text-[11.5px] font-medium'}`}>{language === 'en' ? 'Flights' : '항공권'}</span>
                         </button>
                         <button
                             type="button"
                             onClick={() => setActiveTab('create')}
-                            className={`flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'create' ? 'text-spotify-green font-bold' : 'text-slate-500 hover:text-slate-900'}`}
+                            className={`flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] transition-all duration-300 ${activeTab === 'create' ? 'text-white' : 'text-white/60 hover:text-white'}`}
                         >
-                            <Sparkles size={21} strokeWidth={2} className={activeTab === 'create' ? 'text-spotify-green' : 'text-slate-500'} />
-                            <span className="text-[11px] sm:text-[12.5px] font-black break-keep whitespace-nowrap">{language === 'en' ? 'Create' : '만들기'}</span>
+                            <Sparkles size={21} strokeWidth={2} className={`transition-all duration-300 ${activeTab === 'create' ? 'text-white scale-110' : 'text-white/60'}`} />
+                            <span className={`break-keep whitespace-nowrap transition-all duration-300 ${activeTab === 'create' ? 'text-[12.5px] sm:text-[14px] font-black' : 'text-[10.5px] sm:text-[11.5px] font-medium'}`}>{language === 'en' ? 'Create' : '만들기'}</span>
                         </button>
                         <button
                             type="button"
                             onClick={() => { if (user || session) { router.push('/mypage'); } else { setShowLoginModal(true); } }}
-                            className={`flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] transition text-slate-500 hover:text-slate-900`}
+                            className={`flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] transition-all duration-300 text-white/60 hover:text-white`}
                         >
-                            <Calendar size={21} strokeWidth={2} className="text-slate-500" />
-                            <span className="text-[11px] sm:text-[12.5px] font-black break-keep whitespace-nowrap">{language === 'en' ? 'My Trips' : '내 일정'}</span>
+                            <Calendar size={21} strokeWidth={2} className="text-white/60" />
+                            <span className="text-[10.5px] sm:text-[11.5px] font-medium break-keep whitespace-nowrap">{language === 'en' ? 'My Trips' : '내 일정'}</span>
                         </button>
                         <button
                             type="button"
                             onClick={() => setActiveTab('around_me')}
-                            className={`flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] transition ${activeTab === 'around_me' ? 'text-spotify-green font-bold' : 'text-slate-400 hover:text-white'}`}
+                            className={`flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] transition-all duration-300 ${activeTab === 'around_me' ? 'text-white' : 'text-white/60 hover:text-white'}`}
                         >
-                            <Compass size={21} strokeWidth={2} className={activeTab === 'around_me' ? 'text-spotify-green' : 'text-slate-400'} />
-                            <span className="text-[11px] sm:text-[12.5px] font-black break-keep whitespace-nowrap">{language === 'en' ? 'Around Me' : '내 주변'}</span>
+                            <Compass size={21} strokeWidth={2} className={`transition-all duration-300 ${activeTab === 'around_me' ? 'text-white scale-110' : 'text-white/60'}`} />
+                            <span className={`break-keep whitespace-nowrap transition-all duration-300 ${activeTab === 'around_me' ? 'text-[12.5px] sm:text-[14px] font-black' : 'text-[10.5px] sm:text-[11.5px] font-medium'}`}>{language === 'en' ? 'Around Me' : '내 주변'}</span>
                         </button>
                     </nav>
                 </div>
@@ -2314,8 +2314,8 @@ export default function Home() {
                                 {language === 'en' ? 'Flight Price Notice' : '실시간 가격 변동 안내'}
                             </h3>
                             <p className="text-sm text-slate-700 mb-6 leading-relaxed font-semibold">
-                                {language === 'en' 
-                                    ? 'Due to real-time price fluctuations, the lowest price and date may differ from the actual ones.' 
+                                {language === 'en'
+                                    ? 'Due to real-time price fluctuations, the lowest price and date may differ from the actual ones.'
                                     : '실시간 가격 변동으로 인해 예상 최저가 및 날짜가 실제 항공사 가격과 다를 수 있습니다.'}
                             </p>
                             <button

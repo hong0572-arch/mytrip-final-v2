@@ -1689,49 +1689,48 @@ export default function MyPage() {
                     {activeTab === 'vault' && renderVault()}
                 </div>
 
-                {/* 하단 5대 탭 내비게이션 바 (홈 화면과 완벽 일치) */}
-                {/* 하단 5대 탭 내비게이션 바 (홈 화면과 완벽 일치) */}
-                <div className="absolute bottom-0 left-0 right-0 w-full bg-white border-t border-slate-200 shadow-2xl z-50 shrink-0">
-                    <nav className="flex justify-around items-center h-[72px] px-2 text-slate-800">
+                {/* 하단 내비게이션 바 (프리미엄 반투명 유리 바다색 디자인) */}
+                <div className="absolute bottom-0 left-0 right-0 w-full bg-[#0E4EA1]/80 backdrop-blur-md border-t border-white/20 shadow-2xl z-50 shrink-0">
+                    <nav className="flex justify-around items-center h-[72px] px-2 text-white">
                         <button 
                             type="button" 
                             onClick={() => router.push('/?tab=home')} 
-                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-slate-500 hover:text-slate-900 transition"
+                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-white/60 hover:text-white transition-all duration-300"
                         >
-                            <HomeIcon size={21} strokeWidth={2} className="text-slate-500" />
-                            <span className="text-[11px] sm:text-[12.5px] font-black break-keep whitespace-nowrap">홈</span>
+                            <HomeIcon size={21} strokeWidth={2} className="text-white/60" />
+                            <span className="text-[10.5px] sm:text-[11.5px] font-medium break-keep whitespace-nowrap">홈</span>
                         </button>
                         <button 
                             type="button" 
                             onClick={() => router.push('/?tab=flights_search')} 
-                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-slate-500 hover:text-slate-900 transition"
+                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-white/60 hover:text-white transition-all duration-300"
                         >
-                            <Search size={21} strokeWidth={2} className="text-slate-500" />
-                            <span className="text-[11px] sm:text-[12.5px] font-black break-keep whitespace-nowrap">항공권</span>
+                            <Search size={21} strokeWidth={2} className="text-white/60" />
+                            <span className="text-[10.5px] sm:text-[11.5px] font-medium break-keep whitespace-nowrap">항공권</span>
                         </button>
                         <button 
                             type="button" 
                             onClick={() => router.push('/?tab=create')} 
-                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-slate-500 hover:text-slate-900 transition"
+                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-white/60 hover:text-white transition-all duration-300"
                         >
-                            <Sparkles size={21} strokeWidth={2} className="text-slate-500" />
-                            <span className="text-[11px] sm:text-[12.5px] font-black break-keep whitespace-nowrap">만들기</span>
+                            <Sparkles size={21} strokeWidth={2} className="text-white/60" />
+                            <span className="text-[10.5px] sm:text-[11.5px] font-medium break-keep whitespace-nowrap">만들기</span>
                         </button>
                         <button 
                             type="button" 
                             onClick={() => setActiveTab('schedule')} 
-                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] transition text-spotify-green font-bold"
+                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-white transition-all duration-300"
                         >
-                            <Calendar size={21} strokeWidth={2} className="text-spotify-green" />
-                            <span className="text-[11px] sm:text-[12.5px] font-black break-keep whitespace-nowrap">내 일정</span>
+                            <Calendar size={21} strokeWidth={2} className="text-white scale-110 transition-all duration-300" />
+                            <span className="text-[12.5px] sm:text-[14px] font-black break-keep whitespace-nowrap">내 일정</span>
                         </button>
                         <button 
                             type="button" 
                             onClick={() => router.push('/?tab=around_me')} 
-                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-slate-500 hover:text-slate-900 transition"
+                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-white/60 hover:text-white transition-all duration-300"
                         >
-                            <Compass size={21} strokeWidth={2} className="text-slate-500" />
-                            <span className="text-[11px] sm:text-[12.5px] font-black break-keep whitespace-nowrap">내 주변</span>
+                            <Compass size={21} strokeWidth={2} className="text-white/60" />
+                            <span className="text-[10.5px] sm:text-[11.5px] font-medium break-keep whitespace-nowrap">내 주변</span>
                         </button>
                     </nav>
                 </div>
