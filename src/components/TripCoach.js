@@ -195,7 +195,7 @@ export default function TripCoach({ itineraries = [], userData = {}, onShowToast
   return (
     <div className="animate-in fade-in duration-500 pb-16">
       {/* 헤더 */}
-      <header className="flex justify-between items-center px-4 pt-12 pb-4 sticky top-0 z-40 bg-gradient-to-b from-sand-light/95 to-transparent backdrop-blur-md">
+      <header className="flex justify-between items-center px-4 pt-12 pb-4 sticky top-0 z-40 bg-gradient-to-b from-[#F3E5D0]/95 to-transparent backdrop-blur-md">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-[14px] flex items-center justify-center text-white shadow-lg shrink-0">
             <Sparkles size={20} className="text-white" />
@@ -211,12 +211,12 @@ export default function TripCoach({ itineraries = [], userData = {}, onShowToast
       <div className="px-4 pt-4 space-y-6">
         {/* 여행지 선택 필터 */}
         {itineraries.length === 0 ? (
-          <div className="bg-white/5 border border-dashed border-white/10 rounded-[24px] p-8 text-center backdrop-blur-xl">
-            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+          <div className="bg-white/40 border border-dashed border-slate-300 rounded-[24px] p-8 text-center backdrop-blur-xl">
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-500">
               <Compass size={28} />
             </div>
-            <h3 className="font-black text-white text-base mb-1">활성화된 여행 일정이 없습니다</h3>
-            <p className="text-xs text-gray-400 leading-relaxed mb-6">코칭을 시작하려면 일정을 새로 만들어보세요.</p>
+            <h3 className="font-black text-slate-800 text-base mb-1">활성화된 여행 일정이 없습니다</h3>
+            <p className="text-xs text-slate-500 leading-relaxed mb-6">코칭을 시작하려면 일정을 새로 만들어보세요.</p>
             <button
               onClick={() => window.location.href = '/?mode=new'}
               className="bg-brand-primary hover:bg-brand-primary/95 text-white font-bold text-xs px-5 py-3 rounded-xl shadow-md transition active:scale-95"

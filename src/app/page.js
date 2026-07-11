@@ -1623,6 +1623,78 @@ export default function Home() {
                                     </div>
                                 </div>
                             </div>
+                            {/* 🌟 진행 중이거나 가장 가까운 활성 여행에 대한 액티브 컨트롤 타워 (스포티파이 플레이어 스타일 리디자인) */}
+                            {(user || session) && mySchedules.length > 0 && (() => {
+                                const activeTrip = mySchedules.find(t => calculateDDayNum(t.startDate) >= 0) || mySchedules[0];
+                                if (!activeTrip) return null;
+                                const progress = getTripProgress(activeTrip);
+                                const phase = getTripPhase(activeTrip);
+                                return (
+                                    <div className="mb-4 mt-4 px-1 animate-fadeIn relative group">
+                                        {/* 프리미엄 백그라운드 네온 글로우 효과 */}
+                                        <div className="absolute -inset-1 bg-gradient-to-r from-brand-start via-brand-middle to-brand-end rounded-[28px] blur-lg opacity-25 group-hover:opacity-40 transition-all duration-1000 pointer-events-none"></div>
+                                        <div className="p-5.5 bg-gradient-to-br from-white via-[#FCF9F2] to-white text-slate-800 border-2 border-brand-secondary/35 shadow-2xl rounded-[24px] overflow-hidden relative z-10 transition-all duration-300 hover:scale-[1.01] hover:border-brand-secondary/60">
+                                            <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+                                            <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-brand-secondary/5 rounded-full blur-xl pointer-events-none"></div>
+                                            <div className="relative z-10 flex flex-col">
+                                                <div className="flex items-center gap-3">
+                                                    {/* 앨범 커버 스타일 이미지 */}
+                                                    <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0 shadow-md border border-slate-200 relative">
+                                                        <img
+                                                            src={activeTrip.image || "https://images.unsplash.com/photo-1506158669146-619067262a00?q=80&w=150"}
+                                                            alt={activeTrip.destination || activeTrip.title}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                        <span className="absolute bottom-1 right-1 text-base bg-black/60 px-1 rounded-md text-white">{activeTrip.icon || '✈️'}</span>
+                                                    </div>
+                                                    {/* 타이틀 및 아티스트 스타일 정보 */}
+                                                    <div className="flex-1 min-w-0 text-left">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10.5px] font-black bg-gradient-to-r from-brand-primary to-brand-secondary text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm">{calculateDDay(activeTrip.startDate)}</span>
+                                                            <span className="text-[11px] text-slate-500 font-bold">{translations[language].schedule_trip_suffix}</span>
+                                                        </div>
+                                                        <h3 className="text-base font-bold text-slate-800 truncate mt-1">{activeTrip.destination || activeTrip.title}</h3>
+                                                        <p className="text-xs text-slate-500 font-medium truncate mt-0.5">{formatTripDate(activeTrip.startDate, activeTrip.endDate, activeTrip.duration)}</p>
+                                                    </div>
+                                                    {/* 재생/일시정지 모양 퀵 바로가기 버튼 */}
+                                                    <button
+                                                        onClick={() => setShowCoachSheet(true)}
+                                                        className="w-11 h-11 rounded-full bg-gradient-to-r from-brand-primary to-brand-secondary hover:brightness-110 text-white flex items-center justify-center shadow-lg hover:shadow-brand-primary/20 active:scale-95 transition-all shrink-0"
+                                                        title="트립코치 바로가기"
+                                                    >
+                                                        {phase === 'during' ? (
+                                                            <div className="flex items-center gap-0.5">
+                                                                <div className="w-1.5 h-3.5 bg-white rounded-full animate-[pulse_1s_infinite]"></div>
+                                                                <div className="w-1.5 h-3.5 bg-white rounded-full animate-[pulse_1s_infinite_0.2s]"></div>
+                                                            </div>
+                                                        ) : (
+                                                            <Sparkles size={18} fill="white" className="text-white" />
+                                                        )}
+                                                    </button>
+                                                </div>
+                                                {/* 타임라인 프로그레스 바 */}
+                                                <div className="mt-4">
+                                                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden relative">
+                                                        <div
+                                                            className="bg-gradient-to-r from-brand-primary to-brand-secondary h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(2,136,209,0.5)]"
+                                                            style={{ width: `${progress}%` }}
+                                                        />
+                                                    </div>
+                                                    <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold mt-1.5 px-0.5">
+                                                        <span>{phase === 'prep' ? `${calculateDDayNum(activeTrip.startDate)}일 전` : phase === 'during' ? '여행 중' : '여행 완료'}</span>
+                                                        <span>{progress}%</span>
+                                                    </div>
+                                                </div>
+                                                {/* 코칭 안내 문구 */}
+                                                <div className="bg-[#FFFDF9]/90 backdrop-blur-sm px-4 py-3 rounded-2xl border border-brand-secondary/25 mt-3 text-xs font-bold text-slate-700 leading-relaxed flex items-start gap-2.5 select-none shadow-sm">
+                                                    <Sparkles size={14} className="shrink-0 mt-0.5 text-brand-secondary animate-pulse" />
+                                                    <span className="text-left">{getCoachingGuide(activeTrip)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                             {/* 1.1. 실시간 지역별 특가 항공권 */}
                             <div className="px-1 space-y-3 mt-12">
                                 <div className="flex justify-between items-center px-1">
@@ -1747,75 +1819,7 @@ export default function Home() {
                             <div className="px-1">
                                 <TravelNews language={language} />
                             </div>
-                            {/* 🌟 진행 중이거나 가장 가까운 활성 여행에 대한 액티브 컨트롤 타워 (스포티파이 플레이어 스타일 리디자인) */}
-                            {(user || session) && mySchedules.length > 0 && (() => {
-                                const activeTrip = mySchedules.find(t => calculateDDayNum(t.startDate) >= 0) || mySchedules[0];
-                                if (!activeTrip) return null;
-                                const progress = getTripProgress(activeTrip);
-                                const phase = getTripPhase(activeTrip);
-                                return (
-                                    <div className="mb-4 mt-4 px-1 animate-fadeIn">
-                                        <div className="p-5 bg-white text-slate-800 border border-slate-200 shadow-2xl rounded-[24px] overflow-hidden relative group">
-                                            <div className="absolute top-0 right-0 w-32 h-32 bg-slate-100 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-                                            <div className="relative z-10 flex flex-col">
-                                                <div className="flex items-center gap-3">
-                                                    {/* 앨범 커버 스타일 이미지 */}
-                                                    <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0 shadow-md border border-slate-200 relative">
-                                                        <img
-                                                            src={activeTrip.image || "https://images.unsplash.com/photo-1506158669146-619067262a00?q=80&w=150"}
-                                                            alt={activeTrip.destination || activeTrip.title}
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                        <span className="absolute bottom-1 right-1 text-base bg-black/60 px-1 rounded-md text-white">{activeTrip.icon || '✈️'}</span>
-                                                    </div>
-                                                    {/* 타이틀 및 아티스트 스타일 정보 */}
-                                                    <div className="flex-1 min-w-0 text-left">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-[10px] font-black bg-spotify-green text-black px-2 py-0.5 rounded-full uppercase tracking-wider">{calculateDDay(activeTrip.startDate)}</span>
-                                                            <span className="text-[11px] text-slate-500 font-bold">{translations[language].schedule_trip_suffix}</span>
-                                                        </div>
-                                                        <h3 className="text-base font-bold text-slate-800 truncate mt-1">{activeTrip.destination || activeTrip.title}</h3>
-                                                        <p className="text-xs text-slate-500 font-medium truncate mt-0.5">{formatTripDate(activeTrip.startDate, activeTrip.endDate, activeTrip.duration)}</p>
-                                                    </div>
-                                                    {/* 재생/일시정지 모양 퀵 바로가기 버튼 */}
-                                                    <button
-                                                        onClick={() => setShowCoachSheet(true)}
-                                                        className="w-10 h-10 rounded-full bg-slate-100 hover:bg-spotify-green text-black flex items-center justify-center shadow-lg active:scale-95 transition-all"
-                                                        title="트립코치 바로가기"
-                                                    >
-                                                        {phase === 'during' ? (
-                                                            <div className="flex items-center gap-0.5">
-                                                                <div className="w-1 h-3 bg-black rounded-full animate-[pulse_1s_infinite]"></div>
-                                                                <div className="w-1 h-3 bg-black rounded-full animate-[pulse_1s_infinite_0.2s]"></div>
-                                                            </div>
-                                                        ) : (
-                                                            <Sparkles size={16} fill="black" />
-                                                        )}
-                                                    </button>
-                                                </div>
-                                                {/* 타임라인 프로그레스 바 */}
-                                                <div className="mt-4">
-                                                    <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden relative">
-                                                        <div
-                                                            className="bg-spotify-green h-full rounded-full transition-all duration-500"
-                                                            style={{ width: `${progress}%` }}
-                                                        />
-                                                    </div>
-                                                    <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold mt-1.5 px-0.5">
-                                                        <span>{phase === 'prep' ? `${calculateDDayNum(activeTrip.startDate)}일 전` : phase === 'during' ? '여행 중' : '여행 완료'}</span>
-                                                        <span>{progress}%</span>
-                                                    </div>
-                                                </div>
-                                                {/* 코칭 안내 문구 */}
-                                                <div className="bg-slate-50 px-3.5 py-2.5 rounded-xl border border-slate-200 mt-3 text-xs font-medium text-slate-600 leading-relaxed flex items-start gap-2 select-none">
-                                                    <Sparkles size={13} className="shrink-0 mt-0.5 text-spotify-green animate-pulse" />
-                                                    <span className="text-left">{getCoachingGuide(activeTrip)}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })()}
+
                             {/* 냥프로 코칭 배너 */}
                             <div className="mb-4 px-1">
                                 <div
@@ -2269,17 +2273,17 @@ export default function Home() {
                             animate={{ y: 0 }}
                             exit={{ y: "100%" }}
                             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="fixed inset-x-0 bottom-0 z-50 bg-[#121212] border-t border-white/10 rounded-t-[40px] shadow-2xl h-[85vh] flex flex-col overflow-hidden max-w-[560px] mx-auto text-white"
+                            className="fixed inset-x-0 bottom-0 z-50 bg-[#F3E5D0] border-t border-[#E0D0B0] rounded-t-[40px] shadow-2xl h-[85vh] flex flex-col overflow-hidden max-w-[560px] mx-auto text-slate-800"
                         >
-                            <div className="px-6 py-4 flex items-center justify-between border-b border-white/10 shrink-0 bg-white/5">
+                            <div className="px-6 py-4 flex items-center justify-between border-b border-slate-350/40 shrink-0 bg-white/20">
                                 <div className="flex items-center gap-2">
-                                    <Sparkles className="text-spotify-green" size={20} />
-                                    <h3 className="font-extrabold text-white text-lg">{language === 'en' ? "AI Coach Meow Pro" : "AI 코치 냥프로"}</h3>
+                                    <Sparkles className="text-brand-secondary" size={20} />
+                                    <h3 className="font-extrabold text-slate-800 text-lg">{language === 'en' ? "AI Coach Meow Pro" : "AI 코치 냥프로"}</h3>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => setShowCoachSheet(false)}
-                                    className="p-1 rounded-full bg-white/10 text-slate-300 hover:text-white"
+                                    className="p-1 rounded-full bg-slate-200/60 text-slate-650 hover:text-slate-850 hover:bg-slate-200"
                                 >
                                     <X size={20} />
                                 </button>
