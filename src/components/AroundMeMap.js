@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { MapPin, RefreshCw, Utensils, ShoppingBag, Calendar, Hotel, Loader2 } from "lucide-react";
+import { db } from "../lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
 
 export default function AroundMeMap({ language = 'ko' }) {
     const mapRef = useRef(null);
@@ -194,6 +196,88 @@ export default function AroundMeMap({ language = 'ko' }) {
             } else {
                 console.warn("Places search completed with status:", status);
             }
+
+            // Fetch Partner Products from Firestore
+            const fetchProducts = async () => {
+                try {
+                    const snap = await getDocs(collection(db, "products"));
+                    const products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    
+                    products.forEach(product => {
+                        if (!product.coordinates || !product.coordinates.lat) return;
+                        
+                        // Roughly 5km filter
+                        const dLat = Math.abs(product.coordinates.lat - position.lat);
+                        const dLng = Math.abs(product.coordinates.lng - position.lng);
+                        if (dLat > 0.05 || dLng > 0.05) return; 
+                        
+                        // Filter by category roughly
+                        if (category === "lodging" && product.type !== "hotel") return;
+                        if (category === "events" && product.type !== "ticket" && product.type !== "tour") return;
+                        if (category === "restaurants" && product.type !== "restaurant" && product.type !== "food") return;
+                        if (category === "shopping" && product.type !== "shopping") return;
+
+                        const getCategoryEmoji = (type) => {
+                            switch (type) {
+                                case 'hotel': case 'lodging': return '🏨';
+                                case 'restaurant': case 'food': return '🍽️';
+                                case 'shopping': return '🛍️';
+                                case 'ticket': case 'tour': case 'event': return '🎫';
+                                default: return '✨';
+                            }
+                        };
+                        const emoji = getCategoryEmoji(product.type || product.category);
+
+                        const marker = new google.maps.Marker({
+                            position: product.coordinates,
+                            map: map,
+                            title: product.title,
+                            icon: {
+                                url: '/timmy.png',
+                                scaledSize: new google.maps.Size(64, 64),
+                                anchor: new google.maps.Point(32, 64),
+                                labelOrigin: new google.maps.Point(32, -10)
+                            },
+                            label: {
+                                text: emoji,
+                                fontSize: "24px"
+                            },
+                            animation: google.maps.Animation.DROP,
+                            zIndex: 9999 
+                        });
+
+                        const infoWindow = new google.maps.InfoWindow({
+                            content: `
+                                <div style="color: #1e293b; font-family: Pretendard, sans-serif; text-align: left; padding: 4px; max-width: 200px;">
+                                    <div style="font-size: 10px; font-weight: 800; color: #4f46e5; margin-bottom: 2px;">🏆 파트너 추천 상품</div>
+                                    <div style="font-weight: 800; font-size: 14px; color: #0f172a; margin-bottom: 2px;">
+                                        ${product.title}
+                                    </div>
+                                    <div style="font-size: 12px; color: #eab308; font-weight: 700; margin-bottom: 4px;">
+                                        ₩${Number(product.price).toLocaleString()}
+                                    </div>
+                                    <div style="font-size: 11px; color: #64748b; line-height: 1.4; margin-bottom: 6px;">
+                                        ${product.description.substring(0, 50)}...
+                                    </div>
+                                    <a href="/product/${product.id}" 
+                                       target="_blank" 
+                                       style="display: inline-block; padding: 6px 12px; background: #4f46e5; color: white; font-size: 11px; font-weight: 800; border-radius: 6px; text-decoration: none;">
+                                        상품 상세보기 ↗
+                                    </a>
+                                </div>
+                            `
+                        });
+
+                        marker.addListener("click", () => {
+                            infoWindow.open({ anchor: marker, map, shouldFocus: false });
+                        });
+                    });
+                } catch (e) {
+                    console.error("Error fetching products", e);
+                }
+            };
+            fetchProducts();
+
         });
 
     }, [googleReady, position, category, language]);

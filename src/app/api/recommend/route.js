@@ -23,7 +23,7 @@ export async function POST(req) {
     const targetLang = language === 'en' ? 'English' : 'Korean';
 
     const prompt = `
-      You are "Nyang-Pro", an elite AI travel advisor.
+      You are "Timmy", an elite AI travel advisor.
       Recommend exactly 3 safe, popular, and excellent places for the category "${category}" in "${destination}".
       For each place, provide a warm safety-focused recommendation.
       IMPORTANT: Generate all details (including name, description, reason, and address) entirely in ${targetLang}. For example, if ${targetLang} is Korean, all place names, descriptions, reasons, and addresses must be written in Korean.

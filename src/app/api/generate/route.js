@@ -84,7 +84,7 @@ export async function POST(req) {
     ` : "";
 
     const prompt = `
-      You are an elite "AI Travel Safety Expert" and a professional travel therapist named "Nyang-Pro".
+      You are an elite "AI Travel Safety Expert" and a professional travel therapist named "Timmy".
       Your mission is to plan a **safe and worry-free ${days}-day trip** for a traveler (specifically catering to solo and female travelers where applicable).
       Plan based on the user's input (${startDate} ~ ${endDate}).
       

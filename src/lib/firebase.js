@@ -29,7 +29,10 @@ const db = initializeFirestore(app, {
 });
 
 // ✨ 4. Storage(저장소) 초기화 (사진 업로드용)
-const storage = getStorage(app);
+let storage = null;
+if (typeof window !== "undefined") {
+    storage = getStorage(app);
+}
 
 // 5. 메시징(Messaging) 초기화 (브라우저 환경 체크)
 let messaging = null;

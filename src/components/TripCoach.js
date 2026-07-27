@@ -140,7 +140,7 @@ export default function TripCoach({ itineraries = [], userData = {}, onShowToast
       return;
     }
 
-    const title = language === 'en' ? 'Meow Pro Travel Coach 🐾' : '냥프로의 실시간 여행 코치 🐾';
+    const title = language === 'en' ? 'Timmy Travel Coach 🐾' : '티미의 실시간 여행 코치 🐾';
     const body = currentPhase === 'prep'
       ? `${selectedTrip?.destination || '여행지'} 출발까지 얼마 남지 않았어요! 어댑터(${meta.adapter})와 여권 준비율(${prepScore}%)을 최종 확인해보세요.`
       : `비가 내리기 시작해요! ☔ 현 위치에 급격한 기상 변화가 예상되니 우산을 준비하시고 실내 명소로 일정을 우회해보세요.`;
@@ -610,7 +610,7 @@ export default function TripCoach({ itineraries = [], userData = {}, onShowToast
                   <BellRing size={14} /> 실시간 코칭 푸시 알림 시뮬레이터
                 </h4>
                 <p className="text-[10px] text-slate-500 leading-normal mb-3.5">
-                  아래 버튼을 클릭한 뒤 홈 화면으로 나가면, {testNotificationTime}초 후 냥프로가 직접 설정한 유형의 알림을 기기로 전송합니다. PWA 및 네이티브 모듈 상태를 즉시 테스트해볼 수 있습니다.
+                  아래 버튼을 클릭한 뒤 홈 화면으로 나가면, {testNotificationTime}초 후 티미가 직접 설정한 유형의 알림을 기기로 전송합니다. PWA 및 네이티브 모듈 상태를 즉시 테스트해볼 수 있습니다.
                 </p>
                 <div className="flex gap-2">
                   <select

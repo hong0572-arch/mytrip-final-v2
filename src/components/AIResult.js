@@ -111,6 +111,20 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
         return () => clearInterval(timer);
     }, []);
 
+    const [partnerProducts, setPartnerProducts] = useState([]);
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const snap = await getDocs(collection(db, "products"));
+                setPartnerProducts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            } catch (e) {
+                console.error("Error fetching partner products:", e);
+            }
+        };
+        fetchProducts();
+    }, []);
+
     const [tripPlan, setTripPlan] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
     const [error, setError] = useState(null);
@@ -836,11 +850,62 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     markersRef.current.push(marker);
                 }
             });
+
+            partnerProducts?.forEach((product) => {
+                if (product.coordinates?.lat && product.coordinates?.lng) {
+                    const getCategoryEmoji = (type) => {
+                        switch (type) {
+                            case 'hotel': case 'lodging': return '🏨';
+                            case 'restaurant': case 'food': return '🍽️';
+                            case 'shopping': return '🛍️';
+                            case 'ticket': case 'tour': case 'event': return '🎫';
+                            default: return '✨';
+                        }
+                    };
+                    const emoji = getCategoryEmoji(product.type || product.category);
+
+                    const marker = new google.maps.Marker({
+                        position: product.coordinates,
+                        map,
+                        icon: {
+                            url: '/timmy.png',
+                            scaledSize: new google.maps.Size(64, 64),
+                            anchor: new google.maps.Point(32, 64),
+                            labelOrigin: new google.maps.Point(32, -10)
+                        },
+                        label: {
+                            text: emoji,
+                            fontSize: "24px"
+                        },
+                        animation: google.maps.Animation.DROP,
+                        title: product.title,
+                        zIndex: 9999
+                    });
+
+                    const infoWindow = new google.maps.InfoWindow({
+                        content: `
+                            <div style="color: #1e293b; font-family: Pretendard, sans-serif; text-align: left; padding: 4px; max-width: 200px;">
+                                <div style="font-size: 10px; font-weight: 800; color: #4f46e5; margin-bottom: 2px;">🏆 파트너 상품</div>
+                                <div style="font-weight: 800; font-size: 14px; color: #0f172a; margin-bottom: 2px;">${product.title}</div>
+                                <div style="font-size: 12px; color: #eab308; font-weight: 700; margin-bottom: 4px;">₩${Number(product.price).toLocaleString()}</div>
+                                <a href="/product/${product.id}" target="_blank" style="display: inline-block; padding: 6px 12px; background: #4f46e5; color: white; font-size: 11px; font-weight: 800; border-radius: 6px; text-decoration: none;">상품 상세보기 ↗</a>
+                            </div>
+                        `
+                    });
+
+                    marker.addListener("click", () => {
+                        infoWindow.open({ anchor: marker, map, shouldFocus: false });
+                    });
+
+                    markersRef.current.push(marker);
+                }
+            });
+
             if (!bounds.isEmpty()) map.fitBounds(bounds);
             if (!tripId && !hasAutoFixed.current) { hasAutoFixed.current = true; performSilentAutoFix(map); }
         };
         if (!window.google) { const script = document.createElement("script"); script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`; script.async = true; script.defer = true; script.onload = loadMap; document.head.appendChild(script); } else { loadMap(); }
-    }, [tripPlan, travelMode, currentDayIdx]);
+    }, [tripPlan, travelMode, currentDayIdx, partnerProducts]);
 
     const performSilentAutoFix = async (mapInstance) => {
         if (!mapInstance || !tripPlan) return;
@@ -1540,7 +1605,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                 <div className="flex items-center gap-2 text-spotify-green">
                                                     <Sparkles size={16} className="animate-pulse" />
                                                     <h4 className="text-xs font-black uppercase tracking-wider">
-                                                        {language === 'en' ? '🪄 Nyang-Pro AI Recommendation' : '🪄 냥프로 AI 추가 추천 요청'}
+                                                        {language === 'en' ? '🪄 Timmy AI Recommendation' : '🪄 티미 AI 추가 추천 요청'}
                                                     </h4>
                                                 </div>
                                                 <p className="text-[10px] text-slate-500 font-bold">
@@ -1625,7 +1690,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                     <div className="flex items-center gap-2 text-spotify-green">
                                         <Sparkles size={16} className="animate-pulse" />
                                         <h4 className="text-xs font-black uppercase tracking-wider">
-                                            {language === 'en' ? '🪄 AI Food & Cafe Recommendation' : '🪄 냥프로 AI 맛집/카페 추가 추천'}
+                                            {language === 'en' ? '🪄 AI Food & Cafe Recommendation' : '🪄 티미 AI 맛집/카페 추가 추천'}
                                         </h4>
                                     </div>
                                     <p className="text-xs text-slate-700 font-bold">
@@ -1754,7 +1819,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                     <div className="flex items-center gap-2 text-spotify-green">
                                         <Sparkles size={16} className="animate-pulse" />
                                         <h4 className="text-xs font-black uppercase tracking-wider">
-                                            {language === 'en' ? '🪄 AI Shopping & Sights Recommendation' : '🪄 냥프로 AI 쇼핑/볼거리 추가 추천'}
+                                            {language === 'en' ? '🪄 AI Shopping & Sights Recommendation' : '🪄 티미 AI 쇼핑/볼거리 추가 추천'}
                                         </h4>
                                     </div>
                                     <p className="text-xs text-slate-700 font-bold">

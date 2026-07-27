@@ -41,6 +41,8 @@ const nextConfig = {
     NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
   },
 
+  // ✨ Next.js 16 Turbopack 호환 설정
+  turbopack: {},
 
 };
 

@@ -13,6 +13,7 @@ import CatMascot from '../components/CatMascot';
 import AIResult from "../components/AIResult";
 import TravelNews from '../components/TravelNews';
 import TripCoach from '../components/TripCoach';
+import { TrackPriceButton } from '../components/FlightPriceTracker';
 const AroundMeMap = dynamic(() => import("../components/AroundMeMap"), { ssr: false });
 // 아이콘 및 UI 라이브러리
 import { motion, AnimatePresence } from "framer-motion";
@@ -199,7 +200,7 @@ const RECOMMENDED_TRIPS = [
 const translations = {
     ko: {
         title_pre: "Trip Maker,", title_main: '"냥 프로"', title_sub: "안전하고 편안한 여행",
-        tab_schedule: "🗓️ 안심 여행", tab_flight: "실시간 항공권", tab_myflight: "✈️ 내 일정 항공권", tab_choices: "냥프로의 안심 추천!",
+        tab_schedule: "🗓️ 안심 여행", tab_flight: "실시간 항공권", tab_myflight: "✈️ 내 일정 항공권", tab_choices: "티미의 안심 추천!",
         label_where: "어디로 안심 여행을 떠날까요?", label_when: "언제 떠나세요?", placeholder_dest: "", placeholder_date: "날짜 선택 (최대 30일)",
         label_companion: "동행자", label_budget: "1인 예산", label_people: "인원", label_contact: "연락처 (필수)", placeholder_contact: "카톡ID 또는 이메일",
         label_request: "추가 요청사항 (안전 등)", placeholder_request: "예: 여성 혼자 가기 안전한 곳으로 추천해주세요.",
@@ -209,7 +210,7 @@ const translations = {
         region_auto: "🤖 AI 알아서", region_domestic: "🇰🇷 국내만", region_international: "✈️ 해외로", region_daytrip: "🌞 당일여행",
         btn_login: "로그인",
         modal_nickname_title: "닉네임 설정",
-        modal_nickname_placeholder: "예: 냥프로123",
+        modal_nickname_placeholder: "예: 티미123",
         modal_nickname_btn: "가입 완료 ✨",
         modal_login_title: "반가워요! 🐾",
         modal_login_desc: "어떤 방식으로 로그인을 도와드릴까요?\n지금 시작하면 1,000P를 드려요!",
@@ -232,7 +233,7 @@ const translations = {
     },
     en: {
         title_pre: "Trip Maker,", title_main: "Meow AI", title_sub: "Safe & Worry-free Trip",
-        tab_schedule: "🗓️ Safe Trip", tab_flight: "Real-time Flights", tab_myflight: "✈️ Flights of my trips", tab_choices: "Meow Pro's Safe Picks!",
+        tab_schedule: "🗓️ Safe Trip", tab_flight: "Real-time Flights", tab_myflight: "✈️ Flights of my trips", tab_choices: "Timmy's Safe Picks!",
         label_where: "Where would you like to travel safely?", label_when: "When do you leave?", placeholder_dest: "e.g. Quiet rest in Kyoto", placeholder_date: "Select dates (Max 30 days)",
         label_companion: "Companion", label_budget: "Budget (per person)", label_people: "Travelers", label_contact: "Contact (Required)", placeholder_contact: "Email or Messenger ID",
         label_request: "Special Requests (Safety, etc.)", placeholder_request: "ex: Recommend safe places for solo female travelers.",
@@ -1514,7 +1515,7 @@ export default function Home() {
                     style={{ backgroundImage: `linear-gradient(to bottom, #EADCB9 0%, transparent 100%)` }}
                 />
                 <div className="px-4 pt-6 pb-2 shrink-0 flex justify-between items-center bg-transparent z-20">
-                    <img src="/logo1.png?v=2" alt="Logo" className="h-14 w-auto object-contain" />
+                    <img src="/logotm.png" alt="Logo" className="h-14 w-auto object-contain" />
                     <div className="z-50 flex items-center gap-1.5 sm:gap-2">
                         <div className="flex bg-slate-100/90 p-0.5 rounded-full text-[9px] font-black shadow-sm border border-slate-200 shrink-0">
                             <button
@@ -1668,7 +1669,7 @@ export default function Home() {
                                                                 <div className="w-1.5 h-3.5 bg-white rounded-full animate-[pulse_1s_infinite_0.2s]"></div>
                                                             </div>
                                                         ) : (
-                                                            <Sparkles size={18} fill="white" className="text-white" />
+                                                            <img src="/TT_C.png" alt="T Coach" className="w-5 h-5 object-contain brightness-0 invert" />
                                                         )}
                                                     </button>
                                                 </div>
@@ -1692,6 +1693,7 @@ export default function Home() {
                                                 </div>
                                             </div>
                                         </div>
+
                                     </div>
                                 );
                             })()}
@@ -1820,7 +1822,7 @@ export default function Home() {
                                 <TravelNews language={language} />
                             </div>
 
-                            {/* 냥프로 코칭 배너 */}
+                            {/* 티미 코칭 배너 */}
                             <div className="mb-4 px-1">
                                 <div
                                     onClick={() => setShowCoachSheet(true)}
@@ -1834,12 +1836,12 @@ export default function Home() {
                                         </div>
                                         <div className="flex-1 text-left text-white">
                                             <h3 className="text-base font-extrabold tracking-tight flex items-center gap-2">
-                                                {language === 'en' ? "My AI Coach Meow Pro" : "나만의 AI 코치 냥프로"}
+                                                {language === 'en' ? "My AI Coach Timmy" : "나만의 AI 코치 티미"}
                                                 <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[9px] font-black bg-white/25 text-white border border-white/30 animate-pulse">AI</span>
                                                 <Sparkles size={14} className="text-white" />
                                             </h3>
                                             <p className="text-xs text-white/90 mt-1.5 leading-relaxed font-semibold text-left">
-                                                {language === 'en' ? "Get instant travel tips and safety coaching!" : "여행 중이신가요? 냥프로에게 로컬 꿀팁과 안전 가이드를 물어보세요."}
+                                                {language === 'en' ? "Get instant travel tips and safety coaching!" : "여행 중이신가요? 티미에게 로컬 꿀팁과 안전 가이드를 물어보세요."}
                                             </p>
                                         </div>
                                         <ChevronRight className="text-white/70 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-300" size={20} />
@@ -1933,6 +1935,32 @@ export default function Home() {
                                     </button>
                                 </div>
                             </div>
+
+                            {/* ✈️ 가격 변동 알림 섹션 */}
+                            {selectedTrip && selectedTrip.iata && (
+                                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-5 rounded-3xl border border-blue-100/50 shadow-sm space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <h3 className="font-black text-slate-800 text-sm flex items-center gap-2">
+                                            <Bell className="text-blue-500" size={16} />
+                                            가격 변동 알림
+                                        </h3>
+                                        <span className="text-[10px] text-slate-400 bg-white/80 px-2 py-0.5 rounded-full">매일 오전 9시 체크</span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                                        이 노선의 가격이 <strong className="text-blue-600">5% 이상</strong> 변동되면 푸시 + 이메일로 알려드려요
+                                    </p>
+                                    <TrackPriceButton
+                                        userId={auth.currentUser?.uid || user?.uid}
+                                        userEmail={auth.currentUser?.email || user?.email}
+                                        destination={selectedTrip.iata}
+                                        destinationName={selectedTrip.destination || selectedTrip.title || flightTo}
+                                        departureDate={formatDateForAPI(selectedTrip.startDate)}
+                                        returnDate={selectedTrip.returnDateCalc || formatDateForAPI(selectedTrip.endDate)}
+                                        currentPrice={flightResults?.[0]?.price || 0}
+                                        fcmToken={token || window?._fcmToken}
+                                    />
+                                </div>
+                            )}
                             {/* 내 일정 항공권 (기존 schedule 리스트) */}
                             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-lg space-y-4 text-left">
                                 <h3 className="font-black text-slate-800 text-base flex items-center gap-2 mb-1"><Calendar className="text-spotify-green" size={18} /> {translations[language].tab_myflight}</h3>
@@ -2221,8 +2249,8 @@ export default function Home() {
                     )}
                 </div>
                 {/* 하단 내비게이션 바 (프리미엄 반투명 유리 바다색 디자인) */}
-                <div className="absolute bottom-0 left-0 right-0 w-full bg-[#0E4EA1]/80 backdrop-blur-md border-t border-white/20 shadow-2xl z-50 shrink-0">
-                    <nav className="flex justify-around items-center h-[72px] px-2 text-white">
+                <div className="absolute bottom-0 left-0 right-0 w-full bg-[#00ade8]/75 backdrop-blur-md border-t border-white/20 shadow-2xl z-50 shrink-0">
+                    <nav className="flex justify-around items-center h-[72px] px-2 text-white drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.4)]">
                         <button
                             type="button"
                             onClick={() => setActiveTab('home')}
@@ -2250,22 +2278,22 @@ export default function Home() {
                         <button
                             type="button"
                             onClick={() => { if (user || session) { router.push('/mypage'); } else { setShowLoginModal(true); } }}
-                            className={`flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] transition-all duration-300 text-white/60 hover:text-white`}
+                            className={`flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] transition-all duration-300 text-white/80 hover:text-white`}
                         >
-                            <Calendar size={21} strokeWidth={2} className="text-white/60" />
-                            <span className="text-[10.5px] sm:text-[11.5px] font-medium break-keep whitespace-nowrap">{language === 'en' ? 'My Trips' : '내 일정'}</span>
+                            <Calendar size={21} strokeWidth={2} className="text-white/80" />
+                            <span className="text-[10.5px] sm:text-[11.5px] font-bold break-keep whitespace-nowrap">{language === 'en' ? 'My Trips' : '내 일정'}</span>
                         </button>
                         <button
                             type="button"
                             onClick={() => setActiveTab('around_me')}
-                            className={`flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] transition-all duration-300 ${activeTab === 'around_me' ? 'text-white' : 'text-white/60 hover:text-white'}`}
+                            className={`flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] transition-all duration-300 ${activeTab === 'around_me' ? 'text-white' : 'text-white/80 hover:text-white'}`}
                         >
-                            <Compass size={21} strokeWidth={2} className={`transition-all duration-300 ${activeTab === 'around_me' ? 'text-white scale-110' : 'text-white/60'}`} />
-                            <span className={`break-keep whitespace-nowrap transition-all duration-300 ${activeTab === 'around_me' ? 'text-[12.5px] sm:text-[14px] font-black' : 'text-[10.5px] sm:text-[11.5px] font-medium'}`}>{language === 'en' ? 'Around Me' : '내 주변'}</span>
+                            <Compass size={21} strokeWidth={2} className={`transition-all duration-300 ${activeTab === 'around_me' ? 'text-white scale-110' : 'text-white/80'}`} />
+                            <span className={`break-keep whitespace-nowrap transition-all duration-300 ${activeTab === 'around_me' ? 'text-[12.5px] sm:text-[14px] font-black' : 'text-[10.5px] sm:text-[11.5px] font-bold'}`}>{language === 'en' ? 'Around Me' : '내 주변'}</span>
                         </button>
                     </nav>
                 </div>
-                {/* 냥프로 AI 코치 바텀 시트 */}
+                {/* 티미 AI 코치 바텀 시트 */}
                 <AnimatePresence>
                     {showCoachSheet && (
                         <motion.div
@@ -2278,7 +2306,7 @@ export default function Home() {
                             <div className="px-6 py-4 flex items-center justify-between border-b border-slate-350/40 shrink-0 bg-white/20">
                                 <div className="flex items-center gap-2">
                                     <Sparkles className="text-brand-secondary" size={20} />
-                                    <h3 className="font-extrabold text-slate-800 text-lg">{language === 'en' ? "AI Coach Meow Pro" : "AI 코치 냥프로"}</h3>
+                                    <h3 className="font-extrabold text-slate-800 text-lg">{language === 'en' ? "AI Coach Timmy" : "AI 코치 티미"}</h3>
                                 </div>
                                 <button
                                     type="button"

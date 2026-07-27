@@ -24,6 +24,7 @@ import TravelQuiz from '../../components/TravelQuiz';
 import TripCoach from '../../components/TripCoach';
 import { getApiUrl } from '../../utils/api';
 import SunSceneBackground from '../../components/SunSceneBackground';
+import FlightPriceTracker from '../../components/FlightPriceTracker';
 
 
 
@@ -1667,7 +1668,8 @@ export default function MyPage() {
                         { id: 'social', name: '동행', icon: '👥' },
                         { id: 'coach', name: '코치', icon: '🐾' },
                         { id: 'wallet', name: '트립머니', icon: '💳' },
-                        { id: 'vault', name: '보관함', icon: '📦' }
+                        { id: 'vault', name: '보관함', icon: '📦' },
+                        { id: 'price_alert', name: '가격알림', icon: '📉' }
                     ].map((tab) => (
                         <button 
                             type="button"
@@ -1687,34 +1689,46 @@ export default function MyPage() {
                     {activeTab === 'coach' && renderCoach()}
                     {activeTab === 'wallet' && renderWallet()}
                     {activeTab === 'vault' && renderVault()}
+                    {activeTab === 'price_alert' && (
+                        <div className="space-y-4 animate-fadeIn">
+                            <div className="px-4 pt-4">
+                                <h3 className="font-black text-slate-800 text-base flex items-center gap-2">
+                                    <Bell className="text-blue-500" size={18} />
+                                    항공권 가격 변동 알림
+                                </h3>
+                                <p className="text-[11px] text-slate-500 mt-1">추적 중인 노선의 가격이 5% 이상 변동되면 알림을 보내드려요</p>
+                            </div>
+                            <FlightPriceTracker userId={user?.uid} userEmail={user?.email} />
+                        </div>
+                    )}
                 </div>
 
                 {/* 하단 내비게이션 바 (프리미엄 반투명 유리 바다색 디자인) */}
-                <div className="absolute bottom-0 left-0 right-0 w-full bg-[#0E4EA1]/80 backdrop-blur-md border-t border-white/20 shadow-2xl z-50 shrink-0">
-                    <nav className="flex justify-around items-center h-[72px] px-2 text-white">
+                <div className="absolute bottom-0 left-0 right-0 w-full bg-[#00ade8]/75 backdrop-blur-md border-t border-white/20 shadow-2xl z-50 shrink-0">
+                    <nav className="flex justify-around items-center h-[72px] px-2 text-white drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.4)]">
                         <button 
                             type="button" 
                             onClick={() => router.push('/?tab=home')} 
-                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-white/60 hover:text-white transition-all duration-300"
+                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-white/80 hover:text-white transition-all duration-300"
                         >
-                            <HomeIcon size={21} strokeWidth={2} className="text-white/60" />
-                            <span className="text-[10.5px] sm:text-[11.5px] font-medium break-keep whitespace-nowrap">홈</span>
+                            <HomeIcon size={21} strokeWidth={2} className="text-white/80" />
+                            <span className="text-[10.5px] sm:text-[11.5px] font-bold break-keep whitespace-nowrap">홈</span>
                         </button>
                         <button 
                             type="button" 
                             onClick={() => router.push('/?tab=flights_search')} 
-                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-white/60 hover:text-white transition-all duration-300"
+                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-white/80 hover:text-white transition-all duration-300"
                         >
-                            <Search size={21} strokeWidth={2} className="text-white/60" />
-                            <span className="text-[10.5px] sm:text-[11.5px] font-medium break-keep whitespace-nowrap">항공권</span>
+                            <Search size={21} strokeWidth={2} className="text-white/80" />
+                            <span className="text-[10.5px] sm:text-[11.5px] font-bold break-keep whitespace-nowrap">항공권</span>
                         </button>
                         <button 
                             type="button" 
                             onClick={() => router.push('/?tab=create')} 
-                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-white/60 hover:text-white transition-all duration-300"
+                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-white/80 hover:text-white transition-all duration-300"
                         >
-                            <Sparkles size={21} strokeWidth={2} className="text-white/60" />
-                            <span className="text-[10.5px] sm:text-[11.5px] font-medium break-keep whitespace-nowrap">만들기</span>
+                            <Sparkles size={21} strokeWidth={2} className="text-white/80" />
+                            <span className="text-[10.5px] sm:text-[11.5px] font-bold break-keep whitespace-nowrap">만들기</span>
                         </button>
                         <button 
                             type="button" 
@@ -1727,10 +1741,10 @@ export default function MyPage() {
                         <button 
                             type="button" 
                             onClick={() => router.push('/?tab=around_me')} 
-                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-white/60 hover:text-white transition-all duration-300"
+                            className="flex flex-col items-center justify-center gap-1 p-2 w-[58px] sm:w-[70px] text-white/80 hover:text-white transition-all duration-300"
                         >
-                            <Compass size={21} strokeWidth={2} className="text-white/60" />
-                            <span className="text-[10.5px] sm:text-[11.5px] font-medium break-keep whitespace-nowrap">내 주변</span>
+                            <Compass size={21} strokeWidth={2} className="text-white/80" />
+                            <span className="text-[10.5px] sm:text-[11.5px] font-bold break-keep whitespace-nowrap">내 주변</span>
                         </button>
                     </nav>
                 </div>

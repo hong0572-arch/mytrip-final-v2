@@ -70,5 +70,15 @@ service cloud.firestore {
       allow read: if true;  // 비로그인 상태의 읽기 요청도 에러 없이 허용 (Permission Error 방지)
       allow write: if isAuthenticated(); // 쓰기는 로그인한 회원만 가능
     }
+
+    // 9. 🛍️ 파트너 상품 및 문의 (Partner Products & Inquiries)
+    match /products/{productId} {
+      allow read: if true; // 누구나 상품 조회 가능
+      allow write: if isAuthenticated(); // 일단 로그인한 유저(파트너/어드민) 작성 가능
+    }
+    match /inquiries/{inquiryId} {
+      allow read: if isAuthenticated(); 
+      allow write: if isAuthenticated(); // 문의 작성은 로그인 필요
+    }
   }
 }

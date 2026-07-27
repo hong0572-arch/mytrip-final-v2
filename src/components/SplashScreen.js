@@ -34,9 +34,9 @@ export default function SplashScreen({ language = 'ko', onFinish }) {
                     className="bg-black/30 p-6 rounded-full backdrop-blur-md shadow-2xl border border-white/10"
                 >
                     <motion.img
-                        // ❗ public 폴더에 cat-mascot.png 파일이 있어야 합니다!
-                        src="/cat.png"
-                        alt="Cat Mascot"
+                        // ❗ public 폴더에 timmy.png 파일이 있어야 합니다!
+                        src="/timmy.png"
+                        alt="Timmy Mascot"
                         className="w-32 h-32 object-contain drop-shadow-xl"
                         // 둥둥 떠다니는 애니메이션 추가
                         animate={{ y: [0, -10, 0] }}

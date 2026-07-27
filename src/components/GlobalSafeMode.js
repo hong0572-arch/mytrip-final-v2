@@ -276,10 +276,23 @@ function FluentShield({ active }) {
     );
 }
 
-export default function GlobalSafeMode() {
+export default function GlobalSafeMode({ hideButton = false, externalOpen, onExternalClose, onActiveChange }) {
     const [user, setUser] = useState(null);
     const [isOpen, setIsOpen] = useState(false);
     const [language, setLanguage] = useState('ko');
+
+    // External open control from TimmyButton
+    useEffect(() => {
+        if (externalOpen !== undefined) {
+            setIsOpen(externalOpen);
+        }
+    }, [externalOpen]);
+
+    // Notify parent when panel closes (for external control sync)
+    const handleClose = () => {
+        setIsOpen(false);
+        onExternalClose?.();
+    };
 
     // ✨ Safe Mode 버튼 드래그 이동 관련 상태
     const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -354,7 +367,12 @@ export default function GlobalSafeMode() {
     };
     
     // 안전 모드 핵심 상태
-    const [isActive, setIsActive] = useState(false);
+    const [isActive, setIsActiveInternal] = useState(false);
+    const setIsActive = (val) => {
+        const newVal = typeof val === 'function' ? val(isActive) : val;
+        setIsActiveInternal(newVal);
+        onActiveChange?.(newVal);
+    };
     const [duration, setDuration] = useState(30); // 분 단위
     const [timeLeft, setTimeLeft] = useState(0); // 초 단위
     const [guardianUserId, setGuardianUserId] = useState('');
@@ -635,7 +653,7 @@ export default function GlobalSafeMode() {
                     text: safeModeTranslations[language].msg_chat_expire.replace('{name}', user.displayName || (language === 'en' ? 'Traveler' : '여행자')),
                     senderId: 'system_safemode',
                     senderName: '🛡️ Safe Mode 시스템',
-                    senderAvatar: '/logo1.png?v=2',
+                    senderAvatar: '/logotm.png',
                     createdAt: serverTimestamp()
                 });
             }
@@ -1133,7 +1151,8 @@ export default function GlobalSafeMode() {
                 </div>
             )}
 
-            {/* 2. 하단 중앙 플로팅 안심 가드 버튼 (시그니처 디자인: 가디언 하트 오브, 드래그 이동 가능) */}
+            {/* 2. 하단 중앙 플로팅 안심 가드 버튼 — hideButton이면 숨김 (TimmyButton에서 대체) */}
+            {!hideButton && (
             <div 
                 id="safe-mode-float"
                 className="fixed bottom-[105px] left-1/2 z-[998] pointer-events-auto flex flex-col items-center gap-2.5 transition-transform duration-100 select-none"
@@ -1189,11 +1208,12 @@ export default function GlobalSafeMode() {
                     )}
                 </button>
             </div>
+            )}
 
             {/* 3. Safe Mode 하단 컨트롤 패널 모달 */}
             {isOpen && (
                 <div className="fixed inset-0 z-[9999] flex items-end justify-center pointer-events-auto">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsOpen(false)}></div>
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={handleClose}></div>
                     <div className="bg-[#181818]/95 backdrop-blur-2xl border-t border-white/10 w-full max-w-[480px] rounded-t-[40px] relative z-10 shadow-2xl flex flex-col p-6 animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar text-white">
                         
                         {/* 헤더 */}
@@ -1205,7 +1225,7 @@ export default function GlobalSafeMode() {
                                 </h3>
                                 <p className="text-xs text-slate-300 font-bold mt-1">{safeModeTranslations[language].panel_subtitle}</p>
                             </div>
-                            <button onClick={() => setIsOpen(false)} className="w-10 h-10 bg-white/10 text-white hover:bg-white/20 rounded-full flex items-center justify-center transition">
+                            <button onClick={handleClose} className="w-10 h-10 bg-white/10 text-white hover:bg-white/20 rounded-full flex items-center justify-center transition">
                                 <X size={20} strokeWidth={2.5} />
                             </button>
                         </div>
