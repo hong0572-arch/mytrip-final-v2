@@ -169,7 +169,6 @@ export async function GET(req) {
                                 subject: `[MyTrip] ✈️ ${tracker.destinationName || tracker.destination}행 항공권 가격 변동 알림`,
                                 html: emailHtml
                             });
-                            });
                         } catch (emailError) {
                             console.error(`Email error for tracker ${trackerId}:`, emailError);
                         }
