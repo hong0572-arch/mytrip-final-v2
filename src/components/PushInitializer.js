@@ -12,6 +12,21 @@ import useFcmToken from '../hooks/useFcmToken'; // 👈 Web 토큰용 훅 추가
 export default function PushInitializer() {
     const { token: webFcmToken } = useFcmToken(); // 🌐 Web FCM 토큰 가져오기
 
+    // 토큰 강제 동기화 함수
+    const syncNativeTokenToFirestore = async (tokenValue) => {
+        if (!auth.currentUser) return;
+        try {
+            const userRef = doc(db, "users", auth.currentUser.uid);
+            await setDoc(userRef, {
+                fcmToken: tokenValue,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            console.log("✅ Native FCM token reliably synced to Firestore");
+        } catch (e) {
+            console.error("❌ Failed to sync Native FCM token:", e);
+        }
+    };
+
     // 🌐 Web Service Worker 등록 (Standard PWA)
     useEffect(() => {
         if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
@@ -62,20 +77,7 @@ export default function PushInitializer() {
                     PushNotifications.addListener('registration', async (token) => {
                         console.log('✅ Native FCM Token received:', token.value);
                         window._fcmToken = token.value;
-                        
-                        // Immediately update Firestore if user is logged in
-                        if (auth.currentUser) {
-                            try {
-                                const userRef = doc(db, "users", auth.currentUser.uid);
-                                await setDoc(userRef, {
-                                    fcmToken: token.value,
-                                    updatedAt: serverTimestamp()
-                                }, { merge: true });
-                                console.log("✅ Native FCM token saved to Firestore");
-                            } catch (e) {
-                                console.error("❌ Failed to save Native FCM token:", e);
-                            }
-                        }
+                        await syncNativeTokenToFirestore(token.value);
                     });
                 } catch (err) {
                     console.error("❌ 네이티브 초기화 에러:", err);
@@ -99,6 +101,8 @@ export default function PushInitializer() {
                         if (finalToken) {
                             updateData.fcmToken = finalToken;
                             console.log(`✅ [${isNative ? 'Native' : 'Web'}] FCM 토큰 등록 준비:`, finalToken);
+                        } else if (isNative && window._fcmToken) {
+                            updateData.fcmToken = window._fcmToken;
                         }
 
                         // 최초 로그인 환영 로컬 알림 (네이티브 전용)
