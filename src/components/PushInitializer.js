@@ -79,6 +79,28 @@ export default function PushInitializer() {
                         window._fcmToken = token.value;
                         await syncNativeTokenToFirestore(token.value);
                     });
+
+                    // 앱이 켜져 있을 때 (포그라운드) 푸시 알림 수신
+                    PushNotifications.addListener('pushNotificationReceived', (notification) => {
+                        console.log('✅ 푸시 알림 수신 (포그라운드):', notification);
+                        // 포그라운드에서도 알림을 보여주기 위해 로컬 알림으로 띄움
+                        LocalNotifications.schedule({
+                            notifications: [
+                                {
+                                    title: notification.title || "새로운 알림",
+                                    body: notification.body || "",
+                                    id: new Date().getTime(),
+                                    schedule: { at: new Date(Date.now() + 100) },
+                                    sound: 'default'
+                                }
+                            ]
+                        });
+                    });
+
+                    // 푸시 알림을 탭했을 때
+                    PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+                        console.log('✅ 푸시 알림 탭 액션:', notification);
+                    });
                 } catch (err) {
                     console.error("❌ 네이티브 초기화 에러:", err);
                 }
