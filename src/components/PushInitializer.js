@@ -59,8 +59,23 @@ export default function PushInitializer() {
                         ]
                     });
 
-                    PushNotifications.addListener('registration', (token) => {
+                    PushNotifications.addListener('registration', async (token) => {
+                        console.log('✅ Native FCM Token received:', token.value);
                         window._fcmToken = token.value;
+                        
+                        // Immediately update Firestore if user is logged in
+                        if (auth.currentUser) {
+                            try {
+                                const userRef = doc(db, "users", auth.currentUser.uid);
+                                await setDoc(userRef, {
+                                    fcmToken: token.value,
+                                    updatedAt: serverTimestamp()
+                                }, { merge: true });
+                                console.log("✅ Native FCM token saved to Firestore");
+                            } catch (e) {
+                                console.error("❌ Failed to save Native FCM token:", e);
+                            }
+                        }
                     });
                 } catch (err) {
                     console.error("❌ 네이티브 초기화 에러:", err);
