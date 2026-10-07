@@ -277,6 +277,16 @@ function FluentShield({ active }) {
     );
 }
 
+// 보호자 링크용 일회용 키(128비트). 안전모드를 켤 때마다 새로 만들고, 보호를 끝내면 기록과 함께 사라진다.
+const SHARE_TOKEN_KEY = 'safeMode_shareToken';
+const createShareToken = () =>
+    Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
+const readShareToken = () => {
+    try { return localStorage.getItem(SHARE_TOKEN_KEY) || ''; } catch { return ''; }
+};
+// 보호자가 로그인 없이 볼 수 있는 실시간 링크(키가 없으면 null)
+const liveSessionPath = (uid, token) => (uid && token ? `/share/live_safemode?u=${encodeURIComponent(uid)}&t=${token}` : null);
+
 export default function GlobalSafeMode({ hideButton = false, externalOpen, onExternalClose, onActiveChange }) {
     const [user, setUser] = useState(null);
     const [isOpen, setIsOpen] = useState(false);
@@ -691,12 +701,16 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
             const position = await getPosition();
             const { latitude, longitude } = position.coords;
             const googleMapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
-            const mapUrl = `${baseUrl}?lat=${latitude}&lng=${longitude}&name=${encodedName}&userId=${user?.uid || ''}`;
+            const livePath = isActive ? liveSessionPath(user?.uid, readShareToken()) : null;
+            const mapUrl = livePath
+                ? `https://tripmaker.tips${livePath}&lat=${latitude}&lng=${longitude}&name=${encodedName}`
+                : `${baseUrl}?lat=${latitude}&lng=${longitude}&name=${encodedName}`;
             
             textMessage = safeModeTranslations[language].msg_sms_body.replace('{googleMapsUrl}', googleMapsUrl).replace('{mapUrl}', mapUrl);
         } catch (error) {
             console.error("위치 정보 획득 실패:", error);
-            const mapUrl = `${baseUrl}?name=${encodedName}&userId=${user?.uid || ''}`;
+            const livePath = isActive ? liveSessionPath(user?.uid, readShareToken()) : null;
+            const mapUrl = livePath ? `https://tripmaker.tips${livePath}&name=${encodedName}` : `${baseUrl}?name=${encodedName}`;
             textMessage = safeModeTranslations[language].msg_sms_fallback.replace('{mapUrl}', mapUrl);
         }
 
@@ -852,6 +866,8 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                             const sessionRef = doc(db, "safemode_sessions", user.uid);
                             await setDoc(sessionRef, {
                                 location: { lat: latitude, lng: longitude },
+                                locationError: false,
+                                locationUpdatedAt: serverTimestamp(),
                                 updatedAt: serverTimestamp()
                             }, { merge: true });
                             console.log("GPS Location updated:", latitude, longitude);
@@ -862,17 +878,15 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                     async (error) => {
                         console.warn(`GPS 위치 획득 실패 (코드: ${error.code}): ${error.message}`);
                         
-                        // [테스트 폴백] 위치 권한이 없거나 획득 실패한 경우에도 로컬 테스트 차질 및 크래시를 방지하기 위해 가상 좌표를 기록합니다.
+                        // 위치를 못 받으면 마지막 위치를 그대로 두고 실패 사실만 기록한다(가짜 좌표를 보내면 보호자가 오해할 수 있음).
                         try {
                             const sessionRef = doc(db, "safemode_sessions", user.uid);
                             await setDoc(sessionRef, {
-                                location: { lat: 37.5665, lng: 126.9780 }, // 서울 중심 좌표 폴백
-                                updatedAt: serverTimestamp(),
-                                isMockLocation: true
+                                locationError: true,
+                                updatedAt: serverTimestamp()
                             }, { merge: true });
-                            console.log("💡 GPS 위치 획득 실패로 인해 테스트용 폴백 좌표(서울)가 세션에 기록되었습니다.");
                         } catch (err) {
-                            console.error("폴백 위치 Firestore 업데이트 실패:", err);
+                            console.error("위치 실패 상태 기록 실패:", err);
                         }
                     },
                     { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
@@ -921,8 +935,10 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
         const seconds = parsedDuration * 60;
         const endTime = Date.now() + seconds * 1000;
         
+        const shareToken = createShareToken();
         localStorage.setItem('safeMode_active', 'true');
         localStorage.setItem('safeMode_endTime', endTime.toString());
+        localStorage.setItem(SHARE_TOKEN_KEY, shareToken);
         
         setIsActive(true);
         setTimeLeft(seconds);
@@ -942,6 +958,7 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                 duration: parsedDuration,
                 endTime: endTime,
                 location: null,
+                shareToken,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
@@ -960,7 +977,7 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                     targetMateName: guardianName,
                     status: "pending",
                     message: safeModeTranslations[language].msg_safe_started.replace('{name}', user.displayName || (language === 'en' ? 'Traveler' : '여행자')),
-                    sessionUrl: `/share/live_safemode?userId=${user.uid}`,
+                    sessionUrl: liveSessionPath(user.uid, shareToken),
                     createdAt: serverTimestamp()
                 });
             } catch (err) {
@@ -976,6 +993,7 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
     const handleToggleOff = async () => {
         localStorage.removeItem('safeMode_active');
         localStorage.removeItem('safeMode_endTime');
+        localStorage.removeItem(SHARE_TOKEN_KEY);
         
         setIsActive(false);
         setTimeLeft(0);
@@ -1552,7 +1570,7 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                                 </a>
                             )}
                             <a 
-                                href={`/share/live_safemode?userId=${otherExpiredSession.userId}`}
+                                href={liveSessionPath(otherExpiredSession.userId, otherExpiredSession.shareToken) || '/mypage?openInbox=true'}
                                 className="w-full py-4 rounded-2xl font-black text-white bg-brand-danger hover:bg-brand-danger/90 hover:scale-105 transition-all flex items-center justify-center gap-2 active:scale-95 text-sm shadow-md"
                             >
                                 <Siren size={16} className="shrink-0" /> {safeModeTranslations[language].btn_view_map}

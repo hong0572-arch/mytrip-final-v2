@@ -27,6 +27,13 @@
 - 주의: `spotify-green`은 이제 남색이다. 그 위 글자는 흰색(`bg-spotify-green text-white`)이어야 하고, 어두운 패널 위 강조 글자는 `text-tm-sky-soft`를 쓴다(남색 위 남색 금지).
 - 공통 아래 메뉴는 `components/home/BottomNav.js`(`active`, `onSelect`로 화면 안 탭 처리). `/plan`·`/mypage`도 이것을 쓴다. 배경 사진·켄 번 효과·시작 화면(SplashScreen)은 쓰지 않는다.
 
+## 보안·개인정보 (2026-10)
+- 사용자별 API(`api/chat/session`, `api/memory`, `api/diary`, `api/flights/tracker`)는 `lib/verifyUser.js`로 Firebase ID 토큰을 확인하고 토큰의 uid만 쓴다. 클라이언트는 `utils/authHeaders.js`로 토큰을 붙인다.
+- 안심 귀가 보호자 링크: 안전모드를 켤 때 128비트 일회용 키(`shareToken`)를 만들어 `safemode_sessions/{uid}`에 저장하고, 링크는 `/share/live_safemode?u=<uid>&t=<key>`. 보호자 화면은 `api/safemode/live`가 키를 확인해 이름·상태·위치만 돌려준다(15초 갱신). 보호를 끝내면 문서가 지워져 링크도 만료된다. GPS 실패 시 가짜 좌표를 쓰지 않고 `locationError`만 기록한다.
+- Firestore 규칙(`firestore.rules`)은 콘솔/CLI로 따로 게시해야 반영된다. `safemode_sessions`는 본인과 `guardianUserId` 보호자만 읽는다.
+- 실시간 구독(onSnapshot)에는 항상 `lib/snapshotError.js`의 `onSnapshotError('이름')`을 붙인다.
+- 개인정보처리방침(`app/privacy/page.js`)은 실제 데이터 흐름을 근거로 작성했다. 수집 항목·외부 서비스·보관 방식을 바꾸면 방침도 함께 고친다.
+
 ## 작업 원칙
 - 여행 중 한 손·이동 중 사용을 전제로 한 모바일 우선 UX(큰 터치 영역, 핵심 정보 빠른 접근).
 - 해외 현지 환경을 고려한다: 느린/끊기는 네트워크, 오프라인 캐시(PWA), 배터리 소모.

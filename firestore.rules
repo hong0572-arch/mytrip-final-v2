@@ -60,8 +60,11 @@ service cloud.firestore {
       allow read, write: if true;
     }
     // 7. 🛡️ 안심 귀가 실시간 세션 (Safe Mode)
+    // 위치·보호자 연락처가 담기므로 본인과 지정된 보호자(앱 회원)만 읽는다.
+    // 회원이 아닌 보호자는 서버 API(/api/safemode/live)가 일회용 키를 확인해 필요한 항목만 보여준다.
     match /safemode_sessions/{userId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated()
+        && (request.auth.uid == userId || resource.data.guardianUserId == request.auth.uid);
       allow write: if request.auth.uid == userId;
     }
         

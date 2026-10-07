@@ -2,16 +2,16 @@ import Link from 'next/link';
 
 // 개인정보처리방침(개인정보 보호법 제30조, 위치정보법 관련 고지 포함).
 // 내용은 2026-10 기준 실제 코드가 수집·저장·전송하는 항목을 근거로 작성했다. 기능을 추가·변경하면 이 문서도 함께 고친다.
-// [대괄호] 항목은 운영자 정보로, 배포 전에 반드시 채워야 한다.
+// 운영자·책임자는 부서명으로 표기했다(개인정보 보호법상 허용). 사업자 정보가 정해지면 갱신한다.
 export const metadata = {
     title: '개인정보처리방침',
     description: 'Trip Maker가 처리하는 개인정보의 항목, 목적, 보유 기간, 위탁·국외 이전, 위치정보 처리, 이용자 권리를 안내합니다.',
     alternates: { canonical: 'https://tripmaker.tips/privacy' },
 };
 
-const EFFECTIVE_DATE = '2026년 10월 [일]';
-const OPERATOR = '[운영자(상호)]';
-const PRIVACY_OFFICER = '[개인정보 보호책임자 성명·직책]';
+const EFFECTIVE_DATE = '2026년 10월 7일';
+const OPERATOR = 'Trip Maker 운영팀';
+const PRIVACY_OFFICER = 'Trip Maker 개인정보 보호 담당';
 const CONTACT_EMAIL = 'contact@tripmaker.tips';
 
 const SECTIONS = [
@@ -51,7 +51,7 @@ const RETENTION = [
     ['회원 정보, 여행 일정, 대화 기록, 기억, 일기, 피드 등', '회원 탈퇴 시 지체 없이 삭제. 이용자가 개별 삭제한 항목은 삭제 즉시 파기'],
     ['안전모드 보호 기록(보호자 정보·위치)', '보호를 끝내면 즉시 삭제. 경보가 울린 경우 이용자가 해제할 때까지 보관'],
     ['기기에만 저장되는 정보(보호자 연락처, 보관함 사진, 체크리스트 등)', '서버로 보내지 않으며, 앱 삭제 또는 기기 데이터 삭제 시 함께 삭제'],
-    ['상품 문의·견적 요청', '답변 완료 후 [1년]'],
+    ['상품 문의·견적 요청', '답변 완료 후 1년'],
     ['접속 기록', '통신비밀보호법에 따라 3개월'],
 ];
 
