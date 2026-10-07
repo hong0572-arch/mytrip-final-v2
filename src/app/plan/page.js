@@ -10,7 +10,7 @@ import useFcmToken from '../../hooks/useFcmToken';
 import { getApiUrl } from '../../utils/api';
 // 컴포넌트
 import CatMascot from '../../components/CatMascot';
-import AIResult from "../../components/AIResult";
+import TripDetail from "../../components/trip/TripDetail";
 import TravelNews from '../../components/TravelNews';
 import TripCoach from '../../components/TripCoach';
 import { TrackPriceButton } from '../../components/FlightPriceTracker';
@@ -1364,7 +1364,7 @@ export default function Home() {
         } catch (error) { alert(language === "en" ? "Server Error" : "서버 오류"); } finally { setLoading(false); }
     };
     const handleRecommendedClick = (trip) => { router.push(`/share/${trip.id}`); };
-    if (result) return <AIResult data={result} userInfo={formData} language={language} onReset={() => setResult(null)} />;
+    if (result) return <TripDetail data={result} userInfo={formData} mode="draft" language={language} onBack={() => setResult(null)} />;
     // --- 4. UI 렌더링 ---
     return (
         <div className="h-dvh w-full flex justify-center bg-tm-ground font-sans relative overflow-hidden">

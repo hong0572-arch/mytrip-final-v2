@@ -16,8 +16,8 @@ import HomeComposer from './HomeComposer';
 import { PlanOptions, PlanResultCard, PlanWorking } from './PlanCards';
 import { goToLogin, takePendingMessage } from './homeActions';
 
-// 일정표 화면(지도·저장 포함)은 고른 뒤에만 불러온다
-const AIResult = dynamic(() => import('../AIResult'), { ssr: false });
+// 일정 상세 화면(지도·저장 포함)은 고른 뒤에만 불러온다
+const TripDetail = dynamic(() => import('../trip/TripDetail'), { ssr: false });
 
 const localToday = () => {
   const d = new Date();
@@ -160,6 +160,11 @@ export default function ChatScreen() {
       const data = await res.json();
       removePlanItem(workingId);
       if (!res.ok || !data.result) throw new Error(data?.error || `HTTP ${res.status}`);
+      // 고른 안의 숙소 동네를 일정에 함께 담아 '숙소' 탭에서 보여 준다
+      if (option.stayArea) {
+        data.result.stayArea = data.result.stayArea || option.stayArea;
+        data.result.stayAreaReason = data.result.stayAreaReason || option.stayAreaReason || '';
+      }
       const resultId = addPlanItem({ kind: 'planResult', plan: data.result, request: req, userInfo, opened: false });
       setOpenPlan({ data: data.result, userInfo, itemId: resultId });
       updatePlanItem(resultId, { opened: true });
@@ -299,7 +304,7 @@ export default function ChatScreen() {
   };
 
   if (openPlan) {
-    return <AIResult data={openPlan.data} userInfo={openPlan.userInfo} language={language} onReset={() => setOpenPlan(null)} />;
+    return <TripDetail data={openPlan.data} userInfo={openPlan.userInfo} mode="draft" language={language} onBack={() => setOpenPlan(null)} />;
   }
 
   return (

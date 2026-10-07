@@ -27,6 +27,14 @@
 - 주의: `spotify-green`은 이제 남색이다. 그 위 글자는 흰색(`bg-spotify-green text-white`)이어야 하고, 어두운 패널 위 강조 글자는 `text-tm-sky-soft`를 쓴다(남색 위 남색 금지).
 - 공통 아래 메뉴는 `components/home/BottomNav.js`(`active`, `onSelect`로 화면 안 탭 처리). `/plan`·`/mypage`도 이것을 쓴다. 배경 사진·켄 번 효과·시작 화면(SplashScreen)은 쓰지 않는다.
 
+## 일정 만들기·일정 상세 (2026-10)
+- 일정은 대화에서 만든다: `/api/plan-options`(부족한 정보 질문 또는 후보 3개) → 고른 안을 `/api/generate`로 상세 일정 생성. 예전 4단계 폼(`/plan?tab=create`)은 남아 있지만 진입점은 없앴다.
+- 일정 상세는 `components/trip/TripDetail.js` 하나로 통일: 대화 결과(`mode="draft"`), 저장된 일정 `/trip?id=`(`saved`, 편집 즉시 Firestore 반영·동행 초대·채팅), 공유 `/share/[id]`(`shared`, 보기 전용·사본 저장). 예전 `AIResult`는 관리자 화면만 쓴다.
+- 구성: 지도(`TripMap`, 선택한 날의 번호 핀·이동수단별 경로·구간 시간·주변 장소) + 시트(반쯤/전체/장소) + 탭(일정·숙소·안심·팁·경비) + 편집(`TripEdit`: 끌어서 순서, 사이에 추가, AI 동선 정리, 말로 고치기 `/api/plan-edit`).
+- 저장·공유는 `lib/tripStore.js`(구글 로그인, 모바일은 리디렉트 후 `pendingTripSave`로 이어서 저장). 피드 공유는 기본 꺼짐(혼자 여행자 위치 노출 방지).
+- AI가 준 좌표는 믿지 않고 구글 장소 검색으로 채운다. 긴급번호는 `tripUtils.emergencyNumbers`(확실한 나라만, 모르면 영사콜센터만).
+- 문구는 `content/tripCopy.js`(한/영).
+
 ## 보안·개인정보 (2026-10)
 - 사용자별 API(`api/chat/session`, `api/memory`, `api/diary`, `api/flights/tracker`)는 `lib/verifyUser.js`로 Firebase ID 토큰을 확인하고 토큰의 uid만 쓴다. 클라이언트는 `utils/authHeaders.js`로 토큰을 붙인다.
 - 안심 귀가 보호자 링크: 안전모드를 켤 때 128비트 일회용 키(`shareToken`)를 만들어 `safemode_sessions/{uid}`에 저장하고, 링크는 `/share/live_safemode?u=<uid>&t=<key>`. 보호자 화면은 `api/safemode/live`가 키를 확인해 이름·상태·위치만 돌려준다(15초 갱신). 보호를 끝내면 문서가 지워져 링크도 만료된다. GPS 실패 시 가짜 좌표를 쓰지 않고 `locationError`만 기록한다.

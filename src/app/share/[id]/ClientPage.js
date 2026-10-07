@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { db } from "../../../lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import AIResult from "../../../components/AIResult";
+import TripDetail from "../../../components/trip/TripDetail";
+import useAppLanguage from "../../../hooks/useAppLanguage";
 import { Home, Map } from 'lucide-react';
 
 export default function ShareDetailPage() {
     const params = useParams();
     const router = useRouter();
     const shareId = params.id;
+    const [language] = useAppLanguage();
 
     const [tripData, setTripData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -79,25 +81,8 @@ export default function ShareDetailPage() {
         );
     }
 
-    // 3. 정상 화면 (뷰어 + 홈으로 가기 유도 버튼)
+    // 3. 정상 화면: 보기 전용 일정 상세('내 일정으로 저장하기'로 사본 저장)
     return (
-        <div className="relative w-full h-full bg-tm-ground">
-            {/* 바이럴 유도를 위한 홈 버튼 (왼쪽 상단) */}
-            <div className="absolute top-4 left-4 z-50 pointer-events-auto sm:top-8 sm:left-8">
-                <button
-                    onClick={() => router.push('/')}
-                    className="flex h-11 items-center gap-2 rounded-full border border-tm-line bg-white px-4 text-[14px] font-bold text-tm-navy shadow-sm"
-                >
-                    <Home size={18} strokeWidth={2.2} />
-                    나도 AI로 여행 짜기
-                </button>
-            </div>
-
-            <AIResult
-                data={tripData}
-                userInfo={tripData}
-                tripId={shareId}
-            />
-        </div>
+        <TripDetail data={tripData} userInfo={tripData} mode="shared" language={language} onBack={() => router.push('/')} />
     );
 }
