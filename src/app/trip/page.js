@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { auth, db } from "../../lib/firebase"; // 경로 한 단계 수정됨
 import { doc, getDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { onSnapshotError } from '../../lib/snapshotError';
 import { onAuthStateChanged } from "firebase/auth";
 import AIResult from "../../components/AIResult"; // 경로 한 단계 수정됨
 // ✨ 하단 메뉴바에 사용할 아이콘(Home, Users, Calendar, Wallet) 추가!
@@ -82,7 +83,7 @@ function TripDetailContent() {
                     ...doc.data()
                 }));
                 setMessages(loadedMessages);
-            });
+            }, onSnapshotError('trip/messages'));
         }
         return () => {
             if (unsubscribeMessages) unsubscribeMessages();

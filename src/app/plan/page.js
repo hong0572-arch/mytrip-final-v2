@@ -39,6 +39,7 @@ import {
     doc, getDoc, setDoc, deleteDoc, updateDoc, increment, serverTimestamp,
     collection, getDocs, addDoc, query, orderBy, onSnapshot, where
 } from "firebase/firestore";
+import { onSnapshotError } from '../../lib/snapshotError';
 // AI 홈에서 들어오는 기능 화면의 머리글 제목
 const PLAN_TAB_TITLES = {
     ko: { home: '둘러보기', flights_search: '항공권 최저가', create: '일정표 만들기', around_me: '내 주변' },
@@ -1023,7 +1024,7 @@ export default function Home() {
                         Object.keys(CITY_TO_IATA).forEach(city => { if (data.destination?.includes(city)) iataCode = CITY_TO_IATA[city]; });
                         return { id: doc.id, title: data.destination || (language === 'en' ? "My Trip" : "나의 여행"), subtitle: data.startDate ? (language === 'en' ? `Departs ${data.startDate}` : `${data.startDate} 출발`) : (language === 'en' ? "TBD" : "날짜 미정"), icon: "✈️", iata: iataCode, ...data };
                     }));
-                });
+                }, onSnapshotError('plan/trips'));
             } else { setMySchedules([]); }
         });
         return () => { window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt); window.removeEventListener('appinstalled', handleAppInstalled); unsubscribeAuth(); if (unsubscribeTrips) unsubscribeTrips(); };

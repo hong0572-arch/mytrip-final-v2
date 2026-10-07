@@ -10,6 +10,7 @@ import { saveVaultItem, getVaultItems, deleteVaultItem } from "../../lib/localVa
 import { onAuthStateChanged, updateProfile, signOut } from "firebase/auth";
 import { getMessaging, getToken, isSupported } from "firebase/messaging";
 import { collection, query, where, orderBy, onSnapshot, doc, deleteDoc, updateDoc, getDocs, addDoc, serverTimestamp, increment, arrayUnion, arrayRemove, limit } from "firebase/firestore";
+import { onSnapshotError } from '../../lib/snapshotError';
 import {
     ArrowLeft, ArrowRight, Search, Sparkles, Plane, Bed, Utensils,
     Calendar, Share2, Wallet, Receipt, Plus, ChevronRight,
@@ -369,7 +370,7 @@ export default function MyPage() {
                 }
                 clearTimeout(fallbackTimer); // 데이터 받으면 타이머 취소
                 setLoading(false); // 🎯 덮개 치우기!
-            });
+            }, onSnapshotError('mypage/user'));
 
             // 2. 기타 데이터 구독 (로딩과 무관하게 백그라운드에서 가져옴)
             const tripsQ = query(collection(db, "trips"), where("memberIds", "array-contains", currentUser.uid), orderBy("createdAt", "desc"));
@@ -381,10 +382,10 @@ export default function MyPage() {
                     const updatedSelected = list.find(t => t.id === selectedTrip.id);
                     if (updatedSelected) setSelectedTrip(updatedSelected);
                 }
-            });
+            }, onSnapshotError('mypage/trips'));
 
             const pointsQ = query(collection(db, "users", currentUser.uid, "point_history"), orderBy("createdAt", "desc"));
-            unsubscribePoints = onSnapshot(pointsQ, (snapshot) => setPointHistory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
+            unsubscribePoints = onSnapshot(pointsQ, (snapshot) => setPointHistory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))), onSnapshotError('mypage/points'));
 
             const matchesQ = collection(db, "match_requests");
             unsubscribeMatches = onSnapshot(matchesQ, (snapshot) => {
@@ -394,7 +395,7 @@ export default function MyPage() {
                     if (d.targetMateId === currentUser.uid || d.senderId === currentUser.uid) mList.push({ id: doc.id, ...d });
                 });
                 setMatchRequests(mList.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
-            });
+            }, onSnapshotError('mypage/match_requests'));
 
 
         });
@@ -558,7 +559,7 @@ export default function MyPage() {
         const unsubscribeFeeds = onSnapshot(q, (snapshot) => {
             const feedList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setFeeds(feedList); // 이제 클라이언트에서 억지로 정렬하지 않습니다!
-        });
+        }, onSnapshotError('mypage/feeds'));
 
         return () => unsubscribeFeeds();
     }, [user, feedSort, feedLimit]); // 정렬이나 개수가 바뀌면 자동으로 다시 불러옴
@@ -571,7 +572,7 @@ export default function MyPage() {
                 const expList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 setExpenses(expList);
                 setTotalSpent(expList.reduce((acc, curr) => acc + (parseInt(curr.amount) || 0), 0));
-            });
+            }, onSnapshotError('mypage/expenses'));
         }
         return () => { if (unsubscribeExpenses) unsubscribeExpenses(); };
     }, [selectedTrip, showBudgetModal, user]);
@@ -888,7 +889,7 @@ export default function MyPage() {
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setComments(data);
-        });
+        }, onSnapshotError('mypage/feed-comments'));
         return unsubscribe;
     };
 

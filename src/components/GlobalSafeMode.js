@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { ShieldCheck, ShieldAlert, PhoneCall, Timer, X, Send, User, ChevronUp, AlertTriangle, Siren, Shield, Heart, Sparkles, Search, Loader2 } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc, getDocs, query, where, onSnapshot, deleteDoc } from 'firebase/firestore';
+import { onSnapshotError } from '../lib/snapshotError';
 
 const safeModeTranslations = {
     ko: {
@@ -797,7 +798,7 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                     setOtherExpiredSession(null);
                     toggleGuardianSiren(false);
                 }
-            });
+            }, onSnapshotError('safemode/guardian-alerts'));
         };
 
         const timer = setTimeout(initListener, 0);
