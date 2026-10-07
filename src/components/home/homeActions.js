@@ -3,21 +3,27 @@
 // 홈 → 티미 대화로 넘길 첫 메시지. 대화 내용이 주소(쿼리)·분석 도구에 남지 않도록 sessionStorage로 넘긴다.
 export const PENDING_MESSAGE_KEY = 'tm_pending_message';
 
-export function startChat(router, text) {
+// plan: true면 대화 화면이 바로 '일정 3개 만들기'로 시작한다.
+export const PENDING_PLAN_KEY = 'tm_pending_plan';
+
+export function startChat(router, text, { plan = false } = {}) {
   const message = (text || '').trim();
   try {
     if (message) sessionStorage.setItem(PENDING_MESSAGE_KEY, message);
+    if (plan) sessionStorage.setItem(PENDING_PLAN_KEY, '1');
   } catch {}
   router.push('/chat');
 }
 
 export function takePendingMessage() {
   try {
-    const message = sessionStorage.getItem(PENDING_MESSAGE_KEY);
+    const message = sessionStorage.getItem(PENDING_MESSAGE_KEY) || '';
+    const plan = sessionStorage.getItem(PENDING_PLAN_KEY) === '1';
     sessionStorage.removeItem(PENDING_MESSAGE_KEY);
-    return message || '';
+    sessionStorage.removeItem(PENDING_PLAN_KEY);
+    return { message, plan };
   } catch {
-    return '';
+    return { message: '', plan: false };
   }
 }
 

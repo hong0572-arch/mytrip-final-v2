@@ -1205,7 +1205,7 @@ export default function MyPage() {
                         );
                     })
                 )}
-                <GlassCard className="mt-6 p-5 flex items-center justify-between cursor-pointer transition group active:scale-[0.98]" onClick={() => router.push('/plan?tab=create')}>
+                <GlassCard className="mt-6 p-5 flex items-center justify-between cursor-pointer transition group active:scale-[0.98]" onClick={() => { try { sessionStorage.setItem('tm_pending_plan', '1'); } catch {} router.push('/chat'); }}>
                     <div className="flex items-center gap-4"><div className="w-12 h-12 bg-gradient-to-br from-brand-primary to-brand-secondary text-white rounded-full flex items-center justify-center shadow-lg shadow-brand-primary/30 group-hover:scale-110 transition-transform shrink-0"><Plus size={24} strokeWidth={3} /></div><div className="overflow-hidden"><h4 className="font-bold text-tm-ink text-base mb-0.5 break-keep whitespace-nowrap truncate w-full">새로운 일정 만들기</h4><p className="text-[13px] text-tm-muted font-medium break-keep whitespace-nowrap">AI가 취향에 맞게 짜드려요</p></div></div><ChevronRight size={20} className="text-tm-muted transition shrink-0" />
                 </GlassCard>
             </main>

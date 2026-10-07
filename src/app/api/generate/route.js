@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { generateWithRetry } from "../../../lib/geminiRetry";
+
+export const maxDuration = 60;
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const TOUR_API_KEY = "8ed14b467e021a7ef5801d0a9628602170d0414f8ade42814a9cde30ec04f2fb";
@@ -176,7 +179,7 @@ export async function POST(req) {
     `;
 
     const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" }); // 모델명 최신화 권장
-    const result = await model.generateContent(prompt);
+    const result = await generateWithRetry(model, prompt);
     const response = await result.response;
     let text = response.text();
 

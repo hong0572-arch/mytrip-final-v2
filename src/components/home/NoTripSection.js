@@ -51,7 +51,7 @@ export default function NoTripSection({ copy, user }) {
           <button
             key={s.label}
             type="button"
-            onClick={() => startChat(router, s.prompt)}
+            onClick={() => startChat(router, s.prompt, { plan: Boolean(s.plan) })}
             className="tm-rise h-11 rounded-full border border-tm-line bg-white px-4 text-[14px] font-medium text-tm-ink active:bg-tm-sky-tint"
             style={delay(160 + i * 60)}
           >
@@ -86,10 +86,10 @@ export default function NoTripSection({ copy, user }) {
           <HomeIcon size={22} className="text-tm-navy" strokeWidth={1.8} />
           <span className="text-[13px] font-semibold leading-[1.3]">{copy.shortcuts.stay[0]}<br />{copy.shortcuts.stay[1]}</span>
         </button>
-        <Link href="/plan?tab=create" className="tm-rise flex min-h-[84px] flex-col gap-2.5 rounded-2xl bg-white p-3.5 text-tm-ink" style={delay(580)}>
+        <button type="button" onClick={() => startChat(router, '', { plan: true })} className="tm-rise flex min-h-[84px] flex-col gap-2.5 rounded-2xl bg-white p-3.5 text-left text-tm-ink" style={delay(580)}>
           <CalendarPlus size={22} className="text-tm-navy" strokeWidth={1.8} />
           <span className="text-[13px] font-semibold leading-[1.3]">{copy.shortcuts.planner[0]}<br />{copy.shortcuts.planner[1]}</span>
-        </Link>
+        </button>
       </section>
     </>
   );
