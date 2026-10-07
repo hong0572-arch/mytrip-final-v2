@@ -235,7 +235,7 @@ function TripDetailContent() {
             {/* 실시간 채팅방 모달 (✨ z-index 상향: 일정 모달 위로) */}
             {showChat && (
                 <div className="fixed inset-0 z-[120] flex items-end justify-center sm:items-center pointer-events-auto">
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowChat(false)}></div>
+                    <div className="absolute inset-0 bg-tm-ink/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowChat(false)}></div>
                     <div className="bg-white w-full sm:max-w-md h-[85vh] sm:h-[650px] rounded-t-[32px] sm:rounded-[32px] flex flex-col relative z-10 animate-in slide-in-from-bottom-full duration-300 shadow-2xl overflow-hidden">
                         <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between shrink-0 bg-white/90 backdrop-blur-md z-20">
                             <div>

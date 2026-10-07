@@ -42,7 +42,7 @@ const PortraitOnly = () => {
     if (!isLandscape) return null;
 
     return (
-        <div className="fixed inset-0 z-[99999] bg-[#030712] flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
+        <div className="fixed inset-0 z-[99999] bg-[#0F2747] flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
             <div className="relative mb-8">
                 <div className="absolute inset-0 bg-indigo-500/20 blur-3xl rounded-full"></div>
                 <div className="relative bg-gray-900/50 backdrop-blur-xl border border-white/10 p-6 rounded-[32px] shadow-2xl">

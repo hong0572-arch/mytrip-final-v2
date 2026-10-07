@@ -82,7 +82,7 @@ export default function ProductClient() {
     if (!product) return null;
 
     return (
-        <div className="max-w-2xl mx-auto bg-[#f3eedd] min-h-screen pb-24 font-sans">
+        <div className="max-w-2xl mx-auto bg-tm-ground min-h-screen pb-24 font-sans">
             {/* Header */}
             <header className="fixed top-0 left-0 right-0 z-50 bg-transparent flex items-center p-4 max-w-2xl mx-auto">
                 <button 
@@ -110,20 +110,20 @@ export default function ProductClient() {
                             ))}
                         </div>
                         {product.images.length > 1 && (
-                            <div className="absolute bottom-10 right-4 bg-black/60 text-white text-xs px-3 py-1.5 rounded-full font-bold backdrop-blur-sm pointer-events-none">
+                            <div className="absolute bottom-10 right-4 bg-tm-ink/60 text-white text-xs px-3 py-1.5 rounded-full font-bold backdrop-blur-sm pointer-events-none">
                                 스와이프 {product.images.length}장
                             </div>
                         )}
                     </>
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-500 bg-[#e2dcc8] font-medium">No Image Available</div>
+                    <div className="w-full h-full flex items-center justify-center text-gray-500 bg-tm-sky-tint font-medium">No Image Available</div>
                 )}
                 {/* Gradient overlay for better header visibility */}
-                <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/40 to-transparent pointer-events-none"></div>
+                <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-tm-ink/40 to-transparent pointer-events-none"></div>
             </div>
 
             {/* Content Card (Overlaps the image) */}
-            <div className="bg-[#f3eedd] relative -mt-6 rounded-t-3xl flex flex-col">
+            <div className="bg-tm-ground relative -mt-6 rounded-t-3xl flex flex-col">
                 <div className="bg-white rounded-t-3xl p-6 shadow-sm min-h-screen">
                     {/* Type Badge */}
                     <div className="flex justify-between items-start mb-4">
@@ -198,14 +198,14 @@ export default function ProductClient() {
             <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t p-4 max-w-2xl mx-auto shadow-[0_-10px_30px_rgba(0,0,0,0.05)] flex gap-3 z-50">
                 <button 
                     onClick={() => setShowInquiryModal(true)}
-                    className="flex-1 py-4 bg-[#f3eedd] text-gray-800 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-[#e6dfc8] transition-colors"
+                    className="flex-1 py-4 bg-tm-ground text-gray-800 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-tm-line transition-colors"
                 >
                     <MessageCircle size={22} /> 문의하기
                 </button>
                 {product.externalUrl && (
                     <button 
                         onClick={() => window.open(product.externalUrl, '_blank')}
-                        className="flex-1 py-4 bg-cyan-500 text-white font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-cyan-600 transition-colors shadow-md shadow-cyan-500/30"
+                        className="flex-1 py-4 bg-tm-navy text-white font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-tm-navy-deep transition-colors"
                     >
                         <ExternalLink size={22} /> 예약/구매
                     </button>
@@ -214,7 +214,7 @@ export default function ProductClient() {
 
             {/* Inquiry Modal */}
             {showInquiryModal && (
-                <div className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+                <div className="fixed inset-0 z-[100] bg-tm-ink/60 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
                     <div className="bg-white rounded-3xl w-full max-w-md p-7 shadow-2xl">
                         <h2 className="text-2xl font-bold mb-2 text-gray-900">문의 남기기</h2>
                         <p className="text-gray-500 mb-6 text-sm">궁금한 점이나 예약 관련 문의를 남겨주세요.</p>
@@ -244,7 +244,7 @@ export default function ProductClient() {
                                 <button 
                                     type="submit" 
                                     disabled={!user || isSubmitting}
-                                    className="flex-1 py-4 bg-cyan-500 text-white rounded-2xl font-bold hover:bg-cyan-600 transition-colors disabled:opacity-50 shadow-md shadow-cyan-500/30"
+                                    className="flex-1 py-4 bg-tm-navy text-white rounded-2xl font-bold hover:bg-tm-navy-deep transition-colors disabled:opacity-50"
                                 >
                                     {isSubmitting ? '전송 중...' : '문의 전송'}
                                 </button>

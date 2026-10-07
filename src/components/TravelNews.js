@@ -168,7 +168,7 @@ export default function TravelNews({ language = 'ko' }) {
                             loading="lazy"
                             onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&auto=format'; }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-tm-ink/85 via-tm-ink/30 to-transparent" />
 
                         {/* 태그 */}
                         <div className="absolute top-2.5 left-2.5">

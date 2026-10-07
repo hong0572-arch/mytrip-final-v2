@@ -1127,7 +1127,7 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                         dragConstraints={{ left: -200, right: 200, top: 0, bottom: 650 }}
                         className="w-full max-w-[480px] pointer-events-auto"
                     >
-                        <div className="w-full bg-rose-600/90 backdrop-blur-md border border-rose-500/30 text-white rounded-2xl py-3 px-4 shadow-[0_8px_32px_rgba(239,68,68,0.3)] flex items-center justify-between ring-2 ring-rose-500/50 cursor-grab active:cursor-grabbing">
+                        <div className="w-full bg-tm-safe text-white rounded-2xl py-3 px-4 shadow-lg flex items-center justify-between ring-2 ring-tm-safe/30 cursor-grab active:cursor-grabbing">
                             <div className="flex items-center gap-2.5">
                                 <span className="relative flex h-3.5 w-3.5 shrink-0">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
@@ -1136,12 +1136,12 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                                 <span className="text-xs font-black tracking-wide uppercase text-white">{safeModeTranslations[language].island_protecting}</span>
                             </div>
                             <div className="flex items-center gap-3">
-                                <span className="bg-black/30 font-black px-2.5 py-1 rounded-lg text-sm tabular-nums tracking-wider border border-white/10 text-white">
+                                <span className="bg-tm-ink/30 font-black px-2.5 py-1 rounded-lg text-sm tabular-nums tracking-wider border border-white/10 text-white">
                                     {formatTime(timeLeft)}
                                 </span>
                                 <button 
                                     onClick={() => setIsOpen(true)}
-                                    className="bg-white text-rose-600 text-[10px] font-black px-3 py-1 rounded-lg hover:bg-rose-50 transition active:scale-95 shadow-sm"
+                                    className="bg-white text-tm-safe-ink text-[12px] font-bold px-3 py-1.5 rounded-lg hover:bg-tm-safe-tint transition active:scale-95 shadow-sm"
                                 >
                                     {safeModeTranslations[language].island_manage}
                                 </button>
@@ -1165,7 +1165,7 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                 onTouchStart={handleDragStart}
             >
                 {isActive && (
-                    <div className="bg-rose-600 text-white text-[9px] font-black px-2.5 py-1 rounded-lg shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse border border-rose-500 tracking-wide select-none">
+                    <div className="bg-tm-safe text-white text-[11px] font-bold px-2.5 py-1 rounded-lg shadow-md border border-tm-safe tracking-wide select-none">
                         {safeModeTranslations[language].float_protecting}
                     </div>
                 )}
@@ -1213,19 +1213,19 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
             {/* 3. Safe Mode 하단 컨트롤 패널 모달 */}
             {isOpen && (
                 <div className="fixed inset-0 z-[9999] flex items-end justify-center pointer-events-auto">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={handleClose}></div>
-                    <div className="bg-[#181818]/95 backdrop-blur-2xl border-t border-white/10 w-full max-w-[480px] rounded-t-[40px] relative z-10 shadow-2xl flex flex-col p-6 animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar text-white">
+                    <div className="absolute inset-0 bg-tm-ink/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={handleClose}></div>
+                    <div className="bg-tm-ground border-t border-tm-line w-full max-w-[480px] rounded-t-[40px] relative z-10 shadow-2xl flex flex-col p-6 animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar text-tm-ink">
                         
                         {/* 헤더 */}
                         <div className="flex justify-between items-start mb-6">
                             <div>
-                                <h3 className="text-2xl font-black text-white flex items-center gap-2">
+                                <h3 className="text-2xl font-black text-tm-ink flex items-center gap-2">
                                     <Siren className={isActive ? 'text-rose-500 animate-bounce' : 'text-rose-500/60'} size={26} />
                                     Safe Mode
                                 </h3>
                                 <p className="text-xs text-slate-300 font-bold mt-1">{safeModeTranslations[language].panel_subtitle}</p>
                             </div>
-                            <button onClick={handleClose} className="w-10 h-10 bg-white/10 text-white hover:bg-white/20 rounded-full flex items-center justify-center transition">
+                            <button onClick={handleClose} className="w-10 h-10 bg-tm-sky-tint text-tm-ink hover:bg-tm-line rounded-full flex items-center justify-center transition">
                                 <X size={20} strokeWidth={2.5} />
                             </button>
                         </div>
@@ -1240,7 +1240,7 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                                         {formatTime(timeLeft)}
                                     </div>
                                     
-                                    <div className="flex justify-center items-center gap-1.5 mt-3 text-xs font-bold text-white bg-white/10 inline-flex px-3 py-1 rounded-full border border-white/10">
+                                    <div className="flex justify-center items-center gap-1.5 mt-3 text-xs font-bold text-tm-ink bg-tm-sky-tint inline-flex px-3 py-1 rounded-full border border-tm-line">
                                         <User size={12} /> {safeModeTranslations[language].panel_guardian}: {guardianName} {guardianPhone && `(${guardianPhone})`}
                                     </div>
                                 </div>
@@ -1268,7 +1268,7 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                                     
                                     <button
                                         onClick={handleToggleOff}
-                                        className="w-full py-4 bg-white/10 text-white border border-white/10 rounded-2xl font-black text-base shadow-lg flex items-center justify-center gap-2 hover:bg-white/20 transition active:scale-95"
+                                        className="w-full py-4 bg-tm-sky-tint text-tm-ink border border-tm-line rounded-2xl font-black text-base shadow-lg flex items-center justify-center gap-2 hover:bg-tm-line transition active:scale-95"
                                     >
                                         {safeModeTranslations[language].btn_stop_timer}
                                     </button>
@@ -1277,17 +1277,17 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                         ) : (
                             <div className="space-y-6">
                                 {/* 보호자 등록 구역 */}
-                                <div className="bg-white/5 p-5 rounded-[28px] border border-white/5">
-                                    <h4 className="text-sm font-black text-white mb-3 flex items-center gap-1.5">
+                                <div className="bg-white p-5 rounded-[28px] border border-tm-line">
+                                    <h4 className="text-sm font-black text-tm-ink mb-3 flex items-center gap-1.5">
                                         <PhoneCall size={16} className="text-rose-500" />
                                         {safeModeTranslations[language].step1_title}
                                     </h4>
 
                                     {isRegistered ? (
-                                        <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex justify-between items-center shadow-sm">
+                                        <div className="bg-white p-4 rounded-2xl border border-tm-line flex justify-between items-center shadow-sm">
                                             <div>
-                                                <p className="text-sm font-black text-white">{guardianName}</p>
-                                                {guardianPhone && <p className="text-xs font-bold text-spotify-text-muted mt-0.5">{guardianPhone}</p>}
+                                                <p className="text-sm font-black text-tm-ink">{guardianName}</p>
+                                                {guardianPhone && <p className="text-xs font-bold text-tm-muted mt-0.5">{guardianPhone}</p>}
                                                 {guardianUserId && <span className="inline-block mt-1.5 text-[9px] font-black bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded">{safeModeTranslations[language].step1_linked}</span>}
                                             </div>
                                             <button 
@@ -1300,18 +1300,18 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                                     ) : (
                                         <div className="space-y-4">
                                             {/* 탭 헤더 */}
-                                            <div className="flex border-b border-white/10 pb-1">
+                                            <div className="flex border-b border-tm-line pb-1">
                                                 <button 
                                                     type="button" 
                                                     onClick={() => setRegisterTab('search')} 
-                                                    className={`flex-1 pb-2 text-xs font-black text-center transition-all ${registerTab === 'search' ? 'border-b-2 border-rose-500 text-rose-500' : 'text-spotify-text-muted hover:text-white'}`}
+                                                    className={`flex-1 pb-2 text-xs font-black text-center transition-all ${registerTab === 'search' ? 'border-b-2 border-tm-navy text-tm-navy' : 'text-tm-muted hover:text-tm-ink'}`}
                                                 >
                                                     {safeModeTranslations[language].step1_tab_search}
                                                 </button>
                                                 <button 
                                                     type="button" 
                                                     onClick={() => setRegisterTab('manual')} 
-                                                    className={`flex-1 pb-2 text-xs font-black text-center transition-all ${registerTab === 'manual' ? 'border-b-2 border-rose-500 text-rose-500' : 'text-spotify-text-muted hover:text-white'}`}
+                                                    className={`flex-1 pb-2 text-xs font-black text-center transition-all ${registerTab === 'manual' ? 'border-b-2 border-tm-navy text-tm-navy' : 'text-tm-muted hover:text-tm-ink'}`}
                                                 >
                                                     {safeModeTranslations[language].step1_tab_manual}
                                                 </button>
@@ -1327,13 +1327,13 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                                                                 value={searchQuery}
                                                                 onChange={(e) => setSearchQuery(e.target.value)}
                                                                 required
-                                                                className="w-full bg-white/5 border border-white/10 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 text-white placeholder:text-spotify-text-muted rounded-xl pl-9 pr-4 py-3 text-xs font-bold outline-none transition"
+                                                                className="w-full bg-white border border-tm-line focus:border-tm-navy focus:ring-1 focus:ring-tm-navy/20 text-tm-ink placeholder:text-tm-muted rounded-xl pl-9 pr-4 py-3 text-xs font-bold outline-none transition"
                                                             />
-                                                            <Search size={14} className="text-spotify-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                                                            <Search size={14} className="text-tm-muted absolute left-3 top-1/2 -translate-y-1/2" />
                                                         </div>
                                                         <button
                                                             type="submit"
-                                                            className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-3 rounded-xl text-xs font-black transition active:scale-95 shadow-sm"
+                                                            className="bg-tm-navy hover:bg-tm-navy-deep text-white px-4 py-3 rounded-xl text-xs font-black transition active:scale-95 shadow-sm"
                                                         >
                                                             {safeModeTranslations[language].step1_search_btn}
                                                         </button>
@@ -1346,19 +1346,19 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                                                     )}
 
                                                     {searchStatus === 'result' && (
-                                                        <div className="max-h-40 overflow-y-auto space-y-2 bg-[#121212] border border-white/10 p-2 rounded-xl custom-scrollbar shadow-inner text-white">
+                                                        <div className="max-h-40 overflow-y-auto space-y-2 bg-white border border-tm-line p-2 rounded-xl custom-scrollbar shadow-inner text-tm-ink">
                                                             {searchResults.map((targetUser) => (
                                                                 <div 
                                                                     key={targetUser.id} 
                                                                     onClick={() => handleSelectUserGuardian(targetUser)}
-                                                                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/5 cursor-pointer transition border border-transparent hover:border-white/10"
+                                                                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-tm-ground cursor-pointer transition border border-transparent hover:border-tm-line"
                                                                 >
-                                                                    <div className="w-8 h-8 rounded-full bg-white/10 text-white font-black text-xs flex items-center justify-center uppercase shrink-0">
+                                                                    <div className="w-8 h-8 rounded-full bg-tm-sky-tint text-tm-ink font-black text-xs flex items-center justify-center uppercase shrink-0">
                                                                         {(targetUser.name || targetUser.displayName || 'U').substring(0, 2)}
                                                                     </div>
                                                                     <div className="flex-1 min-w-0">
-                                                                        <p className="text-xs font-black text-white truncate">{targetUser.name || targetUser.displayName}</p>
-                                                                        <p className="text-[10px] font-bold text-spotify-text-muted truncate">{targetUser.email}</p>
+                                                                        <p className="text-xs font-black text-tm-ink truncate">{targetUser.name || targetUser.displayName}</p>
+                                                                        <p className="text-[10px] font-bold text-tm-muted truncate">{targetUser.email}</p>
                                                                     </div>
                                                                     <span className="text-[9px] font-black bg-rose-500/20 text-rose-400 px-2 py-1 rounded">{safeModeTranslations[language].step1_search_select}</span>
                                                                 </div>
@@ -1367,7 +1367,7 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                                                     )}
 
                                                     {searchStatus === 'no-result' && (
-                                                        <p className="text-center text-[11px] text-spotify-text-muted font-bold py-4">{safeModeTranslations[language].step1_search_no_result}</p>
+                                                        <p className="text-center text-[11px] text-tm-muted font-bold py-4">{safeModeTranslations[language].step1_search_no_result}</p>
                                                     )}
                                                 </div>
                                             ) : (
@@ -1379,7 +1379,7 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                                                             value={guardianName}
                                                             onChange={(e) => setGuardianName(e.target.value)}
                                                             required
-                                                            className="w-full bg-white/5 border border-white/10 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 text-white placeholder:text-spotify-text-muted rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
+                                                            className="w-full bg-white border border-tm-line focus:border-tm-navy focus:ring-1 focus:ring-tm-navy/20 text-tm-ink placeholder:text-tm-muted rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
                                                         />
                                                         <input
                                                             type="tel"
@@ -1387,12 +1387,12 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                                                             value={guardianPhone}
                                                             onChange={(e) => setGuardianPhone(e.target.value)}
                                                             required
-                                                            className="w-full bg-white/5 border border-white/10 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 text-white placeholder:text-spotify-text-muted rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
+                                                            className="w-full bg-white border border-tm-line focus:border-tm-navy focus:ring-1 focus:ring-tm-navy/20 text-tm-ink placeholder:text-tm-muted rounded-xl px-4 py-3.5 text-xs font-bold outline-none transition"
                                                         />
                                                     </div>
                                                     <button
                                                         type="submit"
-                                                        className="w-full py-3.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black shadow-md transition active:scale-95"
+                                                        className="w-full py-3.5 bg-tm-navy hover:bg-tm-navy-deep text-white rounded-xl text-xs font-black shadow-md transition active:scale-95"
                                                     >
                                                         {safeModeTranslations[language].step1_manual_save}
                                                     </button>
@@ -1404,22 +1404,22 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
 
                                 {/* 타이머 설정 */}
                                 <div className="space-y-3">
-                                    <h4 className="text-sm font-black text-white flex items-center gap-1.5 px-1">
+                                    <h4 className="text-sm font-black text-tm-ink flex items-center gap-1.5 px-1">
                                         <Timer size={16} className="text-rose-500" />
                                         {safeModeTranslations[language].step2_title}
                                     </h4>
                                     
                                     <div className="flex flex-col gap-2.5">
-                                        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 focus-within:border-rose-500 focus-within:ring-1 focus-within:ring-rose-500/20 transition shadow-sm">
+                                        <div className="flex items-center gap-2 bg-white border border-tm-line rounded-xl px-4 py-3.5 focus-within:border-tm-navy focus-within:ring-1 focus-within:ring-tm-navy/20 transition shadow-sm">
                                             <input 
                                                 type="number"
                                                 min="1"
                                                 value={duration}
                                                 onChange={(e) => setDuration(e.target.value ? Number(e.target.value) : '')}
-                                                className="flex-1 bg-transparent text-sm font-black text-white outline-none w-full"
+                                                className="flex-1 bg-transparent text-sm font-black text-tm-ink outline-none w-full"
                                                 placeholder={safeModeTranslations[language].step2_duration_placeholder}
                                             />
-                                            <span className="text-xs font-bold text-spotify-text-muted shrink-0">{safeModeTranslations[language].step2_duration_unit}</span>
+                                            <span className="text-xs font-bold text-tm-muted shrink-0">{safeModeTranslations[language].step2_duration_unit}</span>
                                         </div>
                                         <div className="grid grid-cols-4 gap-2">
                                             {[10, 30, 60, 120].map((mins) => (
@@ -1429,7 +1429,7 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                                                     className={`py-2 rounded-lg text-[11px] font-black border transition active:scale-95 ${
                                                         duration === mins
                                                             ? 'bg-rose-500/20 border-rose-500 text-rose-400'
-                                                            : 'bg-white/5 border-white/10 text-spotify-text-muted hover:bg-white/10'
+                                                            : 'bg-white border-tm-line text-tm-muted hover:bg-tm-sky-tint'
                                                     }`}
                                                 >
                                                     {safeModeTranslations[language].step2_duration_btn.replace('{mins}', mins.toString())}
@@ -1437,7 +1437,7 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                                             ))}
                                         </div>
                                     </div>
-                                    <p className="text-[10px] text-spotify-text-muted font-bold px-1 leading-relaxed">
+                                    <p className="text-[10px] text-tm-muted font-bold px-1 leading-relaxed">
                                         {safeModeTranslations[language].step2_desc}
                                     </p>
                                 </div>
@@ -1445,9 +1445,9 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                                 {/* 활성화 버튼 */}
                                 <button
                                     onClick={handleToggleOn}
-                                    className="w-full py-4.5 bg-gradient-to-r from-rose-600 via-red-500 to-amber-500 text-white rounded-2xl font-black text-base shadow-xl hover:opacity-90 transition flex items-center justify-center gap-2 border-b-4 border-rose-700 active:scale-95"
+                                    className="w-full py-4.5 bg-tm-navy text-white rounded-2xl font-black text-base shadow-xl hover:opacity-90 transition flex items-center justify-center gap-2 border-b-4 border-rose-700 active:scale-95"
                                 >
-                                    <Siren size={20} className="text-white animate-pulse" />
+                                    <Siren size={20} className="text-tm-ink animate-pulse" />
                                     {safeModeTranslations[language].btn_start_safe}
                                 </button>
                             </div>
@@ -1460,7 +1460,7 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
             {showTimerAlert && (
                 <div className="fixed inset-0 z-[99999] flex items-center justify-center p-6 pointer-events-auto">
                     <div className="absolute inset-0 bg-brand-danger/80 backdrop-blur-md animate-in fade-in duration-300"></div>
-                    <div className="bg-[#181818]/95 backdrop-blur-md w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-brand-danger text-white">
+                    <div className="bg-[#1E3A5C]/95 backdrop-blur-md w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-brand-danger text-white">
                         <div className="w-16 h-16 bg-brand-danger/10 rounded-2xl flex items-center justify-center text-brand-danger mb-4 animate-bounce shadow-md">
                             <AlertTriangle size={36} />
                         </div>
@@ -1502,8 +1502,8 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
             {/* 4.5. 실시간 위치 전송 완료 모달 */}
             {showLocationSentModal && (
                 <div className="fixed inset-0 z-[99999] flex items-center justify-center p-6 pointer-events-auto">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowLocationSentModal(false)}></div>
-                    <div className="bg-[#181818]/95 backdrop-blur-md w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-brand-primary text-white">
+                    <div className="absolute inset-0 bg-tm-ink/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowLocationSentModal(false)}></div>
+                    <div className="bg-[#1E3A5C]/95 backdrop-blur-md w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-brand-primary text-white">
                         <div className="w-16 h-16 bg-brand-primary/10 rounded-2xl flex items-center justify-center text-brand-primary mb-4 animate-bounce shadow-md">
                             <Send size={28} className="translate-x-0.5" />
                         </div>
@@ -1526,7 +1526,7 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
             {otherExpiredSession && (
                 <div className="fixed inset-0 z-[999999] flex items-center justify-center p-6 pointer-events-auto">
                     <div className="absolute inset-0 bg-brand-danger/90 backdrop-blur-lg animate-in fade-in duration-300"></div>
-                    <div className="bg-[#181818]/95 backdrop-blur-md w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-brand-danger ring-4 ring-brand-danger/20 text-white">
+                    <div className="bg-[#1E3A5C]/95 backdrop-blur-md w-full max-w-sm rounded-[36px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 border-2 border-brand-danger ring-4 ring-brand-danger/20 text-white">
                         <div className="w-16 h-16 bg-brand-danger/10 text-brand-danger rounded-2xl flex items-center justify-center mb-4 animate-pulse shadow-md">
                             <Siren size={36} className="text-brand-danger animate-pulse" />
                         </div>

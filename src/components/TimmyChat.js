@@ -183,82 +183,83 @@ export default function TimmyChat({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[9999] flex items-end justify-center pointer-events-auto">
+      <div className="fixed inset-0 z-[9999] flex items-end justify-center pointer-events-auto font-sans">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          className="absolute inset-0 bg-tm-ink/50"
           onClick={onClose}
         />
 
-        {/* Chat Panel */}
+        {/* Chat Panel — AI 홈의 대화 화면(/chat)과 같은 밝은 디자인 */}
         <motion.div
           initial={{ y: '100%' }}
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-          className={`relative z-10 w-full max-w-[480px] bg-[#0F0F14]/95 backdrop-blur-2xl border-t border-white/10 rounded-t-[32px] shadow-2xl flex flex-col ${
+          className={`relative z-10 w-full max-w-md bg-tm-ground rounded-t-[24px] shadow-2xl flex flex-col text-tm-ink ${
             sheetHeight === 'full' ? 'h-[95vh]' : 'h-[65vh]'
           } transition-all duration-300`}
         >
           {/* Drag Handle */}
-          <div
+          <button
+            type="button"
+            aria-label={sheetHeight === 'full' ? '창 줄이기' : '창 키우기'}
             className="flex justify-center pt-3 pb-1 cursor-grab"
             onClick={() => setSheetHeight(h => h === 'full' ? 'half' : 'full')}
           >
-            <div className="w-10 h-1 bg-white/20 rounded-full" />
-          </div>
+            <span className="w-10 h-1 bg-tm-line rounded-full" />
+          </button>
 
           {/* Header */}
-          <div className="flex items-center justify-between px-5 pb-3 border-b border-white/8">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                <Sparkles size={18} className="text-white" />
-              </div>
-              <div>
-                <h2 className="text-white font-semibold text-[15px] leading-tight">{lang.title}</h2>
-                <p className="text-white/40 text-[11px]">{lang.subtitle}</p>
+          <div className="flex items-center justify-between pl-4 pr-2 pb-2 border-b border-tm-line">
+            <div className="flex items-center gap-2.5 min-w-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/timmy.png" alt="" width={32} height={32} className="w-8 h-8 object-contain shrink-0" />
+              <div className="min-w-0">
+                <h2 className="font-bold text-[16px] leading-tight">{lang.title}</h2>
+                <p className="text-tm-muted text-[11px] truncate">{lang.dailyUsage} {todayUsage}/30</p>
               </div>
             </div>
-            <div className="flex items-center gap-1">
-              <span className="text-white/30 text-[10px] mr-2">{lang.dailyUsage} {todayUsage}/30</span>
+            <div className="flex items-center">
               <button
                 onClick={() => {
                   setShowHistory(false);
                   onCreateNewSession?.();
                 }}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
-                title="새 대화"
+                className="w-11 h-11 flex items-center justify-center rounded-full text-tm-navy"
+                aria-label="새 대화"
               >
-                <MessageSquarePlus size={16} className="text-white/50" />
+                <MessageSquarePlus size={20} strokeWidth={1.8} />
               </button>
               <button
                 onClick={() => {
                   setShowMemory(false);
                   setShowHistory(!showHistory);
                 }}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
-                title="과거 대화"
+                className="w-11 h-11 flex items-center justify-center rounded-full text-tm-navy"
+                aria-label="과거 대화"
               >
-                <History size={16} className="text-white/50" />
+                <History size={20} strokeWidth={1.8} />
               </button>
               <button
                 onClick={() => {
                   setShowHistory(false);
                   setShowMemory(!showMemory);
                 }}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
-                title={lang.memoryTitle}
+                className="w-11 h-11 flex items-center justify-center rounded-full text-tm-navy"
+                aria-label={lang.memoryTitle}
               >
-                <BrainCircuit size={16} className="text-white/50" />
+                <BrainCircuit size={20} strokeWidth={1.8} />
               </button>
               <button
                 onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+                className="w-11 h-11 flex items-center justify-center rounded-full text-tm-muted"
+                aria-label="닫기"
               >
-                <X size={16} className="text-white/50" />
+                <X size={20} />
               </button>
             </div>
           </div>
@@ -270,33 +271,33 @@ export default function TimmyChat({
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="absolute top-[72px] left-0 right-0 z-20 mx-4 bg-[#1A1A24] border border-white/10 rounded-2xl p-4 shadow-xl max-h-[300px] flex flex-col"
+                className="absolute top-[72px] left-0 right-0 z-20 mx-4 bg-white border border-tm-line rounded-2xl p-4 shadow-xl max-h-[300px] flex flex-col"
               >
                 <div className="flex items-center justify-between mb-3 shrink-0">
-                  <h3 className="text-white/80 text-sm font-medium">🕒 과거 대화 목록</h3>
-                  <button onClick={() => setShowHistory(false)} className="text-white/30 hover:text-white/60">
-                    <X size={14} />
+                  <h3 className="text-[14px] font-bold">과거 대화 목록</h3>
+                  <button onClick={() => setShowHistory(false)} aria-label="닫기" className="w-9 h-9 flex items-center justify-center text-tm-muted">
+                    <X size={16} />
                   </button>
                 </div>
                 <div className="flex-1 overflow-y-auto pr-1">
                   {chatSessions.length === 0 ? (
-                    <div className="text-center py-6 text-white/30 text-xs">
+                    <div className="text-center py-6 text-tm-muted text-[13px]">
                       저장된 과거 대화가 없습니다.
                     </div>
                   ) : (
                     <div className="flex flex-col gap-2">
                       {chatSessions.map((session) => (
-                        <div 
+                        <div
                           key={session.id}
-                          className={`flex items-center justify-between p-3 rounded-xl border ${currentSessionId === session.id ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-white/5 border-white/5 hover:bg-white/10'} transition-colors cursor-pointer group`}
+                          className={`flex items-center justify-between p-3 rounded-xl border ${currentSessionId === session.id ? 'bg-tm-sky-tint border-tm-navy/30' : 'bg-tm-ground border-tm-line'} transition-colors cursor-pointer group`}
                           onClick={() => {
                             onSwitchSession?.(session.id);
                             setShowHistory(false);
                           }}
                         >
                           <div className="flex-1 min-w-0 pr-3">
-                            <h4 className="text-white/80 text-[13px] font-medium truncate">{session.title}</h4>
-                            <p className="text-white/40 text-[11px] mt-0.5">
+                            <h4 className="text-[14px] font-semibold truncate">{session.title}</h4>
+                            <p className="text-tm-muted text-[12px] mt-0.5">
                               {new Date(session.updatedAt).toLocaleDateString()}
                             </p>
                           </div>
@@ -305,9 +306,10 @@ export default function TimmyChat({
                               e.stopPropagation();
                               onDeleteSession?.(session.id);
                             }}
-                            className="text-white/20 hover:text-red-400 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                            aria-label="대화 삭제"
+                            className="w-9 h-9 flex items-center justify-center text-tm-muted hover:text-tm-sos"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       ))}
@@ -325,32 +327,31 @@ export default function TimmyChat({
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="absolute top-[72px] left-0 right-0 z-20 mx-4 bg-[#1A1A24] border border-white/10 rounded-2xl p-4 shadow-xl max-h-[200px] overflow-y-auto"
+                className="absolute top-[72px] left-0 right-0 z-20 mx-4 bg-white border border-tm-line rounded-2xl p-4 shadow-xl max-h-[240px] overflow-y-auto"
               >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-white/80 text-sm font-medium">🧠 {lang.memoryTitle}</h3>
-                  <button onClick={() => setShowMemory(false)} className="text-white/30 hover:text-white/60">
-                    <X size={14} />
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-[14px] font-bold">{lang.memoryTitle}</h3>
+                  <button onClick={() => setShowMemory(false)} aria-label="닫기" className="w-9 h-9 flex items-center justify-center text-tm-muted">
+                    <X size={16} />
                   </button>
                 </div>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-white/30 text-[11px]">{lang.memoryDesc}</p>
-                </div>
+                <p className="text-tm-muted text-[12px] mb-2">{lang.memoryDesc}</p>
                 {memories.length === 0 ? (
-                  <p className="text-white/20 text-xs text-center py-3">{lang.memoryEmpty}</p>
+                  <p className="text-tm-muted text-[13px] text-center py-3">{lang.memoryEmpty}</p>
                 ) : (
                   <div className="space-y-2">
                     {memories.map(mem => (
-                      <div key={mem.id} className="flex items-start justify-between bg-white/5 rounded-xl px-3 py-2">
+                      <div key={mem.id} className="flex items-start justify-between bg-tm-ground rounded-xl px-3 py-2">
                         <div className="flex-1 min-w-0">
-                          <span className="text-[10px] text-indigo-400 font-medium uppercase">{mem.category}</span>
-                          <p className="text-white/70 text-xs mt-0.5 truncate">{mem.content}</p>
+                          <span className="text-[11px] text-tm-navy font-semibold uppercase">{mem.category}</span>
+                          <p className="text-[13px] mt-0.5 truncate">{mem.content}</p>
                         </div>
                         <button
                           onClick={() => onDeleteMemory?.(mem.id)}
-                          className="ml-2 text-white/20 hover:text-red-400 transition-colors flex-shrink-0"
+                          aria-label="기억 삭제"
+                          className="ml-2 w-9 h-9 flex items-center justify-center text-tm-muted hover:text-tm-sos transition-colors flex-shrink-0"
                         >
-                          <Trash2 size={12} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     ))}
@@ -361,50 +362,38 @@ export default function TimmyChat({
           </AnimatePresence>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 custom-scrollbar" aria-live="polite">
             {/* Welcome Message (when no messages) */}
             {messages.length === 0 && (
-              <div className="flex gap-2.5 items-start">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Sparkles size={13} className="text-white" />
-                </div>
-                <div className="bg-white/8 rounded-2xl rounded-tl-md px-4 py-3 max-w-[85%]">
-                  <p className="text-white/80 text-[13px] leading-relaxed">{lang.greeting}</p>
-                </div>
+              <div className="max-w-[88%] rounded-[18px] rounded-bl-[4px] bg-white px-3.5 py-2.5 text-[15px] leading-normal">
+                {lang.greeting}
               </div>
             )}
 
             {/* Message List */}
             {messages.map((msg, idx) => (
-              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'gap-2.5 items-start'}`}>
-                {msg.role !== 'user' && (
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Sparkles size={13} className="text-white" />
-                  </div>
-                )}
-                <div className={`rounded-2xl px-4 py-3 max-w-[85%] ${
+              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`px-3.5 py-2.5 text-[15px] leading-relaxed ${
                   msg.role === 'user'
-                    ? 'bg-indigo-600/80 rounded-tr-md'
+                    ? 'max-w-[80%] rounded-[18px] rounded-br-[4px] bg-tm-ink text-white'
                     : msg.isError
-                      ? 'bg-red-500/10 border border-red-500/20 rounded-tl-md'
-                      : 'bg-white/8 rounded-tl-md'
+                      ? 'max-w-[92%] rounded-[18px] rounded-bl-[4px] bg-tm-warm-tint text-tm-warm'
+                      : 'max-w-[92%] rounded-[18px] rounded-bl-[4px] bg-white'
                 }`}>
                   {msg.role === 'user' ? (
                     <div className="flex flex-col gap-2">
                       {msg.imageUrl && (
-                        <img 
-                          src={msg.imageUrl} 
-                          alt="Uploaded by user" 
-                          className="max-w-[200px] rounded-lg border border-white/20 object-contain shadow-sm"
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={msg.imageUrl}
+                          alt=""
+                          className="max-w-[200px] rounded-lg object-contain"
                         />
                       )}
-                      {msg.content && <p className="text-white text-[13px] leading-relaxed">{msg.content}</p>}
+                      {msg.content && <p>{msg.content}</p>}
                     </div>
                   ) : (
-                    <div className="text-white/80 text-[13px] leading-relaxed prose prose-invert prose-sm max-w-none
-                      prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5
-                      prose-headings:text-white/90 prose-headings:font-semibold
-                      prose-strong:text-white/90 prose-code:text-indigo-300 prose-code:bg-white/5 prose-code:px-1 prose-code:rounded">
+                    <div className="[&_a]:text-tm-navy [&_a]:underline [&_li]:my-0.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-1 [&_strong]:font-bold [&_ul]:list-disc [&_ul]:pl-5">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {msg.content}
                       </ReactMarkdown>
@@ -416,19 +405,14 @@ export default function TimmyChat({
 
             {/* Loading Indicator */}
             {isLoading && (
-              <div className="flex gap-2.5 items-start">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                  <Sparkles size={13} className="text-white animate-pulse" />
-                </div>
-                <div className="bg-white/8 rounded-2xl rounded-tl-md px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1">
-                      <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
-                    <span className="text-white/40 text-xs">{lang.thinking}</span>
-                  </div>
+              <div className="flex items-center gap-2" role="status">
+                <div className="flex items-center gap-2.5 rounded-[18px] rounded-bl-[4px] bg-white px-3.5 py-2.5">
+                  <span aria-hidden="true" className="flex h-3 items-center gap-1">
+                    <span className="tm-dot bg-tm-sky" />
+                    <span className="tm-dot bg-tm-sky" />
+                    <span className="tm-dot bg-tm-sky" />
+                  </span>
+                  <span className="text-tm-muted text-[13px]">{lang.thinking}</span>
                 </div>
               </div>
             )}
@@ -444,12 +428,12 @@ export default function TimmyChat({
                   <button
                     key={action.key}
                     onClick={() => handleQuickAction(action)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+                    className="flex h-10 items-center gap-1.5 px-3.5 rounded-full border border-tm-line bg-white text-tm-ink"
                   >
-                    <action.icon size={13} style={{ color: action.color }} />
-                    <span className="text-white/70 text-[12px]">{lang.quickActions[action.key]}</span>
+                    <action.icon size={15} className="text-tm-navy" />
+                    <span className="text-[13px] font-medium">{lang.quickActions[action.key]}</span>
                     {action.isComingSoon && (
-                      <span className="text-[9px] text-yellow-400/60 ml-0.5">soon</span>
+                      <span className="text-[11px] text-tm-warm ml-0.5">soon</span>
                     )}
                   </button>
                 ))}
@@ -458,45 +442,49 @@ export default function TimmyChat({
           )}
 
           {/* Hidden File Input for Camera/Image Upload */}
-          <input 
-            type="file" 
-            accept="image/*" 
-            capture="environment" 
-            ref={fileInputRef} 
-            className="hidden" 
-            onChange={handleImageUpload} 
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleImageUpload}
           />
 
           {/* Input Bar */}
-          <div className="px-4 pb-4 pt-2 border-t border-white/8">
-            <div className="flex items-center gap-2 bg-white/8 rounded-2xl px-3 py-1.5">
+          <div className="px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-2.5 border-t border-tm-line">
+            <div className="flex items-center gap-1 bg-white border border-tm-line rounded-full pl-4 pr-1.5 h-[52px] focus-within:border-tm-navy">
               <input
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={lang.placeholder}
-                className="flex-1 bg-transparent text-white text-[14px] placeholder-white/30 outline-none py-1.5"
+                aria-label={lang.placeholder}
+                className="flex-1 min-w-0 bg-transparent text-[15px] placeholder:text-tm-muted outline-none"
                 disabled={isLoading}
               />
               <button
                 onClick={toggleVoice}
-                className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
-                  isListening ? 'bg-red-500/20 text-red-400' : 'text-white/30 hover:text-white/60'
+                aria-label="음성 입력"
+                aria-pressed={isListening}
+                className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
+                  isListening ? 'bg-tm-sos text-white' : 'text-tm-navy'
                 }`}
               >
-                {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                {isListening ? <MicOff size={18} /> : <Mic size={18} />}
               </button>
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || isLoading}
-                className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${
+                aria-label="보내기"
+                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${
                   input.trim() && !isLoading
-                    ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30'
-                    : 'text-white/20'
+                    ? 'bg-tm-navy text-white'
+                    : 'text-tm-muted'
                 }`}
               >
-                <Send size={15} />
+                <Send size={17} />
               </button>
             </div>
           </div>

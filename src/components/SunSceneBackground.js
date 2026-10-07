@@ -320,7 +320,7 @@ export default function SunSceneBackground({ scene }) {
             </div>
 
             {/* A gentle sand vignette fade overlay on top of the SVG to merge it perfectly into the sand-light background */}
-            <div className="absolute inset-x-0 top-0 h-[320px] bg-gradient-to-b from-transparent via-transparent to-[#F3E5D0] z-10" />
+            <div className="absolute inset-x-0 top-0 h-[320px] bg-gradient-to-b from-transparent via-transparent to-[#F8F7F4] z-10" />
         </div>
     );
 }

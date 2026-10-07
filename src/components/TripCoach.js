@@ -195,7 +195,7 @@ export default function TripCoach({ itineraries = [], userData = {}, onShowToast
   return (
     <div className="animate-in fade-in duration-500 pb-16">
       {/* 헤더 */}
-      <header className="flex justify-between items-center px-4 pt-12 pb-4 sticky top-0 z-40 bg-gradient-to-b from-[#F3E5D0]/95 to-transparent backdrop-blur-md">
+      <header className="flex justify-between items-center px-4 pt-12 pb-4 sticky top-0 z-40 bg-gradient-to-b from-[#F8F7F4]/95 to-transparent backdrop-blur-md">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-[14px] flex items-center justify-center text-white shadow-lg shrink-0">
             <Sparkles size={20} className="text-white" />

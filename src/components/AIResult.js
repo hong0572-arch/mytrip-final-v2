@@ -81,7 +81,7 @@ const getInfoModalGradient = (tab) => {
         case 'budget': return '#15548c';
         case 'hotels': return '#4d4f52';
         case 'tips': return '#571370';
-        default: return '#121212';
+        default: return '#15304F';
     }
 };
 
@@ -1325,8 +1325,8 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
     };
 
     return (
-        <div className="fixed inset-0 w-full bg-black flex items-center justify-center font-sans overflow-hidden selection:bg-indigo-500/30" style={{ zIndex: 100 }}>
-            <div id={CAPTURE_ID} className="w-full max-w-[480px] h-full bg-black relative shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col border-x border-white/10 ring-1 ring-white/5">
+        <div className="fixed inset-0 w-full bg-tm-ink flex items-center justify-center font-sans overflow-hidden selection:bg-indigo-500/30" style={{ zIndex: 100 }}>
+            <div id={CAPTURE_ID} className="w-full max-w-[480px] h-full bg-tm-ink relative shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col border-x border-white/10 ring-1 ring-white/5">
 
                 {/* Full screen Map */}
                 <div className={`absolute inset-0 z-0 bg-gray-900 pointer-events-auto ${viewMode === 'map' ? 'block' : 'hidden'}`}>
@@ -1334,11 +1334,11 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 </div>
 
                 {/* Top Overlay */}
-                <div className={`absolute top-0 left-0 w-full p-4 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none z-10 flex flex-col items-start transition-all duration-300 ${
+                <div className={`absolute top-0 left-0 w-full p-4 bg-gradient-to-b from-tm-ink/80 via-tm-ink/40 to-transparent pointer-events-none z-10 flex flex-col items-start transition-all duration-300 ${
                     viewMode === 'map' ? 'pt-2 sm:pt-2' : 'pt-10 sm:pt-6'
                 }`}>
                     {theme && (
-                        <span className="px-2 py-1 bg-spotify-green text-black text-xs font-black rounded-lg mb-1 shadow-sm">
+                        <span className="px-2 py-1 bg-spotify-green text-white text-xs font-black rounded-lg mb-1 shadow-sm">
                             {theme}
                         </span>
                     )}
@@ -1348,7 +1348,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 </div>
 
                 {/* View Mode Switcher Tab Bar */}
-                <div className={`absolute left-4 z-30 flex bg-[#121212]/20 border border-white/10 p-1 rounded-xl pointer-events-auto backdrop-blur-md transition-all duration-300 ${
+                <div className={`absolute left-4 z-30 flex bg-[#15304F]/20 border border-white/10 p-1 rounded-xl pointer-events-auto backdrop-blur-md transition-all duration-300 ${
                     viewMode === 'map' 
                         ? `top-9 ${isToolbarVisible ? 'right-16' : 'right-4'}` 
                         : 'top-16 right-4'
@@ -1357,7 +1357,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         onClick={() => setViewMode('map')} 
                         className={`flex-1 py-1.5 text-xs font-black rounded-lg transition-all ${
                             viewMode === 'map' 
-                                ? 'bg-spotify-green text-black shadow-md' 
+                                ? 'bg-spotify-green text-white shadow-md' 
                                 : 'text-gray-400 hover:text-white'
                         }`}
                     >
@@ -1367,7 +1367,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         onClick={() => setViewMode('timeline')} 
                         className={`flex-1 py-1.5 text-xs font-black rounded-lg transition-all ${
                             viewMode === 'timeline' 
-                                ? 'bg-spotify-green text-black shadow-md' 
+                                ? 'bg-spotify-green text-white shadow-md' 
                                 : 'text-gray-400 hover:text-white'
                         }`}
                     >
@@ -1377,7 +1377,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                         onClick={() => setViewMode('summary')} 
                         className={`flex-1 py-1.5 text-xs font-black rounded-lg transition-all ${
                             viewMode === 'summary' 
-                                ? 'bg-spotify-green text-black shadow-md' 
+                                ? 'bg-spotify-green text-white shadow-md' 
                                 : 'text-gray-400 hover:text-white'
                         }`}
                     >
@@ -1387,21 +1387,21 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                 {/* Right Top Buttons - Unified Vertical Toolbar */}
                 {isToolbarVisible ? (
-                    <div className="absolute top-8 right-4 sm:right-6 z-50 pointer-events-auto flex flex-col items-center bg-[#121212]/80 backdrop-blur-xl border border-white/10 rounded-[32px] p-2 shadow-2xl gap-2 transition-all duration-300">
+                    <div className="absolute top-8 right-4 sm:right-6 z-50 pointer-events-auto flex flex-col items-center bg-[#15304F]/80 backdrop-blur-xl border border-white/10 rounded-[32px] p-2 shadow-2xl gap-2 transition-all duration-300">
                         {/* Collapse Button */}
                         <button 
                             onClick={() => setIsToolbarVisible(false)} 
-                            className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" 
+                            className="p-2.5 rounded-full text-white hover:text-tm-sky-soft hover:bg-white/10 transition-colors" 
                             title={language === 'en' ? 'Hide Menu' : '메뉴 숨기기'}
                         >
                             <ChevronRight size={20} />
                         </button>
                         <div className="w-8 h-[1px] bg-white/10 my-0.5"></div>
 
-                        <button onClick={() => router.push('/mypage')} className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" title={language === 'en' ? "My Page" : "마이페이지"}>
+                        <button onClick={() => router.push('/mypage')} className="p-2.5 rounded-full text-white hover:text-tm-sky-soft hover:bg-white/10 transition-colors" title={language === 'en' ? "My Page" : "마이페이지"}>
                             <User size={20} />
                         </button>
-                        <button onClick={() => setShowInfoModal(true)} className="p-2.5 rounded-full text-spotify-green hover:bg-white/10 transition-colors relative" title={language === 'en' ? "Trip Info" : "여행 정보"}>
+                        <button onClick={() => setShowInfoModal(true)} className="p-2.5 rounded-full text-tm-sky-soft hover:bg-white/10 transition-colors relative" title={language === 'en' ? "Trip Info" : "여행 정보"}>
                             <Sparkles size={20} className="animate-pulse" />
                         </button>
                         <button onClick={() => {
@@ -1410,7 +1410,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             } else {
                                 setIsEditMode(!isEditMode);
                             }
-                        }} className={`p-2.5 rounded-full transition-colors ${isEditMode ? 'bg-spotify-green text-black shadow-lg font-black' : 'text-white hover:bg-white/10 hover:text-spotify-green'}`} title={language === 'en' ? "Edit Itinerary" : "일정 편집"}>
+                        }} className={`p-2.5 rounded-full transition-colors ${isEditMode ? 'bg-spotify-green text-white shadow-lg font-black' : 'text-white hover:bg-white/10 hover:text-tm-sky-soft'}`} title={language === 'en' ? "Edit Itinerary" : "일정 편집"}>
                             {loadingAction === 'save' ? <Loader2 className="animate-spin" size={20} /> : (isEditMode ? <Check size={20} /> : <Pencil size={20} />)}
                         </button>
 
@@ -1422,21 +1422,21 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                                         <button
                                             onClick={() => setTravelMode('DRIVING')}
-                                            className={`p-2 rounded-full transition-all ${travelMode === 'DRIVING' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
+                                            className={`p-2 rounded-full transition-all ${travelMode === 'DRIVING' ? 'bg-spotify-green text-white shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-tm-sky-soft'}`}
                                             title={language === 'en' ? "Driving" : "자동차"}
                                         >
                                             <Car size={18} />
                                         </button>
                                         <button
                                             onClick={() => setTravelMode('WALKING')}
-                                            className={`p-2 rounded-full transition-all ${travelMode === 'WALKING' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
+                                            className={`p-2 rounded-full transition-all ${travelMode === 'WALKING' ? 'bg-spotify-green text-white shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-tm-sky-soft'}`}
                                             title={language === 'en' ? "Walking" : "도보"}
                                         >
                                             <Footprints size={18} />
                                         </button>
                                         <button
                                             onClick={() => setTravelMode('TRANSIT')}
-                                            className={`p-2 rounded-full transition-all ${travelMode === 'TRANSIT' ? 'bg-spotify-green text-black shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-spotify-green'}`}
+                                            className={`p-2 rounded-full transition-all ${travelMode === 'TRANSIT' ? 'bg-spotify-green text-white shadow-md font-bold' : 'text-gray-300 hover:bg-white/10 hover:text-tm-sky-soft'}`}
                                             title={language === 'en' ? "Transit" : "대중교통"}
                                         >
                                             <Train size={18} />
@@ -1447,11 +1447,11 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                         <button
                                             onClick={handleOptimizeItineraryRoute}
                                             disabled={loadingAction === 'optimize'}
-                                            className="p-2.5 bg-spotify-green text-black rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all disabled:opacity-50 border border-white/10 hover:bg-spotify-green-hover"
+                                            className="p-2.5 bg-spotify-green text-white rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all disabled:opacity-50 border border-white/10 hover:bg-spotify-green-hover"
                                             title={language === 'en' ? "AI Route Optimization" : "AI 동선 자동 최적화"}
                                         >
                                             {loadingAction === 'optimize' ? (
-                                                <Loader2 className="animate-spin text-black" size={20} />
+                                                <Loader2 className="animate-spin text-tm-ink" size={20} />
                                             ) : (
                                                 <Wand2 size={20} />
                                             )}
@@ -1463,7 +1463,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                                 <button 
                                     onClick={handleReset} 
-                                    className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" 
+                                    className="p-2.5 rounded-full text-white hover:text-tm-sky-soft hover:bg-white/10 transition-colors" 
                                     title={language === 'en' ? 'Home' : '처음으로'}
                                 >
                                     <Home size={20} />
@@ -1477,14 +1477,14 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                 </button>
                                 <button 
                                     onClick={handleDownloadPDF} 
-                                    className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" 
+                                    className="p-2.5 rounded-full text-white hover:text-tm-sky-soft hover:bg-white/10 transition-colors" 
                                     title={language === 'en' ? 'PDF Export' : 'PDF저장'}
                                 >
                                     <Download size={20} />
                                 </button>
                                 <button 
                                     onClick={handleShare} 
-                                    className="p-2.5 rounded-full text-white hover:text-spotify-green hover:bg-white/10 transition-colors" 
+                                    className="p-2.5 rounded-full text-white hover:text-tm-sky-soft hover:bg-white/10 transition-colors" 
                                     title={language === 'en' ? 'Share' : '공유하기'}
                                 >
                                     <Share2 size={20} />
@@ -1496,7 +1496,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                     /* Expand Button when Collapsed */
                     <button 
                         onClick={() => setIsToolbarVisible(true)} 
-                        className="absolute top-8 right-4 sm:right-6 z-50 pointer-events-auto flex items-center justify-center bg-[#121212]/80 backdrop-blur-xl border border-white/10 rounded-full p-2.5 shadow-2xl text-white hover:text-spotify-green hover:scale-110 transition-all duration-300"
+                        className="absolute top-8 right-4 sm:right-6 z-50 pointer-events-auto flex items-center justify-center bg-[#15304F]/80 backdrop-blur-xl border border-white/10 rounded-full p-2.5 shadow-2xl text-white hover:text-tm-sky-soft hover:scale-110 transition-all duration-300"
                         title={language === 'en' ? 'Show Menu' : '메뉴 보이기'}
                     >
                         <ChevronLeft size={20} />
@@ -1931,11 +1931,11 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {/* Edit Mode Overlay container */}
                 {/* Edit Mode Overlay container */}
                 {isEditMode && (
-                    <div className="absolute bottom-[100px] left-4 right-4 bg-black/80 backdrop-blur-xl p-4 rounded-[24px] shadow-2xl z-20 max-h-[50vh] overflow-y-auto custom-scrollbar border border-white/10 text-white">
+                    <div className="absolute bottom-[100px] left-4 right-4 bg-tm-ink/80 backdrop-blur-xl p-4 rounded-[24px] shadow-2xl z-20 max-h-[50vh] overflow-y-auto custom-scrollbar border border-white/10 text-white">
                         <div className="flex justify-between items-center mb-3">
-                            <h3 className="font-black text-spotify-green flex items-center gap-1"><Pencil size={18} /> {language === 'en' ? 'Edit Itinerary' : '일정 편집'}</h3>
-                            <button onClick={(e) => { e.stopPropagation(); handleAutoFixAll(); }} disabled={loadingAction === 'autoFix'} className="bg-spotify-green text-black py-1 px-3 rounded-full text-xs font-black flex items-center gap-1 hover:bg-spotify-green-hover" title={language === 'en' ? "Calibrate Locations" : "위치 보정"}>
-                                {loadingAction === 'autoFix' ? <Loader2 className="animate-spin text-black" size={14} /> : <Wand2 size={14} />} {language === 'en' ? 'Recalculate All' : '전체 경로 재탐색'}
+                            <h3 className="font-black text-tm-sky-soft flex items-center gap-1"><Pencil size={18} /> {language === 'en' ? 'Edit Itinerary' : '일정 편집'}</h3>
+                            <button onClick={(e) => { e.stopPropagation(); handleAutoFixAll(); }} disabled={loadingAction === 'autoFix'} className="bg-spotify-green text-white py-1 px-3 rounded-full text-xs font-black flex items-center gap-1 hover:bg-spotify-green-hover" title={language === 'en' ? "Calibrate Locations" : "위치 보정"}>
+                                {loadingAction === 'autoFix' ? <Loader2 className="animate-spin text-white" size={14} /> : <Wand2 size={14} />} {language === 'en' ? 'Recalculate All' : '전체 경로 재탐색'}
                             </button>
                         </div>
                         {tripPlan.itinerary?.map((dayItem, dayIdx) => (
@@ -1946,14 +1946,14 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                         <div key={placeIdx} className="bg-white/5 p-3 rounded-xl border border-white/10 shadow-md">
                                             <div className="flex gap-2 mb-2">
                                                 <input type="text" value={place.name} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'name', e.target.value)} className="flex-1 font-bold text-sm p-1.5 border-b border-white/10 outline-none bg-white/5 rounded-t text-white focus:border-spotify-green transition" placeholder={language === 'en' ? "Place Name" : "장소명"} />
-                                                <button onClick={() => handleUpdateLocation(dayIdx, placeIdx, place.name)} className="p-1.5 rounded bg-white/5 text-spotify-green border border-white/10 hover:bg-white/10 transition"><Search size={14} /></button>
+                                                <button onClick={() => handleUpdateLocation(dayIdx, placeIdx, place.name)} className="p-1.5 rounded bg-white/5 text-tm-sky-soft border border-white/10 hover:bg-white/10 transition"><Search size={14} /></button>
                                             </div>
                                             <textarea value={place.description} onChange={(e) => handleEditChange(dayIdx, placeIdx, 'description', e.target.value)} className="w-full text-xs p-1.5 border border-white/10 rounded bg-white/5 text-white h-12 resize-none mb-2 focus:border-spotify-green outline-none transition" placeholder={language === 'en' ? "Please enter description" : "설명을 입력해주세요"} />
 
                                             {/* ✨ 일정별 예산/지출 입력 필드 고도화 (MyPage와 동기화) */}
                                             <div className="space-y-2 mb-3">
                                                 <div className="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-white/10">
-                                                    <Wallet size={12} className="text-spotify-green shrink-0" />
+                                                    <Wallet size={12} className="text-tm-sky-soft shrink-0" />
                                                     <span className="text-[9px] font-black text-spotify-text-muted uppercase shrink-0 w-8">Exp</span>
                                                     <input
                                                         type="number"
@@ -1964,7 +1964,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                     />
                                                 </div>
                                                 <div className="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-white/10">
-                                                    <Receipt size={12} className="text-spotify-green shrink-0" />
+                                                    <Receipt size={12} className="text-tm-sky-soft shrink-0" />
                                                     <span className="text-[9px] font-black text-spotify-text-muted uppercase shrink-0 w-8">Act</span>
                                                     <input
                                                         type="number"
@@ -1984,7 +1984,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                         </div>
                                     ))}
                                 </div>
-                                <button onClick={() => handleAddPlace(dayIdx)} className="w-full mt-3 py-2 border-2 border-dashed border-spotify-green/20 rounded-xl text-spotify-green text-xs font-bold flex items-center justify-center gap-1 hover:bg-spotify-green/5 transition"><Plus size={14} /> {language === 'en' ? 'Add Place' : '장소 추가'}</button>
+                                <button onClick={() => handleAddPlace(dayIdx)} className="w-full mt-3 py-2 border-2 border-dashed border-white/20 rounded-xl text-tm-sky-soft text-xs font-bold flex items-center justify-center gap-1 hover:bg-spotify-green/5 transition"><Plus size={14} /> {language === 'en' ? 'Add Place' : '장소 추가'}</button>
                             </div>
                         ))}
                     </div>
@@ -1997,8 +1997,8 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {/* Spotify 초록색 저장 버튼 */}
                 {!tripId && (
                     <div className="absolute bottom-[240px] right-6 z-50 flex flex-col items-end gap-2 pointer-events-none">
-                        <div className="bg-spotify-green text-black text-xs font-extrabold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">{language === 'en' ? 'Save' : '저장하기'}<div className="absolute -bottom-1 right-1 w-3 h-3 bg-spotify-green transform rotate-45"></div></div>
-                        <button onClick={handleSaveClick} disabled={isSaving} className="w-14 h-14 bg-spotify-green rounded-full shadow-2xl flex items-center justify-center text-black pointer-events-auto hover:bg-spotify-green-hover hover:scale-105 transition-transform active:scale-95 border-2 border-white/20">
+                        <div className="bg-spotify-green text-white text-xs font-extrabold px-3 py-1.5 rounded-l-xl rounded-t-xl shadow-lg pointer-events-auto relative">{language === 'en' ? 'Save' : '저장하기'}<div className="absolute -bottom-1 right-1 w-3 h-3 bg-spotify-green transform rotate-45"></div></div>
+                        <button onClick={handleSaveClick} disabled={isSaving} className="w-14 h-14 bg-spotify-green rounded-full shadow-2xl flex items-center justify-center text-white pointer-events-auto hover:bg-spotify-green-hover hover:scale-105 transition-transform active:scale-95 border-2 border-white/20">
                             {isSaving ? <Loader2 className="animate-spin" size={24} /> : <Save size={24} strokeWidth={2.5} />}
                         </button>
                     </div>
@@ -2009,10 +2009,10 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {/* Info Modal (Budget, Hotels, Tips) — 스포티파이 스타일 */}
                 {showInfoModal && (
                     <div className="absolute inset-0 flex items-end sm:items-center justify-center" style={{ zIndex: 60 }}>
-                        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowInfoModal(false)}></div>
+                        <div className="absolute inset-0 bg-tm-ink/70 backdrop-blur-sm" onClick={() => setShowInfoModal(false)}></div>
                         <div 
                             className={`w-full sm:w-[90%] h-[75vh] sm:h-[80vh] rounded-t-[32px] sm:rounded-[32px] relative z-20 shadow-2xl flex flex-col p-5 animate-in slide-in-from-bottom-full sm:zoom-in-95 border border-white/10 text-white transition-all duration-700`}
-                            style={{ backgroundImage: `linear-gradient(to bottom, ${getInfoModalGradient(infoModalTab)}d0 0%, ${getInfoModalGradient(infoModalTab)}b0 60%, #121212f2 100%)` }}
+                            style={{ backgroundImage: `linear-gradient(to bottom, ${getInfoModalGradient(infoModalTab)}d0 0%, ${getInfoModalGradient(infoModalTab)}b0 60%, #15304Ff2 100%)` }}
                         >
                             {/* Ken Burns background for info modal */}
                             <div className="absolute inset-0 z-[-2] overflow-hidden rounded-t-[32px] sm:rounded-[32px]">
@@ -2033,24 +2033,24 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             <button onClick={() => setShowInfoModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-spotify-text-muted hover:text-white relative z-10">
                                 <X size={18} />
                             </button>
-                            <h2 className="text-xl font-black mb-4 pr-10 text-white flex items-center gap-2 relative z-10"><Sparkles className="text-spotify-green" size={20} /> {language === 'en' ? 'Trip Info Box' : '여정 꿀팁 박스'}</h2>
+                            <h2 className="text-xl font-black mb-4 pr-10 text-white flex items-center gap-2 relative z-10"><Sparkles className="text-tm-sky-soft" size={20} /> {language === 'en' ? 'Trip Info Box' : '여정 꿀팁 박스'}</h2>
  
-                            <div className="flex bg-black/40 backdrop-blur-md p-1 rounded-xl mb-4 border border-white/5 relative z-10">
-                                <button onClick={() => setInfoModalTab('budget')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'budget' ? 'bg-white/15 text-spotify-green border border-white/10 shadow-sm' : 'text-slate-300 hover:text-white'}`}>{language === 'en' ? 'Budget' : '예산'}</button>
-                                <button onClick={() => setInfoModalTab('hotels')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'hotels' ? 'bg-white/15 text-spotify-green border border-white/10 shadow-sm' : 'text-slate-300 hover:text-white'}`}>{language === 'en' ? 'Stays' : '추천 숙소'}</button>
-                                <button onClick={() => setInfoModalTab('tips')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'tips' ? 'bg-white/15 text-spotify-green border border-white/10 shadow-sm' : 'text-slate-300 hover:text-white'}`}>{language === 'en' ? 'Tips & Weather' : '팁 & 날씨'}</button>
+                            <div className="flex bg-tm-ink/40 backdrop-blur-md p-1 rounded-xl mb-4 border border-white/5 relative z-10">
+                                <button onClick={() => setInfoModalTab('budget')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'budget' ? 'bg-white/15 text-tm-sky-soft border border-white/10 shadow-sm' : 'text-slate-300 hover:text-white'}`}>{language === 'en' ? 'Budget' : '예산'}</button>
+                                <button onClick={() => setInfoModalTab('hotels')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'hotels' ? 'bg-white/15 text-tm-sky-soft border border-white/10 shadow-sm' : 'text-slate-300 hover:text-white'}`}>{language === 'en' ? 'Stays' : '추천 숙소'}</button>
+                                <button onClick={() => setInfoModalTab('tips')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${infoModalTab === 'tips' ? 'bg-white/15 text-tm-sky-soft border border-white/10 shadow-sm' : 'text-slate-300 hover:text-white'}`}>{language === 'en' ? 'Tips & Weather' : '팁 & 날씨'}</button>
                             </div>
  
                             <div className="flex-1 overflow-y-auto custom-scrollbar pb-6 text-white relative z-10">
                                 {infoModalTab === 'budget' && (
                                     <div className="space-y-3">
-                                        <div className="bg-spotify-green/10 p-4 rounded-xl border border-spotify-green/20 flex justify-between items-center mb-4">
-                                            <span className="font-bold text-spotify-green">{language === 'en' ? 'Total Estimated Cost' : '총 예상 비용'}</span>
-                                            <span className="font-black text-spotify-green text-lg">{estimatedCost || (language === 'en' ? 'No budget info' : "예산 정보 없음")}</span>
+                                        <div className="bg-white/10 p-4 rounded-xl border border-white/20 flex justify-between items-center mb-4">
+                                            <span className="font-bold text-tm-sky-soft">{language === 'en' ? 'Total Estimated Cost' : '총 예상 비용'}</span>
+                                            <span className="font-black text-tm-sky-soft text-lg">{estimatedCost || (language === 'en' ? 'No budget info' : "예산 정보 없음")}</span>
                                         </div>
                                         {tripPlan.budgetBreakdown?.map((item, idx) => (
                                             <div key={idx} className="flex gap-2 items-center p-3 bg-gradient-to-br from-white/10 to-white/5 border border-white/10 rounded-xl shadow-md">
-                                                <div className="w-6 h-6 rounded-full bg-spotify-green text-black flex items-center justify-center font-bold text-xs shrink-0">{idx + 1}</div>
+                                                <div className="w-6 h-6 rounded-full bg-spotify-green text-white flex items-center justify-center font-bold text-xs shrink-0">{idx + 1}</div>
                                                 <p className="flex-1 text-sm font-medium text-white/95">{item}</p>
                                             </div>
                                         ))}
@@ -2095,7 +2095,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                         onChange={(e) => setSafetyFilterActive(e.target.checked)}
                                                         className="sr-only peer"
                                                     />
-                                                    <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#121212] after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-spotify-green"></div>
+                                                    <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#15304F] after:border-white/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-spotify-green"></div>
                                                 </label>
                                             </div>
  
@@ -2107,10 +2107,10 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                 >
                                                     <div className="flex items-center justify-between gap-2 mb-2">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="bg-spotify-green text-black text-[9px] font-black px-1.5 py-0.5 rounded-md">{language === 'en' ? `Rec ${idx + 1}` : `추천 ${idx + 1}`}</span>
-                                                            <h4 className="font-bold text-sm sm:text-base text-white group-hover:text-spotify-green transition-colors">{hotel.name}</h4>
+                                                            <span className="bg-spotify-green text-white text-[9px] font-black px-1.5 py-0.5 rounded-md">{language === 'en' ? `Rec ${idx + 1}` : `추천 ${idx + 1}`}</span>
+                                                            <h4 className="font-bold text-sm sm:text-base text-white group-hover:text-tm-sky-soft transition-colors">{hotel.name}</h4>
                                                         </div>
-                                                        <span className="text-xs text-spotify-green font-bold bg-spotify-green/10 px-2.5 py-1 rounded-full shrink-0">{hotel.priceRange}</span>
+                                                        <span className="text-xs text-tm-sky-soft font-bold bg-white/10 px-2.5 py-1 rounded-full shrink-0">{hotel.priceRange}</span>
                                                     </div>
  
                                                     {/* 🌟 안전 마이크로 배지 그룹 */}
@@ -2133,7 +2133,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                     <p className="text-xs text-slate-300 leading-relaxed bg-white/5 p-2.5 rounded-xl border border-white/5">{hotel.description}</p>
  
                                                     <div className="mt-3 flex justify-end gap-3.5 border-t border-white/5 pt-3">
-                                                        <a href={getTripLink(hotel.name, userInfo?.destination || "", language)} target="_blank" rel="noopener noreferrer" className="text-xs font-extrabold text-spotify-green flex items-center gap-0.5 hover:underline">{language === 'en' ? 'Trip.com Lowest' : 'Trip.com 최저가'} <ExternalLink size={12} /></a>
+                                                        <a href={getTripLink(hotel.name, userInfo?.destination || "", language)} target="_blank" rel="noopener noreferrer" className="text-xs font-extrabold text-tm-sky-soft flex items-center gap-0.5 hover:underline">{language === 'en' ? 'Trip.com Lowest' : 'Trip.com 최저가'} <ExternalLink size={12} /></a>
                                                         <a href={getKlookLink(hotel.name, language)} target="_blank" rel="noopener noreferrer" className="text-xs font-extrabold text-orange-400 flex items-center gap-0.5 hover:underline">{language === 'en' ? 'Klook Activities' : 'Klook 액티비티'} <ExternalLink size={12} /></a>
                                                     </div>
                                                 </div>
@@ -2147,7 +2147,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                     <div className="space-y-4">
                                         {safetyAdvice && (
                                             <div className="bg-gradient-to-br from-cyan-950/40 via-cyan-900/10 to-white/5 p-4 rounded-2xl border border-cyan-500/30 flex items-start gap-4 mb-4">
-                                                <div className="bg-black/60 border border-white/5 p-3 rounded-full text-cyan-400 shadow-sm shrink-0"><ShieldCheck size={24} /></div>
+                                                <div className="bg-tm-ink/60 border border-white/5 p-3 rounded-full text-cyan-400 shadow-sm shrink-0"><ShieldCheck size={24} /></div>
                                                 <div>
                                                     <p className="font-black text-cyan-200 mb-1">{language === 'en' ? 'Safety Guide' : '안심 & 안전 가이드'}</p>
                                                     <p className="text-sm text-cyan-100/80 leading-relaxed font-medium whitespace-pre-wrap">{safetyAdvice}</p>
@@ -2156,7 +2156,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                         )}
                                         {weather && (
                                             <div className="bg-gradient-to-br from-blue-950/40 via-blue-900/10 to-white/5 p-4 rounded-2xl border border-blue-500/30 flex items-start gap-4 mb-4">
-                                                <div className="bg-black/60 border border-white/5 p-3 rounded-full text-amber-400 shadow-sm shrink-0"><Sun size={24} /></div>
+                                                <div className="bg-tm-ink/60 border border-white/5 p-3 rounded-full text-amber-400 shadow-sm shrink-0"><Sun size={24} /></div>
                                                 <div>
                                                     <p className="font-black text-blue-200 mb-1">{language === 'en' ? 'Weather Info' : '날씨 정보'}</p>
                                                     <p className="text-sm text-blue-100/80 leading-relaxed">{weather}</p>
@@ -2165,7 +2165,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                         )}
                                         {travelTips && travelTips.length > 0 && (
                                             <div className="bg-gradient-to-br from-amber-950/40 via-amber-900/10 to-white/5 p-4 rounded-2xl border border-amber-500/30 flex items-start gap-4">
-                                                <div className="bg-black/60 border border-white/5 p-3 rounded-full text-amber-400 shadow-sm shrink-0"><Lightbulb size={24} /></div>
+                                                <div className="bg-tm-ink/60 border border-white/5 p-3 rounded-full text-amber-400 shadow-sm shrink-0"><Lightbulb size={24} /></div>
                                                 <div>
                                                     <p className="font-black text-amber-200 mb-2">{language === 'en' ? 'Travel Tips' : '여행 꿀팁'}</p>
                                                     <ul className="text-sm text-amber-100/80 space-y-2 list-disc list-inside">
@@ -2184,8 +2184,8 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {/* 매칭 모달 */}
                 {showMatchModal && (
                     <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 80 }}>
-                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowMatchModal(false)}></div>
-                        <div className="bg-black/80 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl animate-in zoom-in-95 text-white">
+                        <div className="absolute inset-0 bg-tm-ink/60 backdrop-blur-sm" onClick={() => setShowMatchModal(false)}></div>
+                        <div className="bg-tm-ink/80 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl animate-in zoom-in-95 text-white">
                             <button onClick={() => setShowMatchModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:text-white"><X size={18} /></button>
                             <div className="text-center mb-6 mt-2">
                                 <div className="w-16 h-16 bg-gradient-to-tr from-brand-primary to-brand-secondary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-primary/30 animate-bounce"><Sparkles size={32} className="text-white" /></div>
@@ -2202,7 +2202,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                 <img src={mate.profileImgBase64 || "https://i.pravatar.cc/150?u=" + mate.id} className="w-12 h-12 rounded-full object-cover border-2 border-brand-primary/20" />
                                                 <div><p className="font-bold text-white">{mate.name}</p><p className="text-xs text-slate-300 font-bold truncate max-w-[120px]">{mate.bio || (language === 'en' ? "Hello!" : "반가워요!")}</p></div>
                                             </div>
-                                            <button onClick={() => handleRequestRealMate(mate)} className="bg-brand-primary/10 text-brand-primary w-10 h-10 rounded-full flex items-center justify-center hover:bg-brand-primary hover:text-white transition"><Send size={16} /></button>
+                                            <button onClick={() => handleRequestRealMate(mate)} className="bg-white/10 text-tm-sky-soft w-10 h-10 rounded-full flex items-center justify-center hover:bg-brand-primary hover:text-white transition"><Send size={16} /></button>
                                         </div>
                                     ))
                                 )}
@@ -2226,15 +2226,15 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {/* Google Places 검색 결과 모달 */}
                 {showPlacesModal && (
                     <div className="absolute inset-0 flex items-center justify-center p-6" style={{ zIndex: 90 }}>
-                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowPlacesModal(false); setSelectedPlaceToInsert(null); setRecommendInputFood(''); setRecommendInputSight(''); }}></div>
-                        <div className="bg-[#121212]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl text-white flex flex-col max-h-[80vh]">
+                        <div className="absolute inset-0 bg-tm-ink/60 backdrop-blur-sm" onClick={() => { setShowPlacesModal(false); setSelectedPlaceToInsert(null); setRecommendInputFood(''); setRecommendInputSight(''); }}></div>
+                        <div className="bg-[#15304F]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl text-white flex flex-col max-h-[80vh]">
                             <button 
                                 onClick={() => { setShowPlacesModal(false); setSelectedPlaceToInsert(null); setRecommendInputFood(''); setRecommendInputSight(''); }} 
                                 className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:text-white"
                             >
                                 <X size={18} />
                             </button>
-                            <div className="w-12 h-12 bg-spotify-green/10 rounded-xl flex items-center justify-center text-spotify-green mb-3 shrink-0">
+                            <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-tm-sky-soft mb-3 shrink-0">
                                 <Search size={24} />
                             </div>
                             <h3 className="text-lg font-black text-white mb-1 shrink-0">
@@ -2247,7 +2247,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1 min-h-0 mb-4">
                                 {isSearchingPlaces ? (
                                     <div className="flex flex-col items-center justify-center py-10 gap-3">
-                                        <Loader2 size={36} className="animate-spin text-spotify-green" />
+                                        <Loader2 size={36} className="animate-spin text-tm-sky-soft" />
                                         <p className="text-xs text-slate-400 font-bold">{language === 'en' ? 'Searching...' : '검색 중입니다...'}</p>
                                     </div>
                                 ) : googlePlacesResults.length === 0 ? (
@@ -2302,10 +2302,10 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
 
                 {showInsertModal && (
                     <div className="absolute inset-0 flex items-center justify-center p-6" style={{ zIndex: 80 }}>
-                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowInsertModal(false); setSelectedPlaceToInsert(null); setRecommendInputFood(''); setRecommendInputSight(''); }}></div>
-                        <div className="bg-[#121212]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl text-white">
+                        <div className="absolute inset-0 bg-tm-ink/60 backdrop-blur-sm" onClick={() => { setShowInsertModal(false); setSelectedPlaceToInsert(null); setRecommendInputFood(''); setRecommendInputSight(''); }}></div>
+                        <div className="bg-[#15304F]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl text-white">
                             <button onClick={() => { setShowInsertModal(false); setSelectedPlaceToInsert(null); setRecommendInputFood(''); setRecommendInputSight(''); }} className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:text-white"><X size={18} /></button>
-                            <div className="w-12 h-12 bg-spotify-green/10 rounded-xl flex items-center justify-center text-spotify-green mb-3"><Sparkles size={24} /></div>
+                            <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-tm-sky-soft mb-3"><Sparkles size={24} /></div>
                             <h3 className="text-lg font-black text-white mb-2">{language === 'en' ? 'Add Recommendation Position' : '일정 추가 위치 설정'}</h3>
                             
                             <div className="space-y-4 w-full text-left mb-6">
@@ -2325,7 +2325,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                 }}
                                                 className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all shrink-0 ${
                                                     selectedInsertDay === idx 
-                                                        ? 'bg-spotify-green text-black shadow-lg shadow-spotify-green/20' 
+                                                        ? 'bg-spotify-green text-white shadow-lg shadow-spotify-green/20' 
                                                         : 'bg-white/5 border border-white/10 hover:bg-white/10 text-white'
                                                 }`}
                                             >
@@ -2347,7 +2347,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                             onClick={() => setSelectedInsertPos(-1)}
                                             className={`w-full p-2.5 rounded-xl border text-xs font-bold transition-all flex justify-between items-center text-left ${
                                                 selectedInsertPos === -1 
-                                                    ? 'bg-spotify-green/10 border-spotify-green text-spotify-green' 
+                                                    ? 'bg-white/10 border-tm-sky-soft text-tm-sky-soft' 
                                                     : 'bg-white/5 border-white/5 hover:border-white/20 text-white'
                                             }`}
                                         >
@@ -2363,7 +2363,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                                 onClick={() => setSelectedInsertPos(idx)}
                                                 className={`w-full p-2.5 rounded-xl border text-xs font-bold transition-all flex justify-between items-center text-left ${
                                                     selectedInsertPos === idx 
-                                                        ? 'bg-spotify-green/10 border-spotify-green text-spotify-green' 
+                                                        ? 'bg-white/10 border-tm-sky-soft text-tm-sky-soft' 
                                                         : 'bg-white/5 border-white/5 hover:border-white/20 text-white'
                                                 }`}
                                             >
@@ -2400,7 +2400,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                         setRecommendInputFood('');
                                         setRecommendInputSight('');
                                     }}
-                                    className="flex-1 py-3.5 rounded-xl font-bold bg-spotify-green hover:bg-spotify-green-hover text-black transition-all text-xs shadow-md"
+                                    className="flex-1 py-3.5 rounded-xl font-bold bg-spotify-green hover:bg-spotify-green-hover text-white transition-all text-xs shadow-md"
                                 >
                                     {language === 'en' ? 'Add' : '추가하기'}
                                 </button>
@@ -2412,8 +2412,8 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {/* 새 여행 시작 모달 */}
                 {showResetConfirm && (
                     <div className="absolute inset-0 flex items-center justify-center p-6" style={{ zIndex: 80 }}>
-                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowResetConfirm(false)}></div>
-                        <div className="bg-[#121212]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 text-white">
+                        <div className="absolute inset-0 bg-tm-ink/60 backdrop-blur-sm" onClick={() => setShowResetConfirm(false)}></div>
+                        <div className="bg-[#15304F]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 text-white">
                             <div className="w-16 h-16 bg-brand-danger/10 rounded-2xl flex items-center justify-center text-brand-danger mb-4 shadow-sm"><RotateCcw size={32} /></div>
                             <h3 className="text-xl font-black text-white mb-2 text-center">{language === 'en' ? 'Start New Trip' : '새로운 여행 시작'}</h3>
                             <p className="text-sm text-slate-400 mb-6 text-center leading-relaxed">{language === 'en' ? <>Go back to the main screen<br />to plan a new trip?</> : <>초기 화면으로 돌아가서<br />새로운 여행 일정을 계획하시겠습니까?</>}</p>
@@ -2428,8 +2428,8 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                 {/* 저장 모달 */}
                 {showSaveModal && (
                     <div className="absolute inset-0 flex items-center justify-center p-6" style={{ zIndex: 80 }}>
-                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSaveModal(false)}></div>
-                        <div className="bg-[#121212]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 text-white">
+                        <div className="absolute inset-0 bg-tm-ink/60 backdrop-blur-sm" onClick={() => setShowSaveModal(false)}></div>
+                        <div className="bg-[#15304F]/95 backdrop-blur-2xl border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative z-10 shadow-2xl flex flex-col items-center animate-in zoom-in-95 text-white">
                             <button onClick={() => setShowSaveModal(false)} className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:text-white"><X size={18} /></button>
                             <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg"><Save size={32} /></div>
                             <h3 className="text-xl font-black text-white mb-1">{language === 'en' ? 'Save Itinerary' : '일정을 저장할까요?'}</h3>
@@ -2445,7 +2445,7 @@ export default function AIResult({ data, userInfo, tripId, onReset, language = '
                                     </p>
                                 </div>
                             </div>
-                            <button onClick={executeSave} disabled={isSaving} className="w-full bg-spotify-green text-black font-black text-lg py-4 rounded-2xl shadow-xl hover:bg-spotify-green-hover transition flex items-center justify-center">{isSaving ? <Loader2 className="animate-spin text-black" size={20} /> : (language === 'en' ? "Save" : "저장 완료")}</button>
+                            <button onClick={executeSave} disabled={isSaving} className="w-full bg-spotify-green text-white font-black text-lg py-4 rounded-2xl shadow-xl hover:bg-spotify-green-hover transition flex items-center justify-center">{isSaving ? <Loader2 className="animate-spin text-tm-ink" size={20} /> : (language === 'en' ? "Save" : "저장 완료")}</button>
                         </div>
                     </div>
                 )}

@@ -8,10 +8,11 @@
 @tailwind utilities;
 
 :root {
-  --background: #F4F5F7; /* A안 뉴트럴 백그라운드 */
-  --foreground: #1E1E24; /* A안 차콜 텍스트 */
-  --brand-gradient: linear-gradient(135deg, #2AC1DB 0%, #1B75BB 50%, #0E4EA1 100%);
-  --brand-gradient-main: linear-gradient(135deg, #2AC1DB 0%, #1B75BB 50%, #0E4EA1 100%);
+  /* 2026-10 AI 홈 디자인(로고 블루)으로 앱 전체 색을 통일한다. 값의 근거는 아래 tm-* 토큰 참고. */
+  --background: #F8F7F4;
+  --foreground: #15304F;
+  --brand-gradient: linear-gradient(135deg, #1B3D6B 0%, #1B5A94 100%);
+  --brand-gradient-main: linear-gradient(135deg, #1B3D6B 0%, #1B5A94 100%);
 }
 
 @theme inline {
@@ -19,27 +20,107 @@
   --color-foreground: var(--foreground);
   --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
 
-  --color-brand-start: #2AC1DB;
-  --color-brand-middle: #1B75BB;
-  --color-brand-end: #0E4EA1;
+  /* 예전 토큰 이름은 그대로 두고 값만 새 팔레트로 바꾼다(기존 화면 코드 호환). */
+  --color-brand-start: #1B3D6B;
+  --color-brand-middle: #1B5A94;
+  --color-brand-end: #1677B0;
 
-  /* 하이브리드 브랜드 및 시스템 토큰 확장 */
-  --color-brand-primary: #1B75BB;
-  --color-brand-secondary: #2AC1DB;
-  --color-brand-accent: #0E4EA1;
-  --color-brand-success: #34D399;
-  --color-brand-danger: #F43F5E;
+  --color-brand-primary: #1B3D6B;
+  --color-brand-secondary: #1677B0; /* 흰 글자 대비 4.5:1 이상을 위해 로고 하늘색보다 진하게 */
+  --color-brand-accent: #0F2747;
+  --color-brand-success: #0E7357;
+  --color-brand-danger: #B42318;
 
-  /* Spotify 테마 컬러 정의 (모래색 배경 위 가독성을 위해 진한 하늘색으로 보정) */
-  --color-spotify-green: #0E7490;
-  --color-spotify-green-hover: #0A5C74;
-  --color-spotify-dark: #121212;
-  --color-spotify-card: #181818;
-  --color-spotify-card-hover: #282828;
-  --color-spotify-text-muted: #cbd5e1;
+  --color-spotify-green: #1B3D6B;
+  --color-spotify-green-hover: #0F2747;
+  --color-spotify-dark: #15304F;
+  --color-spotify-card: #1E3A5C;
+  --color-spotify-card-hover: #27486E;
+  --color-spotify-text-muted: #B9C8DA;
 
-  /* 샌드 테마 컬러 추가 */
-  --color-sand-light: #F3E5D0;
+  --color-sand-light: #EFEBE4;
+}
+
+/* Tailwind 기본 팔레트 재정의: 회색(slate·gray)은 남색 기운의 중성색, 보라·파랑 계열은 로고 남색 계열로.
+   화면마다 흩어진 색 클래스를 일일이 바꾸지 않고도 한 색 체계로 보이게 한다. */
+@theme {
+  --color-slate-50: #F8F7F4;
+  --color-slate-100: #F1F2F4;
+  --color-slate-200: #E3E6EA;
+  --color-slate-300: #CBD2DA;
+  --color-slate-400: #94A0AE;
+  --color-slate-500: #6B7686;
+  --color-slate-600: #5B6577;
+  --color-slate-700: #3A4A60;
+  --color-slate-800: #22385A;
+  --color-slate-900: #15304F;
+  --color-slate-950: #0F2747;
+
+  --color-gray-50: #F8F7F4;
+  --color-gray-100: #F1F2F4;
+  --color-gray-200: #E3E6EA;
+  --color-gray-300: #CBD2DA;
+  --color-gray-400: #94A0AE;
+  --color-gray-500: #6B7686;
+  --color-gray-600: #5B6577;
+  --color-gray-700: #3A4A60;
+  --color-gray-800: #22385A;
+  --color-gray-900: #15304F;
+  --color-gray-950: #0F2747;
+
+  --color-indigo-50: #EEF6FB;
+  --color-indigo-100: #E4F4FB;
+  --color-indigo-200: #C4E6F5;
+  --color-indigo-300: #8FD0EE;
+  --color-indigo-400: #4D9BD0;
+  --color-indigo-500: #1F6FA8;
+  --color-indigo-600: #1B5A94;
+  --color-indigo-700: #1B3D6B;
+  --color-indigo-800: #15304F;
+  --color-indigo-900: #0F2747;
+  --color-indigo-950: #0A1B33;
+
+  --color-blue-50: #EEF6FB;
+  --color-blue-100: #E4F4FB;
+  --color-blue-200: #C4E6F5;
+  --color-blue-300: #8FD0EE;
+  --color-blue-400: #4D9BD0;
+  --color-blue-500: #1F6FA8;
+  --color-blue-600: #1B5A94;
+  --color-blue-700: #1B3D6B;
+  --color-blue-800: #15304F;
+  --color-blue-900: #0F2747;
+  --color-blue-950: #0A1B33;
+
+  --color-purple-50: #EEF6FB;
+  --color-purple-100: #E4F4FB;
+  --color-purple-200: #C4E6F5;
+  --color-purple-300: #8FD0EE;
+  --color-purple-400: #4D9BD0;
+  --color-purple-500: #1F6FA8;
+  --color-purple-600: #1B5A94;
+  --color-purple-700: #1B3D6B;
+  --color-purple-800: #15304F;
+  --color-purple-900: #0F2747;
+  --color-purple-950: #0A1B33;
+
+  /* 청록(cyan)은 로고 하늘색 계열로. 500 이상은 흰 글자 대비 4.5:1을 넘도록 진하게 */
+  --color-cyan-50: #EEF8FD;
+  --color-cyan-100: #E4F4FB;
+  --color-cyan-200: #C4E6F5;
+  --color-cyan-300: #8FD0EE;
+  --color-cyan-400: #1AA7E0;
+  --color-cyan-500: #1677B0;
+  --color-cyan-600: #1B5A94;
+  --color-cyan-700: #1B3D6B;
+  --color-cyan-800: #15304F;
+  --color-cyan-900: #0F2747;
+
+  --color-fuchsia-500: #1677B0;
+  --color-fuchsia-600: #1B5A94;
+
+  --color-violet-500: #1F6FA8;
+  --color-violet-600: #1B5A94;
 }
 
 body {
@@ -64,4 +145,60 @@ body {
 
 .bg-gradient-brand {
   background: var(--brand-gradient-main);
+}
+/* ===== AI 홈 디자인 토큰 (확정안: 로고 블루) =====
+   남색·하늘색은 로고, 햇살 노랑은 티미의 꽃에서 가져왔다.
+   하늘색(tm-sky)은 흰 바탕 글자로 쓰기엔 대비가 낮으므로 장식·경로에만 쓴다.
+   빨강(tm-sos)은 SOS 전용, 초록빛 청록(tm-safe)은 안심 상태 전용. */
+@theme {
+  --color-tm-ground: #F8F7F4;
+  --color-tm-line: #E3E6EA;
+  --color-tm-ink: #15304F;
+  --color-tm-muted: #5B6577;
+  --color-tm-navy: #1B3D6B;
+  --color-tm-navy-deep: #0F2747;
+  --color-tm-sky: #1AA7E0;
+  --color-tm-sky-tint: #E4F4FB;
+  --color-tm-sky-soft: #7FD3F5;
+  --color-tm-sun: #F2B53A;
+  --color-tm-warm: #9A5C00;
+  --color-tm-warm-tint: #FFF3D6;
+  --color-tm-safe: #0E7357;
+  --color-tm-safe-ink: #0E5A46;
+  --color-tm-safe-tint: #E1F2EC;
+  --color-tm-sos: #B42318;
+}
+
+/* ===== AI 홈 모션 =====
+   CSS만 사용, 주요 버튼·가격은 지연 없이 표시, 움직임 줄이기 설정을 존중한다. */
+@keyframes tm-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes tm-float { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-6px) rotate(-2deg); } }
+@keyframes tm-ring { 0% { transform: scale(1); opacity: .4; } 100% { transform: scale(1.55); opacity: 0; } }
+@keyframes tm-beacon { 0% { transform: scale(1); opacity: .6; } 100% { transform: scale(3.4); opacity: 0; } }
+@keyframes tm-fly { 0% { offset-distance: 0%; opacity: 0; } 10% { opacity: 1; } 85% { opacity: 1; } 100% { offset-distance: 100%; opacity: 0; } }
+@keyframes tm-dash { to { stroke-dashoffset: -36; } }
+@keyframes tm-drop { 0%, 70%, 100% { transform: translateY(0); } 80% { transform: translateY(-6px); } 90% { transform: translateY(0); } }
+@keyframes tm-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes tm-rock { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-14deg); } }
+@keyframes tm-nudge { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(2px, -2px); } }
+@keyframes tm-dots { 0%, 80%, 100% { opacity: .3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+
+.tm-rise { animation: tm-rise .6s cubic-bezier(.2, .7, .2, 1) both; }
+.tm-float { animation: tm-float 4s ease-in-out infinite; transform-origin: 50% 90%; }
+.tm-ring { position: absolute; inset: 0; border-radius: inherit; animation: tm-ring 2.4s ease-out infinite; pointer-events: none; }
+.tm-beacon { position: absolute; inset: 0; border-radius: inherit; animation: tm-beacon 1.8s ease-out infinite; pointer-events: none; }
+.tm-route { animation: tm-dash 3s linear infinite; }
+.tm-plane { offset-rotate: auto 45deg; offset-anchor: center; animation: tm-fly 5s ease-in-out infinite; }
+.tm-pin { animation: tm-drop 5s ease-in-out infinite; }
+.tm-fill { transform-origin: left center; animation: tm-fill 1.1s .35s cubic-bezier(.2, .7, .2, 1) both; }
+.tm-rock { animation: tm-rock 3.5s ease-in-out infinite; }
+.tm-nudge { animation: tm-nudge 1.6s ease-in-out infinite; }
+.tm-dot { display: inline-block; width: 6px; height: 6px; border-radius: 3px; animation: tm-dots 1.2s ease-in-out infinite; }
+.tm-dot:nth-child(2) { animation-delay: .15s; }
+.tm-dot:nth-child(3) { animation-delay: .3s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-rise, .tm-float, .tm-ring, .tm-beacon, .tm-route, .tm-plane, .tm-pin,
+  .tm-fill, .tm-rock, .tm-nudge, .tm-dot { animation: none !important; }
+  .tm-ring, .tm-beacon { display: none; }
 }

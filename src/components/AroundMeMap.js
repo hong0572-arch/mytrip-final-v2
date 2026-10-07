@@ -299,7 +299,7 @@ export default function AroundMeMap({ language = 'ko' }) {
                     <button
                         type="button"
                         onClick={() => setCategory("restaurants")}
-                        className={`py-2 px-3 sm:py-2.5 sm:px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 shrink-0 ${category === "restaurants" ? 'bg-spotify-green text-black shadow-sm font-extrabold scale-[1.02]' : 'text-slate-600 hover:bg-slate-200/50'}`}
+                        className={`py-2 px-3 sm:py-2.5 sm:px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 shrink-0 ${category === "restaurants" ? 'bg-spotify-green text-white shadow-sm font-extrabold scale-[1.02]' : 'text-slate-600 hover:bg-slate-200/50'}`}
                     >
                         <Utensils size={14} />
                         {language === 'en' ? 'Food' : '맛집'}
@@ -307,7 +307,7 @@ export default function AroundMeMap({ language = 'ko' }) {
                     <button
                         type="button"
                         onClick={() => setCategory("lodging")}
-                        className={`py-2 px-3 sm:py-2.5 sm:px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 shrink-0 ${category === "lodging" ? 'bg-spotify-green text-black shadow-sm font-extrabold scale-[1.02]' : 'text-slate-600 hover:bg-slate-200/50'}`}
+                        className={`py-2 px-3 sm:py-2.5 sm:px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 shrink-0 ${category === "lodging" ? 'bg-spotify-green text-white shadow-sm font-extrabold scale-[1.02]' : 'text-slate-600 hover:bg-slate-200/50'}`}
                     >
                         <Hotel size={14} />
                         {language === 'en' ? 'Lodging' : '숙소'}
@@ -315,7 +315,7 @@ export default function AroundMeMap({ language = 'ko' }) {
                     <button
                         type="button"
                         onClick={() => setCategory("shopping")}
-                        className={`py-2 px-3 sm:py-2.5 sm:px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 shrink-0 ${category === "shopping" ? 'bg-spotify-green text-black shadow-sm font-extrabold scale-[1.02]' : 'text-slate-600 hover:bg-slate-200/50'}`}
+                        className={`py-2 px-3 sm:py-2.5 sm:px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 shrink-0 ${category === "shopping" ? 'bg-spotify-green text-white shadow-sm font-extrabold scale-[1.02]' : 'text-slate-600 hover:bg-slate-200/50'}`}
                     >
                         <ShoppingBag size={14} />
                         {language === 'en' ? 'Shopping' : '쇼핑'}
@@ -323,7 +323,7 @@ export default function AroundMeMap({ language = 'ko' }) {
                     <button
                         type="button"
                         onClick={() => setCategory("events")}
-                        className={`py-2 px-3 sm:py-2.5 sm:px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 shrink-0 ${category === "events" ? 'bg-spotify-green text-black shadow-sm font-extrabold scale-[1.02]' : 'text-slate-600 hover:bg-slate-200/50'}`}
+                        className={`py-2 px-3 sm:py-2.5 sm:px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 shrink-0 ${category === "events" ? 'bg-spotify-green text-white shadow-sm font-extrabold scale-[1.02]' : 'text-slate-600 hover:bg-slate-200/50'}`}
                     >
                         <Calendar size={14} />
                         {language === 'en' ? 'Events' : '축제/행사'}

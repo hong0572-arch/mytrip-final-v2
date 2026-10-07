@@ -14,7 +14,7 @@ const GA_ID = "G-DC122J4LJL";
 
 // ✅ [PWA & Metadata] 설정
 export const viewport = {
-  themeColor: "#1E1E24",
+  themeColor: "#F8F7F4", // AI 홈 바탕색(로고 블루 디자인)
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,

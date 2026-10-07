@@ -104,7 +104,7 @@ export default function FormContainer() {
                             <button
                                 type="button"
                                 onClick={nextStep}
-                                className="ml-auto rounded-lg bg-black px-8 py-3 font-semibold text-white transition-transform hover:scale-105"
+                                className="ml-auto rounded-lg bg-tm-ink px-8 py-3 font-semibold text-white transition-transform hover:scale-105"
                             >
                                 다음 단계
                             </button>

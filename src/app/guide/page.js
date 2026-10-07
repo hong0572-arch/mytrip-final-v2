@@ -1,203 +1,88 @@
 "use client";
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { motion } from "framer-motion";
-import { ChevronLeft, Sparkles, Coins, Download, Users, Zap, CheckCircle, MapPin, BrainCircuit } from "lucide-react";
-import SunSceneBackground from '../../components/SunSceneBackground';
+import { ChevronLeft, Coins, Download, MessageCircle, Shield, CalendarCheck } from "lucide-react";
+import useAppLanguage from '../../hooks/useAppLanguage';
+
+// 사용 가이드. AI 홈(/)과 같은 디자인·흐름(말로 시작 → 일정 저장 → 여행 중 사용 → 안심 기능)으로 안내한다.
+const COPY = {
+    ko: {
+        title: '사용 가이드',
+        back: '뒤로',
+        heading: ['티미와 함께', '이렇게 떠나요'],
+        intro: '혼자 떠나도 든든하게. 계획부터 여행 중 안심 기능까지, 다섯 가지만 알면 충분해요.',
+        steps: [
+            { Icon: MessageCircle, title: '말로 시작하기', body: '홈 입력창에 쓰거나 마이크를 눌러 말해 보세요. "11월 혼자 교토 3박, 밤에 도착해요"처럼 편하게요. 티미가 일정, 숙소 동네, 공항에서 숙소까지 가는 방법을 함께 정리해요.' },
+            { Icon: CalendarCheck, title: '일정표로 저장하기', body: '"일정표 만들기"로 저장하면 홈이 여행에 맞게 바뀌어요. 출발 전엔 D-day와 안심 준비 체크리스트, 여행 중엔 오늘의 다음 장소와 길찾기가 바로 보여요.' },
+            { Icon: Shield, title: '안심 기능 켜 두기', body: '아래 메뉴의 "안심"에서 비상 연락처를 등록하세요. 밤에 이동할 땐 안심 귀가 타이머를 켜 두면, 시간 안에 도착을 확인하지 않을 때 보호자에게 알림이 가요. 현재 위치도 보호자에게 바로 보낼 수 있어요.' },
+            { Icon: Coins, title: '포인트 모으기', body: '여행지 상식 퀴즈와 출석 체크로 포인트를 모을 수 있어요. 마이페이지에서 초대 링크를 공유하면 친구와 나 모두 1,000P를 받아요.' },
+            { Icon: Download, title: '앱처럼 설치하기', body: '브라우저 메뉴에서 "홈 화면에 추가" 또는 "앱 설치"를 누르면 바탕화면에서 바로 열 수 있어요.' },
+        ],
+        cta: '티미에게 말해 보기',
+    },
+    en: {
+        title: 'How it works',
+        back: 'Back',
+        heading: ['Travel with Timmy,', 'step by step'],
+        intro: 'Travel solo, travel sure. Five things are all you need, from planning to staying safe on the road.',
+        steps: [
+            { Icon: MessageCircle, title: 'Start by talking', body: 'Type on the home screen or tap the mic and just say it, like "Kyoto solo for 3 nights in November, landing at night". Timmy helps with the plan, where to stay and how to get from the airport.' },
+            { Icon: CalendarCheck, title: 'Save it as an itinerary', body: 'Once you save an itinerary, the home screen follows your trip: a countdown and safety checklist before you leave, and your next stop with directions while you travel.' },
+            { Icon: Shield, title: 'Turn on safety features', body: 'Add an emergency contact under "Safety" in the bottom menu. When you head back at night, start the safe-return timer: if you don’t confirm you arrived in time, your guardian is alerted. You can also send your location to them.' },
+            { Icon: Coins, title: 'Earn points', body: 'Collect points with travel trivia and daily check-ins. Share your invite link from My Page and you and your friend both get 1,000P.' },
+            { Icon: Download, title: 'Install it like an app', body: 'Choose "Add to Home Screen" or "Install app" in your browser menu to open Trip Maker straight from your phone.' },
+        ],
+        cta: 'Talk to Timmy',
+    },
+};
 
 export default function GuidePage() {
     const router = useRouter();
-
-    // 애니메이션 설정
-    const fadeInUp = {
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-    };
-
-    const container = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.15
-            }
-        }
-    };
+    const [language] = useAppLanguage();
+    const copy = COPY[language] || COPY.ko;
 
     return (
-        <div className="min-h-screen bg-[#121212] text-white font-sans relative overflow-hidden flex justify-center">
-            {/* 메인 모바일형 래퍼 컨테이너 (My Page 등과 동일한 너비로 설정하여 일관성 유지) */}
-            <div className="w-full max-w-[560px] min-h-screen relative border-x border-white/10 shadow-2xl flex flex-col bg-[#121212] overflow-y-auto pb-36">
-                
-                {/* 태양 및 산 그라데이션 배경 */}
-                <SunSceneBackground scene="mountain" />
-
-                {/* 상단 네비게이션 */}
-                <div className="px-6 py-4 flex items-center justify-between sticky top-0 z-50 bg-[#121212]/60 backdrop-blur-md border-b border-white/10 shrink-0">
-                    <button 
-                        onClick={() => router.back()} 
-                        className="text-slate-300 hover:text-white transition p-2 bg-white/5 rounded-full shadow-sm border border-white/10 active:scale-95 cursor-pointer"
-                    >
-                        <ChevronLeft size={20} strokeWidth={2.5} />
+        <div className="min-h-dvh bg-tm-ground font-sans text-tm-ink">
+            <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col">
+                <header className="sticky top-0 z-10 flex items-center gap-1 bg-tm-ground/95 py-2 pl-1.5 pr-3 backdrop-blur">
+                    <button type="button" onClick={() => router.back()} aria-label={copy.back} className="flex h-11 w-11 items-center justify-center text-tm-ink">
+                        <ChevronLeft size={24} strokeWidth={2} />
                     </button>
-                    <span className="font-bold text-white text-base">사용 가이드</span>
-                    <div className="w-9"></div>
-                </div>
+                    <span className="text-[17px] font-bold">{copy.title}</span>
+                </header>
 
-                <div className="px-6 pt-8 relative z-10 flex-1">
-
-                    {/* 헤더 영역 */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mb-10 text-center"
-                    >
-                        <span className="inline-flex items-center gap-1.5 py-1 px-3.5 rounded-full bg-brand-primary/20 text-brand-primary text-xs font-black mb-4 animate-pulse border border-brand-primary/30">
-                            <Zap size={12} fill="currentColor" /> My Trip Pro 100% 활용법
-                        </span>
-                        <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-3">
-                            검색 없이 3초 완성!<br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary">AI 여행 플래너</span> 사용법
+                <main className="flex flex-1 flex-col gap-6 px-5 pb-8 pt-2">
+                    <section className="flex flex-col gap-3">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/timmy.png" alt="" width={64} height={72} className="tm-float h-[72px] w-16 object-contain" />
+                        <h1 className="tm-rise text-[28px] font-bold leading-[1.3] tracking-[-0.02em]">
+                            {copy.heading[0]}<br />{copy.heading[1]}
                         </h1>
-                        <p className="text-slate-400 text-xs sm:text-sm font-medium">
-                            복잡한 계획은 AI에게 맡기고,<br />설레는 마음만 챙겨서 떠나세요.
-                        </p>
-                    </motion.div>
+                        <p className="tm-rise text-[15px] leading-[1.55] text-tm-muted" style={{ animationDelay: '80ms' }}>{copy.intro}</p>
+                    </section>
 
-                    {/* 단계별 가이드 리스트 */}
-                    <motion.div
-                        variants={container}
-                        initial="hidden"
-                        animate="visible"
-                        className="space-y-8"
-                    >
-                        {/* Step 1 */}
-                        <motion.div variants={fadeInUp} className="relative">
-                            <div className="absolute -left-3 top-0 bottom-0 w-0.5 bg-white/10"></div>
-                            <div className="relative bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10 ml-4 shadow-xl">
-                                <div className="absolute -left-[27px] top-6 w-6 h-6 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold text-xs shadow-md z-10 border border-white/20">1</div>
-
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="p-3 bg-brand-primary/20 text-brand-primary rounded-2xl border border-brand-primary/10">
-                                        <Sparkles size={24} />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-white">3초 만에 일정 생성하기</h3>
+                    <ol className="flex flex-col gap-3">
+                        {copy.steps.map(({ Icon, title, body }, i) => (
+                            <li key={title} className="tm-rise flex gap-3.5 rounded-2xl bg-white p-4" style={{ animationDelay: `${160 + i * 70}ms` }}>
+                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-tm-sky-tint text-tm-navy">
+                                    <Icon size={20} strokeWidth={1.9} />
+                                </span>
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-[12px] font-bold tabular-nums text-tm-navy">STEP {i + 1}</span>
+                                    <h2 className="text-[16px] font-bold">{title}</h2>
+                                    <p className="text-[14px] leading-[1.6] text-tm-muted">{body}</p>
                                 </div>
+                            </li>
+                        ))}
+                    </ol>
+                </main>
 
-                                <div className="space-y-3 text-slate-300 text-sm leading-relaxed font-medium">
-                                    <p className="flex items-start gap-2">
-                                        <CheckCircle size={16} className="text-brand-primary mt-0.5 shrink-0" />
-                                        <span><span className="font-bold text-white">&quot;어디로 가세요?&quot;</span> 입력창에 도시 이름만 넣으세요. (예: 오사카, 다낭, 파리)</span>
-                                    </p>
-                                    <p className="flex items-start gap-2">
-                                        <CheckCircle size={16} className="text-brand-primary mt-0.5 shrink-0" />
-                                        <span>누구와 가는지, 어떤 스타일(힐링/먹방 등)인지 고르면 끝!</span>
-                                    </p>
-                                    <div className="bg-brand-primary/10 p-3.5 rounded-2xl text-xs font-semibold text-brand-primary mt-2 border border-brand-primary/20">
-                                        🤖 AI가 동선, 맛집, 숙소까지 완벽한 일정을 단 3초 만에 짜드립니다.
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
-
-                        {/* Step 2 */}
-                        <motion.div variants={fadeInUp} className="relative">
-                            <div className="absolute -left-3 top-0 bottom-0 w-0.5 bg-white/10"></div>
-                            <div className="relative bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10 ml-4 shadow-xl">
-                                <div className="absolute -left-[27px] top-6 w-6 h-6 rounded-full bg-brand-accent text-white flex items-center justify-center font-bold text-xs shadow-md z-10 border border-white/20">2</div>
-
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="p-3 bg-brand-accent/20 text-brand-accent rounded-2xl border border-brand-accent/10">
-                                        <Coins size={24} />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-white">여행 전 포인트 쌓기</h3>
-                                </div>
-
-                                <div className="space-y-3 text-slate-300 text-sm leading-relaxed font-medium">
-                                    <p className="flex items-start gap-2">
-                                        <BrainCircuit size={16} className="text-brand-accent mt-0.5 shrink-0" />
-                                        <span><span className="font-bold text-white">매일 퀴즈:</span> 여행지 상식 퀴즈를 풀고 포인트를 모으세요.</span>
-                                    </p>
-                                    <p className="flex items-start gap-2">
-                                        <MapPin size={16} className="text-brand-accent mt-0.5 shrink-0" />
-                                        <span><span className="font-bold text-white">출석 체크:</span> 매일 들어오기만 해도 여행 지원금이 차곡차곡!</span>
-                                    </p>
-                                    <p className="text-xs text-slate-400 mt-2 font-semibold">
-                                        * 모은 포인트는 추후 여행 상품권 등으로 교환 가능합니다. (오픈 예정)
-                                    </p>
-                                </div>
-                            </div>
-                        </motion.div>
-
-                        {/* Step 3 */}
-                        <motion.div variants={fadeInUp} className="relative">
-                            <div className="absolute -left-3 top-0 bottom-0 w-0.5 bg-white/10"></div>
-                            <div className="relative bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10 ml-4 shadow-xl">
-                                <div className="absolute -left-[27px] top-6 w-6 h-6 rounded-full bg-brand-secondary text-white flex items-center justify-center font-bold text-xs shadow-md z-10 border border-white/20">3</div>
-
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="p-3 bg-brand-secondary/20 text-brand-secondary rounded-2xl border border-brand-secondary/10">
-                                        <Download size={24} />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-white">앱처럼 편하게 쓰기</h3>
-                                </div>
-
-                                <div className="space-y-3 text-slate-300 text-sm leading-relaxed font-medium">
-                                    <p>매번 검색해서 들어오지 마세요. 🙅‍♂️</p>
-                                    <div className="bg-white/5 border border-white/5 p-4 rounded-2xl">
-                                        <p className="font-bold text-white mb-1">📲 설치 방법</p>
-                                        <p className="text-xs text-slate-300 leading-normal">브라우저 메뉴에서 <span className="font-bold text-brand-secondary">&apos;홈 화면에 추가&apos;</span> 또는 <span className="font-bold text-brand-secondary">&apos;앱 설치&apos;</span>를 누르세요.</p>
-                                    </div>
-                                    <p className="text-xs text-slate-400 font-semibold">
-                                        스마트폰 바탕화면에 아이콘이 생겨 언제든 1초 만에 접속할 수 있습니다.
-                                    </p>
-                                </div>
-                            </div>
-                        </motion.div>
-
-                        {/* Step 4 */}
-                        <motion.div variants={fadeInUp} className="relative">
-                            <div className="relative bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10 ml-4 shadow-xl">
-                                <div className="absolute -left-[27px] top-6 w-6 h-6 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold text-xs shadow-md z-10 border border-white/20">4</div>
-
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="p-3 bg-brand-primary/20 text-brand-primary rounded-2xl border border-brand-primary/10">
-                                        <Users size={24} />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-white">친구 초대하고 무한 적립</h3>
-                                </div>
-
-                                <div className="space-y-3 text-slate-300 text-sm leading-relaxed font-medium">
-                                    <p>혼자 쓰기 아깝다면?</p>
-                                    <p>
-                                        <span className="font-bold text-white bg-white/10 border border-white/10 px-2.5 py-1 rounded-lg text-xs">마이페이지 &gt; 링크 복사하기</span>를 눌러 공유하세요.
-                                    </p>
-                                    <div className="bg-white/5 p-4 rounded-2xl border border-white/10 shadow-sm text-center">
-                                        <p className="text-brand-primary font-black mb-1">🎁 초대 혜택</p>
-                                        <p className="text-white font-bold">
-                                            친구도 <span className="text-brand-primary font-black">1,000P</span>, 나도 <span className="text-brand-primary font-black">1,000P</span>
-                                        </p>
-                                    </div>
-                                    <p className="text-xs text-center text-slate-400 font-semibold">5명만 초대해도 커피 한 잔 값! ☕</p>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-
+                <div className="sticky bottom-0 border-t border-tm-line bg-tm-ground px-5 py-3 pb-[calc(12px+env(safe-area-inset-bottom))]">
+                    <Link href="/" className="flex h-[52px] items-center justify-center rounded-[14px] bg-tm-navy text-[16px] font-bold text-white">
+                        {copy.cta}
+                    </Link>
                 </div>
-
-                {/* 하단 CTA 버튼 */}
-                <div
-                    className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-[512px] px-6 z-40"
-                >
-                    <button
-                        onClick={() => router.push('/')}
-                        className="w-full py-4 bg-gradient-to-r from-brand-primary to-brand-secondary text-white rounded-[24px] font-black text-lg shadow-xl shadow-brand-primary/20 hover:scale-102 active:scale-98 transition flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                        <Sparkles size={20} className="text-yellow-400 fill-yellow-400" /> 지금 바로 여행 만들기
-                    </button>
-                </div>
-
             </div>
         </div>
     );

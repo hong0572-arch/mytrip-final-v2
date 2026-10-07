@@ -15,7 +15,7 @@ export default function Hero() {
         <section className="relative h-screen w-full overflow-hidden bg-gray-900 text-white">
             {/* Background Gradient/Image Placeholder */}
             <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-pink-500 to-purple-600 opacity-80" />
-            <div className="absolute inset-0 bg-black/30" /> {/* Overlay */}
+            <div className="absolute inset-0 bg-tm-ink/30" /> {/* Overlay */}
 
             <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
                 <motion.div

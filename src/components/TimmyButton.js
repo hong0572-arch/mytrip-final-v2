@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Shield, MessageCircle, X, BookHeart } from 'lucide-react';
 import { auth } from '../lib/firebase';
@@ -41,6 +42,9 @@ export default function TimmyButton() {
   const menuTimeoutRef = useRef(null);
 
   const { pos, isDragging, hasMoved, handlers } = useDraggable({ threshold: 5 });
+  const pathname = usePathname() || '';
+  // AI 홈(/)과 티미 대화(/chat)에는 입력창·안심 버튼이 화면에 있으므로 떠 있는 버튼을 숨긴다(패널은 유지).
+  const hideFloatingButton = pathname === '/' || pathname.startsWith('/chat');
   const lang = t[language] || t.ko;
 
   // 40-minute speech bubble interval
@@ -75,6 +79,19 @@ export default function TimmyButton() {
     };
     window.addEventListener('languageChanged', handler);
     return () => window.removeEventListener('languageChanged', handler);
+  }, []);
+
+  // AI 홈에서 패널 열기 요청: window.dispatchEvent(new CustomEvent('timmy:open', { detail: { panel } }))
+  useEffect(() => {
+    const handler = (e) => {
+      const panel = e.detail?.panel;
+      setShowMenu(false);
+      if (panel === 'safe') setSafeModeOpen(true);
+      else if (panel === 'diary') setDiaryOpen(true);
+      else if (panel === 'chat') setChatOpen(true);
+    };
+    window.addEventListener('timmy:open', handler);
+    return () => window.removeEventListener('timmy:open', handler);
   }, []);
 
   // Listen for Safe Mode active state changes from GlobalSafeMode
@@ -149,6 +166,7 @@ export default function TimmyButton() {
   return (
     <>
       {/* Floating Button */}
+      {!hideFloatingButton && (
       <div
         className="fixed bottom-[105px] left-1/2 z-[998] pointer-events-auto flex flex-col items-center gap-2 transition-transform duration-100 select-none"
         style={{
@@ -171,7 +189,7 @@ export default function TimmyButton() {
               {/* AI Chat Option */}
               <button
                 onClick={handleOpenChat}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-[#1A1A24]/95 backdrop-blur-xl border border-white/10 shadow-xl shadow-black/30 hover:bg-[#252535] transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-[#15304F]/95 backdrop-blur-xl border border-white/10 shadow-xl shadow-black/30 hover:bg-[#27486E] transition-colors"
               >
                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                   <MessageCircle size={12} className="text-white" />
@@ -182,7 +200,7 @@ export default function TimmyButton() {
               {/* Diary Option */}
               <button
                 onClick={handleOpenDiary}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-[#1A1A24]/95 backdrop-blur-xl border border-white/10 shadow-xl shadow-black/30 hover:bg-[#252535] transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-[#15304F]/95 backdrop-blur-xl border border-white/10 shadow-xl shadow-black/30 hover:bg-[#27486E] transition-colors"
               >
                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center">
                   <BookHeart size={12} className="text-white" />
@@ -193,7 +211,7 @@ export default function TimmyButton() {
               {/* Safe Mode Option */}
               <button
                 onClick={handleOpenSafeMode}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-[#1A1A24]/95 backdrop-blur-xl border border-white/10 shadow-xl shadow-black/30 hover:bg-[#252535] transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-[#15304F]/95 backdrop-blur-xl border border-white/10 shadow-xl shadow-black/30 hover:bg-[#27486E] transition-colors"
               >
                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
                   <Shield size={12} className="text-white" />
@@ -289,6 +307,7 @@ export default function TimmyButton() {
           )}
         </motion.div>
       </div>
+      )}
 
       <TimmyChat
         isOpen={chatOpen}

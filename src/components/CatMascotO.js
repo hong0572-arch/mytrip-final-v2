@@ -47,7 +47,7 @@ const CatMascot = ({ width = 100 }) => {
 
             {/* 3. 바닥 그림자 (고양이가 뜰 때 그림자는 작아짐) */}
             <motion.div
-                className="absolute -bottom-2 w-[60%] h-3 bg-black/20 rounded-[100%] blur-sm z-0"
+                className="absolute -bottom-2 w-[60%] h-3 bg-tm-ink/20 rounded-[100%] blur-sm z-0"
                 animate={{
                     scale: [1, 0.8, 1],   // 고양이가 올라가면 그림자는 작아짐
                     opacity: [0.3, 0.1, 0.3]

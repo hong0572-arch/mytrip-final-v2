@@ -185,14 +185,14 @@ export default function DiaryTab({ diaries, isGenerating, onGenerate, onSave, on
                     <div className="flex gap-3 pt-4 border-t border-slate-100">
                       <button 
                         onClick={() => shareToX(selectedDiary)}
-                        className="flex-1 py-3 bg-black text-white font-medium rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+                        className="flex-1 py-3 bg-tm-ink text-white font-medium rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
                       >
                         <Twitter size={18} fill="currentColor" />
                         <span>X (Twitter)</span>
                       </button>
                       <button 
                         onClick={() => shareToThreads(selectedDiary)}
-                        className="flex-1 py-3 bg-slate-900 text-white font-medium rounded-xl hover:bg-black transition-colors flex items-center justify-center gap-2"
+                        className="flex-1 py-3 bg-slate-900 text-white font-medium rounded-xl hover:bg-tm-ink transition-colors flex items-center justify-center gap-2"
                       >
                         <Share2 size={18} />
                         <span>Threads</span>

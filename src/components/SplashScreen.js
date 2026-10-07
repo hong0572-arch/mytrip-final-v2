@@ -21,7 +21,7 @@ export default function SplashScreen({ language = 'ko', onFinish }) {
                     style={{ animation: "kenburns 3s ease-out forwards" }}
                 />
                 {/* ✨ [수정핵심] 흐림(blur) 제거하고, 어두운 막을 아주 옅게(10%) 변경하여 선명도 극대화 */}
-                <div className="absolute inset-0 bg-black/10" />
+                <div className="absolute inset-0 bg-tm-ink/10" />
             </div>
 
             {/* 2. 로고 및 텍스트 콘텐츠 */}
@@ -31,7 +31,7 @@ export default function SplashScreen({ language = 'ko', onFinish }) {
                     initial={{ scale: 0.5, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, ease: "backOut" }}
-                    className="bg-black/30 p-6 rounded-full backdrop-blur-md shadow-2xl border border-white/10"
+                    className="bg-tm-ink/30 p-6 rounded-full backdrop-blur-md shadow-2xl border border-white/10"
                 >
                     <motion.img
                         // ❗ public 폴더에 timmy.png 파일이 있어야 합니다!
@@ -72,7 +72,7 @@ export default function SplashScreen({ language = 'ko', onFinish }) {
             </div>
 
             {/* 3. 하단 로딩 바 */}
-            <div className="absolute bottom-12 w-48 h-1.5 bg-black/30 rounded-full overflow-hidden z-10 backdrop-blur-sm">
+            <div className="absolute bottom-12 w-48 h-1.5 bg-tm-ink/30 rounded-full overflow-hidden z-10 backdrop-blur-sm">
                 <motion.div
                     className="h-full bg-gradient-to-r from-brand-primary to-brand-secondary"
                     initial={{ width: "0%" }}
