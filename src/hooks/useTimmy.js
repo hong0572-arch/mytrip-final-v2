@@ -1,5 +1,7 @@
 'use client';
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { getApiUrl } from '../utils/api';
+import { authHeaders } from '../utils/authHeaders';
 
 /**
  * Custom hook for Timmy AI chat state management.
@@ -30,7 +32,9 @@ export default function useTimmy({ userId, language = 'ko' }) {
     if (!userId) return;
     setIsSessionsLoading(true);
     try {
-      const res = await fetch(`/api/chat/session?userId=${userId}`);
+      const res = await fetch(getApiUrl(`/api/chat/session?userId=${userId}`), {
+        headers: await authHeaders(),
+      });
       if (res.ok) {
         const data = await res.json();
         setChatSessions(data.sessions || []);
@@ -58,7 +62,11 @@ export default function useTimmy({ userId, language = 'ko' }) {
   const deleteSession = useCallback(async (sessionId) => {
     if (!userId) return;
     try {
-      await fetch(`/api/chat/session?userId=${userId}&sessionId=${sessionId}`, { method: 'DELETE' });
+      const res = await fetch(getApiUrl(`/api/chat/session?userId=${userId}&sessionId=${encodeURIComponent(sessionId)}`), {
+        method: 'DELETE',
+        headers: await authHeaders(),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setChatSessions(prev => prev.filter(s => s.id !== sessionId));
       if (currentSessionId === sessionId) {
         createNewSession();
@@ -84,9 +92,9 @@ export default function useTimmy({ userId, language = 'ko' }) {
     if (!currentSessionId) setCurrentSessionId(sessionId);
 
     try {
-      await fetch('/api/chat/session', {
+      await fetch(getApiUrl('/api/chat/session'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           userId,
           sessionId,
@@ -104,7 +112,9 @@ export default function useTimmy({ userId, language = 'ko' }) {
   const loadMemories = useCallback(async () => {
     if (!userId) return;
     try {
-      const res = await fetch(`/api/memory?userId=${userId}`);
+      const res = await fetch(getApiUrl(`/api/memory?userId=${userId}`), {
+        headers: await authHeaders(),
+      });
       if (res.ok) {
         const data = await res.json();
         setMemories(data.memories || []);
@@ -136,9 +146,9 @@ export default function useTimmy({ userId, language = 'ko' }) {
   const saveMemory = useCallback(async (memoryData) => {
     if (!userId || !memoryData) return;
     try {
-      await fetch('/api/memory', {
+      await fetch(getApiUrl('/api/memory'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ userId, ...memoryData }),
       });
       // Reload memories
@@ -151,9 +161,11 @@ export default function useTimmy({ userId, language = 'ko' }) {
   const deleteMemory = useCallback(async (memoryId) => {
     if (!userId || !memoryId) return;
     try {
-      await fetch(`/api/memory?userId=${userId}&memoryId=${memoryId}`, {
+      const res = await fetch(getApiUrl(`/api/memory?userId=${userId}&memoryId=${encodeURIComponent(memoryId)}`), {
         method: 'DELETE',
+        headers: await authHeaders(),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setMemories(prev => prev.filter(m => m.id !== memoryId));
     } catch (e) {
       console.error('Failed to delete memory:', e);
@@ -171,7 +183,7 @@ export default function useTimmy({ userId, language = 'ko' }) {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/chat', {
+      const res = await fetch(getApiUrl('/api/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

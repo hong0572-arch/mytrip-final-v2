@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { admin } from '../../../../lib/firebaseAdmin';
+import { verifyUser } from '../../../../lib/verifyUser';
 
 const TP_TOKEN = '4c01a895965a510253489b6eef1e5fde';
 
@@ -7,14 +8,21 @@ const TP_TOKEN = '4c01a895965a510253489b6eef1e5fde';
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { userId, userEmail, destination, destinationName, departureDate, returnDate, fcmToken, currentPrice, replace } = body;
+    const { userId: claimedUserId, destination, destinationName, departureDate, returnDate, fcmToken, currentPrice, replace } = body;
 
-    if (!userId || !destination || !departureDate) {
+    const auth = await verifyUser(request, claimedUserId);
+    if (auth.response) return auth.response;
+    const userId = auth.uid;
+
+    if (!destination || !departureDate) {
       return NextResponse.json(
-        { error: '필수 항목(userId, destination, departureDate)이 누락되었습니다.' },
+        { error: '필수 항목(destination, departureDate)이 누락되었습니다.' },
         { status: 400 }
       );
     }
+
+    // 📧 알림 메일 수신처는 클라이언트 값이 아니라 인증된 계정의 이메일을 사용
+    const { email: userEmail } = await admin.auth().getUser(userId);
 
     const db = admin.firestore();
     const trackersRef = db.collection('flight_price_trackers');
@@ -117,11 +125,9 @@ export async function POST(request) {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-
-    if (!userId) {
-      return NextResponse.json({ error: 'userId가 필요합니다.' }, { status: 400 });
-    }
+    const auth = await verifyUser(request, searchParams.get('userId'));
+    if (auth.response) return auth.response;
+    const userId = auth.uid;
 
     const db = admin.firestore();
     const trackersRef = db.collection('flight_price_trackers');
@@ -159,11 +165,14 @@ export async function GET(request) {
 export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
     const trackerId = searchParams.get('trackerId');
 
-    if (!userId || !trackerId) {
-      return NextResponse.json({ error: 'userId와 trackerId가 필요합니다.' }, { status: 400 });
+    const auth = await verifyUser(request, searchParams.get('userId'));
+    if (auth.response) return auth.response;
+    const userId = auth.uid;
+
+    if (!trackerId) {
+      return NextResponse.json({ error: 'trackerId가 필요합니다.' }, { status: 400 });
     }
 
     const db = admin.firestore();

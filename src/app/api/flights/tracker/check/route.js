@@ -25,8 +25,9 @@ const transporter = nodemailer.createTransport({
 export async function GET(req) {
     try {
         // 🚨 Vercel Cron 인증 확인
+        // CRON_SECRET 미설정 시 'Bearer undefined'로 통과되지 않도록 먼저 확인
         const authHeader = req.headers.get('authorization');
-        if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 

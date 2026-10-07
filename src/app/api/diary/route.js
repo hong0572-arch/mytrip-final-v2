@@ -1,18 +1,16 @@
 import { NextResponse } from 'next/server';
 import { admin } from '../../../lib/firebaseAdmin';
+import { verifyUser } from '../../../lib/verifyUser';
 
 const db = admin.firestore();
 
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
+    const auth = await verifyUser(req, searchParams.get('userId'));
+    if (auth.response) return auth.response;
 
-    if (!userId) {
-      return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
-    }
-
-    const diariesRef = db.collection('users').doc(userId).collection('diaries');
+    const diariesRef = db.collection('users').doc(auth.uid).collection('diaries');
     const snapshot = await diariesRef.orderBy('createdAt', 'desc').get();
 
     const diaries = [];
@@ -32,11 +30,14 @@ export async function POST(req) {
     const body = await req.json();
     const { userId, title, content, location, date, imageBase64 } = body;
 
-    if (!userId || !title || !content) {
+    const auth = await verifyUser(req, userId);
+    if (auth.response) return auth.response;
+
+    if (!title || !content) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const diaryRef = db.collection('users').doc(userId).collection('diaries').doc();
+    const diaryRef = db.collection('users').doc(auth.uid).collection('diaries').doc();
     
     await diaryRef.set({
       title,
@@ -57,14 +58,16 @@ export async function POST(req) {
 export async function DELETE(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
     const diaryId = searchParams.get('diaryId');
 
-    if (!userId || !diaryId) {
-      return NextResponse.json({ error: 'Missing userId or diaryId' }, { status: 400 });
+    const auth = await verifyUser(req, searchParams.get('userId'));
+    if (auth.response) return auth.response;
+
+    if (!diaryId) {
+      return NextResponse.json({ error: 'Missing diaryId' }, { status: 400 });
     }
 
-    await db.collection('users').doc(userId).collection('diaries').doc(diaryId).delete();
+    await db.collection('users').doc(auth.uid).collection('diaries').doc(diaryId).delete();
 
     return NextResponse.json({ success: true });
   } catch (error) {

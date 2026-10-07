@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { admin } from '../../../lib/firebaseAdmin';
+import { verifyUser } from '../../../lib/verifyUser';
 
 const db = admin.firestore();
 
@@ -17,13 +18,10 @@ export async function OPTIONS() {
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'userId is required' }, { status: 400, headers: corsHeaders });
-    }
+    const auth = await verifyUser(req, searchParams.get('userId'), corsHeaders);
+    if (auth.response) return auth.response;
 
-    const memoriesRef = db.collection('users').doc(userId).collection('ai_memory');
+    const memoriesRef = db.collection('users').doc(auth.uid).collection('ai_memory');
     const snapshot = await memoriesRef.orderBy('updatedAt', 'desc').limit(20).get();
     
     const memories = [];
@@ -46,15 +44,18 @@ export async function POST(req) {
   try {
     const body = await req.json();
     const { userId, category, content, confidence = 0.8 } = body;
+
+    const auth = await verifyUser(req, userId, corsHeaders);
+    if (auth.response) return auth.response;
     
-    if (!userId || !category || !content) {
+    if (!category || !content) {
       return NextResponse.json(
-        { error: 'userId, category, and content are required' },
+        { error: 'category and content are required' },
         { status: 400, headers: corsHeaders }
       );
     }
 
-    const memoriesRef = db.collection('users').doc(userId).collection('ai_memory');
+    const memoriesRef = db.collection('users').doc(auth.uid).collection('ai_memory');
     
     // Check if similar memory exists in same category
     const existing = await memoriesRef
@@ -104,17 +105,19 @@ export async function POST(req) {
 export async function DELETE(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
     const memoryId = searchParams.get('memoryId');
+
+    const auth = await verifyUser(req, searchParams.get('userId'), corsHeaders);
+    if (auth.response) return auth.response;
     
-    if (!userId || !memoryId) {
+    if (!memoryId) {
       return NextResponse.json(
-        { error: 'userId and memoryId are required' },
+        { error: 'memoryId is required' },
         { status: 400, headers: corsHeaders }
       );
     }
 
-    await db.collection('users').doc(userId).collection('ai_memory').doc(memoryId).delete();
+    await db.collection('users').doc(auth.uid).collection('ai_memory').doc(memoryId).delete();
 
     return NextResponse.json({ success: true }, { status: 200, headers: corsHeaders });
   } catch (error) {

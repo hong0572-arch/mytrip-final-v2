@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { authHeaders } from '../utils/authHeaders';
 
 export default function useDiary(userId) {
   const [diaries, setDiaries] = useState([]);
@@ -16,7 +17,9 @@ export default function useDiary(userId) {
     if (!userId) return;
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/diary?userId=${userId}`);
+      const res = await fetch(`/api/diary?userId=${userId}`, {
+        headers: await authHeaders(),
+      });
       if (res.ok) {
         const data = await res.json();
         setDiaries(data.diaries || []);
@@ -54,7 +57,7 @@ export default function useDiary(userId) {
     try {
       const res = await fetch('/api/diary', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ userId, ...diaryData })
       });
       if (res.ok) {
@@ -71,8 +74,9 @@ export default function useDiary(userId) {
   const deleteDiary = useCallback(async (diaryId) => {
     if (!userId || !diaryId) return;
     try {
-      const res = await fetch(`/api/diary?userId=${userId}&diaryId=${diaryId}`, {
-        method: 'DELETE'
+      const res = await fetch(`/api/diary?userId=${userId}&diaryId=${encodeURIComponent(diaryId)}`, {
+        method: 'DELETE',
+        headers: await authHeaders(),
       });
       if (res.ok) {
         setDiaries(prev => prev.filter(d => d.id !== diaryId));

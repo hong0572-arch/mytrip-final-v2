@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, BellOff, TrendingDown, TrendingUp, Plane, X, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { authHeaders } from '../utils/authHeaders';
 
 // 💰 가격 포맷 함수
 const formatPrice = (price) => {
@@ -330,10 +331,9 @@ export function TrackPriceButton({
         try {
             const res = await fetch('/api/flights/tracker', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: await authHeaders({ 'Content-Type': 'application/json' }),
                 body: JSON.stringify({
                     userId,
-                    userEmail,
                     destination,
                     destinationName,
                     departureDate,
@@ -426,7 +426,9 @@ export default function FlightPriceTracker({ userId, userEmail }) {
             return;
         }
         try {
-            const res = await fetch(`/api/flights/tracker?userId=${userId}`);
+            const res = await fetch(`/api/flights/tracker?userId=${userId}`, {
+                headers: await authHeaders(),
+            });
             const data = await res.json();
             setTracker(data.tracker || null);
         } catch (err) {
@@ -448,6 +450,7 @@ export default function FlightPriceTracker({ userId, userEmail }) {
         try {
             const res = await fetch(`/api/flights/tracker?userId=${userId}&trackerId=${tracker.id}`, {
                 method: 'DELETE',
+                headers: await authHeaders(),
             });
             if (res.ok) {
                 setTracker(null);
