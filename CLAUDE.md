@@ -49,6 +49,11 @@
 - 사용자별 API(`api/chat/session`, `api/memory`, `api/diary`, `api/flights/tracker`)는 `lib/verifyUser.js`로 Firebase ID 토큰을 확인하고 토큰의 uid만 쓴다. 클라이언트는 `utils/authHeaders.js`로 토큰을 붙인다.
 - 안심 귀가 보호자 링크: 안전모드를 켤 때 128비트 일회용 키(`shareToken`)를 만들어 `safemode_sessions/{uid}`에 저장하고, 링크는 `/share/live_safemode?u=<uid>&t=<key>`. 보호자 화면은 `api/safemode/live`가 키를 확인해 이름·상태·위치만 돌려준다(15초 갱신). 보호를 끝내면 문서가 지워져 링크도 만료된다. GPS 실패 시 가짜 좌표를 쓰지 않고 `locationError`만 기록한다.
 - Firestore 규칙(`firestore.rules`)은 콘솔/CLI로 따로 게시해야 반영된다. `safemode_sessions`는 본인과 `guardianUserId` 보호자만 읽는다.
+- `trips`: 목록 조회·수정은 멤버(`memberIds`)만, 단건 조회는 로그인 사용자(초대 링크). 초대 링크로 자기만 멤버 추가·자기만 나가기 허용, `hostId` 변경 불가, 삭제는 만든 사람 또는 혼자 남은 멤버. `expenses`·`messages`는 멤버만. **목록 쿼리는 반드시 `where('memberIds','array-contains',uid)`를 붙인다**(없으면 거부).
+- `match_requests`(초대·정산·안전모드 알림): 보낸 사람·받는 사람만 읽기. 쿼리는 `where('targetMateId'|'senderId','==',uid)`로 — 컬렉션 전체 구독은 거부된다.
+- `feeds`: 작성자만 수정·삭제, 다른 사람은 `likes/likedBy/forks/comments/commentCount`만. `shared_links`: 누구나 만들고 읽되 수정·삭제 불가.
+- 관리자 = 구글 로그인 + `admins/{uid}` 문서(콘솔에서만 생성). `/admin` 화면과 규칙의 `isAdmin()`이 같은 기준. 비밀번호를 코드에 두지 않는다.
+- 규칙을 바꾸면 에뮬레이터로 시험한다: `@firebase/rules-unit-testing` + `firebase emulators:exec --only firestore`(Java 필요, Android Studio의 `jbr/bin`).
 - 실시간 구독(onSnapshot)에는 항상 `lib/snapshotError.js`의 `onSnapshotError('이름')`을 붙인다.
 - 개인정보처리방침(`app/privacy/page.js`)은 실제 데이터 흐름을 근거로 작성했다. 수집 항목·외부 서비스·보관 방식을 바꾸면 방침도 함께 고친다.
 

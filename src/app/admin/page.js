@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { db } from '../../lib/firebase';
+import { useEffect, useState, useRef } from 'react';
+import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { auth, db, googleProvider } from '../../lib/firebase';
 import {
     collection, query, orderBy, getDocs, deleteDoc, doc, addDoc,
     serverTimestamp, updateDoc, increment, getDoc, limit, collectionGroup
@@ -19,8 +20,9 @@ const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1476514525535-07fb3b4a
 
 export default function AdminPage() {
     // --- 상태 관리 ---
+    // 관리자 = 구글 로그인 + Firestore admins/{uid} 문서(콘솔에서만 만든다). 보안 규칙도 같은 기준으로 관리자 쓰기를 허용한다.
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [password, setPassword] = useState('');
+    const [authState, setAuthState] = useState('checking'); // checking | signedOut | denied | ok
     const [activeTab, setActiveTab] = useState('trips');
 
     const [trips, setTrips] = useState([]);
@@ -44,12 +46,28 @@ export default function AdminPage() {
     const thumbnailInputRef = useRef(null);
 
     // --- 1. 로그인 & 데이터 로드 ---
-    const handleLogin = (e) => {
+    useEffect(() => onAuthStateChanged(auth, async (user) => {
+        if (!user) { setIsLoggedIn(false); setAuthState('signedOut'); return; }
+        try {
+            const adminSnap = await getDoc(doc(db, 'admins', user.uid));
+            if (adminSnap.exists()) {
+                setIsLoggedIn(true);
+                setAuthState('ok');
+                fetchAllData();
+            } else {
+                setIsLoggedIn(false);
+                setAuthState('denied');
+            }
+        } catch {
+            setIsLoggedIn(false);
+            setAuthState('denied');
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }), []);
+
+    const handleLogin = async (e) => {
         e.preventDefault();
-        if (password === 'hong0572!') {
-            setIsLoggedIn(true);
-            fetchAllData();
-        } else { alert('비밀번호가 틀렸습니다!'); }
+        try { await signInWithPopup(auth, googleProvider); } catch (error) { console.error(error); }
     };
 
     const fetchAllData = async () => {
@@ -342,7 +360,22 @@ export default function AdminPage() {
     const filteredUsers = users.filter(u => u.name?.includes(searchTerm) || u.email?.includes(searchTerm));
 
     // --- 렌더링 ---
-    if (!isLoggedIn) return (<div className="min-h-screen flex items-center justify-center bg-gray-100"><form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl shadow-xl w-80 text-center"><div className="bg-rose-100 p-3 rounded-full inline-block mb-4"><Lock className="text-[#FF5A5F]" size={24} /></div><h2 className="text-xl font-bold mb-4">관리자 로그인</h2><input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 border rounded-xl mb-4" placeholder="비밀번호" autoFocus /><button className="w-full bg-[#FF5A5F] text-white py-3 rounded-xl font-bold">접속하기</button></form></div>);
+    if (!isLoggedIn) return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl shadow-xl w-80 text-center">
+                <div className="bg-rose-100 p-3 rounded-full inline-block mb-4"><Lock className="text-[#FF5A5F]" size={24} /></div>
+                <h2 className="text-xl font-bold mb-2">관리자 로그인</h2>
+                {authState === 'checking' && <p className="text-sm text-gray-500">확인 중…</p>}
+                {authState === 'denied' && (
+                    <p className="text-sm text-gray-600 mb-4">
+                        이 계정({auth.currentUser?.email})은 관리자가 아닙니다. Firebase 콘솔에서 <code>admins/{auth.currentUser?.uid}</code> 문서를 만들어야 합니다.
+                    </p>
+                )}
+                {authState === 'signedOut' && <button className="w-full bg-[#FF5A5F] text-white py-3 rounded-xl font-bold">구글 계정으로 로그인</button>}
+                {authState === 'denied' && <button type="button" onClick={() => signOut(auth)} className="w-full border py-3 rounded-xl font-bold">다른 계정으로 로그인</button>}
+            </form>
+        </div>
+    );
 
     return (
         <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">

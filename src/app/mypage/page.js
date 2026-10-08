@@ -387,15 +387,20 @@ export default function MyPage() {
             const pointsQ = query(collection(db, "users", currentUser.uid, "point_history"), orderBy("createdAt", "desc"));
             unsubscribePoints = onSnapshot(pointsQ, (snapshot) => setPointHistory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))), onSnapshotError('mypage/points'));
 
-            const matchesQ = collection(db, "match_requests");
-            unsubscribeMatches = onSnapshot(matchesQ, (snapshot) => {
-                const mList = [];
-                snapshot.forEach(doc => {
-                    const d = doc.data();
-                    if (d.targetMateId === currentUser.uid || d.senderId === currentUser.uid) mList.push({ id: doc.id, ...d });
-                });
-                setMatchRequests(mList.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
-            }, onSnapshotError('mypage/match_requests'));
+            // 내가 받은 것·보낸 것만 구독한다(보안 규칙도 당사자만 읽게 막는다). 두 구독 결과를 합친다.
+            const matchBuckets = { received: [], sent: [] };
+            const publishMatches = () => {
+                const byId = new Map([...matchBuckets.received, ...matchBuckets.sent].map((m) => [m.id, m]));
+                setMatchRequests([...byId.values()].sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
+            };
+            const listenMatches = (field, bucket) => onSnapshot(
+                query(collection(db, "match_requests"), where(field, "==", currentUser.uid)),
+                (snapshot) => { matchBuckets[bucket] = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })); publishMatches(); },
+                onSnapshotError(`mypage/match_requests_${bucket}`)
+            );
+            const unsubReceived = listenMatches("targetMateId", "received");
+            const unsubSent = listenMatches("senderId", "sent");
+            unsubscribeMatches = () => { unsubReceived(); unsubSent(); };
 
 
         });
