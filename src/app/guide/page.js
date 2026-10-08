@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Coins, Download, MessageCircle, Shield, CalendarCheck } from "lucide-react";
 import useAppLanguage from '../../hooks/useAppLanguage';
+import TimmyAvatar from '../../components/TimmyAvatar';
 
 // 사용 가이드. AI 홈(/)과 같은 디자인·흐름(말로 시작 → 일정 저장 → 여행 중 사용 → 안심 기능)으로 안내한다.
 const COPY = {
@@ -54,8 +55,7 @@ export default function GuidePage() {
 
                 <main className="flex flex-1 flex-col gap-6 px-5 pb-8 pt-2">
                     <section className="flex flex-col gap-3">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/timmy.png" alt="" width={64} height={72} className="tm-float h-[72px] w-16 object-contain" />
+                        <TimmyAvatar size={64} ring className="tm-float" />
                         <h1 className="tm-rise text-[28px] font-bold leading-[1.3] tracking-[-0.02em]">
                             {copy.heading[0]}<br />{copy.heading[1]}
                         </h1>

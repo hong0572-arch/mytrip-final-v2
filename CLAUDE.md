@@ -35,6 +35,16 @@
 - AI가 준 좌표는 믿지 않고 구글 장소 검색으로 채운다. 긴급번호는 `tripUtils.emergencyNumbers`(확실한 나라만, 모르면 영사콜센터만).
 - 문구는 `content/tripCopy.js`(한/영).
 
+## 내 일정 목록 (2026-10)
+- `/trips` = `components/trips/MyTrips.js`. 아래 메뉴 '내 일정'은 여기로 간다(예전 `/mypage?tab=schedule`은 남아 있지만 진입점 없음).
+- 맨 위 카드가 여행 단계에 따라 바뀐다: 여행 중 `OnTripHero`(며칠째·다음 장소·안전모드) → 가장 가까운 출발 `NextTripHero`(D-day·안심 준비 진행률, 홈과 같은 `tm_readiness_<id>`). 분류는 `trips/tripsUtils.groupTrips`.
+- 지난 여행: 끝난 지 14일 안이면 '어떠셨어요?' 카드(일기·피드 공유). **피드 공유는 끝난 여행에만 권한다**(여행 중 위치 노출 방지). '다시 가기'는 출발일을 고르면 `duplicateTrip`이 일수만큼 날짜를 다시 매긴 새 여행을 만든다(동행·기록 미복사).
+- ⋯ 메뉴(`TripSheets.TripMenuSheet`): 열기·이름 바꾸기·동행 초대(`/join/<id>` 링크)·공유 링크·복사·삭제. 삭제는 빨강을 쓰지 않고 한 번 더 확인한다. 만든 사람(또는 혼자인 일정)은 삭제, 동행은 '나가기'(`removeTrip`).
+- 받은 초대: `match_requests`(`type: 'workspace_invite'`, `targetMateId`, `status: 'pending'`) → 배너 '보기' → `/join/<tripId>`.
+- 피드·공유 링크·사본에는 `tripStore.tripPlanOnly`로 일정 내용만 싣는다(동행 목록·연락처·지갑 제외).
+- 티미 그림: 작은 곳(대화·로딩·홈 첫 화면)은 `components/TimmyAvatar.js`(얼굴 `public/timmy-face.png` + 하늘색 원). 전신 `timmy.png`는 크게 보여 줄 때만. 썸네일은 사진 대신 `TripThumb`(일정 id로 정해지는 지도 무늬).
+- 문구는 `content/tripsCopy.js`(한/영).
+
 ## 보안·개인정보 (2026-10)
 - 사용자별 API(`api/chat/session`, `api/memory`, `api/diary`, `api/flights/tracker`)는 `lib/verifyUser.js`로 Firebase ID 토큰을 확인하고 토큰의 uid만 쓴다. 클라이언트는 `utils/authHeaders.js`로 토큰을 붙인다.
 - 안심 귀가 보호자 링크: 안전모드를 켤 때 128비트 일회용 키(`shareToken`)를 만들어 `safemode_sessions/{uid}`에 저장하고, 링크는 `/share/live_safemode?u=<uid>&t=<key>`. 보호자 화면은 `api/safemode/live`가 키를 확인해 이름·상태·위치만 돌려준다(15초 갱신). 보호를 끝내면 문서가 지워져 링크도 만료된다. GPS 실패 시 가짜 좌표를 쓰지 않고 `locationError`만 기록한다.

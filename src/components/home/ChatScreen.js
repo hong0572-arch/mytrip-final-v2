@@ -15,6 +15,7 @@ import { getApiUrl } from '../../utils/api';
 import HomeComposer from './HomeComposer';
 import { PlanOptions, PlanResultCard, PlanWorking } from './PlanCards';
 import { goToLogin, takePendingMessage } from './homeActions';
+import TimmyAvatar from '../TimmyAvatar';
 
 // 일정 상세 화면(지도·저장 포함)은 고른 뒤에만 불러온다
 const TripDetail = dynamic(() => import('../trip/TripDetail'), { ssr: false });
@@ -314,8 +315,7 @@ export default function ChatScreen() {
           <Link href="/" aria-label={copy.back} className="flex h-11 w-11 items-center justify-center text-tm-ink">
             <ChevronLeft size={24} strokeWidth={2} />
           </Link>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/timmy.png" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
+          <TimmyAvatar size={32} className="mr-1" />
           <div className="flex flex-1 flex-col">
             <span className="text-[16px] font-bold leading-tight">{copy.chatTitle}</span>
             <span className="text-[11px] text-tm-muted">{copy.chatSubtitle}</span>

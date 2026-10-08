@@ -7,6 +7,7 @@ import { doc, getDoc } from "firebase/firestore";
 import TripDetail from "../../../components/trip/TripDetail";
 import useAppLanguage from "../../../hooks/useAppLanguage";
 import { Home, Map } from 'lucide-react';
+import TimmyAvatar from '../../../components/TimmyAvatar';
 
 export default function ShareDetailPage() {
     const params = useParams();
@@ -53,8 +54,7 @@ export default function ShareDetailPage() {
     if (loading) {
         return (
             <div className="min-h-dvh bg-tm-ground flex flex-col items-center justify-center gap-3 text-tm-ink font-sans">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/timmy.png" alt="" width={64} height={72} className="tm-float h-[72px] w-16 object-contain" />
+                <TimmyAvatar size={64} ring className="tm-float" />
                 <p className="text-[15px] font-semibold text-tm-muted" role="status">친구의 여행 일정을 불러오는 중…</p>
             </div>
         );

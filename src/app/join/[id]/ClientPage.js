@@ -6,6 +6,7 @@ import { auth, db } from "../../../lib/firebase";
 import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { Calendar, MapPin, Sparkles, Loader2, LogIn, ArrowRight } from 'lucide-react';
+import TimmyAvatar from '../../../components/TimmyAvatar';
 
 export default function JoinTripPage() {
     const params = useParams();
@@ -94,8 +95,7 @@ export default function JoinTripPage() {
     if (loading || !tripData) {
         return (
             <div className="min-h-dvh bg-tm-ground flex flex-col items-center justify-center gap-3 font-sans">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/timmy.png" alt="" width={64} height={72} className="tm-float h-[72px] w-16 object-contain" />
+                <TimmyAvatar size={64} ring className="tm-float" />
                 <p className="text-[15px] font-semibold text-tm-muted" role="status">초대장을 여는 중…</p>
             </div>
         );
@@ -109,8 +109,7 @@ export default function JoinTripPage() {
         <div className="min-h-dvh bg-tm-ground flex items-center justify-center px-5 py-8 font-sans text-tm-ink">
             <div className="w-full max-w-md">
                 <div className="mb-6 flex flex-col items-center gap-3 text-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/timmy.png" alt="" width={56} height={64} className="tm-float h-16 w-14 object-contain" />
+                    <TimmyAvatar size={56} ring className="tm-float" />
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-tm-sky-tint px-3 py-1.5 text-[12px] font-bold text-tm-navy"><Sparkles size={14} /> 여행 초대장</span>
                     <h1 className="tm-rise text-[26px] font-bold leading-[1.3] tracking-[-0.02em]">{hostInfo.name}님이<br />여행에 초대했어요</h1>
                 </div>

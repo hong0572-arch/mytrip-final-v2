@@ -1663,9 +1663,8 @@ export default function MyPage() {
                     <BottomNav
                         copy={getAiHomeCopy('ko')}
                         user={user}
-                        active={activeTab === 'schedule' ? 'trips' : 'my'}
+                        active="my"
                         onSelect={(key) => {
-                            if (key === 'trips') { setActiveTab('schedule'); return true; }
                             if (key === 'my') { openProfileModal(); return true; }
                             return false;
                         }}

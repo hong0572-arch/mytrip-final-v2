@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, Mic, MicOff, Settings, Trash2, ChevronDown, Plane, Utensils, Camera, Shield, Luggage, Sparkles, BrainCircuit, MessageSquarePlus, History } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import TimmyAvatar from './TimmyAvatar';
 
 const t = {
   ko: {
@@ -216,8 +217,7 @@ export default function TimmyChat({
           {/* Header */}
           <div className="flex items-center justify-between pl-4 pr-2 pb-2 border-b border-tm-line">
             <div className="flex items-center gap-2.5 min-w-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/timmy.png" alt="" width={32} height={32} className="w-8 h-8 object-contain shrink-0" />
+              <TimmyAvatar size={32} />
               <div className="min-w-0">
                 <h2 className="font-bold text-[16px] leading-tight">{lang.title}</h2>
                 <p className="text-tm-muted text-[11px] truncate">{lang.dailyUsage} {todayUsage}/30</p>

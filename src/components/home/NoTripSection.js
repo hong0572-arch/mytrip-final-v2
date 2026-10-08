@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CalendarPlus, Home as HomeIcon, Plane, Shield } from 'lucide-react';
 import { goToLogin, openTimmyPanel, startChat } from './homeActions';
+import TimmyAvatar from '../TimmyAvatar';
 
 const ROUTE_PATH = 'M76 54 C 150 0, 250 0, 330 40';
 
@@ -22,8 +23,7 @@ function FlightHero() {
           <circle cx="12" cy="10" r="3" fill="#fff" />
         </svg>
       </span>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/timmy.png" alt="" width={70} height={78} className="tm-float absolute left-0 top-0 h-[78px] w-[70px] object-contain" />
+      <TimmyAvatar size={64} ring className="tm-float absolute left-0.5 top-1.5" />
     </div>
   );
 }

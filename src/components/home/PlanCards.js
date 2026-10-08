@@ -1,5 +1,6 @@
 'use client';
 import { BedDouble, CalendarDays, Check, MapPin, Wallet } from 'lucide-react';
+import TimmyAvatar from '../TimmyAvatar';
 
 // 대화 안에 들어가는 일정 카드들: 후보 3개(가로로 넘김), 만드는 중, 완성된 일정 요약
 
@@ -89,8 +90,7 @@ export function PlanOptions({ copy, intro, options, chosenId, disabled, onChoose
 export function PlanWorking({ title, sub }) {
   return (
     <div className="flex items-center gap-2" role="status">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/timmy.png" alt="" width={28} height={28} className="tm-float h-7 w-7 object-contain" />
+      <TimmyAvatar size={28} className="tm-float" />
       <div className="flex flex-col gap-1 rounded-[18px] rounded-bl-[4px] bg-white px-3.5 py-2.5">
         <span className="flex items-center gap-2.5">
           <span aria-hidden="true" className="flex h-3 items-center gap-1">

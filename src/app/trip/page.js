@@ -9,6 +9,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { Map, MessageCircle, X, Send } from 'lucide-react';
 import TripDetail from '../../components/trip/TripDetail';
 import useAppLanguage from '../../hooks/useAppLanguage';
+import TimmyAvatar from '../../components/TimmyAvatar';
 
 // 저장된 일정(/trip?id=…). 참여자는 편집(바로 저장)·동행 초대·동행 채팅을, 그 밖의 사람은 보기만 한다.
 function TripDetailContent() {
@@ -86,8 +87,7 @@ function TripDetailContent() {
     if (loading) {
         return (
             <div className="min-h-dvh bg-tm-ground flex flex-col items-center justify-center gap-3 font-sans">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/timmy.png" alt="" width={64} height={72} className="tm-float h-[72px] w-16 object-contain" />
+                <TimmyAvatar size={64} ring className="tm-float" />
                 <p className="text-[15px] font-semibold text-tm-muted" role="status">{language === 'en' ? 'Loading your itinerary…' : '일정을 불러오는 중…'}</p>
             </div>
         );
@@ -99,7 +99,7 @@ function TripDetailContent() {
                 <div className="w-full max-w-sm rounded-[20px] bg-white p-7 text-center">
                     <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-tm-sky-tint text-tm-navy"><Map size={28} strokeWidth={1.8} /></div>
                     <h1 className="mb-6 text-[22px] font-bold">{language === 'en' ? 'Itinerary not found' : '일정을 찾을 수 없어요'}</h1>
-                    <button onClick={() => router.push('/mypage?tab=schedule')} className="flex h-[52px] w-full items-center justify-center rounded-[14px] bg-tm-navy text-[16px] font-bold text-white">
+                    <button onClick={() => router.push('/trips')} className="flex h-[52px] w-full items-center justify-center rounded-[14px] bg-tm-navy text-[16px] font-bold text-white">
                         {language === 'en' ? 'Back to my trips' : '내 일정으로 돌아가기'}
                     </button>
                 </div>
@@ -117,7 +117,7 @@ function TripDetailContent() {
                 tripId={tripId}
                 mode={isMember ? 'saved' : 'shared'}
                 language={language}
-                onBack={() => router.push(isMember ? '/mypage?tab=schedule' : '/')}
+                onBack={() => router.push(isMember ? '/trips' : '/')}
                 onOpenChat={isMember ? () => setShowChat(true) : undefined}
             />
 
