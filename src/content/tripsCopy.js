@@ -87,6 +87,12 @@ export const tripsCopy = {
       { label: '주말 부산 1박', prompt: '주말에 부산 1박 2일 여행 일정 만들어줘' },
       { label: '처음 가는 유럽, 안전하게', prompt: '처음 가는 유럽 여행인데 혼자서도 안전한 일정으로 만들어줘' },
     ],
+    // 한국 여행 모드(영어 화면 + 한국에서 접속)에서 쓰는 예시
+    emptyChipsKorea: [
+      { label: '혼자 서울 3박 4일', prompt: '혼자 서울 3박 4일, 지하철로 다니는 일정 짜줘' },
+      { label: '주말 부산', prompt: '주말 부산 1박 2일 일정 짜줘' },
+      { label: '버스로 제주', prompt: '혼자 제주 2박 3일, 버스로 다니는 일정 짜줘' },
+    ],
     emptyCta: '티미와 일정 만들기',
     emptyInvite: '초대 링크를 받으셨나요?',
     emptyInviteAction: '링크 붙여넣기',
@@ -182,6 +188,11 @@ export const tripsCopy = {
       { label: 'Solo Tokyo, 4 days', prompt: 'Plan a 4-day solo trip to Tokyo' },
       { label: 'Weekend in Busan', prompt: 'Plan a 2-day weekend trip to Busan' },
       { label: 'First time in Europe, safely', prompt: "It's my first trip to Europe. Plan a safe itinerary for a solo traveler" },
+    ],
+    emptyChipsKorea: [
+      { label: 'Solo Seoul, 4 days', prompt: 'Plan a 4-day solo trip in Seoul getting around by subway' },
+      { label: 'Weekend in Busan', prompt: 'Plan a weekend trip to Busan from Seoul by KTX' },
+      { label: 'Jeju by bus', prompt: 'Plan a 3-day solo trip in Jeju by bus' },
     ],
     emptyCta: 'Plan with Timmy',
     emptyInvite: 'Got an invite link?',

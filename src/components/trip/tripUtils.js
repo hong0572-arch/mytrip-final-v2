@@ -1,3 +1,4 @@
+import { inKorea, kakaoDirectionsUrl } from '../../utils/tripPhase';
 // 일정 상세 화면에서 쓰는 순수 함수들(데이터 정리·이동 시간·링크·긴급번호·동선 정리·인쇄)
 
 // AI 응답·Firestore 문서를 화면에서 쓰기 좋은 형태로 정리한다(원본은 바꾸지 않음).
@@ -53,6 +54,9 @@ export function isEveningStop(place, index, total) {
 }
 
 export function directionsUrl(place, destination = '') {
+  if (hasCoords(place) && inKorea(place.coordinates.lat, place.coordinates.lng)) {
+    return kakaoDirectionsUrl(place.name, place.coordinates.lat, place.coordinates.lng);
+  }
   if (hasCoords(place)) {
     return `https://www.google.com/maps/dir/?api=1&destination=${place.coordinates.lat},${place.coordinates.lng}`;
   }

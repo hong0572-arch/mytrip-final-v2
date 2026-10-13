@@ -381,7 +381,7 @@ export default function MapScreen() {
               </div>
               <div className="flex gap-2">
                 <a
-                  href={directionsUrl({ lat: selected.location.lat, lng: selected.location.lng })}
+                  href={directionsUrl({ name: selected.name, lat: selected.location.lat, lng: selected.location.lng })}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-tm-navy text-[14px] font-bold text-white"

@@ -46,6 +46,12 @@
 - 티미 그림: 작은 곳(대화·로딩·홈 첫 화면)은 `components/TimmyAvatar.js`(얼굴 `public/timmy-face.png` + 하늘색 원). 전신 `timmy.png`는 크게 보여 줄 때만. 썸네일은 사진 대신 `TripThumb`(일정 id로 정해지는 지도 무늬).
 - 문구는 `content/tripsCopy.js`(한/영).
 
+## 한국 여행 모드 (2026-10)
+- 영어 화면 + 한국에 있음(`hooks/useInKorea.js`: 기기 시간대 Asia/Seoul 또는 `/api/geo`의 Vercel 국가 헤더 KR, 위치 권한·저장 없음)이면 외국인 한국 여행자로 본다.
+- 홈: 'Exploring Korea?' 인사, 오늘의 한마디·날씨 카드는 한국 도시(`homeCities.KOREA_CITY_IDS`, 기상청 날씨), 'Korea essentials'(티머니·지도 앱·택시·출발 전 준비·1330/112)와 한국 질문(`content/koreaCopy.js`). 해외 모드 오늘의 한마디에서는 `korea: true` 도시를 뺀다.
+- 안심: 영어 화면에서는 한국인용 영사콜센터를 숨기고, 한국이면 112·119·1330(관광안내)을 보여 준다. 내 일정 빈 화면 예시도 한국 도시.
+- 길찾기: 좌표가 한국이면 언어와 상관없이 카카오맵(`tripPhase.kakaoDirectionsUrl`) — 한국에서는 구글 지도 도보·차 길찾기가 안 된다.
+
 ## 안심 (2026-10)
 - `/safety` = `components/safety/SafetyScreen.js`(아래 메뉴 '안심', 로그인 없이도 긴급번호). `openTimmyPanel('safe')`는 이제 `/safety`로 이동한다. 예전 `GlobalSafeMode` 패널은 없앴다.
 - 상태는 `lib/safety/store.js`(기기 localStorage `tm_safety_v2`, 예전 `safeMode_*` 키도 맞춰 둠) + `useSafety()`. 동작은 `lib/safety/actions.js`. phase: idle → active → **grace(약속 시간 뒤 1분 '도착했나요?')** → alert(사이렌·보호자 알림). SOS는 **3초 누르기**(`SafetyParts.SosButton`).

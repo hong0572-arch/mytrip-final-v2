@@ -93,10 +93,15 @@ export function parseJsonObject(raw) {
   }
 }
 
-// 구글 지도 길찾기 링크(좌표가 있으면 좌표, 없으면 검색어)
+// 한국 안의 좌표인지(대략적인 경계). 한국에서는 구글 지도 길찾기(도보·차)가 거의 안 되므로 카카오맵으로 연다.
+export const inKorea = (lat, lng) => lat >= 33 && lat <= 38.7 && lng >= 124.5 && lng <= 131;
+export const kakaoDirectionsUrl = (name, lat, lng) => `https://map.kakao.com/link/to/${encodeURIComponent(name || '목적지')},${lat},${lng}`;
+
+// 길찾기 링크: 한국이면 카카오맵, 그 밖은 구글 지도(좌표가 있으면 좌표, 없으면 검색어)
 export function directionsUrl(place) {
   const lat = parseFloat(place?.lat ?? place?.coordinates?.lat);
   const lng = parseFloat(place?.lng ?? place?.coordinates?.lng);
+  if (Number.isFinite(lat) && Number.isFinite(lng) && inKorea(lat, lng)) return kakaoDirectionsUrl(place?.name, lat, lng);
   const destination = Number.isFinite(lat) && Number.isFinite(lng)
     ? `${lat},${lng}`
     : place?.googleSearchQuery || place?.address || place?.name || '';

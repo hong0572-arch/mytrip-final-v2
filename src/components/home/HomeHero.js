@@ -2,7 +2,8 @@
 import { useRouter } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
 import { useIsClient } from '../../hooks/useLocalStore';
-import { HOME_CITIES, weatherLabel } from '../../content/homeCities';
+import { HOME_CITIES, KOREA_CITY_IDS, weatherLabel } from '../../content/homeCities';
+import { getKoreaCopy } from '../../content/koreaCopy';
 import TimmyAvatar from '../TimmyAvatar';
 import { goToLogin, startChat } from './homeActions';
 
@@ -10,13 +11,16 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 // 일정이 없을 때의 홈 머리: 시간대에 맞춘 인사 + 티미의 오늘 한마디(오늘의 도시 · 실시간 날씨)
 // 시간·날짜는 브라우저에서만 계산한다(서버 렌더와 첫 화면은 중립 인사·밤하늘).
-export default function HomeHero({ copy, language, user, weather, onToggleLanguage }) {
+// korea: 영어 사용자가 한국에 있을 때 — 한국 도시와 'Exploring Korea?' 인사
+export default function HomeHero({ copy, language, user, weather, onToggleLanguage, korea = false }) {
   const router = useRouter();
   const mounted = useIsClient();
   const now = mounted ? new Date() : null;
   const hour = now ? now.getHours() : null;
   const isDay = hour != null && hour >= 6 && hour < 18;
-  const city = HOME_CITIES[now ? Math.floor(now.getTime() / DAY_MS) % HOME_CITIES.length : 0];
+  const cities = korea ? HOME_CITIES.filter((c) => KOREA_CITY_IDS.includes(c.id)) : HOME_CITIES.filter((c) => !c.korea);
+  const city = cities[now ? Math.floor(now.getTime() / DAY_MS) % cities.length : 0];
+  const heroAsk = korea ? getKoreaCopy(language).heroAsk : copy.heroAsk;
   const c = city[language] || city.ko;
   const w = weather[city.id] ? { ...weather[city.id], ...weatherLabel(weather[city.id]) } : null;
   const name = (user?.displayName || '').split(' ')[0];
@@ -64,9 +68,9 @@ export default function HomeHero({ copy, language, user, weather, onToggleLangua
         <div className="flex min-w-0 flex-col gap-1 pb-1">
           <span className="text-[14px] text-tm-sky-soft">{copy.greeting(hour, name)}</span>
           <h1 className="text-[26px] font-bold leading-[1.25] tracking-[-0.02em]">
-            {copy.heroAsk[0]}
+            {heroAsk[0]}
             <br />
-            {copy.heroAsk[1]}
+            {heroAsk[1]}
           </h1>
         </div>
       </div>

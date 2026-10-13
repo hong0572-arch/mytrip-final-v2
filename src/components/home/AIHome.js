@@ -7,6 +7,7 @@ import useAppLanguage from '../../hooks/useAppLanguage';
 import { notifyLocalStore, useIsClient, useStoredString } from '../../hooks/useLocalStore';
 import useMyTrips from '../../hooks/useMyTrips';
 import useCityWeather from '../../hooks/useCityWeather';
+import useInKorea from '../../hooks/useInKorea';
 import { getAiHomeCopy } from '../../content/aiHomeCopy';
 import { getTripDayNumber, getTripPhase, pickActiveTrip } from '../../utils/tripPhase';
 import { goToLogin, openTimmyPanel, startChat } from './homeActions';
@@ -27,6 +28,9 @@ export default function AIHome() {
   const copy = getAiHomeCopy(language);
   const { user, trips } = useMyTrips();
   const weather = useCityWeather(language);
+  // 영어 화면 + 한국에서 접속 → 한국 여행용 홈
+  const inKorea = useInKorea();
+  const korea = language === 'en' && inKorea;
   // 안심 귀가(lib/safety/store)는 상태를 localStorage에 쓰고 'safeModeChanged' 이벤트를 보낸다.
   const [safeModeFlag] = useStoredString('safeMode_active', 'false');
   const safeModeActive = safeModeFlag === 'true';
@@ -69,7 +73,7 @@ export default function AIHome() {
     <div className="flex min-h-dvh flex-col bg-tm-ground font-sans text-tm-ink">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
         {phase === 'none' ? (
-          <HomeHero copy={copy} language={language} user={user} weather={weather} onToggleLanguage={() => setLanguage(language === 'en' ? 'ko' : 'en')} />
+          <HomeHero copy={copy} language={language} user={user} weather={weather} korea={korea} onToggleLanguage={() => setLanguage(language === 'en' ? 'ko' : 'en')} />
         ) : (
         <header className="flex items-center justify-between py-2 pl-5 pr-3">
           {phase === 'during' ? (
@@ -127,7 +131,7 @@ export default function AIHome() {
         <main className={`flex flex-1 flex-col gap-[18px] px-5 pb-4 ${phase === 'none' ? 'pt-5' : 'pt-1'}`}>
           {phase === 'during' && <OnTripSection copy={copy} trip={activeTrip} dayNumber={dayNumber} />}
           {phase === 'prep' && <PreTripSection copy={copy} language={language} trip={activeTrip} />}
-          {phase !== 'during' && phase !== 'prep' && <NoTripSection copy={copy} language={language} user={user} weather={weather} />}
+          {phase !== 'during' && phase !== 'prep' && <NoTripSection copy={copy} language={language} user={user} weather={weather} korea={korea} />}
 
           <footer className="mt-auto flex justify-center gap-1 pt-4 text-[12px] text-tm-muted">
             <Link href="/guide" className="px-2 py-2">{copy.footerGuide}</Link>

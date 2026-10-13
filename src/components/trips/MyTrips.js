@@ -7,6 +7,7 @@ import { db } from '../../lib/firebase';
 import { onSnapshotError } from '../../lib/snapshotError';
 import useAppLanguage from '../../hooks/useAppLanguage';
 import useMyTrips from '../../hooks/useMyTrips';
+import useInKorea from '../../hooks/useInKorea';
 import { useIsClient, useStoredString } from '../../hooks/useLocalStore';
 import { getAiHomeCopy } from '../../content/aiHomeCopy';
 import { getTripsCopy } from '../../content/tripsCopy';
@@ -30,6 +31,7 @@ export default function MyTrips() {
   const copy = getTripsCopy(language);
   const homeCopy = getAiHomeCopy(language);
   const { user, authReady, trips } = useMyTrips();
+  const inKorea = useInKorea();
   const mounted = useIsClient(); // 날짜 계산은 브라우저에서만
   const [tab, setTab] = useState(null); // null이면 상황에 맞게 고른다
   const [invites, setInvites] = useState([]);
@@ -196,7 +198,7 @@ export default function MyTrips() {
 
           {!loading && user && openInvites.map((invite) => <InviteBanner key={invite.id} copy={copy} invite={invite} />)}
 
-          {isEmpty && <TripsEmpty copy={copy} />}
+          {isEmpty && <TripsEmpty copy={copy} korea={language === 'en' && inKorea} />}
 
           {!loading && user && trips.length > 0 && (
             <>

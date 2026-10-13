@@ -8,6 +8,8 @@ import { db } from '../../lib/firebase';
 import { onSnapshotError } from '../../lib/snapshotError';
 import useAppLanguage from '../../hooks/useAppLanguage';
 import useMyTrips from '../../hooks/useMyTrips';
+import useInKorea from '../../hooks/useInKorea';
+import { getKoreaCopy } from '../../content/koreaCopy';
 import { useIsClient } from '../../hooks/useLocalStore';
 import { getAiHomeCopy } from '../../content/aiHomeCopy';
 import { getSafetyCopy } from '../../content/safetyCopy';
@@ -128,7 +130,13 @@ export default function SafetyScreen() {
 
   // 긴급번호 기준 여행지: 여행 중 → 가장 가까운 출발
   const trip = useMemo(() => (mounted ? pickActiveTrip(trips) : null), [mounted, trips]);
-  const tripDest = trip?.destination || trip?.tripTitle || '';
+  // 영어 화면 + 한국에서 접속 → 한국 여행 중인 외국인으로 보고 한국 번호·1330을 보여 준다
+  const inKorea = useInKorea();
+  const koreaMode = language === 'en' && inKorea;
+  const tripDest = trip?.destination || trip?.tripTitle || (koreaMode ? 'korea' : '');
+  const koreaDest = /한국|korea|서울|seoul|부산|busan|제주|jeju|경주|강릉|전주/i.test(tripDest);
+  const hotline = language === 'en' && (koreaMode || koreaDest) ? getKoreaCopy(language).hotline : null;
+  const showConsular = language !== 'en';
   useEffect(() => { if (tripDest && s.dest !== tripDest) setSafety({ dest: tripDest }); }, [tripDest, s.dest]);
 
   useEffect(() => {
@@ -179,7 +187,7 @@ export default function SafetyScreen() {
     try { await navigator.clipboard.writeText(liveLink()); flash(copy.toastLinkCopied); } catch { flash(copy.failed); }
   };
 
-  const guestCountry = copy.countries.find((c) => c.id === country) || copy.countries[0];
+  const guestCountry = copy.countries.find((c) => c.id === (country || (koreaMode ? 'kr' : null))) || copy.countries[0];
   const loading = !authReady || !mounted;
 
   return (
@@ -255,7 +263,7 @@ export default function SafetyScreen() {
           {/* 로그인 전 */}
           {!loading && !user && (
             <>
-              <EmergencyCard copy={copy} destination={guestCountry.dest} basis={copy.emergencyGuest}>
+              <EmergencyCard copy={copy} destination={guestCountry.dest} basis={copy.emergencyGuest} showConsular={showConsular} hotline={language === 'en' && guestCountry.id === 'kr' ? getKoreaCopy(language).hotline : null}>
                 <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 [scrollbar-width:none]">
                   {copy.countries.map((c) => (
                     <button key={c.id} type="button" aria-pressed={guestCountry.id === c.id} onClick={() => setCountry(c.id)}
@@ -279,7 +287,7 @@ export default function SafetyScreen() {
           )}
 
           {user && (
-            <EmergencyCard copy={copy} destination={tripDest} basis={tripDest ? copy.emergencyBasis(tripDest) : ''}>
+            <EmergencyCard copy={copy} destination={tripDest} basis={tripDest && !(koreaMode && !trip) ? copy.emergencyBasis(tripDest) : ''} showConsular={showConsular} hotline={hotline}>
               {!active && <SosButton copy={copy} onTrigger={() => raiseAlert(copy, { sos: true })} className="h-14 text-[16px]" />}
             </EmergencyCard>
           )}

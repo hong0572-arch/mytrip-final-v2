@@ -5,8 +5,9 @@ import { CONSULAR_CALL, emergencyNumbers } from '../trip/tripUtils';
 
 const telHref = (n) => `tel:${String(n).replace(/[^\d+]/g, '')}`;
 
-// 현지 긴급번호(경찰·구급) + 영사콜센터. destination으로 나라를 고른다(모르면 영사콜센터만).
-export function EmergencyCard({ copy, destination, basis, children }) {
+// 현지 긴급번호(경찰·구급) + 영사콜센터(한국인용) 또는 1330 관광안내(한국을 여행하는 외국인용).
+// destination으로 나라를 고른다(모르면 영사콜센터만).
+export function EmergencyCard({ copy, destination, basis, children, showConsular = true, hotline = null }) {
   const nums = emergencyNumbers(destination || '');
   return (
     <section className="flex flex-col gap-3 rounded-[20px] bg-white p-4">
@@ -25,6 +26,13 @@ export function EmergencyCard({ copy, destination, basis, children }) {
           ))}
         </div>
       )}
+      {hotline && (
+        <a href="tel:1330" className="flex min-h-12 items-center gap-2.5 rounded-[14px] bg-tm-ground px-3">
+          <Phone size={16} strokeWidth={2} className="shrink-0 text-tm-navy" aria-hidden="true" />
+          <span className="flex min-w-0 flex-1 flex-col py-1.5"><span className="text-[14px] font-semibold">{hotline}</span><span className="text-[13px] tabular-nums text-tm-muted">1330</span></span>
+        </a>
+      )}
+      {showConsular && (
       <a href={telHref(CONSULAR_CALL)} className="flex min-h-12 items-center gap-2.5 rounded-[14px] bg-tm-ground px-3">
         <Phone size={16} strokeWidth={2} className="shrink-0 text-tm-navy" aria-hidden="true" />
         <span className="flex min-w-0 flex-1 flex-col py-1.5">
@@ -32,6 +40,7 @@ export function EmergencyCard({ copy, destination, basis, children }) {
           <span className="text-[13px] tabular-nums text-tm-muted">{CONSULAR_CALL}</span>
         </span>
       </a>
+      )}
     </section>
   );
 }

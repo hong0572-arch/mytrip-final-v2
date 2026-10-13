@@ -28,15 +28,39 @@ export const HOME_CITIES = [
   },
   {
     id: 'busan', country: 'KR', lat: 35.1796, lng: 129.0756,
-    ko: { name: '부산', tip: 'KTX로 2시간 반, 해운대·광안리는 밤에도 사람이 많아 걷기 편해요.', prompt: '혼자 부산 1박 2일, KTX로 가서 걸어서 다니는 일정 짜줘.' },
-    en: { name: 'Busan', tip: '2.5 hours by KTX; Haeundae and Gwangalli stay lively at night.', prompt: 'Plan 2 days solo in Busan by KTX, getting around on foot.' },
+    ko: { name: '부산', note: 'KTX 2시간 반 · 바다 옆 도시', tip: 'KTX로 2시간 반, 해운대·광안리는 밤에도 사람이 많아 걷기 편해요.', prompt: '혼자 부산 1박 2일, KTX로 가서 걸어서 다니는 일정 짜줘.' },
+    en: { name: 'Busan', note: '2.5h by KTX · city by the sea', tip: '2.5 hours by KTX; Haeundae and Gwangalli stay lively at night.', prompt: 'Plan 2 days solo in Busan by KTX, getting around on foot.' },
   },
   {
     id: 'taipei', lat: 25.033, lng: 121.5654,
     ko: { name: '타이베이', tip: '야시장도 혼자 다니기 편하고 MRT가 늦게까지 다녀요.', prompt: '혼자 타이베이 3박 4일, 야시장 포함해서 일정 짜줘.' },
     en: { name: 'Taipei', tip: 'Night markets are solo-friendly and the MRT runs late.', prompt: 'Plan 4 days solo in Taipei including night markets.' },
   },
+  // ── 한국 여행 모드(영어 사용자가 한국에 있을 때) 전용 도시: 사진 없이 날씨 카드로 보여 준다 ──
+  {
+    id: 'seoul', country: 'KR', korea: true, lat: 37.5665, lng: 126.978,
+    ko: { name: '서울', note: '지하철로 어디든 · 밤에도 밝은 거리', tip: '명동·홍대는 밤늦게까지 사람이 많아 걷기 편해요.', prompt: '혼자 서울 3박 4일, 지하철로 다니는 일정 짜줘.' },
+    en: { name: 'Seoul', note: 'Subway everywhere · lively at night', tip: 'Myeongdong and Hongdae stay busy late, so walking back feels easy.', prompt: 'Plan 4 days solo in Seoul getting around by subway.' },
+  },
+  {
+    id: 'gyeongju', country: 'KR', korea: true, lat: 35.8562, lng: 129.2247,
+    ko: { name: '경주', note: '걸어서 보는 옛 도읍 · KTX 2시간', tip: '황리단길 근처에 묵으면 밤 산책하기 좋아요.', prompt: '혼자 경주 1박 2일, 걸어서 다니는 일정 짜줘.' },
+    en: { name: 'Gyeongju', note: 'Walkable ancient capital · 2h by KTX', tip: 'Stay near Hwangnidan-gil for easy evening walks.', prompt: 'Plan 2 days solo in Gyeongju on foot.' },
+  },
+  {
+    id: 'gangneung', country: 'KR', korea: true, lat: 37.7519, lng: 128.8761,
+    ko: { name: '강릉', note: '바다와 카페 거리 · KTX 2시간', tip: '안목해변 카페 거리는 해 질 무렵이 가장 예뻐요.', prompt: '혼자 강릉 1박 2일, 바다랑 카페 위주로 일정 짜줘.' },
+    en: { name: 'Gangneung', note: 'Sea and café street · 2h by KTX', tip: 'Anmok Beach café street is loveliest at sunset.', prompt: 'Plan 2 days solo in Gangneung focused on the sea and cafés.' },
+  },
+  {
+    id: 'jeonju', country: 'KR', korea: true, lat: 35.8242, lng: 127.148,
+    ko: { name: '전주', note: '한옥마을과 음식 · 버스·KTX', tip: '한옥마을 안 숙소면 밤에도 조용하고 안전해요.', prompt: '혼자 전주 1박 2일, 한옥마을과 먹거리 위주로 짜줘.' },
+    en: { name: 'Jeonju', note: 'Hanok village and food', tip: 'A guesthouse inside the Hanok Village is quiet and safe at night.', prompt: 'Plan 2 days solo in Jeonju around the Hanok Village and food.' },
+  },
 ];
+
+// 한국 여행 모드에서 쓰는 도시(오늘의 한마디·날씨 카드)
+export const KOREA_CITY_IDS = ['seoul', 'busan', 'jeju', 'gyeongju', 'gangneung', 'jeonju'];
 
 // Google Weather API의 weatherCondition(type·현지어 설명) → 이모지·짧은 설명
 export function weatherLabel(entry) {

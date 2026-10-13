@@ -28,7 +28,7 @@ function RouteArt() {
   );
 }
 
-export default function TripsEmpty({ copy }) {
+export default function TripsEmpty({ copy, korea = false }) {
   const router = useRouter();
   const [pasting, setPasting] = useState(false);
   const [link, setLink] = useState('');
@@ -54,7 +54,7 @@ export default function TripsEmpty({ copy }) {
       </div>
 
       <div className="flex max-w-[330px] flex-wrap justify-center gap-2">
-        {copy.emptyChips.map((chip) => (
+        {(korea ? copy.emptyChipsKorea : copy.emptyChips).map((chip) => (
           <button
             key={chip.label}
             type="button"
