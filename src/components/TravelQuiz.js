@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, updateDoc, increment, addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
+import { authHeaders } from "../utils/authHeaders";
 import { Sparkles, Gift, Lock, RotateCcw, CheckCircle, XCircle } from 'lucide-react';
 
 export default function TravelQuiz({ aiQuizData }) {
@@ -75,21 +76,9 @@ export default function TravelQuiz({ aiQuizData }) {
         if (canPlay) {
             setLoading(true);
             try {
-                const today = new Date().toISOString().split('T')[0];
-                const userRef = doc(db, "users", user.uid);
-
-                // 1. 포인트 & 통계 업데이트
-                await updateDoc(userRef, {
-                    points: increment(REWARD_POINTS),
-                    quizStats: { date: today, count: dailySuccessCount + 1 }
-                });
-
-                // 2. 🔥 [기록] 퀴즈 보상
-                await addDoc(collection(db, "users", user.uid, "point_history"), {
-                    desc: "일일 퀴즈 보상 (만점)",
-                    amount: REWARD_POINTS,
-                    createdAt: serverTimestamp()
-                });
+                // 포인트 적립은 서버가 한다(하루 한도 포함)
+                const res = await fetch('/api/points/', { method: 'POST', headers: await authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ action: 'quiz' }) });
+                if (!res.ok) throw new Error('points failed');
 
                 setDailySuccessCount(prev => prev + 1);
                 if (dailySuccessCount + 1 >= MAX_DAILY_SUCCESS) {

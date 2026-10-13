@@ -21,14 +21,11 @@ async function postToFeed(user, plan, { destination, language }) {
     likes: 0, likedBy: [], comments: 0, forks: 0,
     mockTripData: clean(tripPlanOnly(plan)), createdAt: serverTimestamp(),
   });
-  // 피드 공유 보상은 하루 한 번
-  const userRef = doc(db, 'users', user.uid);
-  const userSnap = await getDoc(userRef);
-  const today = new Date().toISOString().split('T')[0];
-  if (!userSnap.exists() || userSnap.data().lastFeedRewardDate !== today) {
-    await setDoc(userRef, { points: increment(100), lastFeedRewardDate: today }, { merge: true });
-    await addDoc(collection(db, 'users', user.uid, 'point_history'), { reason: '여행 일정 피드 공유 (일일 보상)', amount: 100, createdAt: serverTimestamp() });
-  }
+  // 피드 공유 보상(하루 한 번)은 서버가 준다. 실패해도 공유는 끝난 것으로 본다.
+  try {
+    const token = await user.getIdToken();
+    await fetch('/api/points/', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ action: 'feed' }) });
+  } catch {}
 }
 
 // 피드·사본에는 일정 내용만 싣는다(동행 목록·연락처·지갑·작성 시각 등은 뺀다).

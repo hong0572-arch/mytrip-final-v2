@@ -18,7 +18,7 @@ export default function BottomNav({ copy, user, active = 'home', onSelect }) {
     { key: 'trips', label: copy.nav.trips, Icon: CalendarDays, action: () => router.push('/trips') },
     { key: 'map', label: copy.nav.map, Icon: MapPin, action: () => router.push('/map') },
     { key: 'safety', label: copy.nav.safety, Icon: Shield, action: () => (user ? openTimmyPanel('safe') : goToLogin(router)) },
-    { key: 'my', label: copy.nav.my, Icon: UserRound, action: () => (user ? router.push('/mypage') : goToLogin(router)) },
+    { key: 'my', label: copy.nav.my, Icon: UserRound, action: () => router.push('/mypage') },
   ];
 
   return (

@@ -46,6 +46,13 @@
 - 티미 그림: 작은 곳(대화·로딩·홈 첫 화면)은 `components/TimmyAvatar.js`(얼굴 `public/timmy-face.png` + 하늘색 원). 전신 `timmy.png`는 크게 보여 줄 때만. 썸네일은 사진 대신 `TripThumb`(일정 id로 정해지는 지도 무늬).
 - 문구는 `content/tripsCopy.js`(한/영).
 
+## 마이 (2026-10)
+- `/mypage` = `components/my/MyHome.js`(프로필·포인트·안심·여행 도구·커뮤니티·설정 목록). `/mypage/expenses` 경비 기록(`my/Expenses.js`, `trips/{id}/expenses`, 예산 `budgetKRW`, 원화 환산 `/api/fx` = ECB 환율). `/mypage/account` 개인정보·계정(로그아웃·내 데이터 JSON 내려받기·회원 탈퇴).
+- 예전 마이페이지는 `/mypage/more`(`?tab=social|coach|vault|price_alert`, `?open=inbox|points|quiz|profile`)로 옮겨 피드·요청함·보관함·가격 알림·코치만 쓴다. 일정 탭(→ `/trips`)·트립머니(가짜 입금·환전)·이름/이메일 사람 검색·전체 회원 추천은 없앴다.
+- 회원 탈퇴 `/api/account/delete`(GET 미리 보기, POST 삭제): 혼자 쓰는 일정 삭제, 공유 일정은 본인만 빠짐(만든 사람이면 다음 멤버에게), users/{uid} 하위 전체·안심 세션·요청·가격 알림·(선택) 피드 삭제 후 인증 계정 삭제. 기기의 보관함(IndexedDB)·저장소도 지운다. 공유 링크는 소유자 기록이 없어 남는다.
+- **포인트는 서버만 준다**(`/api/points`: checkin·quiz·feed, 하루 한도·KST). 규칙이 users의 points·lastCheckInDate·lastFeedRewardDate·quizStats·currentAsset 수정을 막고, 가입 시 1000P만 허용한다. users 하위 규칙은 `/{sub}/{document=**}`(회원 문서 자체에 걸리지 않게).
+- 문구는 `content/myCopy.js`(한/영).
+
 ## 지도 (2026-10)
 - 지도 탭 `/map` = `components/map/MapScreen.js`(아래 메뉴 '지도'). 예전 `/plan?tab=around_me`는 `/map`으로 넘긴다. 카테고리(맛집·카페·볼거리·쇼핑·숙소·안심 장소=편의점·약국·경찰서)는 `map/mapUtils.CATEGORY_TYPES`.
 - 기준점: 내 위치 → (권한 없으면) 여행 중/출발 전 일정의 장소 가운데 → 서울. 지도를 직접 끌었을 때만 '이 지역에서 다시 찾기'.

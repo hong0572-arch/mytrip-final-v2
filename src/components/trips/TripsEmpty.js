@@ -100,7 +100,7 @@ export default function TripsEmpty({ copy }) {
         )}
         <span className="flex items-center">
           {copy.emptyFeed}
-          <Link href="/mypage?tab=social" className="flex min-h-11 items-center px-1.5 font-bold text-tm-navy">{copy.emptyFeedAction}</Link>
+          <Link href="/mypage/more?tab=social" className="flex min-h-11 items-center px-1.5 font-bold text-tm-navy">{copy.emptyFeedAction}</Link>
         </span>
       </div>
     </div>

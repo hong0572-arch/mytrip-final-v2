@@ -24,13 +24,24 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // 1. 👤 유저 데이터: 본인 정보만 수정 가능, 읽기는 로그인한 누구나(동행 초대 검색에 쓰임)
+    // 1. 👤 유저 데이터: 본인 정보만 수정 가능, 읽기는 로그인한 누구나(안심 모드 보호자 찾기에 쓰임)
+    // 포인트·출석·퀴즈 기록은 서버(/api/points)만 바꾼다. 가입할 때만 기본 1000P로 만들 수 있다. 탈퇴는 서버(/api/account/delete).
     match /users/{userId} {
+      function protectedFields() {
+        return ['points', 'lastCheckInDate', 'lastFeedRewardDate', 'quizStats', 'currentAsset'];
+      }
       allow read: if isAuthenticated();
-      allow write: if (isAuthenticated() && uid() == userId) || isAdmin();
+      allow create: if (isAuthenticated() && uid() == userId
+          && request.resource.data.get('points', 1000) == 1000
+          && request.resource.data.get('currentAsset', 0) == 0)
+        || isAdmin();
+      allow update: if (isAuthenticated() && uid() == userId
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields()))
+        || isAdmin();
+      allow delete: if isAdmin();
 
-      // 유저 하위 컬렉션 (포인트 내역 등)
-      match /{document=**} {
+      // 유저 하위 컬렉션 (포인트 내역 등) — {sub}를 둬서 회원 문서 자체에는 걸리지 않게 한다
+      match /{sub}/{document=**} {
         allow read, write: if (isAuthenticated() && uid() == userId) || isAdmin();
       }
     }

@@ -63,7 +63,7 @@ export default function JoinTripPage() {
         // 이미 멤버인지 확인
         if (tripData.memberIds?.includes(user.uid)) {
             alert("이미 참여 중인 일정입니다!");
-            router.push('/mypage');
+            router.push('/trips');
             return;
         }
 
@@ -81,8 +81,8 @@ export default function JoinTripPage() {
             });
 
             setTimeout(() => {
-                alert("✨ 여행 일정에 합류했습니다! 마이페이지로 이동합니다.");
-                router.push('/mypage');
+                alert("✨ 여행 일정에 합류했습니다! 내 일정으로 이동합니다.");
+                router.push('/trips');
             }, 800);
 
         } catch (error) {

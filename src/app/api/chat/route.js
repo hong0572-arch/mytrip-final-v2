@@ -74,7 +74,7 @@ export async function POST(req) {
   3. Travel Diary (여행 다이어리): Automatically summarizes and saves your travel memories. Accessible via the main floating Timmy button.
   4. Flight Search (항공권 검색): Find and compare real-time flights easily.
   5. Companion Matching (동행매칭): Find travel buddies safely.
-  6. Trip Money (트립머니): Manage travel budget and track expenses.
+  6. Trip expenses (여행 경비 기록, 마이 탭): Log what you spent, set a budget, see per-person split. No money is stored or transferred.
 - If the user asks "How do I use this app?", provide a friendly overview of these features and how to access them via the bottom navigation bar and the floating Timmy button.
 
 

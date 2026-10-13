@@ -133,7 +133,7 @@ export function SafetyTab({ copy, plan, destination, onSafeMode }) {
   );
 }
 
-export function BudgetTab({ copy, plan, saved }) {
+export function BudgetTab({ copy, plan, saved, tripId }) {
   const placeCosts = plan.itinerary.flatMap((d) => d.places.filter((p) => p.budget).map((p) => ({ day: d.day, name: p.name, budget: p.budget })));
   const empty = !plan.estimatedCost && plan.budgetBreakdown.length === 0 && placeCosts.length === 0;
   return (
@@ -170,7 +170,7 @@ export function BudgetTab({ copy, plan, saved }) {
         </section>
       )}
       {saved && (
-        <Link href="/mypage?tab=wallet" className="flex items-center justify-between rounded-2xl border border-tm-line bg-white px-4 py-3.5 text-[14px] text-tm-ink">
+        <Link href={tripId ? `/mypage/expenses?trip=${tripId}` : '/mypage/expenses'} className="flex items-center justify-between rounded-2xl border border-tm-line bg-white px-4 py-3.5 text-[14px] text-tm-ink">
           <span>{copy.budgetTrack}</span>
           <span className="flex shrink-0 items-center font-bold text-tm-navy">{copy.budgetTrackCta}<ChevronRight size={18} aria-hidden="true" /></span>
         </Link>

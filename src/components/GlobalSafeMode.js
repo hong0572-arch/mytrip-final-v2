@@ -725,7 +725,7 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                     targetMateName: guardianName,
                     status: "pending",
                     message: safeModeTranslations[language].msg_loc_shared.replace('{name}', user.displayName || (language === 'en' ? 'Traveler' : '여행자')),
-                    sessionUrl: `/mypage?openInbox=true`,
+                    sessionUrl: `/mypage/more?open=inbox`,
                     createdAt: serverTimestamp()
                 });
             } catch (err) {
@@ -1570,7 +1570,7 @@ export default function GlobalSafeMode({ hideButton = false, externalOpen, onExt
                                 </a>
                             )}
                             <a 
-                                href={liveSessionPath(otherExpiredSession.userId, otherExpiredSession.shareToken) || '/mypage?openInbox=true'}
+                                href={liveSessionPath(otherExpiredSession.userId, otherExpiredSession.shareToken) || '/mypage/more?open=inbox'}
                                 className="w-full py-4 rounded-2xl font-black text-white bg-brand-danger hover:bg-brand-danger/90 hover:scale-105 transition-all flex items-center justify-center gap-2 active:scale-95 text-sm shadow-md"
                             >
                                 <Siren size={16} className="shrink-0" /> {safeModeTranslations[language].btn_view_map}
