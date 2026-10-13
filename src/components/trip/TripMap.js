@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef } from 'react';
 import useGoogleMaps from './useGoogleMaps';
+import MapFallback from '../map/MapFallback';
 import { hasCoords } from './tripUtils';
 
 const NAVY = '#1B3D6B';
@@ -30,7 +31,7 @@ const hotelIcon = (g) => {
 export default function TripMap({
   plan, dayIdx, selectedIdx, travelMode, bottomInset = 0, recenterKey = 0,
   nearby = [], selectedNearbyId = null, myLocation = null,
-  onSelectPlace, onSelectNearby, onLegs, onMapReady, loadingLabel,
+  onSelectPlace, onSelectNearby, onLegs, onMapReady, loadingLabel, language = 'ko',
 }) {
   const { ready, error } = useGoogleMaps();
   const elRef = useRef(null);
@@ -212,11 +213,20 @@ export default function TripMap({
 
   return (
     <div className="absolute inset-0 bg-[#EEF1EC]">
-      <div ref={elRef} className="h-full w-full" />
-      {!ready && (
+      <div ref={elRef} className="isolate h-full w-full" />
+      {!ready && !error && (
         <div className="absolute inset-0 flex items-start justify-center pt-40 text-[14px] text-tm-muted" role="status">
-          {error ? '' : loadingLabel}
+          {loadingLabel}
         </div>
+      )}
+      {error && (
+        <MapFallback
+          language={language}
+          className="absolute inset-x-0 top-0"
+          style={{ bottom: bottomInset }}
+          onRetry={() => window.location.reload()}
+          googleMapsUrl={plan?.destination ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(plan.destination)}` : null}
+        />
       )}
     </div>
   );

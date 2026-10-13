@@ -45,6 +45,14 @@
 - 티미 그림: 작은 곳(대화·로딩·홈 첫 화면)은 `components/TimmyAvatar.js`(얼굴 `public/timmy-face.png` + 하늘색 원). 전신 `timmy.png`는 크게 보여 줄 때만. 썸네일은 사진 대신 `TripThumb`(일정 id로 정해지는 지도 무늬).
 - 문구는 `content/tripsCopy.js`(한/영).
 
+## 지도 (2026-10)
+- 지도 탭 `/map` = `components/map/MapScreen.js`(아래 메뉴 '지도'). 예전 `/plan?tab=around_me`는 `/map`으로 넘긴다. 카테고리(맛집·카페·볼거리·쇼핑·숙소·안심 장소=편의점·약국·경찰서)는 `map/mapUtils.CATEGORY_TYPES`.
+- 기준점: 내 위치 → (권한 없으면) 여행 중/출발 전 일정의 장소 가운데 → 서울. 지도를 직접 끌었을 때만 '이 지역에서 다시 찾기'.
+- 제휴 상품(`products`)은 같은 카테고리·3km 안의 3개까지 목록 위에 '제휴'로. 지도 말풍선(InfoWindow)에 HTML 문자열을 넣지 않는다(사용자 입력 → XSS). 정보는 React 카드로 보여 준다.
+- 핀 색: 남색(기본)·햇살색(제휴)·하늘색(내 위치). 빨강은 SOS 전용이라 쓰지 않는다.
+- Maps 로더는 `components/trip/useGoogleMaps.js` 하나(`loading=async`). 키·결제 오류는 `window.gm_authFailure`로 잡아 `map/MapFallback`(지도 대신 안내·새로 고침·구글 지도 링크)을 보여 준다. Google Cloud 결제가 꺼지면 모든 지도·장소 검색이 멈춘다(2026-10 장애).
+- 문구는 `content/mapCopy.js`(한/영).
+
 ## 보안·개인정보 (2026-10)
 - 사용자별 API(`api/chat/session`, `api/memory`, `api/diary`, `api/flights/tracker`)는 `lib/verifyUser.js`로 Firebase ID 토큰을 확인하고 토큰의 uid만 쓴다. 클라이언트는 `utils/authHeaders.js`로 토큰을 붙인다.
 - 안심 귀가 보호자 링크: 안전모드를 켤 때 128비트 일회용 키(`shareToken`)를 만들어 `safemode_sessions/{uid}`에 저장하고, 링크는 `/share/live_safemode?u=<uid>&t=<key>`. 보호자 화면은 `api/safemode/live`가 키를 확인해 이름·상태·위치만 돌려준다(15초 갱신). 보호를 끝내면 문서가 지워져 링크도 만료된다. GPS 실패 시 가짜 좌표를 쓰지 않고 `locationError`만 기록한다.

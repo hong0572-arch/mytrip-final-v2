@@ -408,6 +408,7 @@ export default function TripDetail({ data, userInfo, tripId, mode = 'draft', lan
           onLegs={setLegs}
           onMapReady={onMapReady}
           loadingLabel={copy.mapLoading}
+          language={language}
         />
 
         {showMapChrome && (

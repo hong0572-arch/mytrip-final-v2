@@ -16,7 +16,6 @@ import TripCoach from '../../components/TripCoach';
 import { TrackPriceButton } from '../../components/FlightPriceTracker';
 import BottomNav from '../../components/home/BottomNav';
 import { getAiHomeCopy } from '../../content/aiHomeCopy';
-const AroundMeMap = dynamic(() => import("../../components/AroundMeMap"), { ssr: false });
 // 아이콘 및 UI 라이브러리
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -924,7 +923,12 @@ export default function Home() {
                 }
             }
             const queryTab = params.get("tab");
-            if (queryTab && ['home', 'flights_search', 'create', 'around_me'].includes(queryTab)) {
+            // 내 주변은 지도 탭(/map)으로 옮겼다(예전 링크·알림 호환)
+            if (queryTab === 'around_me') {
+                router.replace('/map');
+                return;
+            }
+            if (queryTab && ['home', 'flights_search', 'create'].includes(queryTab)) {
                 setActiveTab(queryTab);
             }
             // AI 홈(/)에서 로그인이 필요한 기능을 눌렀을 때 로그인 창을 바로 연다.
@@ -2207,26 +2211,13 @@ export default function Home() {
                             </div>
                         </div>
                     )}
-                    {activeTab === 'around_me' && (
-                        <div className="space-y-6 animate-fadeIn text-slate-800">
-                            <div className="text-left px-1">
-                                <h3 className="font-extrabold text-slate-900 text-lg flex items-center gap-1.5"><MapPin className="text-spotify-green" size={20} /> {language === 'en' ? "Around Me" : "내 주변 탐색"}</h3>
-                                <p className="text-xs text-slate-400 mt-1 font-medium text-left">{language === 'en' ? "Find local restaurants, shopping, and events near you." : "현재 위치를 중심으로 맛집, 쇼핑, 축제/행사 정보를 탐색하세요."}</p>
-                            </div>
-                            <AroundMeMap language={language} />
-                        </div>
-                    )}
                 </div>
                 {/* 앱 공통 아래 메뉴 (AI 홈과 동일) */}
                 <div className="absolute bottom-0 left-0 right-0 z-50 shrink-0">
                     <BottomNav
                         copy={getAiHomeCopy(language)}
                         user={user || session}
-                        active={activeTab === 'around_me' ? 'map' : null}
-                        onSelect={(key) => {
-                            if (key === 'map') { setActiveTab('around_me'); return true; }
-                            return false;
-                        }}
+                        active={null}
                     />
                 </div>
                 {/* 티미 AI 코치 바텀 시트 */}

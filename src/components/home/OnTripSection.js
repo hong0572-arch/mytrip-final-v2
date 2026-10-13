@@ -24,7 +24,7 @@ export default function OnTripSection({ copy, trip, dayNumber }) {
   const quickActions = [
     { key: 'safe', label: copy.quick.safeReturn, sub: copy.quick.safeReturnSub, Icon: HomeIcon, onClick: () => openTimmyPanel('safe'), ring: true },
     { key: 'translate', label: copy.quick.translate, Icon: Camera, onClick: () => openTimmyPanel('chat') },
-    { key: 'around', label: copy.quick.around, Icon: Compass, onClick: () => router.push('/plan?tab=around_me') },
+    { key: 'around', label: copy.quick.around, Icon: Compass, onClick: () => router.push('/map') },
     { key: 'diary', label: copy.quick.diary, Icon: BookOpen, onClick: () => openTimmyPanel('diary') },
   ];
 
