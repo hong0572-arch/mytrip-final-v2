@@ -8,7 +8,7 @@ export default function TimmyAvatar({ size = 32, ring = false, className = '' })
     : { width: size, height: size, outline: '1px solid var(--color-tm-line)' };
   return (
     <span aria-hidden="true" className={`inline-block shrink-0 overflow-hidden rounded-full bg-tm-sky-tint ${className}`} style={style}>
-      <img src="/timmy-face.png" alt="" width={size} height={size} className="block h-full w-full object-cover" />
+      <img src="/timmy-face-192.webp" alt="" width={size} height={size} className="block h-full w-full object-cover" />
     </span>
   );
 }

@@ -6,12 +6,15 @@ import { Shield } from 'lucide-react';
 import useAppLanguage from '../../hooks/useAppLanguage';
 import { notifyLocalStore, useIsClient, useStoredString } from '../../hooks/useLocalStore';
 import useMyTrips from '../../hooks/useMyTrips';
+import useCityWeather from '../../hooks/useCityWeather';
+import { HOME_CITIES } from '../../content/homeCities';
 import { getAiHomeCopy } from '../../content/aiHomeCopy';
 import { getTripDayNumber, getTripPhase, pickActiveTrip } from '../../utils/tripPhase';
 import { goToLogin, openTimmyPanel, startChat } from './homeActions';
 import HomeComposer from './HomeComposer';
 import BottomNav from './BottomNav';
 import NoTripSection from './NoTripSection';
+import HomeHero from './HomeHero';
 import PreTripSection from './PreTripSection';
 import OnTripSection from './OnTripSection';
 
@@ -24,6 +27,7 @@ export default function AIHome() {
   const [language, setLanguage] = useAppLanguage();
   const copy = getAiHomeCopy(language);
   const { user, trips } = useMyTrips();
+  const weather = useCityWeather(HOME_CITIES);
   // 안전모드(GlobalSafeMode)는 상태를 localStorage에 쓰고 'safeModeChanged' 이벤트를 보낸다.
   const [safeModeFlag] = useStoredString('safeMode_active', 'false');
   const safeModeActive = safeModeFlag === 'true';
@@ -65,6 +69,9 @@ export default function AIHome() {
   return (
     <div className="flex min-h-dvh flex-col bg-tm-ground font-sans text-tm-ink">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
+        {phase === 'none' ? (
+          <HomeHero copy={copy} language={language} user={user} weather={weather} onToggleLanguage={() => setLanguage(language === 'en' ? 'ko' : 'en')} />
+        ) : (
         <header className="flex items-center justify-between py-2 pl-5 pr-3">
           {phase === 'during' ? (
             <div className="flex flex-col gap-0.5 py-1">
@@ -104,6 +111,7 @@ export default function AIHome() {
             )}
           </div>
         </header>
+        )}
 
         {safeModeActive && (
           <div className="mx-5 mb-2.5 flex items-center gap-2.5 rounded-[14px] bg-tm-safe-tint py-1 pl-3.5 pr-1">
@@ -117,10 +125,10 @@ export default function AIHome() {
           </div>
         )}
 
-        <main className="flex flex-1 flex-col gap-[18px] px-5 pb-4 pt-1">
+        <main className={`flex flex-1 flex-col gap-[18px] px-5 pb-4 ${phase === 'none' ? 'pt-5' : 'pt-1'}`}>
           {phase === 'during' && <OnTripSection copy={copy} trip={activeTrip} dayNumber={dayNumber} />}
           {phase === 'prep' && <PreTripSection copy={copy} language={language} trip={activeTrip} />}
-          {phase !== 'during' && phase !== 'prep' && <NoTripSection copy={copy} user={user} />}
+          {phase !== 'during' && phase !== 'prep' && <NoTripSection copy={copy} language={language} user={user} weather={weather} />}
 
           <footer className="mt-auto flex justify-center gap-1 pt-4 text-[12px] text-tm-muted">
             <Link href="/guide" className="px-2 py-2">{copy.footerGuide}</Link>

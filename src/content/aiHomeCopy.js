@@ -6,6 +6,30 @@ export const aiHomeCopy = {
     notifications: '알림',
     login: '로그인',
 
+    greeting: (hour, name) => {
+      const base = hour == null ? '안녕하세요' : hour < 5 ? '좋은 밤이에요' : hour < 11 ? '좋은 아침이에요' : hour < 17 ? '좋은 오후예요' : hour < 22 ? '좋은 저녁이에요' : '좋은 밤이에요';
+      return name ? `${base}, ${name}님` : base;
+    },
+    heroAsk: ['다음 여행,', '같이 그려 볼까요?'],
+    todayLabel: '티미의 오늘 한마디',
+    todayLine: (city, w, tip) => (w ? `지금 ${city}는 ${w.temp}° ${w.text}. ${tip}` : `${city} 어때요? ${tip}`),
+    todayPlan: (city) => `${city} 일정 짜 줘`,
+    todayOther: '다른 곳 추천',
+    todayOtherPrompt: '혼자 가기 좋은 여행지 3곳 추천해줘. 이번 계절 날씨랑 치안, 숙소 동네까지 고려해서.',
+    citiesTitle: '혼자 가기 좋은 도시',
+    citiesMore: '더 추천받기',
+    soloSafe: '혼자 안심',
+    nowLabel: '지금',
+    askedTitle: '요즘 혼자 여행자들이 묻는 것',
+    asked: [
+      { icon: '🌙', q: '밤 비행기 도착, 공항에서 숙소까지 안전하게', where: '방콕 · 다낭', prompt: '밤 비행기로 방콕에 도착해요. 공항에서 숙소까지 안전하게 가는 방법과 첫날 일정 알려줘.' },
+      { icon: '🏨', q: '여자 혼자 묵기 좋은 동네만 골라 줘', where: '도쿄 · 파리', prompt: '여자 혼자 묵기 좋은, 밤에도 안전한 숙소 동네를 도쿄와 파리에서 골라줘.' },
+      { icon: '🚶', q: '걸어서 다니는 3박 일정', where: '교토 · 포르투', prompt: '혼자 걸어서 다니기 좋은 3박 4일 일정 만들어줘. 교토나 포르투 중에서.', plan: true },
+    ],
+    tileSafety: '안심 기능 켜 두기',
+    tileSafetySub: '비상 연락처 · 귀가 타이머',
+    tileFlights: '항공권 최저가',
+    tileFlightsSub: '가격 비교',
     heroTitle: ['혼자 떠나도', '든든하게'],
     heroBody: '어디로 갈지 말해 주세요. 일정부터 숙소 동네, 밤 이동까지 티미가 함께 챙겨요.',
     suggestions: [
@@ -110,6 +134,30 @@ export const aiHomeCopy = {
     notifications: 'Notifications',
     login: 'Log in',
 
+    greeting: (hour, name) => {
+      const base = hour == null ? 'Hello' : hour < 5 ? 'Good night' : hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 22 ? 'Good evening' : 'Good night';
+      return name ? `${base}, ${name}` : base;
+    },
+    heroAsk: ['Where to next?', "Let's sketch it together."],
+    todayLabel: "Timmy's note for today",
+    todayLine: (city, w, tip) => (w ? `It's ${w.temp}° and ${w.text.toLowerCase()} in ${city} right now. ${tip}` : `How about ${city}? ${tip}`),
+    todayPlan: (city) => `Plan ${city}`,
+    todayOther: 'Suggest others',
+    todayOtherPrompt: 'Suggest 3 great destinations for a solo traveler, considering this season, safety and where to stay.',
+    citiesTitle: 'Great cities to go solo',
+    citiesMore: 'More ideas',
+    soloSafe: 'Solo-friendly',
+    nowLabel: 'Now',
+    askedTitle: 'What solo travelers ask lately',
+    asked: [
+      { icon: '🌙', q: 'Arriving late — getting to my stay safely', where: 'Bangkok · Da Nang', prompt: "I'm landing in Bangkok late at night. How do I get to my hotel safely, and what should day one look like?" },
+      { icon: '🏨', q: 'Only neighborhoods good for women alone', where: 'Tokyo · Paris', prompt: 'Pick neighborhoods in Tokyo and Paris that feel safe at night for a woman traveling alone.' },
+      { icon: '🚶', q: 'A 3-night trip on foot', where: 'Kyoto · Porto', prompt: 'Plan a 4-day walkable solo trip in Kyoto or Porto.', plan: true },
+    ],
+    tileSafety: 'Set up safety',
+    tileSafetySub: 'Contacts · return timer',
+    tileFlights: 'Cheap flights',
+    tileFlightsSub: 'Compare prices',
     heroTitle: ['Travel solo,', 'travel sure'],
     heroBody: 'Tell me where you want to go. Timmy helps with the plan, the right neighborhood to stay in, and getting around after dark.',
     suggestions: [
