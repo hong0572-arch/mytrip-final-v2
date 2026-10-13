@@ -51,7 +51,7 @@
 - 상태는 `lib/safety/store.js`(기기 localStorage `tm_safety_v2`, 예전 `safeMode_*` 키도 맞춰 둠) + `useSafety()`. 동작은 `lib/safety/actions.js`. phase: idle → active → **grace(약속 시간 뒤 1분 '도착했나요?')** → alert(사이렌·보호자 알림). SOS는 **3초 누르기**(`SafetyParts.SosButton`).
 - `components/safety/SafetyRuntime.js`는 레이아웃에 하나: 타이머·유예·경보 화면, 15초 위치 갱신, 보호자 기기 경보(`safemode_sessions` where `guardianUserIds` array-contains / 예전 `guardianUserId`).
 - 보호자는 최대 3명: 앱 회원은 **초대 링크**(`guardian_invites/{128비트 id}` → `/safety/join?t=`) 수락으로만 연결, 전화번호 보호자는 기기에만 저장하고 경보 때 `sms:` 문자 화면을 연다. 이름·이메일 검색 없음 → `users`는 본인·관리자만 읽는다.
-- 한계: 경보는 이용자 휴대폰에서 앱이 열려 있을 때 판단한다(서버 감시 없음). 앱을 닫아 두면 약속 시간이 지나도 보호자에게 자동 알림이 가지 않는다.
+- 서버 감시: Cloud Functions `checkExpiredSafeSessions`(functions/src/index.ts, 1분마다)가 약속 시간 + 유예 1분 + 여유 1분이 지난 `active` 세션을 트랜잭션으로 `expired`(alertedBy: 'server')로 바꾸고, 앱 보호자에게 match_requests + FCM 푸시(users.fcmToken), 이용자에게 '도착했나요?' 푸시를 보낸다. 앱은 자기 세션이 서버로 만료되면 다시 알리지 않고 경보 화면만 띄운다. 전화번호 보호자는 서버가 문자를 보낼 수 없다(문자 발송 업체 연동 전). 함수 배포: `firebase deploy --only functions:checkExpiredSafeSessions`.
 - 문구는 `content/safetyCopy.js`(한/영).
 
 ## 마이 (2026-10)

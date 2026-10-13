@@ -32,6 +32,7 @@ async function writeSession(fields, { create = false } = {}) {
     guardianName: s.guardians.map((g) => g.name).join(', '),
     location: null,
     shareToken: s.shareToken,
+    language: (() => { try { return localStorage.getItem('language') === 'en' ? 'en' : 'ko'; } catch { return 'ko'; } })(), // 서버 푸시 문구용
     createdAt: serverTimestamp(),
   } : {};
   await setDoc(sessionRef(user.uid), { ...base, ...fields, updatedAt: serverTimestamp() }, { merge: !create }).catch((e) => console.error('[safety] session write failed', e));

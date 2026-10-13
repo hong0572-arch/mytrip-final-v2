@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, where } from 'firebase/firestore';
 import { Check, MessageSquare, Phone, Timer, Volume2, VolumeX } from 'lucide-react';
 import { auth, db } from '../../lib/firebase';
 import { onSnapshotError } from '../../lib/snapshotError';
@@ -10,7 +10,7 @@ import useAppLanguage from '../../hooks/useAppLanguage';
 import { getSafetyCopy } from '../../content/safetyCopy';
 import useSafety from '../../lib/safety/useSafety';
 import { endSafety, enterGrace, extendSafety, raiseAlert, smsHref, smsText, toggleSiren, updateLocation } from '../../lib/safety/actions';
-import { liveSessionPath } from '../../lib/safety/store';
+import { liveSessionPath, setSafety } from '../../lib/safety/store';
 import { startSiren, stopSiren } from '../../lib/safety/siren';
 import { emergencyNumbers } from '../trip/tripUtils';
 
@@ -51,6 +51,16 @@ export default function SafetyRuntime() {
     const id = setInterval(updateLocation, 15000);
     return () => clearInterval(id);
   }, [s.phase, user]);
+
+  // 앱이 닫혀 있는 동안 서버(checkExpiredSafeSessions)가 먼저 경보를 냈다면, 다시 알리지 않고 경보 화면만 띄운다
+  useEffect(() => {
+    if (!user || (s.phase !== 'active' && s.phase !== 'grace')) return undefined;
+    return onSnapshot(doc(db, 'safemode_sessions', user.uid), (snap) => {
+      if (snap.exists() && snap.get('status') === 'expired' && snap.get('alertedBy') === 'server') {
+        setSafety({ phase: 'alert', sos: false, siren: startSiren() });
+      }
+    }, onSnapshotError('safety/own-session'));
+  }, [user, s.phase]);
 
   // 경보 화면의 문자 본문(위치 포함)
   useEffect(() => {
