@@ -1,8 +1,8 @@
 // 홈 '혼자 가기 좋은 도시' 카드와 '티미의 오늘 한마디'에 쓰는 도시 목록. 한/영을 항상 함께 고친다.
-// image가 있는 도시만 카드로 보여 준다. 좌표는 실시간 날씨(Open-Meteo) 조회용.
+// image가 있는 도시만 카드로 보여 준다. 좌표는 실시간 날씨 조회용(country 'KR'은 기상청, 나머지는 Google Weather API).
 export const HOME_CITIES = [
   {
-    id: 'jeju', lat: 33.4996, lng: 126.5312, image: '/home/jeju.webp',
+    id: 'jeju', country: 'KR', lat: 33.4996, lng: 126.5312, image: '/home/jeju.webp',
     ko: { name: '제주', note: '버스로 충분 · 밤 이동 적음', flight: '1h10m', tip: '바다 쪽 숙소에서 버스로 다니기 좋아요.', prompt: '혼자 제주 2박 3일, 버스로 다니는 일정 짜줘.' },
     en: { name: 'Jeju', note: 'Easy by bus · little night travel', flight: '1h10m', tip: 'Stay by the sea and get around by bus.', prompt: 'Plan a 3-day solo trip to Jeju by bus.' },
   },
@@ -22,9 +22,14 @@ export const HOME_CITIES = [
     en: { name: 'Banff, Canada', note: 'Lake shuttles · easy nature walks', flight: '1 stop', tip: 'Book the lake shuttles ahead — easy without a car.', prompt: 'Plan 5 days solo in Banff without a car, using shuttles.' },
   },
   {
-    id: 'osaka', lat: 34.6937, lng: 135.5023,
+    id: 'osaka', country: 'JP', lat: 34.6937, lng: 135.5023,
     ko: { name: '오사카', tip: '난바 근처 숙소면 밤늦게도 걸어서 돌아오기 쉬워요.', prompt: '혼자 오사카 2박 3일, 맛집 위주로 일정 짜줘.' },
     en: { name: 'Osaka', tip: 'Stay near Namba to walk back easily at night.', prompt: 'Plan 3 days solo in Osaka, focused on food.' },
+  },
+  {
+    id: 'busan', country: 'KR', lat: 35.1796, lng: 129.0756,
+    ko: { name: '부산', tip: 'KTX로 2시간 반, 해운대·광안리는 밤에도 사람이 많아 걷기 편해요.', prompt: '혼자 부산 1박 2일, KTX로 가서 걸어서 다니는 일정 짜줘.' },
+    en: { name: 'Busan', tip: '2.5 hours by KTX; Haeundae and Gwangalli stay lively at night.', prompt: 'Plan 2 days solo in Busan by KTX, getting around on foot.' },
   },
   {
     id: 'taipei', lat: 25.033, lng: 121.5654,

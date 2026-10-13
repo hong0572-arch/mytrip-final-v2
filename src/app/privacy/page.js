@@ -59,6 +59,7 @@ const OUTSOURCING = [
     { company: 'Google LLC (Firebase, Google Cloud)', task: '회원 인증, 데이터 저장(데이터베이스·파일), 푸시 알림', country: '미국 등 Google 데이터센터' },
     { company: 'Google LLC (Gemini API)', task: 'AI 일정 생성, AI 대화 답변, 일기 요약, 사진 속 글자 번역', country: '미국' },
     { company: 'Google LLC (Google 지도·날씨, Google 애널리틱스)', task: '지도·장소 정보 표시, 추천 도시 날씨 조회(서버가 도시 좌표로만 조회하며 이용자 정보는 보내지 않음), 이용 통계 분석', country: '미국' },
+    { company: '기상청 (공공데이터포털 단기예보 API)', task: '국내 추천 도시 날씨 조회 (서버가 도시 좌표로만 조회하며 이용자 정보는 보내지 않음)', country: '대한민국' },
     { company: 'Vercel Inc.', task: '웹 서비스 호스팅, 서버 기능 실행, 이용 통계(Vercel Analytics)', country: '미국' },
     { company: 'Kakao Corp.', task: '카카오 로그인', country: '대한민국' },
     { company: 'OpenStreetMap 기반 서비스 (Overpass API, Nominatim)', task: '내 주변 장소 검색, 위치를 주소로 변환 (위치 좌표만 전송하며 이름 등 식별 정보는 보내지 않음)', country: '독일, 영국' },

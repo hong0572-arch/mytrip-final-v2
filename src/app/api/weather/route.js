@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { HOME_CITIES } from '../../../content/homeCities';
+import { kmaCurrent } from '../../../lib/kmaWeather';
 
-// 홈 추천 도시들의 지금 날씨(Google Maps Platform Weather API).
+// 홈 추천 도시들의 지금 날씨. 한국(country 'KR')은 기상청 단기예보(KMA_SERVICE_KEY), 나머지는 Google Maps Platform Weather API.
+// Google은 한국·일본을 지원하지 않는다(일본은 지금 날씨 없이 보여 준다).
 // 서버가 대신 조회하고 30분 동안 캐시한다 → 방문자 수와 상관없이 호출 수가 거의 일정하고,
 // 방문자 IP·위치는 날씨 API로 가지 않는다. 키는 GOOGLE_WEATHER_API_KEY(없으면 지도 키)를 쓴다.
 // Weather API가 꺼져 있거나 실패하면 빈 객체를 돌려주고, 화면은 날씨 없이 그린다.
@@ -26,9 +28,15 @@ export async function GET(req) {
   if (hit && Date.now() - hit.at < TTL_MS) return NextResponse.json(hit.data, { headers });
 
   const key = process.env.GOOGLE_WEATHER_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  if (!key) return NextResponse.json({}, { headers: { 'Cache-Control': 'no-store' } });
+  const kmaKey = process.env.KMA_SERVICE_KEY;
+  const fetchCity = (c) => {
+    if (c.country === 'KR') return kmaKey ? kmaCurrent(c, lang, kmaKey) : Promise.reject(new Error('no KMA_SERVICE_KEY'));
+    if (c.country === 'JP') return Promise.reject(new Error('not supported'));
+    return key ? lookup(c, lang, key) : Promise.reject(new Error('no Google key'));
+  };
 
-  const results = await Promise.allSettled(HOME_CITIES.map((c) => lookup(c, lang, key)));
+  const results = await Promise.allSettled(HOME_CITIES.map(fetchCity));
+  results.forEach((r, i) => { if (r.status === 'rejected' && HOME_CITIES[i].country === 'KR' && kmaKey) console.warn('[weather] kma', HOME_CITIES[i].id, r.reason?.message); });
   const data = {};
   results.forEach((r, i) => { if (r.status === 'fulfilled') data[HOME_CITIES[i].id] = r.value; });
   if (Object.keys(data).length === 0) {
