@@ -1,6 +1,9 @@
-// 기상청 단기예보 조회서비스(공공데이터포털 VilageFcstInfoService_2.0)로 한국 도시의 지금 날씨를 가져온다.
+// 기상청 단기예보 조회서비스(VilageFcstInfoService_2.0)로 한국 도시의 지금 날씨를 가져온다.
 // Google Weather API가 한국을 지원하지 않아서 한국 도시만 이걸 쓴다. 서버 전용(키: KMA_SERVICE_KEY).
-const BASE = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0';
+// 키는 두 곳 중 하나: 기상청 API허브(apihub.kma.go.kr, 22자 authKey) 또는 공공데이터포털(긴 serviceKey). 응답 형식은 같다.
+const HUB_BASE = 'https://apihub.kma.go.kr/api/typ02/openApi/VilageFcstInfoService_2.0';
+const DATA_GO_BASE = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0';
+const isHubKey = (key) => key.length <= 40 && /^[A-Za-z0-9_-]+$/.test(key);
 
 // 위경도 → 기상청 격자(nx, ny). 기상청 Lambert Conformal Conic 변환식.
 export function toKmaGrid(lat, lng) {
@@ -34,13 +37,15 @@ function kstParts(date, minusMinutes) {
 }
 
 async function call(op, key, params) {
-  const serviceKey = key.includes('%') ? key : encodeURIComponent(key); // 인코딩·디코딩 키 모두 받는다
   const qs = new URLSearchParams({ pageNo: '1', numOfRows: '100', dataType: 'JSON', ...params }).toString();
-  const res = await fetch(`${BASE}/${op}?serviceKey=${serviceKey}&${qs}`, { cache: 'no-store' });
+  const url = isHubKey(key)
+    ? `${HUB_BASE}/${op}?authKey=${key}&${qs}`
+    : `${DATA_GO_BASE}/${op}?serviceKey=${key.includes('%') ? key : encodeURIComponent(key)}&${qs}`; // 인코딩·디코딩 키 모두 받는다
+  const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error(`kma ${op} ${res.status}`);
   const json = await res.json().catch(() => null); // 키 오류 등은 XML로 온다
   const code = json?.response?.header?.resultCode;
-  if (code !== '00') throw new Error(`kma ${op} result ${code || 'non-json'}`);
+  if (code !== '00') throw new Error(`kma ${op} result ${code || json?.result?.status || 'non-json'}`);
   return json.response.body?.items?.item || [];
 }
 
