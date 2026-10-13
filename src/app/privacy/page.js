@@ -9,7 +9,7 @@ export const metadata = {
     alternates: { canonical: 'https://tripmaker.tips/privacy' },
 };
 
-const EFFECTIVE_DATE = '2026년 10월 7일';
+const EFFECTIVE_DATE = '2026년 10월 13일';
 const OPERATOR = 'Trip Maker 운영팀';
 const PRIVACY_OFFICER = 'Trip Maker 개인정보 보호 담당';
 const CONTACT_EMAIL = 'contact@tripmaker.tips';
@@ -61,6 +61,7 @@ const OUTSOURCING = [
     { company: 'Google LLC (Google 지도, Google 애널리틱스)', task: '지도·장소 정보 표시, 이용 통계 분석', country: '미국' },
     { company: 'Vercel Inc.', task: '웹 서비스 호스팅, 서버 기능 실행, 이용 통계(Vercel Analytics)', country: '미국' },
     { company: 'Kakao Corp.', task: '카카오 로그인', country: '대한민국' },
+    { company: 'OpenMeteo GmbH (Open-Meteo 날씨 API)', task: '홈 화면의 추천 도시 실시간 날씨 표시 (도시 좌표만 전송하며 이용자 위치·이름 등 식별 정보는 보내지 않음. 접속 IP는 업체 서버 기록에 남을 수 있고 90일 뒤 삭제됨)', country: '스위스' },
     { company: 'OpenStreetMap 기반 서비스 (Overpass API, Nominatim)', task: '내 주변 장소 검색, 위치를 주소로 변환 (위치 좌표만 전송하며 이름 등 식별 정보는 보내지 않음)', country: '독일, 영국' },
 ];
 
