@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import AuthContext from "../components/AuthContext";
 import TimmyButton from '../components/TimmyButton';
+import SafetyRuntime from '../components/safety/SafetyRuntime';
 
 // ✅ 환경 변수 및 설정
 const SITE_TITLE = process.env.NEXT_PUBLIC_OG_TITLE || "Trip Maker - 내 AI 여행 가이드";
@@ -89,6 +90,9 @@ export default function RootLayout({ children }) {
 
           {/* 🐱 티미 AI 통합 버튼 (AI 채팅 + Safe Mode) */}
           <TimmyButton />
+
+          {/* 🛡️ 안심 귀가 타이머·경보(앱 전체에 하나) */}
+          <SafetyRuntime />
 
           {/* GA4 (구글 애널리틱스) */}
           <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} />

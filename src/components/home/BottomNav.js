@@ -1,7 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { CalendarDays, MapPin, Shield, Sparkles, UserRound } from 'lucide-react';
-import { goToLogin, openTimmyPanel } from './homeActions';
 
 // 앱 공통 아래 메뉴: 홈 / 내 일정 / 지도 / 안심 / 마이
 // active: 'home' | 'trips' | 'map' | 'my' | null (현재 화면이 메뉴에 없으면 null)
@@ -17,7 +16,7 @@ export default function BottomNav({ copy, user, active = 'home', onSelect }) {
     { key: 'home', label: copy.nav.home, Icon: Sparkles, action: () => (active === 'home' ? window.scrollTo({ top: 0, behavior: 'smooth' }) : router.push('/')) },
     { key: 'trips', label: copy.nav.trips, Icon: CalendarDays, action: () => router.push('/trips') },
     { key: 'map', label: copy.nav.map, Icon: MapPin, action: () => router.push('/map') },
-    { key: 'safety', label: copy.nav.safety, Icon: Shield, action: () => (user ? openTimmyPanel('safe') : goToLogin(router)) },
+    { key: 'safety', label: copy.nav.safety, Icon: Shield, action: () => router.push('/safety') },
     { key: 'my', label: copy.nav.my, Icon: UserRound, action: () => router.push('/mypage') },
   ];
 

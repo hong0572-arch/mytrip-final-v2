@@ -24,13 +24,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // 1. 👤 유저 데이터: 본인 정보만 수정 가능, 읽기는 로그인한 누구나(안심 모드 보호자 찾기에 쓰임)
+    // 1. 👤 유저 데이터: 본인 정보만 수정 가능. 읽기는 본인·관리자만(보호자·동행은 초대 링크로 연결하므로 다른 회원을 찾을 일이 없다)
     // 포인트·출석·퀴즈 기록은 서버(/api/points)만 바꾼다. 가입할 때만 기본 1000P로 만들 수 있다. 탈퇴는 서버(/api/account/delete).
     match /users/{userId} {
       function protectedFields() {
         return ['points', 'lastCheckInDate', 'lastFeedRewardDate', 'quizStats', 'currentAsset'];
       }
-      allow read: if isAuthenticated();
+      allow read: if (isAuthenticated() && uid() == userId) || isAdmin();
       allow create: if (isAuthenticated() && uid() == userId
           && request.resource.data.get('points', 1000) == 1000
           && request.resource.data.get('currentAsset', 0) == 0)
@@ -152,10 +152,33 @@ service cloud.firestore {
     // 7. 🛡️ 안심 귀가 실시간 세션 (Safe Mode)
     // 위치·보호자 연락처가 담기므로 본인과 지정된 보호자(앱 회원)만 읽는다.
     // 회원이 아닌 보호자는 서버 API(/api/safemode/live)가 일회용 키를 확인해 필요한 항목만 보여준다.
+    // 보호자는 여러 명(guardianUserIds)일 수 있다. guardianUserId는 예전 화면 호환용.
     match /safemode_sessions/{userId} {
       allow read: if isAuthenticated()
-        && (request.auth.uid == userId || resource.data.guardianUserId == request.auth.uid);
-      allow write: if request.auth.uid == userId;
+        && (request.auth.uid == userId
+          || resource.data.get('guardianUserId', null) == request.auth.uid
+          || request.auth.uid in resource.data.get('guardianUserIds', []));
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // 7-1. 🛡️ 안심 귀가 보호자 초대(문서 id = 추측할 수 없는 128비트 키)
+    // 링크를 받은 로그인 사용자는 단건 조회·수락(자기 자신만)할 수 있고, 목록은 초대한 사람·수락한 사람만 본다.
+    match /guardian_invites/{inviteId} {
+      allow get: if isAuthenticated();
+      allow list: if isAuthenticated()
+        && (resource.data.ownerUid == uid() || resource.data.get('acceptedBy', null) == uid());
+      allow create: if isAuthenticated()
+        && request.resource.data.ownerUid == uid()
+        && request.resource.data.status == 'pending'
+        && !('acceptedBy' in request.resource.data);
+      allow update: if isAuthenticated()
+        && resource.data.status == 'pending'
+        && resource.data.ownerUid != uid()
+        && onlyChanges(['status', 'acceptedBy', 'acceptedName', 'acceptedAt'])
+        && request.resource.data.status == 'accepted'
+        && request.resource.data.acceptedBy == uid();
+      allow delete: if isAuthenticated()
+        && (resource.data.ownerUid == uid() || resource.data.get('acceptedBy', null) == uid());
     }
 
     // 8. ✈️ 항공 최저가 캐시 데이터

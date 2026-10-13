@@ -27,7 +27,7 @@ export default function AIHome() {
   const copy = getAiHomeCopy(language);
   const { user, trips } = useMyTrips();
   const weather = useCityWeather(language);
-  // 안전모드(GlobalSafeMode)는 상태를 localStorage에 쓰고 'safeModeChanged' 이벤트를 보낸다.
+  // 안심 귀가(lib/safety/store)는 상태를 localStorage에 쓰고 'safeModeChanged' 이벤트를 보낸다.
   const [safeModeFlag] = useStoredString('safeMode_active', 'false');
   const safeModeActive = safeModeFlag === 'true';
   // 날짜 계산은 브라우저에서만(서버 렌더와 첫 화면을 '일정 없음'으로 맞춘다)

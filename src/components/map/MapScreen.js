@@ -46,7 +46,11 @@ export default function MapScreen() {
   const { user, trips } = useMyTrips();
 
   const { ready, error } = useGoogleMaps();
-  const [category, setCategory] = useState('food');
+  // ?cat=safe 처럼 카테고리를 정해 들어올 수 있다(안심 탭 → 안심 장소)
+  const [category, setCategory] = useState(() => {
+    const c = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('cat');
+    return c && CATEGORY_TYPES[c] ? c : 'food';
+  });
   const [openNow, setOpenNow] = useState(false);
   const [sheet, setSheet] = useState('peek');
   const [locating, setLocating] = useState(true);

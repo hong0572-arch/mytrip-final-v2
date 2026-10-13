@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Shield, MessageCircle, X, BookHeart } from 'lucide-react';
 import { auth } from '../lib/firebase';
@@ -9,7 +9,7 @@ import useDraggable from '../hooks/useDraggable';
 import useTimmy from '../hooks/useTimmy';
 import useDiary from '../hooks/useDiary';
 import TimmyChat from './TimmyChat';
-import GlobalSafeMode from './GlobalSafeMode';
+import useSafety from '../lib/safety/useSafety';
 import DiaryTab from './DiaryTab';
 
 const t = {
@@ -36,8 +36,10 @@ export default function TimmyButton() {
   const [showMenu, setShowMenu] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [diaryOpen, setDiaryOpen] = useState(false);
-  const [safeModeOpen, setSafeModeOpen] = useState(false);
-  const [safeModeActive, setSafeModeActive] = useState(false);
+  // 안심 귀가는 /safety 화면과 전역 SafetyRuntime이 맡는다. 여기서는 열기만 한다.
+  const router = useRouter();
+  const safeModeActive = useSafety().phase !== 'idle';
+  const openSafety = useCallback(() => router.push('/safety'), [router]);
   const [showSpeechBubble, setShowSpeechBubble] = useState(false);
   const menuTimeoutRef = useRef(null);
 
@@ -86,20 +88,13 @@ export default function TimmyButton() {
     const handler = (e) => {
       const panel = e.detail?.panel;
       setShowMenu(false);
-      if (panel === 'safe') setSafeModeOpen(true);
+      if (panel === 'safe') openSafety();
       else if (panel === 'diary') setDiaryOpen(true);
       else if (panel === 'chat') setChatOpen(true);
     };
     window.addEventListener('timmy:open', handler);
     return () => window.removeEventListener('timmy:open', handler);
-  }, []);
-
-  // Listen for Safe Mode active state changes from GlobalSafeMode
-  useEffect(() => {
-    const handler = (e) => setSafeModeActive(e.detail?.active || false);
-    window.addEventListener('safeModeStateChange', handler);
-    return () => window.removeEventListener('safeModeStateChange', handler);
-  }, []);
+  }, [openSafety]);
 
   // Timmy chat hook
   const {
@@ -133,13 +128,13 @@ export default function TimmyButton() {
 
     // If Safe Mode is active, directly open Safe Mode panel
     if (safeModeActive) {
-      setSafeModeOpen(true);
+      openSafety();
       return;
     }
 
     // Toggle menu
     setShowMenu(prev => !prev);
-  }, [safeModeActive, hasMoved]);
+  }, [safeModeActive, hasMoved, openSafety]);
 
   const handleOpenChat = useCallback(() => {
     setShowMenu(false);
@@ -153,12 +148,8 @@ export default function TimmyButton() {
 
   const handleOpenSafeMode = useCallback(() => {
     setShowMenu(false);
-    setSafeModeOpen(true);
-  }, []);
-
-  const handleCloseSafeMode = useCallback(() => {
-    setSafeModeOpen(false);
-  }, []);
+    openSafety();
+  }, [openSafety]);
 
   // Don't render if not logged in
   if (!user) return null;
@@ -314,7 +305,7 @@ export default function TimmyButton() {
         onClose={() => setChatOpen(false)}
         onOpenSafeMode={() => {
           setChatOpen(false);
-          setTimeout(() => setSafeModeOpen(true), 200);
+          setTimeout(openSafety, 200);
         }}
         language={language}
         messages={messages}
@@ -330,15 +321,7 @@ export default function TimmyButton() {
         onDeleteSession={deleteSession}
       />
 
-      {/* GlobalSafeMode — hidden button, externally controlled */}
-      <GlobalSafeMode
-        hideButton={true}
-        externalOpen={safeModeOpen}
-        onExternalClose={handleCloseSafeMode}
-        onActiveChange={(active) => setSafeModeActive(active)}
-      />
-
-      {/* Diary Modal Overlay */}
+            {/* Diary Modal Overlay */}
       <AnimatePresence>
         {diaryOpen && (
           <motion.div

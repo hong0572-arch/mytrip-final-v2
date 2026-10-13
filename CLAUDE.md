@@ -46,6 +46,14 @@
 - 티미 그림: 작은 곳(대화·로딩·홈 첫 화면)은 `components/TimmyAvatar.js`(얼굴 `public/timmy-face.png` + 하늘색 원). 전신 `timmy.png`는 크게 보여 줄 때만. 썸네일은 사진 대신 `TripThumb`(일정 id로 정해지는 지도 무늬).
 - 문구는 `content/tripsCopy.js`(한/영).
 
+## 안심 (2026-10)
+- `/safety` = `components/safety/SafetyScreen.js`(아래 메뉴 '안심', 로그인 없이도 긴급번호). `openTimmyPanel('safe')`는 이제 `/safety`로 이동한다. 예전 `GlobalSafeMode` 패널은 없앴다.
+- 상태는 `lib/safety/store.js`(기기 localStorage `tm_safety_v2`, 예전 `safeMode_*` 키도 맞춰 둠) + `useSafety()`. 동작은 `lib/safety/actions.js`. phase: idle → active → **grace(약속 시간 뒤 1분 '도착했나요?')** → alert(사이렌·보호자 알림). SOS는 **3초 누르기**(`SafetyParts.SosButton`).
+- `components/safety/SafetyRuntime.js`는 레이아웃에 하나: 타이머·유예·경보 화면, 15초 위치 갱신, 보호자 기기 경보(`safemode_sessions` where `guardianUserIds` array-contains / 예전 `guardianUserId`).
+- 보호자는 최대 3명: 앱 회원은 **초대 링크**(`guardian_invites/{128비트 id}` → `/safety/join?t=`) 수락으로만 연결, 전화번호 보호자는 기기에만 저장하고 경보 때 `sms:` 문자 화면을 연다. 이름·이메일 검색 없음 → `users`는 본인·관리자만 읽는다.
+- 한계: 경보는 이용자 휴대폰에서 앱이 열려 있을 때 판단한다(서버 감시 없음). 앱을 닫아 두면 약속 시간이 지나도 보호자에게 자동 알림이 가지 않는다.
+- 문구는 `content/safetyCopy.js`(한/영).
+
 ## 마이 (2026-10)
 - `/mypage` = `components/my/MyHome.js`(프로필·포인트·안심·여행 도구·커뮤니티·설정 목록). `/mypage/expenses` 경비 기록(`my/Expenses.js`, `trips/{id}/expenses`, 예산 `budgetKRW`, 원화 환산 `/api/fx` = ECB 환율). `/mypage/account` 개인정보·계정(로그아웃·내 데이터 JSON 내려받기·회원 탈퇴).
 - 예전 마이페이지는 `/mypage/more`(`?tab=social|coach|vault|price_alert`, `?open=inbox|points|quiz|profile`)로 옮겨 피드·요청함·보관함·가격 알림·코치만 쓴다. 일정 탭(→ `/trips`)·트립머니(가짜 입금·환전)·이름/이메일 사람 검색·전체 회원 추천은 없앴다.
