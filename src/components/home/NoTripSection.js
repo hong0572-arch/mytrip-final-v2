@@ -25,7 +25,7 @@ export default function NoTripSection({ copy, language, user, weather }) {
         <ul className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
           {PHOTO_CITIES.map((city, i) => {
             const c = city[language] || city.ko;
-            const w = weather[city.id] ? { ...weather[city.id], ...weatherLabel(weather[city.id].code, language) } : null;
+            const w = weather[city.id] ? { ...weather[city.id], ...weatherLabel(weather[city.id]) } : null;
             return (
               <li key={city.id} className="shrink-0 snap-start">
                 <button

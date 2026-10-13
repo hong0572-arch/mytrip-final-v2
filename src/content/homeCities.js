@@ -33,14 +33,16 @@ export const HOME_CITIES = [
   },
 ];
 
-// WMO 날씨 코드 → 이모지·짧은 설명
-export function weatherLabel(code, language = 'ko') {
-  const ko = language !== 'en';
-  if (code === 0) return { icon: '☀️', text: ko ? '맑음' : 'Clear' };
-  if (code <= 2) return { icon: '🌤️', text: ko ? '구름 조금' : 'Partly cloudy' };
-  if (code === 3) return { icon: '☁️', text: ko ? '흐림' : 'Cloudy' };
-  if (code <= 48) return { icon: '🌫️', text: ko ? '안개' : 'Fog' };
-  if (code <= 67 || (code >= 80 && code <= 82)) return { icon: '🌧️', text: ko ? '비' : 'Rain' };
-  if (code <= 77 || code === 85 || code === 86) return { icon: '🌨️', text: ko ? '눈' : 'Snow' };
-  return { icon: '⛈️', text: ko ? '뇌우' : 'Storm' };
+// Google Weather API의 weatherCondition(type·현지어 설명) → 이모지·짧은 설명
+export function weatherLabel(entry) {
+  const type = String(entry?.type || '');
+  const icon = /THUNDER/.test(type) ? '⛈️'
+    : /SNOW|HAIL|SLEET/.test(type) ? '🌨️'
+      : /RAIN|SHOWER|DRIZZLE/.test(type) ? '🌧️'
+        : /FOG|HAZE|MIST/.test(type) ? '🌫️'
+          : /WIND/.test(type) ? '💨'
+            : type === 'CLEAR' ? '☀️'
+              : /MOSTLY_CLEAR|PARTLY/.test(type) ? '🌤️'
+                : /CLOUD/.test(type) ? '☁️' : '🌡️';
+  return { icon, text: entry?.text || '' };
 }

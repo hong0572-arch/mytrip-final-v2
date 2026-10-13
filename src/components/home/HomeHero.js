@@ -18,7 +18,7 @@ export default function HomeHero({ copy, language, user, weather, onToggleLangua
   const isDay = hour != null && hour >= 6 && hour < 18;
   const city = HOME_CITIES[now ? Math.floor(now.getTime() / DAY_MS) % HOME_CITIES.length : 0];
   const c = city[language] || city.ko;
-  const w = weather[city.id] ? { ...weather[city.id], ...weatherLabel(weather[city.id].code, language) } : null;
+  const w = weather[city.id] ? { ...weather[city.id], ...weatherLabel(weather[city.id]) } : null;
   const name = (user?.displayName || '').split(' ')[0];
   const clock = now
     ? now.toLocaleString(language === 'en' ? 'en-US' : 'ko-KR', { weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false })

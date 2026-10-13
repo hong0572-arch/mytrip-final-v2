@@ -7,7 +7,6 @@ import useAppLanguage from '../../hooks/useAppLanguage';
 import { notifyLocalStore, useIsClient, useStoredString } from '../../hooks/useLocalStore';
 import useMyTrips from '../../hooks/useMyTrips';
 import useCityWeather from '../../hooks/useCityWeather';
-import { HOME_CITIES } from '../../content/homeCities';
 import { getAiHomeCopy } from '../../content/aiHomeCopy';
 import { getTripDayNumber, getTripPhase, pickActiveTrip } from '../../utils/tripPhase';
 import { goToLogin, openTimmyPanel, startChat } from './homeActions';
@@ -27,7 +26,7 @@ export default function AIHome() {
   const [language, setLanguage] = useAppLanguage();
   const copy = getAiHomeCopy(language);
   const { user, trips } = useMyTrips();
-  const weather = useCityWeather(HOME_CITIES);
+  const weather = useCityWeather(language);
   // 안전모드(GlobalSafeMode)는 상태를 localStorage에 쓰고 'safeModeChanged' 이벤트를 보낸다.
   const [safeModeFlag] = useStoredString('safeMode_active', 'false');
   const safeModeActive = safeModeFlag === 'true';
