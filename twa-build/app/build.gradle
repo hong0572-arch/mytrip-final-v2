@@ -39,7 +39,11 @@ def twaManifest = [
     // - short_name: Shorter string used if |name| is too long.
     // - url: Absolute path of the URL to launch the app with (e.g '/create').
     // - icon: Name of the resource in the drawable folder to use as an icon.
-    shortcuts: [],
+    shortcuts: [
+        [name: '내 일정 보기', short_name: '내 일정', url: 'https://tripmaker.tips/trips/', icon: 'shortcut_trips'],
+        [name: '티미에게 물어보기', short_name: '티미', url: 'https://tripmaker.tips/chat/', icon: 'shortcut_chat'],
+        [name: '안심 귀가 켜기', short_name: '안심 귀가', url: 'https://tripmaker.tips/safety/', icon: 'shortcut_safety']
+    ],
     // The duration of fade out animation in milliseconds to be played when removing splash screen.
     splashScreenFadeOutDuration: 200,
     generatorApp: 'bubblewrap-cli', // Application that generated the Android Project
@@ -56,9 +60,9 @@ android {
     defaultConfig {
         applicationId "pro.mytrip2.twa"
         minSdkVersion 21
-        targetSdkVersion 35
-        versionCode 28
-        versionName "4.4"
+        targetSdkVersion 36
+        versionCode 29
+        versionName "4.5"
 
         // The name for the application
         resValue "string", "appName", twaManifest.name
