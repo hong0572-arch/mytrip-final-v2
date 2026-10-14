@@ -1,10 +1,12 @@
 'use client';
 /* eslint-disable @next/next/no-img-element */
+import { useState } from 'react';
 import Link from 'next/link';
-import { MoreVertical, Navigation, Plus, Shield, Sparkles, UserPlus } from 'lucide-react';
+import { Bell, MoreVertical, Navigation, Plus, Shield, Sparkles, UserPlus } from 'lucide-react';
 import { useStoredString } from '../../hooks/useLocalStore';
 import { daysUntil, directionsUrl, formatDDay, formatTripRange, getTodayPlaces, parseJsonObject } from '../../utils/tripPhase';
 import { openTimmyPanel } from '../home/homeActions';
+import { useTripAlerts } from '../../lib/push';
 import { companionLabel, placeCount, tripDestination, tripLength, tripTitle } from './tripsUtils';
 
 // 일정마다 조금씩 다른 지도 무늬 썸네일(사진이 없어서 대신 쓴다). id로 정해지므로 렌더마다 같다.
@@ -233,5 +235,29 @@ export function NewTripCard({ copy, onClick }) {
       </span>
       <Plus size={20} className="text-tm-muted" />
     </button>
+  );
+}
+
+// 다가오는 여행이 있을 때 한 번만: 출발 알림 켜기(닫으면 다시 안 띄운다)
+export function TripAlertNudge({ copy }) {
+  const { state, enable } = useTripAlerts();
+  const [raw, setRaw] = useStoredString('tm_alert_nudge', '');
+  const [done, setDone] = useState(false);
+  if (raw === 'closed' || (!done && state !== 'off')) return null;
+  return (
+    <div className="tm-rise flex items-center gap-3 rounded-2xl bg-white py-2 pl-4 pr-2">
+      <Bell size={18} className="shrink-0 text-tm-navy" aria-hidden="true" />
+      <span role="status" className="flex-1 text-[13px] leading-snug text-tm-ink">
+        {done ? (state === 'on' ? copy.alertNudgeDone : state === 'denied' ? copy.alertNudgeDenied : copy.alertNudge) : copy.alertNudge}
+      </span>
+      {done && state !== 'loading' ? (
+        <button type="button" onClick={() => setRaw('closed')} className="h-11 rounded-xl px-3 text-[13px] font-semibold text-tm-muted">{copy.alertNudgeLater}</button>
+      ) : (
+        <>
+          <button type="button" onClick={() => setRaw('closed')} className="h-11 rounded-xl px-2 text-[13px] font-semibold text-tm-muted">{copy.alertNudgeLater}</button>
+          <button type="button" disabled={state === 'loading'} onClick={() => { setDone(true); enable(); }} className="h-11 rounded-xl bg-tm-navy px-3.5 text-[13px] font-bold text-white disabled:opacity-60">{copy.alertNudgeOn}</button>
+        </>
+      )}
+    </div>
   );
 }

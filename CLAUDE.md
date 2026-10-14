@@ -67,6 +67,12 @@
 - 화면 `components/voice/VoiceChat.js`: 헤더 VoiceToggle → VoiceSheet(설정·미리 듣기), SpeakingBar(누르면 멈추고 바로 듣기). '대답이 끝나면 다시 듣기'는 HomeComposer `listenRequest`로 다시 마이크를 켠다. 듣는 중 표시는 네이비(빨강은 SOS 전용). SOS(raiseAlert)·화면 이탈 시 말 멈춤.
 - 안드로이드 앱(Capacitor WebView)은 Web Speech 인식이 없어 마이크가 안내 문구만 띄운다(플러그인 추가는 앱 업데이트 필요).
 
+## 오프라인·출발 알림 (2026-10)
+- 오프라인: Firestore `persistentLocalCache`(lib/firebase.js, 브라우저만) → 한 번 연 일정·채팅은 오프라인에서도 열린다. next-pwa `extendDefaultRuntimeCaching` + 규칙 2개(next.config.js): 오디오 가이드 MP3 CacheFirst(`tm-audio-guides`, Range 지원), `/trip|trips|safety|chat/` 화면 NetworkFirst(쿼리 무시). 들은 해설 정보는 localStorage `tm_guides_v1`(최근 40개). 전역 `OfflineBanner`.
+- **알림용 서비스 워커는 `/firebase-cloud-messaging-push-scope` 범위**(lib/push.js `MESSAGING_SW_SCOPE`). '/'에 등록하면 next-pwa의 /sw.js를 덮어써 오프라인이 꺼진다(2026-10 이전 버그).
+- 알림 권한은 첫 방문에 묻지 않는다. 마이 '출발 알림' 스위치·내 일정 안내(`TripAlertNudge`)에서 `enableTripAlerts()` → users/{uid} { notifyTrips, fcmToken, timezone, language }. PushInitializer는 로그인 때 timezone·language를 저장한다.
+- 서버 `sendTripReminders`(functions, 매시): 그 사람 시간대 기준 D-7 09시·D-1 19시·당일 08시, trips.startDate `in` 후보 날짜로 찾고 `reminder_log/{trip}_{uid}_{kind}`로 한 번만. 죽은 토큰은 지운다. 예전 `sendDailyDDayPush`(매일 D-n)는 대체·삭제.
+
 ## 도시 사진 (2026-10)
 - 홈 추천 도시 카드·오늘의 한마디 사진은 `public/home/<id>.webp`(640×480, 30~90KB), 출처는 `homeCities.js`의 `credit`(카드 왼쪽 아래 작게 표시).
 - 출처 원칙: 한국 도시는 한국관광공사(포토코리아·공공누리 제1유형, 출처 표시) 우선, 해외는 Unsplash(무료·상업 가능). 없으면 일러스트풍 AI 생성(사실적 랜드마크 금지). 검색해서 아무 사진이나 쓰지 않는다.

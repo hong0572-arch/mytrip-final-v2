@@ -82,6 +82,22 @@ function playTrack(idx) {
   a.play().catch(() => set({ status: 'paused' }));
 }
 
+// 들은 해설 정보는 기기에 남겨 둔다(오프라인이면 여기서 꺼내고, MP3는 서비스 워커 캐시에서 재생된다)
+const SAVED_KEY = 'tm_guides_v1';
+const SAVED_MAX = 40;
+function readSaved() {
+  try { return JSON.parse(localStorage.getItem(SAVED_KEY) || '{}'); } catch { return {}; }
+}
+function saveGuide(id, guide) {
+  try {
+    const saved = readSaved();
+    saved[id] = { at: Date.now(), guide };
+    const keys = Object.keys(saved).sort((a, b) => saved[b].at - saved[a].at);
+    keys.slice(SAVED_MAX).forEach((k) => delete saved[k]);
+    localStorage.setItem(SAVED_KEY, JSON.stringify(saved));
+  } catch {}
+}
+
 // 해설 받기(같은 장소는 한 번만 요청)
 function fetchGuide(place) {
   const id = `${lang}|${place.key}`;
@@ -93,8 +109,15 @@ function fetchGuide(place) {
         body: JSON.stringify({ name: place.name, query: place.query, city: place.city, category: place.category, description: place.description, lat: place.lat, lng: place.lng, lang }),
       });
       if (!res.ok) { const err = new Error('load'); err.code = res.status === 429 ? 'limit' : 'load'; throw err; }
-      return res.json();
-    })();
+      const guide = await res.json();
+      saveGuide(id, guide);
+      return guide;
+    })().catch((err) => {
+      const saved = readSaved()[id]?.guide;
+      if (saved) return saved;
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) err.code = 'offline';
+      throw err;
+    });
     guides.set(id, p);
     p.catch(() => guides.delete(id)); // 실패는 다시 시도할 수 있게
   }

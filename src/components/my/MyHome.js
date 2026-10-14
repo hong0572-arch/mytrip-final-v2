@@ -16,6 +16,7 @@ import { authHeaders } from '../../utils/authHeaders';
 import BottomNav from '../home/BottomNav';
 import { goToLogin, openTimmyPanel } from '../home/homeActions';
 import { groupTrips } from '../trips/tripsUtils';
+import { useTripAlerts } from '../../lib/push';
 
 const KAKAO_CONSULT_URL = 'https://pf.kakao.com/_xcJhrn/chat';
 const todayKst = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
@@ -39,6 +40,27 @@ function Row({ href, onClick, Icon, label, sub, tone = 'navy', right, badge }) {
   const cls = 'flex min-h-14 w-full items-center gap-3 border-t border-[#EEF0F2] px-3.5 py-2 text-left first:border-t-0 active:bg-tm-ground';
   if (href) return <Link href={href} className={cls}>{inner}</Link>;
   return <button type="button" onClick={onClick} className={cls}>{inner}</button>;
+}
+
+// 출발 알림 켜기/끄기(켤 때 알림 권한을 묻는다)
+function TripAlertRow({ copy }) {
+  const { state, enable, disable } = useTripAlerts();
+  if (state === 'guest') return null;
+  const on = state === 'on';
+  const blocked = state === 'denied' || state === 'unsupported';
+  return (
+    <Row
+      onClick={() => { if (state === 'loading' || blocked) return; if (on) disable(); else enable(); }}
+      Icon={Bell}
+      label={copy.tripAlerts}
+      sub={copy.tripAlertsSub[state] || copy.tripAlertsSub.off}
+      right={blocked ? <span /> : (
+        <span aria-hidden="true" className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${on ? 'bg-tm-navy' : 'bg-[#C9D2DD]'} ${state === 'loading' ? 'opacity-50' : ''}`}>
+          <span className={`absolute top-[3px] h-[22px] w-[22px] rounded-full bg-white transition-transform ${on ? 'left-[23px]' : 'left-[3px]'}`} />
+        </span>
+      )}
+    />
+  );
 }
 
 function Group({ title, children }) {
@@ -193,6 +215,7 @@ export default function MyHome() {
           )}
 
           <Group title={copy.groups.settings}>
+            {user && <TripAlertRow copy={copy} />}
             <Row
               onClick={() => setLanguage(language === 'en' ? 'ko' : 'en')}
               Icon={Globe}

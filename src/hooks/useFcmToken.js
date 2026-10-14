@@ -1,74 +1,32 @@
 import { useEffect, useState } from 'react';
-import { getMessaging, getToken } from 'firebase/messaging';
+import { webPushToken } from '../lib/push';
 
+// 웹 푸시 토큰. 알림 권한은 여기서 묻지 않는다 — 이미 허용된 기기만 토큰을 새로 받아 저장한다.
+// (권한 요청은 '출발 알림 받기' 같은 버튼에서 lib/push.js enableTripAlerts가 한다)
 export default function useFcmToken() {
     const [token, setToken] = useState('');
     const [notificationPermission, setNotificationPermission] = useState('');
 
     useEffect(() => {
-        const retrieveToken = async () => {
+        let alive = true;
+        (async () => {
             try {
-                // 🛡️ 1단계: 환경 체크 (window, navigator, 그리고 가장 중요한 Notification 객체 확인)
-                const isBrowser = typeof window !== 'undefined';
-                const hasSW = isBrowser && 'serviceWorker' in navigator;
-                const hasNotification = isBrowser && 'Notification' in window; // 👈 여기가 핵심!
-
-                // 앱(웹뷰) 환경이거나 알림을 지원하지 않으면 조용히 종료
-                if (!isBrowser || !hasSW || !hasNotification) {
-                    console.log('⚠️ 알림을 지원하지 않는 환경(앱 또는 구형 브라우저)입니다. FCM 스킵.');
-                    return;
-                }
-
-                const messaging = getMessaging();
-
-                // 🛡️ 2단계: 권한 확인 및 요청 (단, 세션당 1회만 요청하여 중복 팝업 방지)
-                let permission = Notification.permission;
-                
-                if (permission === 'default') {
-                    const hasPrompted = sessionStorage.getItem('fcmPrompted');
-                    if (!hasPrompted) {
-                        sessionStorage.setItem('fcmPrompted', 'true');
-                        permission = await Notification.requestPermission();
-                    }
-                }
-                
-                setNotificationPermission(permission);
-
-                if (permission === 'granted') {
-                    // 3. 토큰 가져오기
-                    const currentToken = await getToken(messaging, {
-                        vapidKey: 'BGbHmsiKlsaSkfEQiOYQz5R17r6DLgykoKNq22WE8CDRzG1BF8OFI09U21SiFS363Q7X4XtXKqdw_XfPxfZrrHk'
-                    });
-
-                    if (currentToken) {
-                        setToken(currentToken);
-                        console.log('✅ FCM Token:', currentToken);
-
-                        // 🔔 4. 포그라운드(앱이 열려있을 때) 알림 수신 대기
-                        import('firebase/messaging').then(({ onMessage }) => {
-                            onMessage(messaging, (payload) => {
-                                console.log('[포그라운드 FCM 수신]', payload);
-                                // 포그라운드에서도 브라우저 알림을 띄우려면 수동으로 띄워야 합니다.
-                                if (Notification.permission === 'granted') {
-                                    new Notification(payload.notification.title, {
-                                        body: payload.notification.body,
-                                        icon: '/icon-192.png'
-                                    });
-                                }
-                            });
-                        });
-                        
-                    } else {
-                        console.log('토큰을 가져올 수 없습니다.');
-                    }
-                }
+                if (typeof window === 'undefined' || !('Notification' in window)) return;
+                if (alive) setNotificationPermission(Notification.permission);
+                const current = await webPushToken();
+                if (!current || !alive) return;
+                setToken(current);
+                // 앱이 열려 있을 때 온 알림도 보여 준다
+                const { getMessaging, onMessage } = await import('firebase/messaging');
+                onMessage(getMessaging(), (payload) => {
+                    if (Notification.permission !== 'granted' || !payload.notification) return;
+                    new Notification(payload.notification.title, { body: payload.notification.body, icon: '/icon-192.png', data: payload.fcmOptions || payload.data });
+                });
             } catch (error) {
-                // 여기서 에러가 나도 앱 전체가 멈추지 않도록 관리
-                console.warn('FCM 토큰 확보 중단:', error.message);
+                console.warn('FCM 토큰 확보 중단:', error?.message);
             }
-        };
-
-        retrieveToken();
+        })();
+        return () => { alive = false; };
     }, []);
 
     return { token, notificationPermission };

@@ -8,132 +8,108 @@ admin.initializeApp();
 setGlobalOptions({ maxInstances: 10 });
 
 /**
- * 매일 오전 9시에 실행되어 사용자의 여행 D-Day 알림을 보냅니다.
+ * 여행 출발 알림(매시 정각). 그 사람의 시간대 기준으로
+ *  - D-7 오전 9시: 일주일 남았어요(숙소·환전·보험 점검)
+ *  - D-1 저녁 7시: 내일 출발(체크리스트·안심 귀가·오프라인 준비)
+ *  - D-day 오전 8시: 오늘 출발
+ * 대상: trips.startDate('YYYY-MM-DD')가 해당 날짜인 일정의 동행 중 users/{uid}.notifyTrips === true 이고 fcmToken이 있는 사람.
+ * 같은 알림은 reminder_log/{tripId}_{uid}_{kind}로 한 번만 보낸다(서버 전용 컬렉션).
+ * 예전 sendDailyDDayPush(설정한 사람에게 매일 D-n 발송)를 대신한다.
  */
-export const sendDailyDDayPush = onSchedule("0 * * * *", async (event) => {
+const REMIND = [
+  { kind: "d7", daysBefore: 7, hour: 9 },
+  { kind: "d1", daysBefore: 1, hour: 19 },
+  { kind: "d0", daysBefore: 0, hour: 8 },
+] as const;
+
+const REMIND_TEXT = {
+  ko: {
+    d7: (t: string) => ({ title: `✈️ ${t}까지 일주일`, body: "숙소 위치, 환전, 여행자 보험을 한 번 점검해 볼까요?" }),
+    d1: (t: string) => ({ title: `🧳 내일 ${t}로 떠나요`, body: "여권·충전기·상비약을 챙기고, 일정과 해설은 미리 한 번 열어 두면 오프라인에서도 볼 수 있어요." }),
+    d0: (t: string) => ({ title: `🎉 오늘 ${t} 여행 시작!`, body: "늦은 시간 이동이 있다면 안심 귀가를 켜 두세요. 즐거운 여행 되세요." }),
+    trip: "여행",
+  },
+  en: {
+    d7: (t: string) => ({ title: `✈️ One week until ${t}`, body: "A good time to check your stay, currency and travel insurance." }),
+    d1: (t: string) => ({ title: `🧳 You leave for ${t} tomorrow`, body: "Pack your passport, charger and meds. Open your itinerary and guides once so they work offline." }),
+    d0: (t: string) => ({ title: `🎉 Your ${t} trip starts today!`, body: "Moving around late? Turn on safe return. Have a great trip." }),
+    trip: "your trip",
+  },
+};
+
+// 시간대별 지금 시각·오늘 날짜
+function localNow(timeZone: string, now: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hour12: false }).formatToParts(now);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value || "0";
+  const hour = Number(get("hour")) % 24;
+  return { hour, date: `${get("year")}-${get("month")}-${get("day")}` };
+}
+const addDays = (ymd: string, n: number) => {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + n));
+  return dt.toISOString().slice(0, 10);
+};
+const shortPlace = (trip: admin.firestore.DocumentData) =>
+  String(trip.destination || trip.tripTitle || "").split(/[,#(]/)[0].trim().slice(0, 24);
+
+export const sendTripReminders = onSchedule({ schedule: "0 * * * *", timeoutSeconds: 120, memory: "256MiB" }, async () => {
   const db = admin.firestore();
-  const now = new Date(); // 현재 UTC 시간
+  const now = new Date();
+  // UTC 기준 어제~모레 사이 날짜면 세계 어느 시간대든 해당 날짜를 포함한다
+  const utcToday = now.toISOString().slice(0, 10);
+  const candidates = new Set<string>();
+  for (const r of REMIND) for (const off of [-1, 0, 1]) candidates.add(addDays(utcToday, off + r.daysBefore));
+  const tripsSnap = await db.collection("trips").where("startDate", "in", [...candidates]).get();
+  if (tripsSnap.empty) return;
 
-  try {
-    // 1. D-Day 알림 설정이 된 모든 사용자 조회
-    const usersSnapshot = await db.collection("users")
-      .where("dDayTripId", "!=", null)
-      .get();
+  const userCache = new Map<string, admin.firestore.DocumentSnapshot>();
+  const getUser = async (uid: string) => {
+    if (!userCache.has(uid)) userCache.set(uid, await db.collection("users").doc(uid).get());
+    return userCache.get(uid)!;
+  };
+  let sent = 0;
 
-    logger.info(`Found ${usersSnapshot.size} users with D-Day notifications set.`);
+  for (const tripDoc of tripsSnap.docs) {
+    const trip = tripDoc.data();
+    const members: string[] = Array.isArray(trip.memberIds) ? trip.memberIds : [];
+    for (const uid of members) {
+      const user = await getUser(uid);
+      if (!user.exists || user.get("notifyTrips") !== true) continue;
+      const token = user.get("fcmToken");
+      if (!token) continue;
+      let local;
+      try { local = localNow(user.get("timezone") || "Asia/Seoul", now); } catch { local = localNow("Asia/Seoul", now); }
+      const rule = REMIND.find((r) => r.hour === local.hour && addDays(local.date, r.daysBefore) === trip.startDate);
+      if (!rule) continue;
 
-    const promises = usersSnapshot.docs.map(async (userDoc) => {
-      const userData = userDoc.data();
-      const fcmToken = userData.fcmToken;
-      const startDateStr = userData.dDayStartDate;
-      const tripTitle = userData.dDayTripTitle || "여행";
-      const userTimezone = userData.timezone || "Asia/Seoul"; // 기본값 KST
-
-      if (!fcmToken || !startDateStr) return;
-
-      // 2. 사용자의 로컬 시간 확인
-      let userHour = 0;
-      let userToday = now;
+      // 한 번만 보내기
       try {
-        const formatter = new Intl.DateTimeFormat('en-US', {
-          timeZone: userTimezone,
-          hour: 'numeric',
-          hour12: false,
-          year: 'numeric',
-          month: 'numeric',
-          day: 'numeric'
+        await db.collection("reminder_log").doc(`${tripDoc.id}_${uid}_${rule.kind}`).create({ tripId: tripDoc.id, uid, kind: rule.kind, at: admin.firestore.FieldValue.serverTimestamp() });
+      } catch {
+        continue; // 이미 보냄
+      }
+      const t = REMIND_TEXT[user.get("language") === "en" ? "en" : "ko"];
+      const { title, body } = t[rule.kind](shortPlace(trip) || t.trip);
+      const link = `https://tripmaker.tips/trip/?id=${tripDoc.id}`;
+      try {
+        await admin.messaging().send({
+          token,
+          notification: { title, body },
+          data: { link },
+          webpush: { notification: { icon: "https://tripmaker.tips/icon-192.png", badge: "https://tripmaker.tips/icon-192.png" }, fcmOptions: { link } },
         });
-        const parts = formatter.formatToParts(now);
-        const getPart = (type: string) => parts.find(p => p.type === type)?.value || '0';
-        
-        userHour = parseInt(getPart('hour'), 10);
-        // hour24 format can return 24 for midnight, adjust if needed (though we only check for 9)
-        if (userHour === 24) userHour = 0;
-        
-        userToday = new Date(
-          parseInt(getPart('year'), 10),
-          parseInt(getPart('month'), 10) - 1,
-          parseInt(getPart('day'), 10)
-        );
-      } catch (e) {
-        logger.error(`Invalid timezone ${userTimezone} for user ${userDoc.id}`);
-        return;
+        sent += 1;
+      } catch (error: unknown) {
+        const code = (error as { code?: string })?.code || "";
+        // 더 이상 쓰지 않는 토큰은 지운다(다음 로그인 때 새로 받는다)
+        if (code.includes("registration-token-not-registered") || code.includes("invalid-registration-token")) {
+          await user.ref.update({ fcmToken: admin.firestore.FieldValue.delete() }).catch(() => {});
+        }
+        logger.warn(`trip reminder failed ${tripDoc.id}/${uid}`, code);
       }
-
-      // 사용자 시간 기준으로 오전 9시인 경우에만 발송
-      if (userHour !== 9) return;
-
-      // 3. D-Day 계산
-      // startDateStr은 보통 'YYYY-MM-DD' 형식
-      const startDateParts = startDateStr.split('-');
-      if (startDateParts.length !== 3) return;
-
-      const tripDateLocal = new Date(
-        parseInt(startDateParts[0]), 
-        parseInt(startDateParts[1]) - 1, 
-        parseInt(startDateParts[2])
-      );
-      
-      const diffTime = tripDateLocal.getTime() - userToday.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      let messageBody = "";
-      let title = "";
-      // 다양한 고화질 여행 이미지 배열 (랜덤 선택)
-      const bannerImages = [
-        "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1200&auto=format&fit=crop", // 비행기 날개
-        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop", // 예쁜 해변
-        "https://images.unsplash.com/photo-1522083111333-6623fccb9c7b?q=80&w=1200&auto=format&fit=crop", // 여행 캐리어
-        "https://images.unsplash.com/photo-1488085061387-422e29b40080?q=80&w=1200&auto=format&fit=crop"  // 구름 여행
-      ];
-      const randomImage = bannerImages[Math.floor(Math.random() * bannerImages.length)];
-
-      if (diffDays > 0) {
-        title = `✈️ '${tripTitle}' D-${diffDays}`;
-        messageBody = `여행이 ${diffDays}일 남았습니다!\n어떤 옷을 챙길지, 일정은 잘 짜여 있는지 미리 확인해볼까요? 😉`;
-      } else if (diffDays === 0) {
-        title = `🎉 드디어 오늘! '${tripTitle}'`;
-        messageBody = `기다리던 여행이 시작되는 날입니다.\n여권과 지갑을 꼭 챙기시고 안전하고 즐거운 여행 되세요! ✈️`;
-      } else {
-        // 여행이 이미 시작된 경우
-        return;
-      }
-
-      // 4. FCM 발송 (Rich Push Notification 디자인 강화)
-      const message = {
-        notification: {
-          title: title,
-          body: messageBody,
-        },
-        token: fcmToken,
-        webpush: {
-          notification: {
-            icon: "https://tripmaker.tips/icon-512.png", // 아이콘 고화질로 교체
-            image: randomImage, // 안드로이드 알림창 하단에 크게 표시되는 배너 이미지
-            badge: "https://tripmaker.tips/icon-192.png", // 상태바에 작게 표시되는 아이콘
-            click_action: "https://tripmaker.tips/mypage",
-            requireInteraction: true, // 알림이 자동으로 사라지지 않고 유지되도록 설정
-            vibrate: [200, 100, 200]
-          },
-          fcmOptions: {
-            link: "https://tripmaker.tips/mypage"
-          }
-        },
-      };
-
-      try {
-        await admin.messaging().send(message);
-        logger.info(`Notification sent to user ${userDoc.id} for trip ${tripTitle} in timezone ${userTimezone}`);
-      } catch (error) {
-        logger.error(`Failed to send notification to user ${userDoc.id}:`, error);
-      }
-    });
-
-    await Promise.all(promises);
-    logger.info("Hourly D-Day push notification process completed.");
-  } catch (error) {
-    logger.error("Error in sendDailyDDayPush:", error);
+    }
   }
+  logger.info(`trip reminders: ${tripsSnap.size} trip(s) checked, ${sent} sent`);
 });
 
 /**

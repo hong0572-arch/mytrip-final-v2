@@ -1,6 +1,6 @@
 // src/lib/firebase.js
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { initializeFirestore } from "firebase/firestore";
+import { initializeFirestore, memoryLocalCache, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getMessaging, isSupported } from "firebase/messaging";
 import { getStorage } from "firebase/storage"; // ✨ 1. Storage 함수 임포트 추가
@@ -23,7 +23,10 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
 // 3. Firestore 초기화 (✨ 중요: 앱 환경에서의 오프라인 에러 방지 설정)
+// 브라우저에서는 읽은 문서를 기기(IndexedDB)에 저장해 둔다 → 오프라인에서도 내 일정·동행 채팅을 볼 수 있다.
+// (IndexedDB를 못 쓰는 환경이면 Firestore가 알아서 메모리 캐시로 돌아간다)
 const db = initializeFirestore(app, {
+    localCache: typeof window !== 'undefined' ? persistentLocalCache({ tabManager: persistentMultipleTabManager() }) : memoryLocalCache(),
     experimentalForceLongPolling: true, // 👈 웹뷰(Capacitor) 통신 안정성을 위한 핵심 설정
     useFetchStreams: false, // 👈 스트림 사용을 명시적으로 꺼서 안정성 확보
 });

@@ -36,6 +36,14 @@ export const myCopy = {
     account: '개인정보·계정',
     accountSub: '개인정보처리방침 · 로그아웃 · 회원 탈퇴',
     guide: '사용 가이드',
+    tripAlerts: '출발 알림',
+    tripAlertsSub: {
+      on: '켜짐 · D-7, 전날 저녁, 당일 아침에 알려 드려요',
+      off: 'D-7, 전날 저녁, 당일 아침에 준비할 것을 알려 드려요',
+      denied: '알림이 막혀 있어요. 브라우저·휴대폰 설정에서 허용해 주세요',
+      unsupported: '이 브라우저는 알림을 못 받아요. 아이폰은 홈 화면에 추가하면 받을 수 있어요',
+      loading: '확인하는 중…',
+    },
     failed: '처리하지 못했어요. 잠시 후 다시 시도해 주세요',
 
     // 경비
@@ -129,6 +137,14 @@ export const myCopy = {
     account: 'Privacy & account',
     accountSub: 'Privacy policy · sign out · delete account',
     guide: 'How to use',
+    tripAlerts: 'Trip reminders',
+    tripAlertsSub: {
+      on: 'On · a week before, the evening before and the morning you leave',
+      off: 'Reminders a week before, the evening before and the morning you leave',
+      denied: 'Notifications are blocked. Allow them in your browser or phone settings',
+      unsupported: "This browser can't receive notifications. On iPhone, add the app to your home screen",
+      loading: 'Checking…',
+    },
     failed: "Couldn't do that. Please try again shortly",
 
     expTitle: 'Trip expenses',

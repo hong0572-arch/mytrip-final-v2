@@ -8,6 +8,7 @@ import { db, auth } from '../lib/firebase';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import useFcmToken from '../hooks/useFcmToken'; // 👈 Web 토큰용 훅 추가
+import { deviceContext } from '../lib/push';
 
 export default function PushInitializer() {
     const { token: webFcmToken } = useFcmToken(); // 🌐 Web FCM 토큰 가져오기
@@ -27,15 +28,8 @@ export default function PushInitializer() {
         }
     };
 
-    // 🌐 Web Service Worker 등록 (Standard PWA)
-    useEffect(() => {
-        if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-            navigator.serviceWorker
-                .register('/firebase-messaging-sw.js')
-                .then((reg) => console.log('🚀 서비스 워커 등록 성공!', reg))
-                .catch((err) => console.log('❌ 서비스 워커 등록 실패!', err));
-        }
-    }, []);
+    // 알림용 서비스 워커(firebase-messaging-sw.js)는 lib/push.js가 별도 범위에 등록한다.
+    // 예전처럼 '/'에 등록하면 오프라인용 서비스 워커(/sw.js)를 덮어써서 오프라인 캐시가 꺼진다.
 
     useEffect(() => {
         const initNativeFeatures = async () => {
@@ -65,8 +59,8 @@ export default function PushInitializer() {
                     await LocalNotifications.schedule({
                         notifications: [
                             {
-                                title: "냥 프로가 기다리고 있어요! 🐾",
-                                body: "대표님, 여행 계획 세우신 지 벌써 3주가 지났네요. 새로운 핫플레이스를 구경해보세요!",
+                                title: deviceContext().language === 'en' ? 'Timmy is here when you need a trip 🐾' : '다음 여행, 티미랑 같이 짜 볼까요? 🐾',
+                                body: deviceContext().language === 'en' ? "It's been a few weeks. Tell Timmy where you'd like to go next." : '여행 계획 세운 지 3주가 지났어요. 가고 싶은 곳을 말해 주시면 일정을 짜 드릴게요.',
                                 id: 999,
                                 schedule: { at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 21) },
                                 sound: 'beep.wav'
@@ -113,7 +107,9 @@ export default function PushInitializer() {
                         const userRef = doc(db, "users", user.uid);
                         const userSnap = await getDoc(userRef);
 
+                        // 출발 알림을 그 사람의 시간대·언어로 보내기 위해 함께 저장한다
                         const updateData = {
+                            ...deviceContext(),
                             lastActive: serverTimestamp(),
                             updatedAt: serverTimestamp()
                         };
@@ -132,8 +128,8 @@ export default function PushInitializer() {
                             await LocalNotifications.schedule({
                                 notifications: [
                                     {
-                                        title: `반가워요, ${userSnap.data().name || '여행자'}님! ✨`,
-                                        body: "트립메이커 '냥 프로'와 함께 설레는 여행을 시작해봐요!",
+                                        title: deviceContext().language === 'en' ? `Welcome, ${userSnap.data().name || 'traveler'}! ✨` : `반가워요, ${userSnap.data().name || '여행자'}님! ✨`,
+                                        body: deviceContext().language === 'en' ? 'Plan your next trip with Timmy — just say where you want to go.' : '가고 싶은 곳을 말해 주세요. 티미가 일정을 짜 드릴게요.',
                                         id: 1,
                                         schedule: { at: new Date(Date.now() + 1000) }
                                     }

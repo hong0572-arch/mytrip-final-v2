@@ -57,7 +57,7 @@ export function ListenCard({ place, language, korea = false, onOpen }) {
 
   if (status === 'idle' || status === 'loading' || status === 'error') {
     const sub = status === 'loading' ? copy.preparing
-      : status === 'error' ? (p.error === 'limit' ? copy.limit : p.error === 'play' ? copy.playFailed : copy.failed)
+      : status === 'error' ? (p.error === 'limit' ? copy.limit : p.error === 'play' ? copy.playFailed : p.error === 'offline' ? copy.offline : copy.failed)
       : korea ? copy.listenSubKorea : copy.listenSub;
     return (
       <button
@@ -382,7 +382,7 @@ export function TourSheet({ language, onClose }) {
             )}
           </div>
           <div aria-hidden="true" className="h-1 rounded-full bg-[#2E4E75]"><div className="h-full rounded-full bg-tm-sky-soft" style={{ width: `${tour.waiting ? 100 : pct}%` }} /></div>
-          {p.status === 'error' && <p role="alert" className="text-[13px] text-[#FFD9A0]">{p.error === 'limit' ? copy.limit : copy.failed}</p>}
+          {p.status === 'error' && <p role="alert" className="text-[13px] text-[#FFD9A0]">{p.error === 'limit' ? copy.limit : p.error === 'offline' ? copy.offline : copy.failed}</p>}
           {next ? (
             <p className="flex items-center gap-2 text-[13px] text-[#B9C8DA]"><Footprints size={16} className="shrink-0 text-tm-sky-soft" aria-hidden="true" />{copy.nextAt(next.name, moveLabel(copy, next.move))}</p>
           ) : allHeard && <p className="flex items-center gap-2 text-[13px] text-[#B9C8DA]"><Check size={16} className="shrink-0 text-tm-sky-soft" aria-hidden="true" />{copy.tourDone}</p>}

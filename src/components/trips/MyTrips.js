@@ -15,6 +15,7 @@ import { getTripDayNumber, getTripPhase, parseJsonObject } from '../../utils/tri
 import { canDeleteTrip, duplicateTrip, removeTrip, renameTrip, shareTripToFeed } from '../../lib/tripStore';
 import { InviteSheet, MembersSheet, SharesSheet, isViewer } from '../invite/InviteSheets';
 import { formatTripRange } from '../../utils/tripPhase';
+import { TripAlertNudge } from './TripCards';
 import { goToLogin, startChat } from '../home/homeActions';
 import BottomNav from '../home/BottomNav';
 import { InviteBanner, NewTripCard, NextTripHero, OnTripHero, PastRow, PostTripPrompt, TripRow } from './TripCards';
@@ -212,7 +213,10 @@ export default function MyTrips() {
                 <div role="tabpanel" className="flex flex-col gap-3">
                   {hero && firstPhase === 'during' && <OnTripHero copy={copy} trip={hero} dayNumber={getTripDayNumber(hero)} />}
                   {hero && firstPhase === 'prep' && (
-                    <NextTripHero copy={copy} homeCopy={homeCopy} language={language} trip={hero} onMenu={() => setMenuTrip(hero)} onInvite={() => inviteLink(hero)} />
+                    <>
+                      <NextTripHero copy={copy} homeCopy={homeCopy} language={language} trip={hero} onMenu={() => setMenuTrip(hero)} onInvite={() => inviteLink(hero)} />
+                      <TripAlertNudge copy={copy} />
+                    </>
                   )}
                   {!hero && upcoming.length === 0 && <p className="py-4 text-center text-[14px] text-tm-muted">{copy.upcomingEmpty}</p>}
                   {rest.length > 0 && <h2 className="mt-1.5 text-[15px] font-bold">{hero ? copy.nextTrips : copy.otherTrips}</h2>}
