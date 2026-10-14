@@ -14,7 +14,7 @@ const num = (v) => (Number.isFinite(Number(v)) && v !== '' && v != null ? Number
 const clean = (v) => String(v || '').replace(/\s+/g, ' ').trim();
 
 async function mofa(path, iso) {
-  const url = `${BASE}/${path}?serviceKey=${encodedServiceKey()}&pageNo=1&numOfRows=50&returnType=JSON&cond[country_iso_alp2::EQ]=${iso}`;
+  const url = `${BASE}/${path}?serviceKey=${encodedServiceKey()}&pageNo=1&numOfRows=50&returnType=JSON&${encodeURIComponent("cond[country_iso_alp2::EQ]")}=${iso}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(8000), cache: 'no-store' });
   const text = await res.text();
   if (!res.ok || text.trimStart().startsWith('<')) throw new Error(`${path} ${res.status} ${text.slice(0, 100)}`);
@@ -75,9 +75,11 @@ async function load(iso) {
   const hit = memo.get(iso);
   if (hit && Date.now() - hit.at < 86400000) return hit.data;
   const [local, emb] = await Promise.allSettled([mofa('LocalContactService2/getLocalContactList2', iso), mofa('EmbassyService2/getEmbassyList2', iso)]);
+  const errors = [local, emb].filter((r) => r.status === 'rejected').map((r) => String(r.reason?.message || 'error').slice(0, 80));
   if (local.status === 'rejected') console.warn('[emergency] local contacts:', String(local.reason?.message).slice(0, 160));
   if (emb.status === 'rejected') console.warn('[emergency] embassies:', String(emb.reason?.message).slice(0, 160));
   const data = {
+    errors,
     local: local.status === 'fulfilled' && local.value[0] ? parseLocal(local.value[0]) : null,
     embassies: emb.status === 'fulfilled' ? emb.value.map((e) => ({
       name: clean(e.embassy_kor_nm),
@@ -111,7 +113,10 @@ export async function GET(req) {
       .sort((a, b) => Number(a.concurrent) - Number(b.concurrent) || (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9))
       .slice(0, 3);
     const ok = data.local || embassies.length;
-    return NextResponse.json({ local: data.local, embassies }, { headers: ok ? CACHE : { 'Cache-Control': 'public, s-maxage=600' } });
+    // 실패 이유(키 제외)를 헤더로 남겨 원인을 바로 볼 수 있게(x-emergency-error)
+    const headers = ok ? { ...CACHE } : { 'Cache-Control': 'public, s-maxage=600' };
+    if (data.errors?.length) headers['x-emergency-error'] = data.errors.join(' | ').replace(/[^ -~]/g, '');
+    return NextResponse.json({ local: data.local, embassies }, { headers });
   } catch (error) {
     console.warn('[emergency] failed:', String(error?.message || error).slice(0, 160));
     return NextResponse.json({ local: null, embassies: [], error: 'unavailable' }, { headers: { 'Cache-Control': 'public, s-maxage=600' } });
