@@ -37,14 +37,7 @@ export const metadata = {
   },
   manifest: "/manifest.json",
   icons: { icon: "/icon-192.png", apple: "/icon-192.png" },
-  alternates: {
-    canonical: 'https://tripmaker.tips',
-    languages: {
-      'x-default': 'https://tripmaker.tips',
-      'ko-KR': 'https://tripmaker.tips',
-      'en-US': 'https://tripmaker.tips/?lang=en',
-    },
-  },
+  // canonical·hreflang은 페이지마다 둔다(여기 두면 모든 페이지가 홈을 원본으로 가리킨다)
   keywords: ["AI Trip Maker", "AI 여행 계획", "AI 여행 코스", "AI 여행 일정", "여행 일정 짜기", "여행 코스", "AI 여행 코스", "트립메이커", "Trip Maker", "유럽 여행 코스", "아프리카 여행 코스",
     "미주 여행 코스", "일본 여행 코스", "중국 여행 코스", "오사카 일정", "호주 여행 코스", "남미 여행 코스", "중남미 여행 코스", "여행 플래너",
     "PWA Travel App", "AI Life Coach", "Vibe Planner"],

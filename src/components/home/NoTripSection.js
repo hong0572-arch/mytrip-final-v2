@@ -65,6 +65,7 @@ function KoreaSection({ copy, language, user, weather }) {
             <CityCard key={city.id} city={city} copy={copy} language={language} weather={weather} index={i} showFlight={false} />
           ))}
         </ul>
+        <Link href={language === 'en' ? '/en/city/' : '/city/'} className="mx-5 flex min-h-11 items-center text-[13px] font-semibold text-tm-navy">{k.cityGuides}</Link>
       </section>
 
       <section aria-labelledby="korea-essentials" className="flex flex-col gap-2.5">
@@ -122,6 +123,7 @@ export default function NoTripSection({ copy, language, user, weather, korea = f
             <CityCard key={city.id} city={city} copy={copy} language={language} weather={weather} index={i} />
           ))}
         </ul>
+        <Link href={language === 'en' ? '/en/city/' : '/city/'} className="mx-5 flex min-h-11 items-center text-[13px] font-semibold text-tm-navy">{copy.cityGuides}</Link>
       </section>
 
       <section aria-labelledby="home-asked" className="flex flex-col gap-2.5">

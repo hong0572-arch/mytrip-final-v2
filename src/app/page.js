@@ -5,7 +5,7 @@ import AIHome from '../components/home/AIHome';
 export const metadata = {
   title: { absolute: 'Trip Maker - 혼자 떠나도 든든한 AI 여행 동반자' },
   description: '말로 하면 AI 티미가 여행 일정부터 안전한 숙소 동네, 밤 이동, 안심 귀가까지 챙겨 주는 자유여행 앱. 혼자 떠나는 여행자를 위한 Trip Maker.',
-  alternates: { canonical: 'https://tripmaker.tips' },
+  alternates: { canonical: 'https://tripmaker.tips', languages: { 'x-default': 'https://tripmaker.tips', ko: 'https://tripmaker.tips', en: 'https://tripmaker.tips/?lang=en' } },
 };
 
 export default function Home() {

@@ -3,6 +3,7 @@ export const koreaCopy = {
   en: {
     heroAsk: ['Exploring Korea?', "Let's plan it together."],
     citiesTitle: 'Where to in Korea',
+    cityGuides: 'Korea city guides for solo travelers →',
     essentialsTitle: 'Korea essentials',
     essentials: [
       { icon: '🚇', title: 'T-money & subway', body: 'One card for subway, bus and convenience stores', prompt: 'How do I get and use a T-money card in Korea? Explain subway and bus tips for a first-time visitor.' },
@@ -22,6 +23,7 @@ export const koreaCopy = {
   ko: {
     heroAsk: ['한국 여행 중이세요?', '같이 계획해 볼까요?'],
     citiesTitle: '한국 어디로 갈까요',
+    cityGuides: '한국 도시별 혼자 여행 가이드 →',
     essentialsTitle: '한국 여행 필수 정보',
     essentials: [
       { icon: '🚇', title: '티머니·지하철', body: '카드 한 장으로 지하철·버스·편의점', prompt: '한국에서 티머니 카드 사고 쓰는 법, 지하철·버스 팁 알려줘.' },

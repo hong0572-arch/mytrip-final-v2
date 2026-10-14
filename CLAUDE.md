@@ -73,6 +73,11 @@
 - 알림 권한은 첫 방문에 묻지 않는다. 마이 '출발 알림' 스위치·내 일정 안내(`TripAlertNudge`)에서 `enableTripAlerts()` → users/{uid} { notifyTrips, fcmToken, timezone, language }. PushInitializer는 로그인 때 timezone·language를 저장한다.
 - 서버 `sendTripReminders`(functions, 매시): 그 사람 시간대 기준 D-7 09시·D-1 19시·당일 08시, trips.startDate `in` 후보 날짜로 찾고 `reminder_log/{trip}_{uid}_{kind}`로 한 번만. 죽은 토큰은 지운다. 예전 `sendDailyDDayPush`(매일 D-n)는 대체·삭제.
 
+## 도시 가이드·공유 미리보기 (2026-10)
+- 도시 가이드: 한국어 `/city/[id]/`, 영어 `/en/city/[id]/`, 목록 `/city/`·`/en/city/` (정적 생성, `dynamicParams=false`). 내용 `content/cityGuides.js`(HOME_CITIES와 같은 id, 한/영 함께), 화면 `components/city/CityGuide.js`(Article·FAQPage·BreadcrumbList JSON-LD, canonical·hreflang). CTA는 페이지 언어로 티미 대화 시작. 요금·운영 시간처럼 자주 바뀌는 정보는 쓰지 않는다. 도시를 추가하면 homeCities(사진·이름)와 cityGuides를 함께.
+- canonical은 페이지마다(root layout에 두지 않는다 — 예전엔 모든 페이지가 홈을 원본으로 가리켰다). sitemap은 도시 가이드 포함.
+- 공유 링크 미리보기: `share/[id]` generateMetadata + `opengraph-image.js`(next/og, Noto Sans KR을 필요한 글자만 Google Fonts에서). `lib/shareMeta.js`가 꺼짐·만료 링크는 일반 문구로. 공유 페이지는 noindex. 초대(/j)는 일정 정보 없이 일반 미리보기.
+
 ## 도시 사진 (2026-10)
 - 홈 추천 도시 카드·오늘의 한마디 사진은 `public/home/<id>.webp`(640×480, 30~90KB), 출처는 `homeCities.js`의 `credit`(카드 왼쪽 아래 작게 표시).
 - 출처 원칙: 한국 도시는 한국관광공사(포토코리아·공공누리 제1유형, 출처 표시) 우선, 해외는 Unsplash(무료·상업 가능). 없으면 일러스트풍 AI 생성(사실적 랜드마크 금지). 검색해서 아무 사진이나 쓰지 않는다.
