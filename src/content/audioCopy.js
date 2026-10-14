@@ -32,6 +32,23 @@ const ko = {
   retry: '다시 시도',
   loginNeeded: '해설을 들으려면 로그인해 주세요',
   noScript: '이 해설은 자막이 없어요.',
+  // 오늘 투어
+  tourToday: '오늘 투어',
+  tourDay: (n) => `${n}일차 투어`,
+  tourStart: '이 날 순서대로 듣기',
+  tourSub: (n) => `${n}곳 · 한 곳에 1~2분 · 다음 장소는 미리 준비해요`,
+  tourCount: (i, n) => `${i} / ${n}`,
+  nextAt: (name, move) => `다음: ${name}${move ? ` · ${move}` : ''}`,
+  playNext: '다음 장소 듣기',
+  listenHere: (name) => `${name} 듣기`,
+  heard: '들음',
+  tourDone: '이 날 투어를 다 들었어요',
+  arrive: '도착하면 이어 듣기',
+  arriveSub: '앱이 열려 있을 때 다음 장소 근처에 오면 이어서 들려줘요',
+  endTour: '투어 끝내기',
+  move: { walk: (m) => `걸어서 ${m}분`, transit: (m) => `대중교통 ${m}분`, drive: (m) => `차로 ${m}분` },
+  nightTitle: '주변 소리도 들어 주세요',
+  nightBody: '해가 졌어요. 한쪽 이어폰만 쓰거나 소리를 조금 줄이면 길에서 더 안전해요.',
 };
 
 const en = {
@@ -67,6 +84,22 @@ const en = {
   retry: 'Try again',
   loginNeeded: 'Sign in to listen to guides',
   noScript: 'No captions for this guide.',
+  tourToday: "Today's tour",
+  tourDay: (n) => `Day ${n} tour`,
+  tourStart: 'Listen to this day in order',
+  tourSub: (n) => `${n} stops · 1–2 min each · the next one is prepared ahead`,
+  tourCount: (i, n) => `${i} / ${n}`,
+  nextAt: (name, move) => `Next: ${name}${move ? ` · ${move}` : ''}`,
+  playNext: 'Play next stop',
+  listenHere: (name) => `Listen to ${name}`,
+  heard: 'Heard',
+  tourDone: "You've heard every stop for this day",
+  arrive: 'Continue when I arrive',
+  arriveSub: 'While the app is open, plays the next stop when you get close',
+  endTour: 'End tour',
+  move: { walk: (m) => `${m} min walk`, transit: (m) => `${m} min by transit`, drive: (m) => `${m} min drive` },
+  nightTitle: 'Keep an ear on your surroundings',
+  nightBody: "It's dark out. Using one earbud or lowering the volume keeps you safer on the street.",
 };
 
 export const getAudioCopy = (language) => (language === 'en' ? en : ko);

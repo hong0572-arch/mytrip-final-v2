@@ -14,8 +14,9 @@ import { BudgetTab, SafetyTab, StayTab } from './TripInfoTabs';
 import { EditDay } from './TripEdit';
 import { MoreMenu, NearbyCard, SaveSheet, Toast } from './TripSheets';
 import { InviteSheet, MembersSheet, SharesSheet } from '../invite/InviteSheets';
-import { ListenCard, MiniPlayer, PlayerSheet } from '../audio/AudioGuide';
-import { getPlayer, placeKey, playPlace, setOnNext, stop as stopAudio } from '../../lib/audio/player';
+import { ListenCard, MiniPlayer, PlayerSheet, TourButton, TourSheet, useTourArrival } from '../audio/AudioGuide';
+import { getAudioCopy } from '../../content/audioCopy';
+import { getPlayer, placeKey, playPlace, setOnNext, startTour, stop as stopAudio, tourNext } from '../../lib/audio/player';
 import { inKorea } from '../../utils/tripPhase';
 import { formatTripText, hasCoords, normalizePlan, parseTransit, printTrip, renumber } from './tripUtils';
 
@@ -63,7 +64,7 @@ export default function TripDetail({ data, userInfo, tripId, trip = null, mode =
   const [menuOpen, setMenuOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState('');
-  const [panel, setPanel] = useState(null); // invite | members | shares | audio
+  const [panel, setPanel] = useState(null); // invite | members | shares | audio | tour
   // 화면 높이(시트 높이 계산용). 서버 렌더에서는 800으로 둔다
   const vh = useSyncExternalStore(
     (cb) => { window.addEventListener('resize', cb); return () => window.removeEventListener('resize', cb); },
@@ -379,8 +380,9 @@ export default function TripDetail({ data, userInfo, tripId, trip = null, mode =
     lng: p.coordinates?.lng,
     album: headerTitle,
   }), [destShort, headerTitle]);
-  // 재생 중인 장소의 다음 장소로 넘어가 이어 듣기
+  // 재생 중인 장소의 다음 장소로 넘어가 이어 듣기(투어 중이면 투어 순서대로)
   const playNextPlace = useCallback(() => {
+    if (getPlayer().tour) { tourNext(); return; }
     const key = getPlayer().place?.key;
     const idx = places.findIndex((p) => placeKey(p, destShort) === key);
     const next = places[idx + 1];
@@ -391,6 +393,22 @@ export default function TripDetail({ data, userInfo, tripId, trip = null, mode =
   }, [places, destShort, audioPlace, language]);
   useEffect(() => { setOnNext(playNextPlace); return () => setOnNext(null); }, [playNextPlace]);
   useEffect(() => () => stopAudio(), []); // 일정 화면을 떠나면 해설도 끈다
+  useTourArrival();
+  // ③ 이 날 순서대로 듣기. 여행 날짜가 오늘이면 '오늘 투어'
+  const startDayTour = () => {
+    const audioCopy = getAudioCopy(language);
+    const dayNumber = day?.day || dayIdx + 1;
+    const start = parseDate(plan.startDate);
+    const today = new Date();
+    const isToday = start && new Date(start.getFullYear(), start.getMonth(), start.getDate() + dayIdx).toDateString() === today.toDateString();
+    const tourPlaces = places.map((p, i) => ({
+      ...audioPlace(p),
+      time: p.time || '',
+      move: i > 0 ? parseTransit(places[i - 1].transitToNext) : null,
+    }));
+    startTour({ title: isToday ? audioCopy.tourToday : audioCopy.tourDay(dayNumber), places: tourPlaces }, language);
+    setPanel('tour');
+  };
 
   const openSafeMode = () => (auth.currentUser ? openTimmyPanel('safe') : goToLogin(router));
 
@@ -570,6 +588,7 @@ export default function TripDetail({ data, userInfo, tripId, trip = null, mode =
                     </div>
                     {sheet === 'full' && plan.tripTitle && <p className="px-4 pb-3 text-[13px] leading-normal text-tm-muted">{plan.tripTitle}</p>}
                     <div className="px-4 pb-4">
+                      <TourButton language={language} count={places.length} onStart={startDayTour} />
                       <PlanList copy={copy} places={places} legs={legs} travelMode={travelMode} selectedIdx={selectedIdx} onSelect={selectPlace} compact={sheet !== 'full'} />
                     </div>
                   </>
@@ -581,7 +600,7 @@ export default function TripDetail({ data, userInfo, tripId, trip = null, mode =
             </>
           )}
 
-          {sheet !== 'place' && <MiniPlayer language={language} onOpen={() => setPanel('audio')} />}
+          {sheet !== 'place' && <MiniPlayer language={language} onOpen={() => setPanel(getPlayer().tour ? 'tour' : 'audio')} />}
           {sheet !== 'place' && (
             <div className="flex shrink-0 gap-2 border-t border-tm-line bg-tm-ground px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-2.5">
               <button type="button" onClick={primaryCta.onClick} className="h-[52px] flex-1 rounded-[14px] bg-tm-navy text-[16px] font-bold text-white">{primaryCta.label}</button>
@@ -626,6 +645,7 @@ export default function TripDetail({ data, userInfo, tripId, trip = null, mode =
         {panel === 'invite' && <InviteSheet trip={trip} language={language} meta={[plan.tripTitle || headerTitle, dateRange].filter(Boolean).join(' · ')} onClose={() => setPanel(null)} />}
         {panel === 'members' && <MembersSheet trip={trip} language={language} onClose={() => setPanel(null)} onNewInvite={() => setPanel('invite')} />}
         {panel === 'audio' && <PlayerSheet language={language} onClose={() => setPanel(null)} onNext={playNextPlace} />}
+        {panel === 'tour' && <TourSheet language={language} onClose={() => setPanel(null)} />}
         {panel === 'shares' && <SharesSheet trip={trip} plan={plan} language={language} onClose={() => setPanel(null)} />}
         <Toast message={toast} />
       </div>
