@@ -62,9 +62,9 @@
 - 공공데이터 키는 `DATA_GO_KR_KEY` 하나(`lib/dataGoKr.js`, 없으면 예전 `KMA_SERVICE_KEY`): 기상청 날씨·TourAPI(일정 생성, KorService2/EngService2)·오디. 로컬 `.env.local`의 `TOUR_API_KEY`는 무효인 예전 키.
 
 ## 음성 대화 (2026-10)
-- 대화(/chat): 마이크로 물은 질문(HomeComposer )에만 티미가 말로 대답한다. 대답이 길면 앞부분 2~3문장만 읽고() 말풍선에 '앞부분만 읽었어요' 표시. 일정 후보·일정표는 짧은 안내 문장만 읽는다.
-- : 기본 기기 음성(speechSynthesis), 설정에서 '티미 목소리'(로그인,  → Gemini TTS MP3, 저장 안 함, 1인 하루 150번 , 대답마다 약 5초 지연, 실패 시 기기 음성). 설정은 localStorage  { reply, autoListen(기본 끔), voice }.
-- 화면 : 헤더 VoiceToggle → VoiceSheet(설정·미리 듣기), SpeakingBar(누르면 멈추고 바로 듣기). '대답이 끝나면 다시 듣기'는 HomeComposer 로 다시 마이크를 켠다. 듣는 중 표시는 네이비(빨강은 SOS 전용). SOS(raiseAlert)·화면 이탈 시 말 멈춤.
+- 대화(/chat): 마이크로 물은 질문(HomeComposer `onSubmit(text, { voice: true })`)에만 티미가 말로 대답한다. 대답이 길면 앞부분 2~3문장만 읽고(`spokenText`) 말풍선에 '앞부분만 읽었어요' 표시. 일정 후보·일정표는 짧은 안내 문장만 읽는다.
+- `lib/voice/speech.js`: 기본 기기 음성(speechSynthesis), 설정에서 '티미 목소리'(로그인, `POST /api/tts` → Gemini TTS MP3, 저장 안 함, 1인 하루 150번 `tts_usage`, 대답마다 약 5초 지연, 실패 시 기기 음성). 설정은 localStorage `tm_voice` { reply, autoListen(기본 끔), voice }.
+- 화면 `components/voice/VoiceChat.js`: 헤더 VoiceToggle → VoiceSheet(설정·미리 듣기), SpeakingBar(누르면 멈추고 바로 듣기). '대답이 끝나면 다시 듣기'는 HomeComposer `listenRequest`로 다시 마이크를 켠다. 듣는 중 표시는 네이비(빨강은 SOS 전용). SOS(raiseAlert)·화면 이탈 시 말 멈춤.
 - 안드로이드 앱(Capacitor WebView)은 Web Speech 인식이 없어 마이크가 안내 문구만 띄운다(플러그인 추가는 앱 업데이트 필요).
 
 ## 도시 사진 (2026-10)
