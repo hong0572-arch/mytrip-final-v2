@@ -22,8 +22,14 @@ export async function OPTIONS() {
   });
 }
 
-// 🌍 관광공사 TourAPI(국문 KorService2·영문 EngService2) 키워드 검색. 키는 공공데이터 일반 인증키(DATA_GO_KR_KEY).
+// 한국 여행지인지(관광공사 TourAPI는 국내 장소만 있다). 해외 도시에 국내 장소 목록을 붙이면
+// AI가 엉뚱한 국내 일정을 만든다(2026-10: '도쿄' → 제주 일정).
+const KOREA_PLACES = /(한국|대한민국|korea|서울|seoul|부산|busan|제주|jeju|경주|gyeongju|강릉|gangneung|전주|jeonju|여수|yeosu|속초|sokcho|인천|incheon|대구|daegu|광주|gwangju|대전|daejeon|울산|ulsan|수원|suwon|춘천|chuncheon|통영|tongyeong|남해|namhae|안동|andong|포항|pohang|가평|gapyeong|양양|yangyang|거제|geoje|순천|suncheon|목포|mokpo|담양|damyang|군산|gunsan|단양|danyang|평창|pyeongchang|울릉|ulleung|서귀포|seogwipo|해운대|haeundae|경기|강원|충청|전라|경상|gyeonggi|gangwon)/i;
+const isKoreanDestination = (text) => KOREA_PLACES.test(String(text || ''));
+
+// 🌍 관광공사 TourAPI(국문 KorService2·영문 EngService2) 키워드 검색. 키는 공공데이터 일반 인증키(DATA_GO_KR_KEY). 한국 여행지일 때만.
 async function fetchRealTourData(keyword, language) {
+  if (!isKoreanDestination(keyword)) return null;
   if (!dataGoKrKey()) return null;
   try {
     const serviceName = language === 'en' ? 'EngService2' : 'KorService2';
@@ -78,8 +84,9 @@ export async function POST(req) {
     const realTourData = await fetchRealTourData(destination, language);
 
     const tourApiPrompt = realTourData ? `
-      [🚨 TOUR API REAL DATA - CRITICAL PRIORITY]
-      You MUST use the following REAL places to build the itinerary.
+      [TOUR API REAL DATA — Korea Tourism Organization]
+      Prefer the following REAL places when they fit the destination and the request. Ignore any that are not in "${destination}".
+      Never change the destination because of this list.
       IMPORTANT: If you use a place from this list, you MUST include its exact 'lat' and 'lng' in the JSON output!
       
       <Real Places List>
