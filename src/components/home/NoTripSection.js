@@ -7,7 +7,44 @@ import { HOME_CITIES, KOREA_CITY_IDS, weatherLabel } from '../../content/homeCit
 import { getKoreaCopy } from '../../content/koreaCopy';
 import { goToLogin, openTimmyPanel, startChat } from './homeActions';
 
-const PHOTO_CITIES = HOME_CITIES.filter((c) => c.image);
+// 해외 모드 추천 도시(사진 있는 도시, 혼행 수요 순) · 한국 여행 모드 도시
+const GLOBAL_CARD_IDS = ['tokyo', 'osaka', 'taipei', 'bangkok', 'jeju', 'busan', 'paris', 'ronda', 'banff'];
+const PHOTO_CITIES = GLOBAL_CARD_IDS.map((id) => HOME_CITIES.find((c) => c.id === id)).filter((c) => c?.image);
+
+// 사진 도시 카드(해외·한국 모드 공용). 누르면 그 도시로 일정 3개 만들기를 시작한다.
+function CityCard({ city, copy, language, weather, index, showFlight = true }) {
+  const router = useRouter();
+  const c = city[language] || city.ko;
+  const w = weather[city.id] ? { ...weather[city.id], ...weatherLabel(weather[city.id]) } : null;
+  return (
+    <li className="shrink-0 snap-start">
+      <button
+        type="button"
+        onClick={() => startChat(router, c.prompt, { plan: true })}
+        className="tm-rise flex w-[168px] flex-col overflow-hidden rounded-[18px] bg-white text-left text-tm-ink shadow-[0_2px_10px_rgba(21,48,79,.06)]"
+        style={{ animationDelay: `${80 + index * 60}ms` }}
+      >
+        <span className="relative block h-[150px] w-full bg-tm-sky-tint">
+          <img src={city.image} alt="" width={168} height={150} loading={index < 2 ? 'eager' : 'lazy'} className="h-full w-full object-cover" />
+          <span className="absolute left-2 top-2 inline-flex h-[22px] items-center gap-1 rounded-full bg-white/90 px-2 text-[11px] font-bold text-tm-safe-ink">
+            <Shield size={12} strokeWidth={2.2} aria-hidden="true" /> {copy.soloSafe}
+          </span>
+          {w && (
+            <span className="absolute bottom-2 right-2 inline-flex h-[22px] items-center rounded-full bg-tm-ink/70 px-2 text-[11px] font-semibold tabular-nums text-white">
+              {w.icon} {w.temp}°
+            </span>
+          )}
+          {city.credit && <span className="absolute bottom-1.5 left-2 max-w-[60%] truncate text-[9px] text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,.6)]">© {city.credit.name}</span>}
+        </span>
+        <span className="flex flex-col gap-0.5 px-3 pb-3 pt-2.5">
+          <span className="text-[16px] font-bold">{c.name}</span>
+          <span className="text-[12px] leading-snug text-tm-muted">{c.note}</span>
+          {showFlight && c.flight && <span className="mt-0.5 text-[11px] font-semibold tabular-nums text-tm-navy">✈ {c.flight}</span>}
+        </span>
+      </button>
+    </li>
+  );
+}
 const KOREA_CITIES = KOREA_CITY_IDS.map((id) => HOME_CITIES.find((c) => c.id === id)).filter(Boolean);
 
 // 한국 여행 모드: 날씨 도시 카드 → 한국 여행 필수 정보 → 한국 맞춤 질문
@@ -19,24 +56,10 @@ function KoreaSection({ copy, language, user, weather }) {
     <>
       <section aria-labelledby="korea-cities" className="-mx-5 flex flex-col gap-3">
         <h2 id="korea-cities" className="px-5 text-[18px] font-bold text-tm-ink">{k.citiesTitle}</h2>
-        <ul className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
-          {KOREA_CITIES.map((city, i) => {
-            const c = city[language] || city.en;
-            const w = weather[city.id] ? { ...weather[city.id], ...weatherLabel(weather[city.id]) } : null;
-            return (
-              <li key={city.id} className="shrink-0 snap-start">
-                <button type="button" onClick={() => startChat(router, c.prompt, { plan: true })}
-                  className="tm-rise flex w-[150px] flex-col gap-1.5 rounded-[18px] bg-white p-3.5 text-left text-tm-ink shadow-[0_2px_10px_rgba(21,48,79,.06)]" style={delay(60 + i * 50)}>
-                  <span className="flex items-center justify-between">
-                    <span aria-hidden="true" className="text-[26px] leading-none">{w?.icon || '🧭'}</span>
-                    {w && <span className="text-[18px] font-bold tabular-nums">{w.temp}°</span>}
-                  </span>
-                  <span className="text-[16px] font-bold">{c.name}</span>
-                  <span className="text-[12px] leading-snug text-tm-muted">{c.note}</span>
-                </button>
-              </li>
-            );
-          })}
+        <ul className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
+          {KOREA_CITIES.map((city, i) => (
+            <CityCard key={city.id} city={city} copy={copy} language={language} weather={weather} index={i} showFlight={false} />
+          ))}
         </ul>
       </section>
 
@@ -91,37 +114,9 @@ export default function NoTripSection({ copy, language, user, weather, korea = f
           </button>
         </div>
         <ul className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
-          {PHOTO_CITIES.map((city, i) => {
-            const c = city[language] || city.ko;
-            const w = weather[city.id] ? { ...weather[city.id], ...weatherLabel(weather[city.id]) } : null;
-            return (
-              <li key={city.id} className="shrink-0 snap-start">
-                <button
-                  type="button"
-                  onClick={() => startChat(router, c.prompt, { plan: true })}
-                  className="tm-rise flex w-[168px] flex-col overflow-hidden rounded-[18px] bg-white text-left text-tm-ink shadow-[0_2px_10px_rgba(21,48,79,.06)]"
-                  style={delay(80 + i * 60)}
-                >
-                  <span className="relative block h-[150px] w-full bg-tm-sky-tint">
-                    <img src={city.image} alt="" width={168} height={150} loading={i < 2 ? 'eager' : 'lazy'} className="h-full w-full object-cover" />
-                    <span className="absolute left-2 top-2 inline-flex h-[22px] items-center gap-1 rounded-full bg-white/90 px-2 text-[11px] font-bold text-tm-safe-ink">
-                      <Shield size={12} strokeWidth={2.2} aria-hidden="true" /> {copy.soloSafe}
-                    </span>
-                    {w && (
-                      <span className="absolute bottom-2 right-2 inline-flex h-[22px] items-center rounded-full bg-tm-ink/70 px-2 text-[11px] font-semibold tabular-nums text-white">
-                        {w.icon} {w.temp}°
-                      </span>
-                    )}
-                  </span>
-                  <span className="flex flex-col gap-0.5 px-3 pb-3 pt-2.5">
-                    <span className="text-[16px] font-bold">{c.name}</span>
-                    <span className="text-[12px] leading-snug text-tm-muted">{c.note}</span>
-                    <span className="mt-0.5 text-[11px] font-semibold tabular-nums text-tm-navy">✈ {c.flight}</span>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
+          {PHOTO_CITIES.map((city, i) => (
+            <CityCard key={city.id} city={city} copy={copy} language={language} weather={weather} index={i} />
+          ))}
         </ul>
       </section>
 

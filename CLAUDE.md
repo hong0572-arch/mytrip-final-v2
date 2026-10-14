@@ -46,6 +46,12 @@
 - 티미 그림: 작은 곳(대화·로딩·홈 첫 화면)은 `components/TimmyAvatar.js`(얼굴 `public/timmy-face.png` + 하늘색 원). 전신 `timmy.png`는 크게 보여 줄 때만. 썸네일은 사진 대신 `TripThumb`(일정 id로 정해지는 지도 무늬).
 - 문구는 `content/tripsCopy.js`(한/영).
 
+## 도시 사진 (2026-10)
+- 홈 추천 도시 카드·오늘의 한마디 사진은 `public/home/<id>.webp`(640×480, 30~90KB), 출처는 `homeCities.js`의 `credit`(카드 왼쪽 아래 작게 표시).
+- 출처 원칙: 한국 도시는 한국관광공사(포토코리아·공공누리 제1유형, 출처 표시) 우선, 해외는 Unsplash(무료·상업 가능). 없으면 일러스트풍 AI 생성(사실적 랜드마크 금지). 검색해서 아무 사진이나 쓰지 않는다.
+- 현재 한국 도시(서울·부산·경주·강릉·전주)는 포토코리아 원본 다운로드에 회원 로그인이 필요해 Unsplash 사진을 임시로 썼다 → 관광공사 사진으로 바꾸면 credit을 { name: '한국관광공사', license: '공공누리 제1유형' }로.
+- 해외 카드 순서는 `NoTripSection.GLOBAL_CARD_IDS`.
+
 ## 한국 여행 모드 (2026-10)
 - 영어 화면 + 한국에 있음(`hooks/useInKorea.js`: 기기 시간대 Asia/Seoul 또는 `/api/geo`의 Vercel 국가 헤더 KR, 위치 권한·저장 없음)이면 외국인 한국 여행자로 본다.
 - 홈: 'Exploring Korea?' 인사, 오늘의 한마디·날씨 카드는 한국 도시(`homeCities.KOREA_CITY_IDS`, 기상청 날씨), 'Korea essentials'(티머니·지도 앱·택시·출발 전 준비·1330/112)와 한국 질문(`content/koreaCopy.js`). 해외 모드 오늘의 한마디에서는 `korea: true` 도시를 뺀다.

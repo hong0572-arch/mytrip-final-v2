@@ -79,10 +79,16 @@ export default function HomeHero({ copy, language, user, weather, onToggleLangua
         <span className="flex items-center gap-1.5 text-[12px] text-tm-sky-soft">
           <Sparkles size={14} strokeWidth={2} aria-hidden="true" /> {copy.todayLabel}
         </span>
-        <p className="text-[15px] leading-normal">
-          {w && <span aria-hidden="true">{w.icon} </span>}
-          {copy.todayLine(c.name, w, c.tip)}
-        </p>
+        <div className="flex items-start gap-3">
+          {city.image && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={city.image} alt="" width={64} height={64} className="h-16 w-16 shrink-0 rounded-xl object-cover" />
+          )}
+          <p className="text-[15px] leading-normal">
+            {w && <span aria-hidden="true">{w.icon} </span>}
+            {copy.todayLine(c.name, w, c.tip)}
+          </p>
+        </div>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => startChat(router, c.prompt, { plan: true })} className="h-10 rounded-full bg-white px-3.5 text-[13px] font-bold text-tm-navy">
             {copy.todayPlan(c.name)}
