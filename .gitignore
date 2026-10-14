@@ -51,3 +51,12 @@ next-env.d.ts
 /twa-build/android.keystore
 android.keystore
 .vscode/
+# 서명 키·Firebase 앱 설정·빌드 결과물은 커밋하지 않는다
+*.keystore
+*.jks
+google-services.json
+GoogleService-Info.plist
+*.aab
+*.apk
+*.idsig
+/twa-build/app.ap
