@@ -7,8 +7,7 @@ import { kmaCurrent } from '../../../lib/kmaWeather';
 // 서버가 대신 조회하고 30분 동안 캐시한다 → 방문자 수와 상관없이 호출 수가 거의 일정하고,
 // 방문자 IP·위치는 날씨 API로 가지 않는다. 키는 GOOGLE_WEATHER_API_KEY(없으면 지도 키)를 쓴다.
 // Weather API가 꺼져 있거나 실패하면 빈 객체를 돌려주고, 화면은 날씨 없이 그린다.
-// 공공데이터포털(기상청)은 해외 IP 요청을 막을 수 있어 이 함수는 서울 리전에서 실행한다.
-export const preferredRegion = 'icn1';
+// 공공데이터포털(기상청)은 해외 IP 요청을 막을 수 있어 함수는 서울 리전(vercel.json regions: icn1)에서 실행한다.
 
 const TTL_MS = 30 * 60 * 1000;
 const cache = new Map(); // lang → { at, data }
@@ -39,7 +38,9 @@ export async function GET(req) {
   };
 
   const results = await Promise.allSettled(HOME_CITIES.map(fetchCity));
-  results.forEach((r, i) => { if (r.status === 'rejected' && HOME_CITIES[i].country === 'KR' && kmaKey) console.warn('[weather] kma', HOME_CITIES[i].id, r.reason?.message); });
+  // 한국 도시 실패 이유(키 제외)를 로그와 응답 헤더(x-weather-kma)에 남겨 원인을 바로 볼 수 있게 한다
+  const kmaErrors = [...new Set(results.filter((r, i) => r.status === 'rejected' && HOME_CITIES[i].country === 'KR').map((r) => String(r.reason?.message || 'error').slice(0, 60)))];
+  if (kmaErrors.length) console.warn('[weather] kma failed:', kmaErrors.join('; '));
   const data = {};
   results.forEach((r, i) => { if (r.status === 'fulfilled') data[HOME_CITIES[i].id] = r.value; });
   if (Object.keys(data).length === 0) {
@@ -47,6 +48,6 @@ export async function GET(req) {
     console.warn('[weather] lookup failed:', reason);
     return NextResponse.json({}, { headers: { 'Cache-Control': 'public, s-maxage=300' } });
   }
-  cache.set(lang, { at: Date.now(), data });
-  return NextResponse.json(data, { headers });
+  if (!kmaErrors.length) cache.set(lang, { at: Date.now(), data });
+  return NextResponse.json(data, { headers: kmaErrors.length ? { 'Cache-Control': 'public, s-maxage=300', 'x-weather-kma': kmaErrors.join('; ') } : headers });
 }

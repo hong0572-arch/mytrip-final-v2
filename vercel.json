@@ -4,5 +4,8 @@
             "path": "/api/flights/tracker/check",
             "schedule": "0 0 * * *"
         }
+    ],
+    "regions": [
+        "icn1"
     ]
 }
