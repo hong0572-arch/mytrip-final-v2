@@ -55,7 +55,7 @@ export function InviteBanner({ copy, invite }) {
     <div className="tm-rise flex items-center gap-3 rounded-2xl bg-tm-sky-tint py-2 pl-4 pr-2">
       <UserPlus size={20} className="shrink-0 text-tm-navy" />
       <span className="flex-1 text-[14px] leading-snug text-tm-ink">{copy.invite(invite.senderName || '…', invite.destination || '')}</span>
-      <Link href={`/join/${invite.tripId}`} className="flex h-11 items-center rounded-xl bg-white px-4 text-[14px] font-bold text-tm-navy">
+      <Link href={`/j/?r=${invite.id}`} className="flex h-11 items-center rounded-xl bg-white px-4 text-[14px] font-bold text-tm-navy">
         {copy.inviteView}
       </Link>
     </div>

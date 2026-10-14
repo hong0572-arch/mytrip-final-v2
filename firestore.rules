@@ -50,7 +50,8 @@ service cloud.firestore {
       allow read, delete: if isAdmin();
     }
 
-    // 2. ✈️ 여행(워크스페이스): 멤버(memberIds)만 수정·목록 조회
+    // 2. ✈️ 여행(워크스페이스): 동행(memberIds)만 읽고, '함께 편집' 동행만 고친다.
+    // 동행 참여는 서버(/api/invites)가 1회성 초대 키를 확인한 뒤에만 한다. 명단·권한(viewerIds)은 만든 사람만 바꾼다.
     match /trips/{tripId} {
       function members(data) {
         return data.get('memberIds', []);
@@ -58,45 +59,78 @@ service cloud.firestore {
       function isMemberOf(data) {
         return isAuthenticated() && uid() in members(data);
       }
-      // 초대 링크(/join/<id>)로 처음 들어온 사람이 자기 자신만 멤버로 추가
-      function isJoiningSelf() {
-        return isAuthenticated()
-          && !isMemberOf(resource.data)
-          && onlyChanges(['memberIds', 'membersInfo'])
-          && members(request.resource.data).toSet() == members(resource.data).toSet().union([uid()].toSet());
+      // '보기만' 동행이 아닌 동행
+      function isEditorOf(data) {
+        return isMemberOf(data) && !(uid() in data.get('viewerIds', []));
+      }
+      // 만든 사람(예전 일정은 hostId가 없어 첫 멤버)
+      function isHostOf(data) {
+        return isMemberOf(data)
+          && (data.get('hostId', null) == uid()
+            || (data.get('hostId', null) == null && members(data)[0] == uid()));
+      }
+      function rosterKeys() {
+        return ['memberIds', 'membersInfo', 'viewerIds'];
       }
       // 동행이 자기 자신만 빼고 나가기
       function isLeavingSelf() {
         return isMemberOf(resource.data)
-          && onlyChanges(['memberIds', 'membersInfo'])
-          && members(request.resource.data).toSet() == members(resource.data).toSet().difference([uid()].toSet());
+          && onlyChanges(rosterKeys())
+          && members(request.resource.data).toSet() == members(resource.data).toSet().difference([uid()].toSet())
+          && request.resource.data.get('viewerIds', []).toSet().difference([uid()].toSet())
+            == resource.data.get('viewerIds', []).toSet().difference([uid()].toSet());
       }
 
-      // 단건 조회: 초대·공유 링크(추측할 수 없는 id)를 받은 로그인 사용자. 목록 조회: 내가 속한 여행만.
-      allow get: if isAuthenticated();
-      allow list: if isMemberOf(resource.data) || isAdmin();
+      allow get, list: if isMemberOf(resource.data) || isAdmin();
       allow create: if (isMemberOf(request.resource.data)
-          && request.resource.data.get('hostId', uid()) == uid())
+          && request.resource.data.get('hostId', uid()) == uid()
+          && !(uid() in request.resource.data.get('viewerIds', [])))
         || isAdmin();
-      // 멤버는 내용을 고칠 수 있지만 만든 사람(hostId)은 바꿀 수 없고 자신도 멤버로 남아야 한다.
-      allow update: if (isMemberOf(resource.data)
-          && isMemberOf(request.resource.data)
-          && request.resource.data.get('hostId', null) == resource.data.get('hostId', null))
+      // 함께 편집 동행은 내용을 고칠 수 있지만 만든 사람(hostId)은 바꿀 수 없고 자신도 남아야 한다.
+      // 명단·권한은 만든 사람만(만든 사람은 자신을 보기만으로 바꿀 수 없다).
+      allow update: if (isEditorOf(resource.data)
+          && isEditorOf(request.resource.data)
+          && request.resource.data.get('hostId', null) == resource.data.get('hostId', null)
+          && (isHostOf(resource.data) || !request.resource.data.diff(resource.data).affectedKeys().hasAny(rosterKeys())))
         || isLeavingSelf()
-        || isJoiningSelf()
         || isAdmin();
       // 삭제: 만든 사람, 또는 혼자 남은 멤버(예전 일정은 hostId가 없을 수 있다)
       allow delete: if (isMemberOf(resource.data)
           && (resource.data.get('hostId', null) == uid() || members(resource.data).size() <= 1))
         || isAdmin();
 
-      function isTripMember() {
-        return isAuthenticated()
-          && uid() in get(/databases/$(database)/documents/trips/$(tripId)).data.get('memberIds', []);
+      function tripData() {
+        return get(/databases/$(database)/documents/trips/$(tripId)).data;
       }
-      // 가계부 (지출 내역)
+      function isTripMember() {
+        return isAuthenticated() && uid() in tripData().get('memberIds', []);
+      }
+      function isTripEditor() {
+        return isTripMember() && !(uid() in tripData().get('viewerIds', []));
+      }
+      // 가계부 (지출 내역): 보기만 동행은 읽기만
       match /expenses/{expenseId} {
-        allow read, write: if isTripMember() || isAdmin();
+        allow read: if isTripMember() || isAdmin();
+        allow write: if isTripEditor() || isAdmin();
+      }
+      // 🔑 동행 초대 링크(문서 id = 추측할 수 없는 128비트 키). 참여(사용 횟수 차감)는 서버만 한다.
+      // 함께 편집 동행이 만들고·보고·닫는다. 닫기는 revoked=true로만.
+      match /invites/{key} {
+        allow read: if isTripEditor() || isAdmin();
+        allow create: if isTripEditor()
+          && request.resource.data.keys().hasOnly(['createdBy', 'maxUses', 'uses', 'role', 'expiresAt', 'revoked', 'createdAt'])
+          && request.resource.data.createdBy == uid()
+          && request.resource.data.uses == 0
+          && request.resource.data.revoked == false
+          && request.resource.data.role in ['edit', 'view']
+          && request.resource.data.maxUses in [0, 1, 3]
+          && request.resource.data.expiresAt is int
+          && request.resource.data.expiresAt > request.time.toMillis()
+          && request.resource.data.expiresAt < request.time.toMillis() + 400 * 24 * 60 * 60 * 1000;
+        allow update: if isTripEditor()
+          && onlyChanges(['revoked', 'revokedAt'])
+          && request.resource.data.revoked == true;
+        allow delete: if isAdmin();
       }
       // 💬 채팅방 메시지(안전모드 시스템 알림도 멤버 기기에서 쓴다)
       match /messages/{messageId} {
@@ -143,11 +177,25 @@ service cloud.firestore {
       allow write: if isAdmin(); // 관리자 화면에서만
     }
 
-    // 6. 🔗 공유 링크 (AI 일정 공유용)
-    // 로그인하지 않은 여행자도 링크를 만들 수 있다. 한번 만든 링크는 아무도 고치거나 지울 수 없다.
+    // 6. 🔗 공유 링크 (로그인 없이 보는 일정 사본)
+    // 로그인하지 않은 여행자도 링크를 만들 수 있다(만든 사람 기록 없음). 로그인했다면 ownerUid를 남기고
+    // 만든 사람만 켜고 끈다(enabled). expiresAt이 지났거나 꺼진 링크는 열리지 않는다. 목록은 만든 사람만.
     match /shared_links/{docId} {
-      allow read, create: if true;
-      allow update, delete: if isAdmin();
+      function isShareOwner(data) {
+        return isAuthenticated() && data.get('ownerUid', null) == uid();
+      }
+      function isOpen(data) {
+        return data.get('enabled', true) == true
+          && (data.get('expiresAt', null) == null || data.expiresAt > request.time);
+      }
+      allow get: if isOpen(resource.data) || isShareOwner(resource.data) || isAdmin();
+      allow list: if isShareOwner(resource.data) || isAdmin();
+      allow create: if request.resource.data.get('enabled', true) == true
+        && (!('ownerUid' in request.resource.data) || isShareOwner(request.resource.data));
+      allow update: if isShareOwner(resource.data)
+        && onlyChanges(['enabled'])
+        && request.resource.data.enabled is bool;
+      allow delete: if isShareOwner(resource.data) || isAdmin();
     }
     // 7. 🛡️ 안심 귀가 실시간 세션 (Safe Mode)
     // 위치·보호자 연락처가 담기므로 본인과 지정된 보호자(앱 회원)만 읽는다.

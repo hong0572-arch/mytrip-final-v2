@@ -13,6 +13,7 @@ import { DayTabs, PlaceDetail, PlanList } from './TripParts';
 import { BudgetTab, SafetyTab, StayTab } from './TripInfoTabs';
 import { EditDay } from './TripEdit';
 import { MoreMenu, NearbyCard, SaveSheet, Toast } from './TripSheets';
+import { InviteSheet, MembersSheet, SharesSheet } from '../invite/InviteSheets';
 import { formatTripText, hasCoords, normalizePlan, parseTransit, printTrip, renumber } from './tripUtils';
 
 const KAKAO_CONSULT_URL = 'https://pf.kakao.com/_xcJhrn/chat';
@@ -32,12 +33,14 @@ function inferMode(plan) {
   return 'WALKING';
 }
 
-// 일정 상세(지도 + 일정). mode: 'draft'(저장 전) | 'saved'(내 일정, 편집하면 바로 저장) | 'shared'(보기 전용)
-export default function TripDetail({ data, userInfo, tripId, mode = 'draft', language = 'ko', onBack, onOpenChat }) {
+// 일정 상세(지도 + 일정). mode: 'draft'(저장 전) | 'saved'(내 일정, 편집하면 바로 저장) | 'view'(보기만 동행) | 'shared'(보기 전용)
+// trip: 저장된 일정 문서(동행·초대 관리에 쓴다)
+export default function TripDetail({ data, userInfo, tripId, trip = null, mode = 'draft', language = 'ko', onBack, onOpenChat }) {
   const router = useRouter();
   const copy = getTripCopy(language);
   const homeCopy = getAiHomeCopy(language);
-  const canEdit = mode !== 'shared';
+  const canEdit = mode === 'draft' || mode === 'saved';
+  const isMemberMode = (mode === 'saved' || mode === 'view') && Boolean(tripId && trip);
 
   const [plan, setPlan] = useState(() => normalizePlan(data));
   const [dayIdx, setDayIdx] = useState(0);
@@ -57,6 +60,7 @@ export default function TripDetail({ data, userInfo, tripId, mode = 'draft', lan
   const [menuOpen, setMenuOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState('');
+  const [panel, setPanel] = useState(null); // invite | members | shares
   // 화면 높이(시트 높이 계산용). 서버 렌더에서는 800으로 둔다
   const vh = useSyncExternalStore(
     (cb) => { window.addEventListener('resize', cb); return () => window.removeEventListener('resize', cb); },
@@ -328,7 +332,7 @@ export default function TripDetail({ data, userInfo, tripId, mode = 'draft', lan
   };
 
   const shareLink = async () => {
-    if (!shareUrlRef.current) shareUrlRef.current = await createShareLink(plan, userInfo);
+    if (!shareUrlRef.current) shareUrlRef.current = await createShareLink(plan, userInfo, isMemberMode ? tripId : null);
     return shareUrlRef.current;
   };
 
@@ -346,18 +350,14 @@ export default function TripDetail({ data, userInfo, tripId, mode = 'draft', lan
     }
   };
 
-  const copyInvite = async () => {
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}/join/${tripId}`);
-      notify(copy.inviteCopied);
-    } catch {}
-  };
 
   const menuItems = [
     { key: 'copyText', onClick: async () => { try { await navigator.clipboard.writeText(formatTripText(plan, null, copy)); notify(copy.textCopied); } catch {} } },
     { key: 'print', onClick: () => printTrip(plan, copy, dateRange) },
-    ...(mode === 'saved' && onOpenChat ? [{ key: 'chat', onClick: onOpenChat }] : []),
-    ...(mode === 'saved' && tripId ? [{ key: 'invite', onClick: copyInvite }] : []),
+    ...(isMemberMode && onOpenChat ? [{ key: 'chat', onClick: onOpenChat }] : []),
+    ...(mode === 'saved' && isMemberMode ? [{ key: 'invite', onClick: () => setPanel('invite') }] : []),
+    ...(isMemberMode ? [{ key: 'members', onClick: () => setPanel('members') }] : []),
+    ...(mode === 'saved' && isMemberMode ? [{ key: 'shares', onClick: () => setPanel('shares') }] : []),
     { key: 'consult', onClick: () => {
       window.open(KAKAO_CONSULT_URL, '_blank');
       shareLink().then((url) => navigator.clipboard?.writeText(formatTripText(plan, url, copy))).catch(() => {});
@@ -386,9 +386,11 @@ export default function TripDetail({ data, userInfo, tripId, mode = 'draft', lan
     else setSheet((s) => (s === 'half' ? 'full' : 'half'));
   };
 
-  const primaryCta = mode === 'saved'
-    ? { label: copy.invite, onClick: copyInvite }
-    : { label: mode === 'shared' ? copy.saveCopy : copy.save, onClick: () => setSaveOpen(true) };
+  const primaryCta = mode === 'saved' && isMemberMode
+    ? { label: copy.invite, onClick: () => setPanel('invite') }
+    : mode === 'view' && isMemberMode
+      ? { label: copy.members, onClick: () => setPanel('members') }
+      : { label: mode === 'shared' ? copy.saveCopy : copy.save, onClick: () => setSaveOpen(true) };
 
   return (
     <div className="fixed inset-0 z-[100] flex justify-center bg-tm-ground font-sans text-tm-ink">
@@ -585,6 +587,9 @@ export default function TripDetail({ data, userInfo, tripId, mode = 'draft', lan
         )}
         {saveOpen && <SaveSheet copy={copy} saving={saving} onCancel={() => setSaveOpen(false)} onConfirm={confirmSave} />}
         {menuOpen && <MoreMenu copy={copy} onClose={() => setMenuOpen(false)} items={menuItems} />}
+        {panel === 'invite' && <InviteSheet trip={trip} language={language} meta={[plan.tripTitle || headerTitle, dateRange].filter(Boolean).join(' · ')} onClose={() => setPanel(null)} />}
+        {panel === 'members' && <MembersSheet trip={trip} language={language} onClose={() => setPanel(null)} onNewInvite={() => setPanel('invite')} />}
+        {panel === 'shares' && <SharesSheet trip={trip} plan={plan} language={language} onClose={() => setPanel(null)} />}
         <Toast message={toast} />
       </div>
     </div>

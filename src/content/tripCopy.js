@@ -46,7 +46,8 @@ export const tripCopy = {
     saveError: '저장하지 못했어요. 잠시 후 다시 시도해 주세요.',
     loginNeeded: '저장하려면 구글로 로그인해 주세요.',
     // 더 보기
-    menu: { copyText: '일정 글로 복사', print: 'PDF로 저장(인쇄)', consult: '카톡으로 여행 상담', chat: '동행 채팅', invite: '동행 초대 링크 복사' },
+    menu: { copyText: '일정 글로 복사', print: 'PDF로 저장(인쇄)', consult: '카톡으로 여행 상담', chat: '동행 채팅', invite: '동행 초대 링크 만들기', members: '동행·초대 링크 관리', shares: '공유 링크 관리' },
+    members: '동행 보기',
     shareCopied: '공유 링크를 복사했어요',
     textCopied: '일정을 복사했어요',
     // 숙소
@@ -151,7 +152,8 @@ export const tripCopy = {
     welcomeToast: 'Saved — plus a 1,000P welcome gift',
     saveError: 'Couldn’t save. Please try again.',
     loginNeeded: 'Log in with Google to save.',
-    menu: { copyText: 'Copy as text', print: 'Save as PDF (print)', consult: 'Chat with us on Kakao', chat: 'Group chat', invite: 'Copy invite link' },
+    menu: { copyText: 'Copy as text', print: 'Save as PDF (print)', consult: 'Chat with us on Kakao', chat: 'Group chat', invite: 'Create invite link', members: 'Companions & invite links', shares: 'Manage share links' },
+    members: 'Companions',
     shareCopied: 'Share link copied',
     textCopied: 'Itinerary copied',
     stayAreaTitle: 'Best area to stay',

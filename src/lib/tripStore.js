@@ -1,5 +1,5 @@
 'use client';
-import { addDoc, arrayRemove, collection, deleteDoc, doc, getDoc, increment, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { Timestamp, addDoc, arrayRemove, collection, deleteDoc, doc, getDoc, getDocs, increment, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 import { GoogleAuthProvider, getRedirectResult, signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { auth, db } from './firebase';
 
@@ -29,7 +29,7 @@ async function postToFeed(user, plan, { destination, language }) {
 }
 
 // 피드·사본에는 일정 내용만 싣는다(동행 목록·연락처·지갑·작성 시각 등은 뺀다).
-const PRIVATE_FIELDS = ['id', 'memberIds', 'membersInfo', 'hostId', 'contact', 'contactInfo', 'phone', 'email', 'name', 'userName',
+const PRIVATE_FIELDS = ['id', 'memberIds', 'membersInfo', 'viewerIds', 'hostId', 'contact', 'contactInfo', 'phone', 'email', 'name', 'userName',
   'tripWalletBalance', 'depositStatus', 'foreignWallets', 'targetTotalCost', 'createdAt', 'updatedAt', 'isEdited', 'copiedFrom', 'isForked', 'originalAuthor'];
 export function tripPlanOnly(trip) {
   const out = { ...(trip || {}) };
@@ -92,14 +92,39 @@ export async function updateItinerary(tripId, itinerary) {
   await updateDoc(doc(db, 'trips', tripId), { itinerary: clean(itinerary), isEdited: true, updatedAt: serverTimestamp() });
 }
 
-// 로그인 없이 볼 수 있는 공유 링크(일정 사본을 shared_links에 저장)
-export async function createShareLink(plan, userInfo) {
+// 로그인 없이 볼 수 있는 공유 링크(일정 사본을 shared_links에 저장). 30일 뒤 닫히고, 만든 사람이 끄고 켤 수 있다.
+const SHARE_DAYS = 30;
+export const shareUrl = (id) => `${window.location.origin}/share/${id}`;
+
+export async function createShareLink(plan, userInfo, tripId = null) {
+  const user = auth.currentUser;
   const ref = await addDoc(collection(db, 'shared_links'), {
     ...clean(tripPlanOnly(plan)),
-    contactInfo: userInfo?.contact || '',
+    // 저장된 일정에서 만든 링크에는 연락처를 싣지 않는다(공유 링크 관리 화면 안내와 같게)
+    ...(tripId ? {} : { contactInfo: userInfo?.contact || '' }),
+    ...(user ? { ownerUid: user.uid } : {}),
+    ...(tripId ? { tripId } : {}),
+    enabled: true,
+    expiresAt: Timestamp.fromMillis(Date.now() + SHARE_DAYS * 24 * 60 * 60 * 1000),
     createdAt: serverTimestamp(),
   });
-  return `${window.location.origin}/share/${ref.id}`;
+  return shareUrl(ref.id);
+}
+
+// 이 일정에서 내가 만든 공유 링크(최근 것부터)
+export async function listShareLinks(tripId) {
+  const user = requireUser();
+  const snap = await getDocs(query(collection(db, 'shared_links'), where('ownerUid', '==', user.uid), where('tripId', '==', tripId)));
+  return snap.docs
+    .map((d) => {
+      const x = d.data();
+      return { id: d.id, enabled: x.enabled !== false, createdAt: x.createdAt?.toMillis?.() || 0, expiresAt: x.expiresAt?.toMillis?.() || null };
+    })
+    .sort((a, b) => b.createdAt - a.createdAt);
+}
+
+export async function setShareEnabled(id, enabled) {
+  await updateDoc(doc(db, 'shared_links', id), { enabled });
 }
 
 const requireUser = () => {
@@ -164,6 +189,6 @@ export async function removeTrip(trip) {
     return 'removed';
   }
   const membersInfo = (trip.membersInfo || []).filter((m) => m?.uid !== user.uid);
-  await updateDoc(ref, { memberIds: arrayRemove(user.uid), membersInfo });
+  await updateDoc(ref, { memberIds: arrayRemove(user.uid), viewerIds: arrayRemove(user.uid), membersInfo });
   return 'left';
 }

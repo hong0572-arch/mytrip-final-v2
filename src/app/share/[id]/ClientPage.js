@@ -23,22 +23,13 @@ export default function ShareDetailPage() {
         const fetchSharedTrip = async () => {
             if (!shareId) return;
             try {
-                // 1순위: 외부 공유용으로 저장된 shared_links 컬렉션 확인
+                // 외부 공유용으로 저장된 일정 사본(shared_links)
                 const docRef = doc(db, "shared_links", shareId);
                 const docSnap = await getDoc(docRef);
 
-                if (docSnap.exists()) {
-                    setTripData(docSnap.data());
-                } else {
-                    // 2순위: 혹시 워크스페이스(trips) ID로 바로 접근했을 경우를 대비해 trips 컬렉션도 확인
-                    const tripRef = doc(db, "trips", shareId);
-                    const tripSnap = await getDoc(tripRef);
-                    if (tripSnap.exists()) {
-                        setTripData(tripSnap.data());
-                    } else {
-                        setError(true);
-                    }
-                }
+                // 꺼졌거나 기간이 지난 링크는 보안 규칙이 읽기를 막는다(오류 → 없는 링크 화면)
+                if (docSnap.exists()) setTripData(docSnap.data());
+                else setError(true);
             } catch (err) {
                 console.error("공유 데이터 로딩 에러:", err);
                 setError(true);

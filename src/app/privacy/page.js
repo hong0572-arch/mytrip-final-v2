@@ -9,7 +9,7 @@ export const metadata = {
     alternates: { canonical: 'https://tripmaker.tips/privacy' },
 };
 
-const EFFECTIVE_DATE = '2026년 10월 13일';
+const EFFECTIVE_DATE = '2026년 10월 14일';
 const OPERATOR = 'Trip Maker 운영팀';
 const PRIVACY_OFFICER = 'Trip Maker 개인정보 보호 담당';
 const CONTACT_EMAIL = 'contact@tripmaker.tips';
@@ -151,8 +151,8 @@ export default function PrivacyPage() {
                         <p>회사는 이용자의 동의나 법령의 근거 없이 개인정보를 제3자에게 제공하지 않습니다. 다만 이용자가 직접 선택한 아래 기능에서는 정보가 다른 사람에게 보이거나 전달됩니다.</p>
                         <ul className="list-disc space-y-1.5 pl-5">
                             <li><b>보호자</b>: 안전모드에서 이용자가 지정한 보호자에게 이름, 보호 상태, 위치가 전달됩니다.</li>
-                            <li><b>일정 참여자</b>: 이용자가 초대한 동행자에게 여행 일정과 참여자 이름·프로필 사진이 보입니다.</li>
-                            <li><b>공유 링크</b>: 일정 공유 링크를 받은 사람은 로그인 없이 그 일정을 볼 수 있습니다.</li>
+                            <li><b>일정 참여자</b>: 이용자가 만든 초대 링크(정한 인원·기간만 쓸 수 있음)로 참여한 동행자에게 여행 일정과 참여자 이름·프로필 사진이 보입니다. 참여 전에는 일정 이름·날짜·초대한 사람 이름·인원만 보입니다.</li>
+                            <li><b>공유 링크</b>: 일정 공유 링크를 받은 사람은 로그인 없이 그 일정(동행 목록·경비·연락처 제외)을 볼 수 있습니다. 링크는 30일 뒤 닫히며 만든 사람이 언제든 끌 수 있고, 회원 탈퇴 시 함께 삭제됩니다.</li>
                             <li><b>여행자 피드·동행 찾기</b>: 올린 글·사진과 닉네임·프로필 사진·여행 취향 태그가 다른 회원에게 보입니다.</li>
                         </ul>
                         <p className="text-[14px] text-tm-muted">보호자 연락처처럼 이용자가 다른 사람의 정보를 입력하는 경우, 그 사람에게 미리 알리고 동의를 받아 주세요.</p>

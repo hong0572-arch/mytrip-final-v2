@@ -30,7 +30,7 @@
 
 ## 일정 만들기·일정 상세 (2026-10)
 - 일정은 대화에서 만든다: `/api/plan-options`(부족한 정보 질문 또는 후보 3개) → 고른 안을 `/api/generate`로 상세 일정 생성. 예전 4단계 폼(`/plan?tab=create`)은 남아 있지만 진입점은 없앴다.
-- 일정 상세는 `components/trip/TripDetail.js` 하나로 통일: 대화 결과(`mode="draft"`), 저장된 일정 `/trip?id=`(`saved`, 편집 즉시 Firestore 반영·동행 초대·채팅), 공유 `/share/[id]`(`shared`, 보기 전용·사본 저장). 예전 `AIResult`는 관리자 화면만 쓴다.
+- 일정 상세는 `components/trip/TripDetail.js` 하나로 통일: 대화 결과(`mode="draft"`), 저장된 일정 `/trip?id=`(`saved`, 편집 즉시 Firestore 반영·동행 초대·채팅 / 보기만 동행은 `view`: 편집·초대 없이 보기·채팅·동행 목록. 일정 문서는 onSnapshot 구독이라 내보내기·권한 변경이 바로 반영), 공유 `/share/[id]`(`shared`, 보기 전용·사본 저장). 예전 `AIResult`는 관리자 화면만 쓴다.
 - 구성: 지도(`TripMap`, 선택한 날의 번호 핀·이동수단별 경로·구간 시간·주변 장소) + 시트(반쯤/전체/장소) + 탭(일정·숙소·안심·팁·경비) + 편집(`TripEdit`: 끌어서 순서, 사이에 추가, AI 동선 정리, 말로 고치기 `/api/plan-edit`).
 - 저장·공유는 `lib/tripStore.js`(구글 로그인, 모바일은 리디렉트 후 `pendingTripSave`로 이어서 저장). 피드 공유는 기본 꺼짐(혼자 여행자 위치 노출 방지).
 - AI가 준 좌표는 믿지 않고 구글 장소 검색으로 채운다. 긴급번호는 `tripUtils.emergencyNumbers`(확실한 나라만, 모르면 영사콜센터만).
@@ -40,11 +40,19 @@
 - `/trips` = `components/trips/MyTrips.js`. 아래 메뉴 '내 일정'은 여기로 간다(예전 `/mypage?tab=schedule`은 남아 있지만 진입점 없음).
 - 맨 위 카드가 여행 단계에 따라 바뀐다: 여행 중 `OnTripHero`(며칠째·다음 장소·안전모드) → 가장 가까운 출발 `NextTripHero`(D-day·안심 준비 진행률, 홈과 같은 `tm_readiness_<id>`). 분류는 `trips/tripsUtils.groupTrips`.
 - 지난 여행: 끝난 지 14일 안이면 '어떠셨어요?' 카드(일기·피드 공유). **피드 공유는 끝난 여행에만 권한다**(여행 중 위치 노출 방지). '다시 가기'는 출발일을 고르면 `duplicateTrip`이 일수만큼 날짜를 다시 매긴 새 여행을 만든다(동행·기록 미복사).
-- ⋯ 메뉴(`TripSheets.TripMenuSheet`): 열기·이름 바꾸기·동행 초대(`/join/<id>` 링크)·공유 링크·복사·삭제. 삭제는 빨강을 쓰지 않고 한 번 더 확인한다. 만든 사람(또는 혼자인 일정)은 삭제, 동행은 '나가기'(`removeTrip`).
-- 받은 초대: `match_requests`(`type: 'workspace_invite'`, `targetMateId`, `status: 'pending'`) → 배너 '보기' → `/join/<tripId>`.
+- ⋯ 메뉴(`TripSheets.TripMenuSheet`): 열기·이름 바꾸기·동행 초대(초대 시트)·공유 링크(공유 링크 관리 시트)·복사·삭제. 삭제는 빨강을 쓰지 않고 한 번 더 확인한다. 만든 사람(또는 혼자인 일정)은 삭제, 동행은 '나가기'(`removeTrip`).
+- 받은 초대: `match_requests`(`type: 'workspace_invite'`, `targetMateId`, `status: 'pending'`) → 배너 '보기' → `/j/?r=<요청 id>`(받은 사람만, 서버가 보낸 사람이 아직 편집 동행인지 확인).
 - 피드·공유 링크·사본에는 `tripStore.tripPlanOnly`로 일정 내용만 싣는다(동행 목록·연락처·지갑 제외).
 - 티미 그림: 작은 곳(대화·로딩·홈 첫 화면)은 `components/TimmyAvatar.js`(얼굴 `public/timmy-face.png` + 하늘색 원). 전신 `timmy.png`는 크게 보여 줄 때만. 썸네일은 사진 대신 `TripThumb`(일정 id로 정해지는 지도 무늬).
 - 문구는 `content/tripsCopy.js`(한/영).
+
+## 동행 초대·공유 링크 (2026-10)
+- 초대 링크 = 1회성·기간 제한 키: `trips/{tripId}/invites/{128비트 hex 키}` { createdBy, maxUses(1|3|0=제한 없음), uses, role: 'edit'|'view', expiresAt(ms), revoked }. 주소 `/j/?k=<tripId>.<키>`. 기본값 **1명 · 7일 · 함께 편집**(`components/invite/InviteSheets.js` InviteSheet, 문구 `content/inviteCopy.js`, 함수 `lib/invites.js`).
+- 참여는 서버만: `/api/invites` GET(미리보기 — 일정 이름·날짜·초대한 사람·인원·권한·남은 기간만, 닫힌 이유는 구분하지 않고 404 closed) · POST(로그인, 트랜잭션으로 키 확인·uses+1·memberIds/membersInfo 추가, 보기만이면 viewerIds). 앱 안 초대(`r=`)도 같은 경로.
+- 예전 `/join/<tripId>` 링크는 닫힌 안내 화면만 보여 준다(id만 알면 누구나 들어올 수 있었음).
+- 권한: `viewerIds`에 있으면 '보기만'(일정·지출 수정, 초대 불가, 채팅 가능). 만든 사람(`hostId`, 없으면 첫 멤버)만 동행 내보내기·권한 바꾸기(MembersSheet). 함께 편집 동행은 열린 초대 링크를 보고 닫을 수 있다.
+- 로그인 필요한 화면에서 돌아오기: `goToLogin(router, returnTo)` → sessionStorage `tm_return_to` → /plan에서 로그인(신규는 닉네임 저장) 뒤 `takeReturnPath()`로 복귀.
+- 공유 링크(`shared_links`, 로그인 없이 보기): 로그인 상태면 `ownerUid`·`tripId`, 모두 `enabled`·`expiresAt`(30일). 저장된 일정에서 만든 링크에는 연락처를 넣지 않는다. 만든 사람이 SharesSheet에서 켜고 끄며, 꺼지거나 만료된 링크는 규칙이 읽기를 막는다. 회원 탈퇴 시 ownerUid 링크와 내가 만든 초대 링크 삭제.
 
 ## 도시 사진 (2026-10)
 - 홈 추천 도시 카드·오늘의 한마디 사진은 `public/home/<id>.webp`(640×480, 30~90KB), 출처는 `homeCities.js`의 `credit`(카드 왼쪽 아래 작게 표시).
@@ -85,9 +93,9 @@
 - 사용자별 API(`api/chat/session`, `api/memory`, `api/diary`, `api/flights/tracker`)는 `lib/verifyUser.js`로 Firebase ID 토큰을 확인하고 토큰의 uid만 쓴다. 클라이언트는 `utils/authHeaders.js`로 토큰을 붙인다.
 - 안심 귀가 보호자 링크: 안전모드를 켤 때 128비트 일회용 키(`shareToken`)를 만들어 `safemode_sessions/{uid}`에 저장하고, 링크는 `/share/live_safemode?u=<uid>&t=<key>`. 보호자 화면은 `api/safemode/live`가 키를 확인해 이름·상태·위치만 돌려준다(15초 갱신). 보호를 끝내면 문서가 지워져 링크도 만료된다. GPS 실패 시 가짜 좌표를 쓰지 않고 `locationError`만 기록한다.
 - Firestore 규칙(`firestore.rules`)은 콘솔/CLI로 따로 게시해야 반영된다. `safemode_sessions`는 본인과 `guardianUserId` 보호자만 읽는다.
-- `trips`: 목록 조회·수정은 멤버(`memberIds`)만, 단건 조회는 로그인 사용자(초대 링크). 초대 링크로 자기만 멤버 추가·자기만 나가기 허용, `hostId` 변경 불가, 삭제는 만든 사람 또는 혼자 남은 멤버. `expenses`·`messages`는 멤버만. **목록 쿼리는 반드시 `where('memberIds','array-contains',uid)`를 붙인다**(없으면 거부).
+- `trips`: 조회(단건·목록)는 멤버(`memberIds`)만, 수정은 '보기만'(`viewerIds`)이 아닌 멤버만. 멤버 추가는 서버(`/api/invites`)만, 명단·권한(`memberIds/membersInfo/viewerIds`) 변경은 만든 사람만(자기 나가기는 허용), `hostId` 변경 불가, 삭제는 만든 사람 또는 혼자 남은 멤버. `messages`는 멤버, `expenses` 쓰기는 편집 멤버만. `invites`는 편집 멤버가 만들고(필드·값 검증) 닫기(revoked=true)만, uses는 서버만. **목록 쿼리는 반드시 `where('memberIds','array-contains',uid)`를 붙인다**(없으면 거부).
 - `match_requests`(초대·정산·안전모드 알림): 보낸 사람·받는 사람만 읽기. 쿼리는 `where('targetMateId'|'senderId','==',uid)`로 — 컬렉션 전체 구독은 거부된다.
-- `feeds`: 작성자만 수정·삭제, 다른 사람은 `likes/likedBy/forks/comments/commentCount`만. `shared_links`: 누구나 만들고 읽되 수정·삭제 불가.
+- `feeds`: 작성자만 수정·삭제, 다른 사람은 `likes/likedBy/forks/comments/commentCount`만. `shared_links`: 누구나 만들 수 있고(ownerUid는 본인만), 켜져 있고 만료 전이면 누구나 단건 조회. 목록·켜고 끄기(enabled만)·삭제는 만든 사람만.
 - 관리자 = 구글 로그인 + `admins/{uid}` 문서(콘솔에서만 생성). `/admin` 화면과 규칙의 `isAdmin()`이 같은 기준. 비밀번호를 코드에 두지 않는다.
 - 규칙을 바꾸면 에뮬레이터로 시험한다: `@firebase/rules-unit-testing` + `firebase emulators:exec --only firestore`(Java 필요, Android Studio의 `jbr/bin`).
 - 실시간 구독(onSnapshot)에는 항상 `lib/snapshotError.js`의 `onSnapshotError('이름')`을 붙인다.

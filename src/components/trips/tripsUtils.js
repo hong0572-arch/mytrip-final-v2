@@ -56,10 +56,12 @@ export function toInputDate(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-// 초대 링크(…/join/abc123) 또는 id만 붙여넣어도 id를 꺼낸다
-export function parseInviteId(text) {
+// 붙여 넣은 초대 링크에서 열 경로를 꺼낸다. 새 1회성 링크(/j/?k=…)는 그대로, 예전 /join/ 링크는 닫힌 안내 화면으로.
+export function parseInviteLink(text) {
   const value = String(text || '').trim();
-  const match = /\/join\/([A-Za-z0-9_-]{6,})/.exec(value);
-  if (match) return match[1];
-  return /^[A-Za-z0-9_-]{15,}$/.test(value) ? value : null;
+  const key = /[?&]k=([A-Za-z0-9]{10,40}\.[0-9a-f]{32})/.exec(value);
+  if (key) return `/j/?k=${key[1]}`;
+  const legacy = /\/join\/([A-Za-z0-9_-]{6,})/.exec(value);
+  if (legacy) return `/join/${legacy[1]}`;
+  return null;
 }

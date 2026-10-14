@@ -39,6 +39,7 @@ import {
     collection, getDocs, addDoc, query, orderBy, onSnapshot, where
 } from "firebase/firestore";
 import { onSnapshotError } from '../../lib/snapshotError';
+import { takeReturnPath } from '../../components/home/homeActions';
 // AI 홈에서 들어오는 기능 화면의 머리글 제목
 const PLAN_TAB_TITLES = {
     ko: { home: '둘러보기', flights_search: '항공권 최저가', create: '일정표 만들기', around_me: '내 주변' },
@@ -1019,6 +1020,7 @@ export default function Home() {
                 const userRef = doc(db, "users", currentUser.uid);
                 const userSnap = await getDoc(userRef);
                 if (!userSnap.exists()) { setShowNicknameModal(true); }
+                else { const back = takeReturnPath(); if (back) { router.replace(back); return; } }
             }
             if (currentUser) {
                 const tripsQ = query(collection(db, "trips"), where("memberIds", "array-contains", currentUser.uid), orderBy("createdAt", "desc"));
@@ -1099,6 +1101,8 @@ export default function Home() {
                 uid: auth.currentUser.uid, email: auth.currentUser.email, name: nicknameInput, photoURL: auth.currentUser.photoURL, points: 1000, createdAt: serverTimestamp()
             });
             setShowNicknameModal(false);
+            const back = takeReturnPath();
+            if (back) router.replace(back);
         } catch (error) { alert(language === "en" ? "An error occurred during registration." : "가입 처리 중 문제가 발생했습니다."); }
     };
     const handleDeleteTrip = async (e, tripId, destination) => {

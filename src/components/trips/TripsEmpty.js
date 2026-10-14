@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
 import { startChat } from '../home/homeActions';
-import { parseInviteId } from './tripsUtils';
+import { parseInviteLink } from './tripsUtils';
 
 // 점선 경로와 핀(장식). 캐릭터 대신 쓴다.
 function RouteArt() {
@@ -36,9 +36,9 @@ export default function TripsEmpty({ copy, korea = false }) {
 
   const openInvite = (e) => {
     e.preventDefault();
-    const id = parseInviteId(link);
-    if (!id) return setError(copy.emptyInviteInvalid);
-    router.push(`/join/${id}`);
+    const path = parseInviteLink(link);
+    if (!path) return setError(copy.emptyInviteInvalid);
+    router.push(path);
   };
 
   return (

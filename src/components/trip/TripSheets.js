@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { ClipboardCopy, FileDown, MessageCircle, MessagesSquare, Plus, Star, UserPlus, X } from 'lucide-react';
+import { ClipboardCopy, FileDown, Link2, MessageCircle, MessagesSquare, Plus, Star, UserPlus, Users, X } from 'lucide-react';
 
 function Sheet({ label, onClose, children }) {
   return (
@@ -37,7 +37,7 @@ export function SaveSheet({ copy, saving, onCancel, onConfirm }) {
 }
 
 export function MoreMenu({ copy, onClose, items }) {
-  const icons = { copyText: ClipboardCopy, print: FileDown, consult: MessageCircle, chat: MessagesSquare, invite: UserPlus };
+  const icons = { copyText: ClipboardCopy, print: FileDown, consult: MessageCircle, chat: MessagesSquare, invite: UserPlus, members: Users, shares: Link2 };
   return (
     <Sheet label={copy.more} onClose={onClose}>
       <ul className="flex flex-col">

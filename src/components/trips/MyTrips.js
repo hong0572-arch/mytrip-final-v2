@@ -12,7 +12,9 @@ import { useIsClient, useStoredString } from '../../hooks/useLocalStore';
 import { getAiHomeCopy } from '../../content/aiHomeCopy';
 import { getTripsCopy } from '../../content/tripsCopy';
 import { getTripDayNumber, getTripPhase, parseJsonObject } from '../../utils/tripPhase';
-import { canDeleteTrip, createShareLink, duplicateTrip, removeTrip, renameTrip, shareTripToFeed } from '../../lib/tripStore';
+import { canDeleteTrip, duplicateTrip, removeTrip, renameTrip, shareTripToFeed } from '../../lib/tripStore';
+import { InviteSheet, MembersSheet, SharesSheet, isViewer } from '../invite/InviteSheets';
+import { formatTripRange } from '../../utils/tripPhase';
 import { goToLogin, startChat } from '../home/homeActions';
 import BottomNav from '../home/BottomNav';
 import { InviteBanner, NewTripCard, NextTripHero, OnTripHero, PastRow, PostTripPrompt, TripRow } from './TripCards';
@@ -39,6 +41,7 @@ export default function MyTrips() {
   const [reuseTrip, setReuseTrip] = useState(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState('');
+  const [panel, setPanel] = useState(null); // { kind: invite | members | shares, trip }
   const toastTimer = useRef(null);
   const [postDoneRaw, setPostDoneRaw] = useStoredString(POST_DONE_KEY, '{}');
   const postDone = parseJsonObject(postDoneRaw);
@@ -89,23 +92,8 @@ export default function MyTrips() {
     setReuseTrip({ trip, min: toInputDate(today), def: toInputDate(later) });
   };
 
-  const inviteLink = async (trip) => {
-    const url = `${window.location.origin}/join/${trip.id}`;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: tripTitle(trip), url });
-        return;
-      }
-    } catch (e) {
-      if (e?.name === 'AbortError') return;
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-      showToast(copy.toast.linkCopied);
-    } catch {
-      showToast(copy.toast.failed);
-    }
-  };
+  // 동행 초대(1회성 링크 만들기). 보기만 동행은 동행 목록만 본다.
+  const inviteLink = (trip) => setPanel({ kind: isViewer(trip, user?.uid) ? 'members' : 'invite', trip });
 
   const markPostDone = (trip) => setPostDoneRaw(JSON.stringify({ ...postDone, [trip.id]: true }));
 
@@ -148,15 +136,15 @@ export default function MyTrips() {
       setMenuTrip(null);
       return inviteLink(trip);
     }
+    if (action === 'shareLink') {
+      setMenuTrip(null);
+      return setPanel({ kind: 'shares', trip });
+    }
     setMenuTrip(null);
     try {
       if (action === 'rename') {
         await renameTrip(trip.id, value);
         showToast(copy.toast.renamed);
-      } else if (action === 'shareLink') {
-        const url = await createShareLink(trip, null);
-        await navigator.clipboard.writeText(url).catch(() => {});
-        showToast(copy.toast.linkCopied);
       } else if (action === 'remove' || action === 'leave') {
         const result = await removeTrip(trip);
         showToast(result === 'left' ? copy.toast.left : copy.toast.removed);
@@ -274,6 +262,16 @@ export default function MyTrips() {
           onSubmit={(date) => reuse(reuseTrip.trip, date)}
         />
       )}
+      {panel?.kind === 'invite' && (
+        <InviteSheet
+          trip={panel.trip}
+          language={language}
+          meta={[tripTitle(panel.trip), formatTripRange(panel.trip, language)].filter(Boolean).join(' · ')}
+          onClose={() => setPanel(null)}
+        />
+      )}
+      {panel?.kind === 'members' && <MembersSheet trip={panel.trip} language={language} onClose={() => setPanel(null)} onNewInvite={() => setPanel({ kind: 'invite', trip: panel.trip })} />}
+      {panel?.kind === 'shares' && <SharesSheet trip={panel.trip} language={language} onClose={() => setPanel(null)} />}
       <Toast message={toast} />
     </div>
   );

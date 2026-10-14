@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { auth, db } from "../../lib/firebase";
-import { doc, getDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { doc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { onSnapshotError } from '../../lib/snapshotError';
 import { onAuthStateChanged } from "firebase/auth";
 import { Map, MessageCircle, X, Send } from 'lucide-react';
@@ -11,7 +11,8 @@ import TripDetail from '../../components/trip/TripDetail';
 import useAppLanguage from '../../hooks/useAppLanguage';
 import TimmyAvatar from '../../components/TimmyAvatar';
 
-// 저장된 일정(/trip?id=…). 참여자는 편집(바로 저장)·동행 초대·동행 채팅을, 그 밖의 사람은 보기만 한다.
+// 저장된 일정(/trip?id=…). 일정 문서는 동행(memberIds)만 읽을 수 있다.
+// 함께 편집 동행은 편집(바로 저장)·동행 초대를, 보기만 동행(viewerIds)은 보기·채팅만 한다. 명단·권한 변경은 실시간 반영.
 function TripDetailContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -29,26 +30,29 @@ function TripDetailContent() {
     const messagesEndRef = useRef(null);
 
     useEffect(() => {
-        const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => setUser(currentUser));
-        const fetchTrip = async () => {
-            if (!tripId) { setLoading(false); return; }
-            try {
-                const docSnap = await getDoc(doc(db, "trips", tripId));
+        let unsubscribeTrip = null;
+        const stop = () => { if (unsubscribeTrip) { unsubscribeTrip(); unsubscribeTrip = null; } };
+        const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+            stop();
+            if (!tripId || !currentUser) { setError(true); setLoading(false); return; }
+            unsubscribeTrip = onSnapshot(doc(db, "trips", tripId), (docSnap) => {
                 if (docSnap.exists()) {
-                    setTripData(docSnap.data());
+                    setTripData({ id: docSnap.id, ...docSnap.data() });
+                    setError(false);
                     localStorage.setItem('activeTripId', tripId);
                 } else {
                     setError(true);
                 }
-            } catch (err) {
+                setLoading(false);
+            }, (err) => {
+                // 내보내졌거나 동행이 아니면 권한 오류
                 console.error("일정 로딩 에러:", err);
                 setError(true);
-            } finally {
                 setLoading(false);
-            }
-        };
-        fetchTrip();
-        return () => unsubscribeAuth();
+            });
+        });
+        return () => { stop(); unsubscribeAuth(); };
     }, [tripId]);
 
     // 동행 채팅(열었을 때만 구독)
@@ -108,6 +112,7 @@ function TripDetailContent() {
     }
 
     const isMember = Boolean(user && tripData.memberIds?.includes(user.uid));
+    const viewer = Boolean(isMember && tripData.viewerIds?.includes(user.uid));
 
     return (
         <>
@@ -115,7 +120,8 @@ function TripDetailContent() {
                 data={tripData}
                 userInfo={tripData}
                 tripId={tripId}
-                mode={isMember ? 'saved' : 'shared'}
+                trip={tripData}
+                mode={!isMember ? 'shared' : viewer ? 'view' : 'saved'}
                 language={language}
                 onBack={() => router.push(isMember ? '/trips' : '/')}
                 onOpenChat={isMember ? () => setShowChat(true) : undefined}

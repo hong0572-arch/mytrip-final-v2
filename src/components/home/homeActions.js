@@ -33,6 +33,22 @@ export function openTimmyPanel(panel) {
 }
 
 // 로그인 창은 예전 홈(/plan)에 있다.
-export function goToLogin(router) {
+// returnTo: 로그인(신규 가입은 닉네임까지)을 마치면 돌아갈 같은 사이트 경로(예: 초대 화면 /j/?k=…)
+export const RETURN_KEY = 'tm_return_to';
+export function goToLogin(router, returnTo) {
+  try {
+    if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//')) sessionStorage.setItem(RETURN_KEY, returnTo);
+  } catch {}
   router.push('/plan?login=1');
+}
+
+// 로그인 뒤 돌아갈 곳이 있으면 한 번만 꺼낸다
+export function takeReturnPath() {
+  try {
+    const path = sessionStorage.getItem(RETURN_KEY);
+    sessionStorage.removeItem(RETURN_KEY);
+    return path && path.startsWith('/') && !path.startsWith('//') ? path : null;
+  } catch {
+    return null;
+  }
 }
