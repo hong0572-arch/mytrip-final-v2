@@ -40,6 +40,9 @@ import {
 } from "firebase/firestore";
 import { onSnapshotError } from '../../lib/snapshotError';
 import { takeReturnPath } from '../../components/home/homeActions';
+
+// 날짜 → 'YYYY-MM-DD'(현지 날짜). toISOString은 UTC라 한국 시간 자정 이후엔 하루 전날이 된다
+const localYmd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 // AI 홈에서 들어오는 기능 화면의 머리글 제목
 const PLAN_TAB_TITLES = {
     ko: { home: '둘러보기', flights_search: '항공권 최저가', create: '일정표 만들기', around_me: '내 주변' },
@@ -1278,12 +1281,7 @@ export default function Home() {
             const trip = manualAirport.trip;
             setManualAirport({ show: false, trip: null, searchStr: "", error: "" });
             if (trip && trip.isFromSearchForm) {
-                let googleFlightsLink = `https://www.google.com/travel/flights?hl=ko&gl=KR&q=Flights from Seoul to ${resolvedCode} on ${trip.startDate}`;
-                if (trip.endDate) {
-                    googleFlightsLink += ` through ${trip.endDate}`;
-                }
-                googleFlightsLink += ` with ${trip.adults || 1} adults`;
-                window.open(googleFlightsLink, '_blank');
+                router.push(`/flights/?to=${resolvedCode}&name=${encodeURIComponent(trip.destination || resolvedCode)}&depart=${trip.startDate}${trip.endDate ? `&return=${trip.endDate}` : ''}&adults=${trip.adults || 1}`);
             } else {
                 proceedFlightSearch(trip, resolvedCode, resolvedCode);
             }
@@ -1447,12 +1445,7 @@ export default function Home() {
                                                     const trip = manualAirport.trip;
                                                     setManualAirport({ show: false, trip: null, searchStr: "", error: "" });
                                                     if (trip && trip.isFromSearchForm) {
-                                                        let googleFlightsLink = `https://www.google.com/travel/flights?hl=ko&gl=KR&q=Flights from Seoul to ${rec.code} on ${trip.startDate}`;
-                                                        if (trip.endDate) {
-                                                            googleFlightsLink += ` through ${trip.endDate}`;
-                                                        }
-                                                        googleFlightsLink += ` with ${trip.adults || 1} adults`;
-                                                        window.open(googleFlightsLink, '_blank');
+                                                        router.push(`/flights/?to=${rec.code}&name=${encodeURIComponent(trip.destination || rec.code)}&depart=${trip.startDate}${trip.endDate ? `&return=${trip.endDate}` : ''}&adults=${trip.adults || 1}`);
                                                     } else {
                                                         proceedFlightSearch(trip, rec.code, rec.code);
                                                     }
@@ -1880,8 +1873,8 @@ export default function Home() {
                                                 setAiRecommendations([]);
                                                 const tempTrip = {
                                                     destination: query,
-                                                    startDate: flightDateRange[0] ? flightDateRange[0].toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-                                                    endDate: flightDateRange[1] ? flightDateRange[1].toISOString().split('T')[0] : null,
+                                                    startDate: flightDateRange[0] ? localYmd(flightDateRange[0]) : localYmd(new Date()),
+                                                    endDate: flightDateRange[1] ? localYmd(flightDateRange[1]) : null,
                                                     isFromSearchForm: true,
                                                     adults: flightAdults
                                                 };
@@ -1890,21 +1883,16 @@ export default function Home() {
                                                 return;
                                             }
                                             setFlightSearchError("");
-                                            const depDate = flightDateRange[0] ? flightDateRange[0].toISOString().split('T')[0] : '';
-                                            const retDate = flightDateRange[1] ? flightDateRange[1].toISOString().split('T')[0] : '';
+                                            const depDate = flightDateRange[0] ? localYmd(flightDateRange[0]) : '';
+                                            const retDate = flightDateRange[1] ? localYmd(flightDateRange[1]) : '';
 
                                             if (!depDate) {
                                                 setFlightSearchError(language === 'en' ? "Please select departure date." : "출발일을 선택해 주세요.");
                                                 return;
                                             }
 
-                                            let googleFlightsLink = `https://www.google.com/travel/flights?hl=ko&gl=KR&q=Flights from Seoul to ${resolvedCode} on ${depDate}`;
-                                            if (retDate) {
-                                                googleFlightsLink += ` through ${retDate}`;
-                                            }
-                                            googleFlightsLink += ` with ${flightAdults} adults`;
-
-                                            window.open(googleFlightsLink, '_blank');
+                                            // 앱 안 항공권 검색 화면으로(구글 항공권 페이지로 넘기지 않는다)
+                                            router.push(`/flights/?to=${resolvedCode}&name=${encodeURIComponent(query)}&depart=${depDate}${retDate ? `&return=${retDate}` : ''}&adults=${flightAdults}`);
                                         }}
                                         className="w-full py-3.5 bg-spotify-green hover:bg-spotify-green-hover text-white font-extrabold rounded-2xl active:scale-95 transition-all text-sm mt-2 shadow-md"
                                     >

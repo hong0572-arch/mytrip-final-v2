@@ -594,7 +594,7 @@ export default function TripDetail({ data, userInfo, tripId, trip = null, mode =
                   </>
                 )}
                 {tab === 'stay' && <StayTab copy={copy} plan={plan} destination={destShort} language={language} onShowHotel={(h) => { setSheet('half'); mapRef.current?.panTo(h.coordinates); mapRef.current?.setZoom(16); }} />}
-                {tab === 'safety' && <SafetyTab copy={copy} plan={plan} destination={destination} onSafeMode={openSafeMode} />}
+                {tab === 'safety' && <SafetyTab copy={copy} plan={plan} destination={destination} language={language} onSafeMode={openSafeMode} />}
                 {tab === 'budget' && <BudgetTab copy={copy} plan={plan} saved={mode === 'saved'} tripId={tripId} />}
               </div>
             </>

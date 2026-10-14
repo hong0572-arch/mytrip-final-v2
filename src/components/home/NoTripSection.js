@@ -158,7 +158,7 @@ export default function NoTripSection({ copy, language, user, weather, korea = f
             <span className="text-[11px] text-tm-muted">{copy.tileSafetySub}</span>
           </span>
         </button>
-        <Link href="/plan?tab=flights_search" className="flex min-h-[88px] flex-col gap-2 rounded-2xl bg-white p-3.5 text-tm-ink">
+        <Link href="/flights/" className="flex min-h-[88px] flex-col gap-2 rounded-2xl bg-white p-3.5 text-tm-ink">
           <Plane size={22} strokeWidth={1.8} className="text-tm-navy" aria-hidden="true" />
           <span className="flex flex-col">
             <span className="text-[14px] font-bold">{copy.tileFlights}</span>

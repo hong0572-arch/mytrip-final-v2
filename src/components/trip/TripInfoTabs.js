@@ -1,7 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { ChevronRight, MapPin, Phone, ShieldCheck, Sun, Lightbulb, Wallet } from 'lucide-react';
-import { CONSULAR_CALL, emergencyNumbers, hotelCompareUrl, placeSearchUrl } from './tripUtils';
+import { hotelCompareUrl, placeSearchUrl } from './tripUtils';
+import EmergencyPanel from './EmergencyPanel';
 
 const tel = (n) => `tel:${n.replace(/[^\d+]/g, '')}`;
 
@@ -58,8 +59,9 @@ export function StayTab({ copy, plan, destination, language, onShowHotel }) {
   );
 }
 
-export function SafetyTab({ copy, plan, destination, onSafeMode }) {
-  const nums = emergencyNumbers(destination);
+export function SafetyTab({ copy, plan, destination, language = 'ko', onSafeMode }) {
+  // 첫 장소 좌표(가장 가까운 공관 고르기용)
+  const first = (plan.itinerary || []).flatMap((d) => d.places || []).find((p) => p.coordinates);
   const advice = String(plan.safetyAdvice || '')
     .split(/(?<=[.!?。])\s+|\n+/)
     .map((s) => s.replace(/^[-•\s]+/, '').trim())
@@ -67,26 +69,7 @@ export function SafetyTab({ copy, plan, destination, onSafeMode }) {
     .slice(0, 6);
   return (
     <div className="flex flex-col gap-3 px-4 pb-4">
-      <section aria-label="emergency" className={`grid gap-2 ${nums ? 'grid-cols-3' : 'grid-cols-1'}`}>
-        {nums && (
-          <>
-            <a href={tel(nums.police)} className="flex min-h-[72px] flex-col items-center justify-center gap-0.5 rounded-[14px] border-[1.5px] border-[#F2C6C2] bg-white px-1.5 text-tm-sos">
-              <span className="text-[20px] font-bold tabular-nums">{nums.police}</span>
-              <span className="text-[12px] font-semibold">{copy[nums.policeLabel] || copy.police}</span>
-            </a>
-            <a href={tel(nums.ambulance)} className="flex min-h-[72px] flex-col items-center justify-center gap-0.5 rounded-[14px] border-[1.5px] border-[#F2C6C2] bg-white px-1.5 text-tm-sos">
-              <span className="text-[20px] font-bold tabular-nums">{nums.ambulance}</span>
-              <span className="text-[12px] font-semibold">{copy.ambulance}</span>
-            </a>
-          </>
-        )}
-        <a href={tel(CONSULAR_CALL)} className={`flex min-h-[72px] items-center justify-center gap-0.5 rounded-[14px] border border-tm-line bg-white px-1.5 text-tm-ink ${nums ? 'flex-col' : 'gap-2'}`}>
-          {!nums && <Phone size={18} className="text-tm-navy" aria-hidden="true" />}
-          <span className="text-[14px] font-bold">{copy.consular}</span>
-          <span className="whitespace-nowrap text-[11px] tabular-nums text-tm-muted">{CONSULAR_CALL}</span>
-        </a>
-      </section>
-      {!nums && <p className="text-[12px] text-tm-muted">{copy.emergencyUnknown}</p>}
+      <EmergencyPanel destination={destination} language={language} coords={first?.coordinates} />
 
       <button type="button" onClick={onSafeMode} className="flex h-14 items-center justify-between rounded-2xl bg-tm-safe px-4 text-left text-white">
         <span className="flex items-center gap-2.5">

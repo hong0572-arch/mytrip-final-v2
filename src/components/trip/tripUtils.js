@@ -1,4 +1,5 @@
 import { inKorea, kakaoDirectionsUrl } from '../../utils/tripPhase';
+import { CONSULAR_CALL, findCountry } from '../../lib/emergency';
 // 일정 상세 화면에서 쓰는 순수 함수들(데이터 정리·이동 시간·링크·긴급번호·동선 정리·인쇄)
 
 // AI 응답·Firestore 문서를 화면에서 쓰기 좋은 형태로 정리한다(원본은 바꾸지 않음).
@@ -76,31 +77,14 @@ export function hotelCompareUrl(hotel, destination = '') {
 }
 
 // 여행지별 긴급번호(정확히 아는 나라만. 모르면 영사콜센터만 보여 준다)
-const EMERGENCY = [
-  { match: /일본|japan|도쿄|tokyo|오사카|osaka|교토|kyoto|후쿠오카|fukuoka|삿포로|sapporo|오키나와|okinawa|나고야|nagoya|나라|nara|고베|kobe/i, police: '110', ambulance: '119' },
-  { match: /대한민국|한국|korea|서울|seoul|부산|busan|제주|jeju|강릉|경주/i, police: '112', ambulance: '119' },
-  { match: /대만|taiwan|타이베이|taipei|가오슝|타이중/i, police: '110', ambulance: '119' },
-  { match: /홍콩|hong kong/i, police: '999', ambulance: '999' },
-  { match: /중국|china|베이징|beijing|상하이|shanghai|칭다오|청두/i, police: '110', ambulance: '120' },
-  { match: /태국|thailand|방콕|bangkok|푸켓|phuket|치앙마이|chiang mai|파타야/i, police: '1155', policeLabel: 'touristPolice', ambulance: '1669' },
-  { match: /베트남|vietnam|다낭|da nang|하노이|hanoi|호치민|ho chi minh|나트랑|nha trang|푸꾸옥|phu quoc|호이안/i, police: '113', ambulance: '115' },
-  { match: /필리핀|philippines|세부|cebu|마닐라|manila|보라카이|boracay/i, police: '911', ambulance: '911' },
-  { match: /싱가포르|singapore/i, police: '999', ambulance: '995' },
-  { match: /말레이시아|malaysia|쿠알라룸푸르|kuala lumpur|코타키나발루/i, police: '999', ambulance: '999' },
-  { match: /미국|usa|united states|뉴욕|new york|la\b|로스앤젤레스|los angeles|샌프란시스코|하와이|hawaii|괌|guam|사이판|saipan|라스베이거스/i, police: '911', ambulance: '911' },
-  { match: /캐나다|canada|밴쿠버|토론토/i, police: '911', ambulance: '911' },
-  { match: /영국|uk\b|united kingdom|런던|london|에든버러/i, police: '999', ambulance: '999' },
-  { match: /호주|australia|시드니|sydney|멜버른|melbourne|브리즈번/i, police: '000', ambulance: '000' },
-  { match: /뉴질랜드|new zealand|오클랜드|퀸스타운/i, police: '111', ambulance: '111' },
-  { match: /프랑스|france|파리|paris|이탈리아|italy|로마|rome|밀라노|피렌체|베네치아|스페인|spain|바르셀로나|barcelona|마드리드|독일|germany|베를린|뮌헨|스위스|switzerland|체코|prague|프라하|오스트리아|비엔나|포르투갈|리스본|portugal|네덜란드|암스테르담|그리스|아테네|산토리니|튀르키예|터키|turkey|이스탄불|크로아티아|헝가리|부다페스트|벨기에|덴마크|스웨덴|노르웨이|핀란드|아일랜드|폴란드/i, police: '112', ambulance: '112' },
-];
-
+// 현지 긴급번호는 lib/emergency.js(나라별 경찰·구급·소방). 예전 호출부 호환: police·ambulance·policeLabel
 export function emergencyNumbers(destination = '') {
-  const found = EMERGENCY.find((e) => e.match.test(destination));
-  return found ? { police: found.police, ambulance: found.ambulance, policeLabel: found.policeLabel || 'police' } : null;
+  const c = findCountry(destination);
+  if (!c) return null;
+  return { iso: c.iso, country: c, police: c.police, ambulance: c.ambulance, fire: c.fire, touristPolice: c.touristPolice, policeLabel: 'police' };
 }
 
-export const CONSULAR_CALL = '+82-2-3210-0404';
+export { CONSULAR_CALL };
 
 // 가까운 순서로 다시 정렬(첫 장소는 고정). 기존 화면의 '동선 최적화'와 같은 방식
 export function reorderByDistance(places) {

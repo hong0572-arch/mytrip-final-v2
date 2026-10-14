@@ -73,7 +73,7 @@ export default function PreTripSection({ copy, language, trip }) {
         </ul>
       </section>
 
-      <Link href="/plan?tab=flights_search" className="tm-rise flex min-h-14 items-center gap-3 rounded-2xl bg-white px-4 py-3.5 text-tm-ink" style={delay(200)}>
+      <Link href="/flights/" className="tm-rise flex min-h-14 items-center gap-3 rounded-2xl bg-white px-4 py-3.5 text-tm-ink" style={delay(200)}>
         <Plane size={20} className="text-tm-navy" strokeWidth={1.8} />
         <span className="flex-1 text-[15px] font-semibold">{copy.flightsRow}</span>
         <ChevronRight size={20} className="text-tm-muted" />
