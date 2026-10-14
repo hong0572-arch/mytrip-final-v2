@@ -69,6 +69,8 @@ export async function POST(req) {
       currentTime, startLocation
     } = body;
 
+    // 짧은 입력은 도시·나라 이름으로 보고 고정한다(기분·목적 문장은 AI가 목적지를 고른다)
+    const placeLike = Boolean(destination) && String(destination).trim().length <= 30 && !/(싶|하고|위한|힐링|휴식|분위기|기분|mood|relax|want|feel|something)/i.test(destination);
     const start = new Date(startDate);
     const end = new Date(endDate);
     const days = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
@@ -105,6 +107,7 @@ export async function POST(req) {
       
       [Traveler Info]
       User Input (Destination or Mood/Purpose): "${destination}"
+      ${placeLike ? `DESTINATION IS FIXED: plan the whole trip in "${destination}". Every place, hotel and the "destination" field must be in ${destination}. Never move the trip to another city or country.` : ''}
       Companion: ${companion}, People: ${people}, Budget: ${budgetText}, Style: ${tourType}
       Preferred Transportation: ${transport ? transport.join(", ") : "Any"}
       
@@ -124,11 +127,11 @@ export async function POST(req) {
 
       [CRITICAL INSTRUCTIONS FOR TRANSPORTATION]
       1. Between every place on the same day, you MUST provide a realistic 'transitToNext' string based on the user's Preferred Transportation.
-      2. Keep it concise, e.g., "🚗 렌트카 15분", "🚶‍♂️ 도보 5분", "🚌 대중교통 30분", "🚕 택시 10분".
+      2. Keep it concise, e.g., "🚶‍♂️ 도보 5분", "🚇 지하철 20분", "🚌 버스 30분", "🚕 택시 10분" (use rental cars only if the user asked for them).
       
       [CRITICAL INSTRUCTIONS FOR DESTINATION INFERENCE]
-      1. If the "User Input" is a specific city/country (e.g., "Paris", "Jeju"), plan the trip there.
-      2. IF the "User Input" is a MOOD or PURPOSE:
+      1. If the "User Input" names any city, region or country, plan the trip exactly there. Do not substitute a different place.
+      2. ONLY IF the "User Input" is a MOOD or PURPOSE with no place name:
          - YOU MUST INFER AND CHOOSE the absolutely most perfect destination (city/country) that is "Safe" and fits the mood.
          - Make sure to clearly state this chosen destination in the "destination" JSON field.
 
@@ -141,7 +144,7 @@ export async function POST(req) {
       Return ONLY the following JSON. Do not use Markdown formatting blocks like \`\`\`json.
       {
         "tripTitle": "Catchy, emotional title reflecting the mood in ${targetLang}",
-        "destination": "The exact City/Country chosen (e.g., '삿포로, 일본' or '제주도, 한국')",
+        "destination": "<City>, <Country> of the trip (the user's destination if they named one)",
         "theme": "The main emotional theme (e.g., 힐링, 로맨스, 안전)",
         "arrivalIata": "3-letter IATA for the chosen destination",
         "departureIata": "3-letter IATA",
@@ -177,7 +180,7 @@ export async function POST(req) {
                 "googleSearchQuery": "Name + City",
                 "lat": "Lat",
                 "lng": "Lng",
-                "transitToNext": "Transit method and estimated time to the next place on the same day (e.g., 🚗 렌트카 15분). Leave empty if it's the last place of the day."
+                "transitToNext": "Transit method and estimated time to the next place on the same day (e.g., 🚶‍♂️ 도보 10분). Leave empty if it's the last place of the day."
               }
             ]
           }
