@@ -12,7 +12,9 @@ export async function generateMetadata({ params }) {
     const s = await getShareSummary(id);
     const title = s ? `${s.title || s.destination} · Trip Maker` : '여행 일정 공유 · Trip Maker';
     const description = s
-        ? [s.destination, s.days ? `${s.days}일` : '', s.placeCount ? `장소 ${s.placeCount}곳` : '', 'AI 티미가 짠 여행 일정'].filter(Boolean).join(' · ')
+        ? (s.en
+            ? [s.destination, s.days ? `${s.days} days` : '', s.placeCount ? `${s.placeCount} stops` : '', 'planned with Timmy AI']
+            : [s.destination, s.days ? `${s.days}일` : '', s.placeCount ? `장소 ${s.placeCount}곳` : '', 'AI 티미가 짠 여행 일정']).filter(Boolean).join(' · ')
         : '친구가 공유한 여행 일정을 확인해 보세요.';
     return {
         title: { absolute: title },

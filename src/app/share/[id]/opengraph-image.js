@@ -27,10 +27,13 @@ export default async function Image({ params }) {
   const { id } = await params;
   const s = await getShareSummary(id);
   const title = s?.title || s?.destination || '여행 일정';
-  const meta = s ? [s.destination, s.days ? `${s.days}일` : '', s.placeCount ? `장소 ${s.placeCount}곳` : ''].filter(Boolean).join('  ·  ') : '친구가 공유한 여행 일정';
+  const en = Boolean(s?.en);
+  const meta = s
+    ? [s.destination, s.days ? (en ? `${s.days} days` : `${s.days}일`) : '', s.placeCount ? (en ? `${s.placeCount} stops` : `장소 ${s.placeCount}곳`) : ''].filter(Boolean).join('  ·  ')
+    : '친구가 공유한 여행 일정';
   const places = s?.places || [];
-  const brand = 'Trip Maker · AI 티미가 짠 여행 일정';
-  const allText = `${title}${meta}${places.join('')}${brand}→·0123456789`;
+  const brand = en ? 'Trip Maker · Planned with Timmy, your AI travel companion' : 'Trip Maker · AI 티미가 짠 여행 일정';
+  const allText = `${title}${meta}${places.join('')}${brand}→·…0123456789`;
   const [bold, regular] = await Promise.all([font(allText, 700), font(allText, 500)]);
   const fonts = [bold && { name: 'NotoKR', data: bold, weight: 700 }, regular && { name: 'NotoKR', data: regular, weight: 500 }].filter(Boolean);
 

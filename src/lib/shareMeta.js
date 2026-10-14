@@ -14,12 +14,16 @@ export async function getShareSummary(id) {
     const itinerary = Array.isArray(d.itinerary) ? d.itinerary : [];
     const places = itinerary.flatMap((day) => (Array.isArray(day?.places) ? day.places : [])).map((p) => String(p?.name || '').trim()).filter(Boolean);
     const destination = String(d.destination || '').split(/[,#]/)[0].trim();
+    const cut = (t, n) => (t.length > n ? `${t.slice(0, n - 1).trim()}…` : t);
+    const title = String(d.tripTitle || destination || '');
     return {
-      title: String(d.tripTitle || destination || '').slice(0, 60),
+      title: cut(title, 60),
+      // 일정 글이 영어면 미리보기 문구도 영어로
+      en: !/[가-힣]/.test(title + destination),
       destination: destination.slice(0, 40),
       days: itinerary.length,
       placeCount: places.length,
-      places: places.slice(0, 4).map((p) => p.slice(0, 18)),
+      places: places.slice(0, 4).map((p) => cut(p, 20)),
       startDate: typeof d.startDate === 'string' ? d.startDate : null,
     };
   } catch (error) {
