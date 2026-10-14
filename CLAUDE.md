@@ -119,7 +119,7 @@
 - Firestore 규칙(`firestore.rules`)은 콘솔/CLI로 따로 게시해야 반영된다. `safemode_sessions`는 본인과 `guardianUserId` 보호자만 읽는다.
 - `trips`: 조회(단건·목록)는 멤버(`memberIds`)만, 수정은 '보기만'(`viewerIds`)이 아닌 멤버만. 멤버 추가는 서버(`/api/invites`)만, 명단·권한(`memberIds/membersInfo/viewerIds`) 변경은 만든 사람만(자기 나가기는 허용), `hostId` 변경 불가, 삭제는 만든 사람 또는 혼자 남은 멤버. `messages`는 멤버, `expenses` 쓰기는 편집 멤버만. `invites`는 편집 멤버가 만들고(필드·값 검증) 닫기(revoked=true)만, uses는 서버만. **목록 쿼리는 반드시 `where('memberIds','array-contains',uid)`를 붙인다**(없으면 거부).
 - `match_requests`(초대·정산·안전모드 알림): 보낸 사람·받는 사람만 읽기. 쿼리는 `where('targetMateId'|'senderId','==',uid)`로 — 컬렉션 전체 구독은 거부된다.
-- `feeds`: 작성자만 수정·삭제, 다른 사람은 `likes/likedBy/forks/comments/commentCount`만. `shared_links`: 누구나 만들 수 있고(ownerUid는 본인만), 켜져 있고 만료 전이면 누구나 단건 조회. 목록·켜고 끄기(enabled만)·삭제는 만든 사람만.
+- `feeds`: 작성자만 수정·삭제, 다른 사람은 `likes/likedBy/forks/comments/commentCount`만. `products`(파트너 상품)는 관리자만 쓰기(/partner도 admins/{uid}로 확인, 예전 화면 비밀번호 제거), `inquiries`는 본인 이름으로 생성·읽기는 관리자만. `shared_links`: 누구나 만들 수 있고(ownerUid는 본인만), 켜져 있고 만료 전이면 누구나 단건 조회. 목록·켜고 끄기(enabled만)·삭제는 만든 사람만.
 - 관리자 = 구글 로그인 + `admins/{uid}` 문서(콘솔에서만 생성). `/admin` 화면과 규칙의 `isAdmin()`이 같은 기준. 비밀번호를 코드에 두지 않는다.
 - 규칙을 바꾸면 에뮬레이터로 시험한다: `@firebase/rules-unit-testing` + `firebase emulators:exec --only firestore`(Java 필요, Android Studio의 `jbr/bin`).
 - 실시간 구독(onSnapshot)에는 항상 `lib/snapshotError.js`의 `onSnapshotError('이름')`을 붙인다.

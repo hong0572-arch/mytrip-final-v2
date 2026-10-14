@@ -236,13 +236,15 @@ service cloud.firestore {
     }
 
     // 9. 🛍️ 파트너 상품 및 문의 (Partner Products & Inquiries)
+    // 상품 등록·수정·삭제는 관리자만(/partner 화면도 admins/{uid}로 확인)
     match /products/{productId} {
       allow read: if true; // 누구나 상품 조회 가능
-      allow write: if isAuthenticated(); // 일단 로그인한 유저(파트너/어드민) 작성 가능
+      allow write: if isAdmin();
     }
+    // 문의: 로그인한 사람이 자기 이름으로 남기고, 읽기·처리는 관리자만(연락처가 담긴다)
     match /inquiries/{inquiryId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated(); // 문의 작성은 로그인 필요
+      allow create: if isAuthenticated() && request.resource.data.get('userId', uid()) == uid();
+      allow read, update, delete: if isAdmin();
     }
   }
 }

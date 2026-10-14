@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import * as xlsx from 'xlsx';
 import { db, auth, storage } from '../../lib/firebase';
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDoc, getDocs, addDoc, deleteDoc, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { onAuthStateChanged } from 'firebase/auth';
 import { Plus, Trash2, Edit2, ShoppingBag, MapPin, Link as LinkIcon, Phone, Mail, Image as ImageIcon, FileUp, Download, Eye, Edit3 } from 'lucide-react';
@@ -20,8 +20,8 @@ export default function PartnerDashboard() {
     const router = useRouter();
 
     const [isMobile, setIsMobile] = useState(false);
-    const [isPasswordVerified, setIsPasswordVerified] = useState(false);
-    const [passwordInput, setPasswordInput] = useState('');
+    // 상품 관리는 관리자만(admins/{uid} 문서 — 보안 규칙도 같은 기준). null = 확인 중
+    const [isAdmin, setIsAdmin] = useState(null);
 
     useEffect(() => {
         // Mobile device detection
@@ -38,11 +38,6 @@ export default function PartnerDashboard() {
         checkMobile();
         window.addEventListener('resize', checkMobile);
 
-        // Check session storage for password
-        const verified = sessionStorage.getItem('partner_auth');
-        if (verified === 'true') {
-            setIsPasswordVerified(true);
-        }
 
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
@@ -71,7 +66,13 @@ export default function PartnerDashboard() {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             if (currentUser) {
                 setUser(currentUser);
-                fetchProducts(currentUser.uid);
+                getDoc(doc(db, 'admins', currentUser.uid))
+                    .then((snap) => {
+                        setIsAdmin(snap.exists());
+                        if (snap.exists()) fetchProducts(currentUser.uid);
+                        else setLoading(false);
+                    })
+                    .catch(() => { setIsAdmin(false); setLoading(false); });
             } else {
                 setUser(null);
                 setLoading(false);
@@ -299,31 +300,14 @@ export default function PartnerDashboard() {
         );
     }
 
-    if (!isPasswordVerified) {
+    if (isAdmin === false) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-                <form onSubmit={(e) => {
-                    e.preventDefault();
-                    if (passwordInput === 'timmy3542') {
-                        setIsPasswordVerified(true);
-                        sessionStorage.setItem('partner_auth', 'true');
-                    } else {
-                        alert('Invalid password');
-                    }
-                }} className="bg-white p-8 rounded-xl shadow max-w-sm w-full text-center">
-                    <h1 className="text-2xl font-bold mb-2">Partner Login</h1>
-                    <p className="text-gray-600 mb-6 text-sm">Please enter the partner password to access the dashboard.</p>
-                    <input 
-                        type="password" 
-                        value={passwordInput} 
-                        onChange={e => setPasswordInput(e.target.value)} 
-                        placeholder="Enter password" 
-                        className="w-full p-3 border rounded-lg mb-4 text-center focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                    />
-                    <button type="submit" className="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700">
-                        Enter Dashboard
-                    </button>
-                </form>
+                <div className="bg-white p-8 rounded-xl shadow max-w-sm w-full text-center">
+                    <h1 className="text-xl font-bold mb-2">관리자 전용 · Admins only</h1>
+                    <p className="text-gray-600 mb-6 text-sm">이 계정({user?.email})은 관리자가 아니에요. Firebase 콘솔에서 admins/{user?.uid} 문서를 만들어야 해요.</p>
+                    <button onClick={() => router.push('/')} className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg font-bold">홈으로</button>
+                </div>
             </div>
         );
     }
