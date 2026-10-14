@@ -20,9 +20,13 @@ async function mofa(path, iso) {
   if (!res.ok || text.trimStart().startsWith('<')) throw new Error(`${path} ${res.status} ${text.slice(0, 100)}`);
   const json = JSON.parse(text);
   if (json?.resultCode && !['0', '00'].includes(String(json.resultCode))) throw new Error(`${path} ${json.resultCode} ${json.resultMsg}`);
-  const items = json?.data || json?.response?.body?.items?.item || [];
-  return Array.isArray(items) ? items : [items];
+  const items = json?.data || json?.response?.body?.items?.item || json?.items || [];
+  const list = Array.isArray(items) ? items : [items];
+  // 응답 겉모양(진단용, 값은 넣지 않는다)
+  shapes[path.split('/')[0]] = `keys=${Object.keys(json || {}).join(',')} total=${json?.totalCount ?? json?.response?.body?.totalCount ?? '?'} n=${list.length} first=${Object.keys(list[0] || {}).slice(0, 8).join(',')}`;
+  return list;
 }
+const shapes = {};
 
 // HTML 안내문 → 줄 단위 글
 function htmlToLines(html) {
@@ -115,6 +119,7 @@ export async function GET(req) {
     const ok = data.local || embassies.length;
     // 실패 이유(키 제외)를 헤더로 남겨 원인을 바로 볼 수 있게(x-emergency-error)
     const headers = ok ? { ...CACHE } : { 'Cache-Control': 'public, s-maxage=600' };
+    headers['x-emergency-shape'] = JSON.stringify(shapes).replace(/[^ -~]/g, '').slice(0, 600);
     if (data.errors?.length) headers['x-emergency-error'] = data.errors.join(' | ').replace(/[^ -~]/g, '');
     return NextResponse.json({ local: data.local, embassies }, { headers });
   } catch (error) {
