@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Camera, ChevronLeft, MessageSquarePlus, Sparkles } from 'lucide-react';
+import { Camera, ChevronLeft, FileText, MessageSquarePlus, Sparkles } from 'lucide-react';
 import { auth } from '../../lib/firebase';
 import useTimmy from '../../hooks/useTimmy';
 import useAppLanguage from '../../hooks/useAppLanguage';
@@ -16,6 +16,8 @@ import HomeComposer from './HomeComposer';
 import { PlanOptions, PlanResultCard, PlanWorking } from './PlanCards';
 import { goToLogin, takePendingMessage } from './homeActions';
 import TimmyAvatar from '../TimmyAvatar';
+import { SpeakingBar, VoiceSheet, VoiceToggle } from '../voice/VoiceChat';
+import { cancelSpeech, getVoicePrefs, speak, spokenText, unlockSpeech, useVoicePrefs } from '../../lib/voice/speech';
 
 // 일정 상세 화면(지도·저장 포함)은 고른 뒤에만 불러온다
 const TripDetail = dynamic(() => import('../trip/TripDetail'), { ssr: false });
@@ -29,6 +31,7 @@ let seq = 0;
 const newId = () => `p${Date.now()}_${seq++}`;
 
 // 티미와 대화(/chat). 일반 질문은 useTimmy(대화 기록·기억 저장)가 맡고,
+// 음성 대화: 마이크로 물은 질문에는 티미가 말로 대답하고(앞부분만 읽기), 설정에 따라 대답이 끝나면 다시 듣는다.
 // '일정 만들기'에 들어가면 대화 내용으로 후보 3개를 만들고 → 고른 안으로 일정표를 만든다.
 export default function ChatScreen() {
   const router = useRouter();
@@ -43,6 +46,14 @@ export default function ChatScreen() {
   const [planMode, setPlanMode] = useState(false);
   const [planBusy, setPlanBusy] = useState(false);
   const [openPlan, setOpenPlan] = useState(null); // { data, userInfo, itemId }
+
+  // 음성 대화
+  const voicePrefs = useVoicePrefs();
+  const [voiceSheet, setVoiceSheet] = useState(false);
+  const [listenRequest, setListenRequest] = useState(0);
+  const [spokenCut, setSpokenCut] = useState(null); // 앞부분만 읽은 대답의 항목 id
+  const pendingVoiceRef = useRef(0); // 말로 물은 시각(대답을 기다리는 중)
+  const speakTurnRef = useRef(0);
 
   const endRef = useRef(null);
   const fileRef = useRef(null);
@@ -119,7 +130,10 @@ export default function ChatScreen() {
     addPlanItem({ kind: 'planQuestion', text: copy.plan.askFirst, quickReplies: copy.plan.askFirstReplies });
   }, [timeline, runPlanOptions, addPlanItem, copy.plan.askFirst, copy.plan.askFirstReplies]);
 
-  const handleSubmit = useCallback((text) => {
+  const handleSubmit = useCallback((text, opts = {}) => {
+    cancelSpeech();
+    speakTurnRef.current += 1;
+    pendingVoiceRef.current = opts.voice && getVoicePrefs().reply ? Date.now() : 0;
     if (planMode) {
       const userItem = { id: newId(), at: Date.now(), kind: 'planUser', text };
       setPlanItems((prev) => [...prev, userItem]);
@@ -228,6 +242,29 @@ export default function ChatScreen() {
   const showPlanCta = !planMode && !planBusy && !isLoading;
   const busy = isLoading || planBusy;
 
+  // 말로 물은 질문의 대답이 화면에 나오면 소리 내어 읽는다
+  useEffect(() => {
+    const askedAt = pendingVoiceRef.current;
+    if (!askedAt || busy) return;
+    const reply = [...timeline].reverse().find((t) => t.at >= askedAt && ['chatTimmy', 'planQuestion', 'planOptions', 'planResult', 'planError'].includes(t.kind));
+    if (!reply) return;
+    pendingVoiceRef.current = 0;
+    const raw = reply.kind === 'chatTimmy' ? reply.msg.content
+      : reply.kind === 'planQuestion' ? reply.text
+      : reply.kind === 'planOptions' ? `${reply.intro || ''} ${copy.voice.optionsSpoken(reply.options?.length || 3)}`
+      : reply.kind === 'planResult' ? copy.voice.resultSpoken
+      : copy.plan.error;
+    const { text, truncated } = spokenText(raw, language);
+    const turn = ++speakTurnRef.current;
+    Promise.resolve().then(() => setSpokenCut(truncated && reply.kind === 'chatTimmy' ? reply.id : null));
+    speak(text, language).then(() => {
+      if (turn === speakTurnRef.current && getVoicePrefs().autoListen && document.visibilityState === 'visible') setListenRequest((n) => n + 1);
+    });
+  }, [timeline, busy, language, copy]);
+
+  // 대화 화면을 떠나면 말도 멈춘다
+  useEffect(() => () => cancelSpeech(), []);
+
   const renderItem = (t) => {
     switch (t.kind) {
       case 'chatUser':
@@ -250,6 +287,11 @@ export default function ChatScreen() {
             className={`tm-rise max-w-[92%] rounded-[18px] rounded-bl-[4px] px-3.5 py-2.5 text-[15px] leading-relaxed ${t.msg.isError ? 'bg-tm-warm-tint text-tm-warm' : 'bg-white text-tm-ink'} [&_a]:text-tm-navy [&_a]:underline [&_li]:my-0.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-1 [&_strong]:font-bold [&_ul]:list-disc [&_ul]:pl-5`}
           >
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{t.msg.content}</ReactMarkdown>
+            {spokenCut === t.id && (
+              <span className="mt-1.5 flex items-center gap-1.5 border-t border-tm-line pt-1.5 text-[12px] text-tm-muted">
+                <FileText size={14} aria-hidden="true" />{copy.voice.truncated}
+              </span>
+            )}
           </div>
         );
       case 'planQuestion':
@@ -318,8 +360,9 @@ export default function ChatScreen() {
           <TimmyAvatar size={32} className="mr-1" />
           <div className="flex flex-1 flex-col">
             <span className="text-[16px] font-bold leading-tight">{copy.chatTitle}</span>
-            <span className="text-[11px] text-tm-muted">{copy.chatSubtitle}</span>
+            <span className="text-[11px] text-tm-muted">{voicePrefs.reply && voicePrefs.autoListen ? copy.voice.subtitleOn : copy.chatSubtitle}</span>
           </div>
+          <VoiceToggle copy={copy} onOpen={() => setVoiceSheet(true)} />
           <button type="button" onClick={() => fileRef.current?.click()} aria-label={copy.attachPhoto} className="flex h-11 w-11 items-center justify-center text-tm-navy">
             <Camera size={22} strokeWidth={1.8} />
           </button>
@@ -370,9 +413,19 @@ export default function ChatScreen() {
               </button>
             </div>
           )}
-          <HomeComposer copy={copy} language={language} placeholder={copy.composerPlaceholder} onSubmit={handleSubmit} disabled={busy} />
+          <div className="border-t border-tm-line bg-tm-ground empty:hidden"><SpeakingBar copy={copy} onInterrupt={() => { speakTurnRef.current += 1; setListenRequest((n) => n + 1); }} /></div>
+          <HomeComposer
+            copy={copy}
+            language={language}
+            placeholder={copy.composerPlaceholder}
+            onSubmit={handleSubmit}
+            disabled={busy}
+            listenRequest={listenRequest}
+            onMicStart={() => { unlockSpeech(); speakTurnRef.current += 1; cancelSpeech(); }}
+          />
         </div>
       </div>
+      {voiceSheet && <VoiceSheet copy={copy} language={language} onClose={() => setVoiceSheet(false)} />}
     </div>
   );
 }

@@ -155,3 +155,8 @@ export async function createAiGuide(id, input) {
   const duration = Math.round(durations.reduce((a, b) => a + b, 0));
   return { title, teaser, tracks: [{ title, src, duration, script, cues: cuesFor(chunks, durations) }] };
 }
+
+/** 짧은 글(티미 대답 등)을 바로 MP3로. 저장하지 않는다. */
+export async function synthesizeMp3(text) {
+  return toMp3(await speak(text));
+}

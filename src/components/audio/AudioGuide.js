@@ -426,7 +426,8 @@ export function TourSheet({ language, onClose }) {
                 <span className="text-[14px] font-semibold">{copy.arrive}</span>
                 <span className="text-[12px] leading-snug text-tm-muted">{copy.arriveSub}</span>
               </span>
-              <input type="checkbox" role="switch" checked={tour.arrive} onChange={(e) => setTourArrive(e.target.checked)} className="h-6 w-11 shrink-0 accent-tm-navy" />
+              <input type="checkbox" role="switch" checked={tour.arrive} onChange={(e) => setTourArrive(e.target.checked)} className="peer sr-only" />
+              <span aria-hidden="true" className="relative h-7 w-12 shrink-0 rounded-full bg-[#C9D2DD] transition-colors after:absolute after:left-[3px] after:top-[3px] after:h-[22px] after:w-[22px] after:rounded-full after:bg-white after:transition-transform peer-checked:bg-tm-navy peer-checked:after:translate-x-5 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-tm-navy" />
             </label>
           )}
           <NightNote language={language} />

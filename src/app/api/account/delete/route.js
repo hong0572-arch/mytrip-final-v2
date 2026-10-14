@@ -85,6 +85,7 @@ export async function POST(req) {
     };
     await batchDelete([...c.sent.docs, ...c.received.docs, ...c.trackers.docs, ...c.invites, ...c.shareLinks, ...c.audioReports]);
     await db.collection('audio_usage').doc(uid).delete().catch(() => {});
+    await db.collection('tts_usage').doc(uid).delete().catch(() => {});
     if (deleteFeeds) for (const d of c.feeds.docs) await db.recursiveDelete(d.ref);
 
     await db.collection('safemode_sessions').doc(uid).delete().catch(() => {});

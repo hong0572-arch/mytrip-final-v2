@@ -186,6 +186,9 @@ body {
 .tm-rise { animation: tm-rise .6s cubic-bezier(.2, .7, .2, 1) both; }
 .tm-float { animation: tm-float 4s ease-in-out infinite; transform-origin: 50% 90%; }
 .tm-ring { position: absolute; inset: 0; border-radius: inherit; animation: tm-ring 2.4s ease-out infinite; pointer-events: none; }
+/* 음성 대화: 듣는 중·말하는 중 막대 */
+@keyframes tm-voice-bar { 0%, 100% { transform: scaleY(.45); } 50% { transform: scaleY(1); } }
+.tm-voice-bar { animation: tm-voice-bar 0.9s ease-in-out infinite; transform-origin: center; }
 .tm-beacon { position: absolute; inset: 0; border-radius: inherit; animation: tm-beacon 1.8s ease-out infinite; pointer-events: none; }
 .tm-route { animation: tm-dash 3s linear infinite; }
 .tm-plane { offset-rotate: auto 45deg; offset-anchor: center; animation: tm-fly 5s ease-in-out infinite; }
@@ -200,7 +203,7 @@ body {
 .tm-twinkle { animation: tm-twinkle 3s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
-  .tm-rise, .tm-float, .tm-ring, .tm-beacon, .tm-route, .tm-plane, .tm-pin,
+  .tm-rise, .tm-float, .tm-ring, .tm-beacon, .tm-route, .tm-plane, .tm-pin, .tm-voice-bar,
   .tm-fill, .tm-rock, .tm-nudge, .tm-dot, .tm-twinkle { animation: none !important; }
   .tm-ring, .tm-beacon { display: none; }
 }
