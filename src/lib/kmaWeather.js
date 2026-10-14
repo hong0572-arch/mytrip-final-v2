@@ -1,5 +1,5 @@
 // 기상청 단기예보 조회서비스(VilageFcstInfoService_2.0)로 한국 도시의 지금 날씨를 가져온다.
-// Google Weather API가 한국을 지원하지 않아서 한국 도시만 이걸 쓴다. 서버 전용(키: KMA_SERVICE_KEY).
+// Google Weather API가 한국을 지원하지 않아서 한국 도시만 이걸 쓴다. 서버 전용(키: DATA_GO_KR_KEY, lib/dataGoKr.js).
 // 키는 두 곳 중 하나: 기상청 API허브(apihub.kma.go.kr, 22자 authKey) 또는 공공데이터포털(긴 serviceKey). 응답 형식은 같다.
 const HUB_BASE = 'https://apihub.kma.go.kr/api/typ02/openApi/VilageFcstInfoService_2.0';
 const DATA_GO_BASE = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0';

@@ -54,6 +54,12 @@
 - 로그인 필요한 화면에서 돌아오기: `goToLogin(router, returnTo)` → sessionStorage `tm_return_to` → /plan에서 로그인(신규는 닉네임 저장) 뒤 `takeReturnPath()`로 복귀.
 - 공유 링크(`shared_links`, 로그인 없이 보기): 로그인 상태면 `ownerUid`·`tripId`, 모두 `enabled`·`expiresAt`(30일). 저장된 일정에서 만든 링크에는 연락처를 넣지 않는다. 만든 사람이 SharesSheet에서 켜고 끄며, 꺼지거나 만료된 링크는 규칙이 읽기를 막는다. 회원 탈퇴 시 ownerUid 링크와 내가 만든 초대 링크 삭제.
 
+## 오디오 가이드 (2026-10)
+- 장소 상세(`PlaceDetail` children)의 "들려줘"(`components/audio/AudioGuide.js` ListenCard) → 재생 중이면 작은 재생기, 자막·구간·틀린 내용 신고는 PlayerSheet, 장소 카드를 닫으면 MiniPlayer. 재생기는 앱 전체에 하나(`lib/audio/player.js`, Media Session으로 잠금 화면 조작·⏭ 다음 장소). 일정 화면을 떠나면 끈다. SOS(raiseAlert) 때 자동 멈춤. 문구 `content/audioCopy.js`.
+- 서버 `POST /api/audio-guide`(로그인): 한국 장소는 관광공사 오디(`lib/odii.js`: 좌표 주변 관광지 → 이름 일치 → 스토리 오디오)를 먼저, 없으면 AI 해설(`lib/audioGuide.js`: `GEMINI_GUIDE_MODEL` 원고 → `GEMINI_TTS_MODEL`(기본 gemini-3.8-flash-tts, 목소리 `GEMINI_TTS_VOICE`=Sulafat) 문단별 병렬 낭독 → MP3 48kbps → Storage `audio-guides/{id}.mp3`(다운로드 토큰 주소)). 캐시 `audio_guides/{장소·도시·언어 해시}`(서버 전용), 새 AI 해설은 1인 하루 20개(`audio_usage`), 신고 `audio_reports`. AI로 저장된 한국 장소는 일주일마다 오디를 다시 확인.
+- TTS에 말투 지시문("Say warmly:" 등)을 붙이지 않는다 — 지시문까지 소리 내어 읽는다(2026-10 확인). 이 모델은 systemInstruction도 받지 않는다.
+- 공공데이터 키는 `DATA_GO_KR_KEY` 하나(`lib/dataGoKr.js`, 없으면 예전 `KMA_SERVICE_KEY`): 기상청 날씨·TourAPI(일정 생성, KorService2/EngService2)·오디. 로컬 `.env.local`의 `TOUR_API_KEY`는 무효인 예전 키.
+
 ## 도시 사진 (2026-10)
 - 홈 추천 도시 카드·오늘의 한마디 사진은 `public/home/<id>.webp`(640×480, 30~90KB), 출처는 `homeCities.js`의 `credit`(카드 왼쪽 아래 작게 표시).
 - 출처 원칙: 한국 도시는 한국관광공사(포토코리아·공공누리 제1유형, 출처 표시) 우선, 해외는 Unsplash(무료·상업 가능). 없으면 일러스트풍 AI 생성(사실적 랜드마크 금지). 검색해서 아무 사진이나 쓰지 않는다.

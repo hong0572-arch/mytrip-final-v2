@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { generateWithRetry } from "../../../lib/geminiRetry";
+import { dataGoKrKey, encodedServiceKey, itemsOf } from "../../../lib/dataGoKr";
 
 export const maxDuration = 60;
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const TOUR_API_KEY = "8ed14b467e021a7ef5801d0a9628602170d0414f8ade42814a9cde30ec04f2fb";
 
 // 🌍 공통 CORS 헤더 설정
 const corsHeaders = {
@@ -22,19 +22,20 @@ export async function OPTIONS() {
   });
 }
 
-// 🌍 TourAPI 연동 함수 (기존 유지)
+// 🌍 관광공사 TourAPI(국문 KorService2·영문 EngService2) 키워드 검색. 키는 공공데이터 일반 인증키(DATA_GO_KR_KEY).
 async function fetchRealTourData(keyword, language) {
+  if (!dataGoKrKey()) return null;
   try {
-    const serviceName = language === 'en' ? 'EngService1' : 'KorService1';
-    const url = `https://apis.data.go.kr/B551011/${serviceName}/searchKeyword1?serviceKey=${TOUR_API_KEY}&numOfRows=40&pageNo=1&MobileOS=ETC&MobileApp=TripMaker&_type=json&listYN=Y&arrange=O&keyword=${encodeURIComponent(keyword)}`;
+    const serviceName = language === 'en' ? 'EngService2' : 'KorService2';
+    const url = `https://apis.data.go.kr/B551011/${serviceName}/searchKeyword2?serviceKey=${encodedServiceKey()}&numOfRows=40&pageNo=1&MobileOS=ETC&MobileApp=TripMaker&_type=json&arrange=O&keyword=${encodeURIComponent(keyword)}`;
 
     const res = await fetch(url, { method: 'GET' });
     if (!res.ok) return null;
 
     const data = await res.json();
-    const items = data?.response?.body?.items?.item;
+    const items = itemsOf(data);
 
-    if (items && items.length > 0) {
+    if (items.length > 0) {
       const placesList = items.map(item => {
         const type = item.contenttypeid === '39'
           ? (language === 'en' ? 'Restaurant/Cafe' : '음식점/카페')

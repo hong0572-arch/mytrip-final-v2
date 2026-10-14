@@ -14,6 +14,9 @@ import { BudgetTab, SafetyTab, StayTab } from './TripInfoTabs';
 import { EditDay } from './TripEdit';
 import { MoreMenu, NearbyCard, SaveSheet, Toast } from './TripSheets';
 import { InviteSheet, MembersSheet, SharesSheet } from '../invite/InviteSheets';
+import { ListenCard, MiniPlayer, PlayerSheet } from '../audio/AudioGuide';
+import { getPlayer, placeKey, playPlace, setOnNext, stop as stopAudio } from '../../lib/audio/player';
+import { inKorea } from '../../utils/tripPhase';
 import { formatTripText, hasCoords, normalizePlan, parseTransit, printTrip, renumber } from './tripUtils';
 
 const KAKAO_CONSULT_URL = 'https://pf.kakao.com/_xcJhrn/chat';
@@ -60,7 +63,7 @@ export default function TripDetail({ data, userInfo, tripId, trip = null, mode =
   const [menuOpen, setMenuOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState('');
-  const [panel, setPanel] = useState(null); // invite | members | shares
+  const [panel, setPanel] = useState(null); // invite | members | shares | audio
   // 화면 높이(시트 높이 계산용). 서버 렌더에서는 800으로 둔다
   const vh = useSyncExternalStore(
     (cb) => { window.addEventListener('resize', cb); return () => window.removeEventListener('resize', cb); },
@@ -364,6 +367,31 @@ export default function TripDetail({ data, userInfo, tripId, trip = null, mode =
     } },
   ];
 
+  // ── 오디오 가이드 ──
+  const audioPlace = useCallback((p) => ({
+    key: placeKey(p, destShort),
+    name: p.name,
+    query: p.googleSearchQuery || '',
+    city: destShort,
+    category: p.category || '',
+    description: p.description || '',
+    lat: p.coordinates?.lat,
+    lng: p.coordinates?.lng,
+    album: headerTitle,
+  }), [destShort, headerTitle]);
+  // 재생 중인 장소의 다음 장소로 넘어가 이어 듣기
+  const playNextPlace = useCallback(() => {
+    const key = getPlayer().place?.key;
+    const idx = places.findIndex((p) => placeKey(p, destShort) === key);
+    const next = places[idx + 1];
+    if (!next) return;
+    setSelectedIdx(idx + 1);
+    setSheet('place');
+    playPlace(audioPlace(next), language);
+  }, [places, destShort, audioPlace, language]);
+  useEffect(() => { setOnNext(playNextPlace); return () => setOnNext(null); }, [playNextPlace]);
+  useEffect(() => () => stopAudio(), []); // 일정 화면을 떠나면 해설도 끈다
+
   const openSafeMode = () => (auth.currentUser ? openTimmyPanel('safe') : goToLogin(router));
 
   // ── 화면 ───────────────────────────────────────────────────
@@ -500,7 +528,14 @@ export default function TripDetail({ data, userInfo, tripId, trip = null, mode =
                 onNext={() => setSelectedIdx((i) => Math.min(places.length - 1, i + 1))}
                 onSwap={swapPlace}
                 onRemove={removePlace}
-              />
+              >
+                <ListenCard
+                  place={audioPlace(selectedPlace)}
+                  language={language}
+                  korea={hasCoords(selectedPlace) && inKorea(selectedPlace.coordinates.lat, selectedPlace.coordinates.lng)}
+                  onOpen={() => setPanel('audio')}
+                />
+              </PlaceDetail>
             </div>
           ) : (
             <>
@@ -546,6 +581,7 @@ export default function TripDetail({ data, userInfo, tripId, trip = null, mode =
             </>
           )}
 
+          {sheet !== 'place' && <MiniPlayer language={language} onOpen={() => setPanel('audio')} />}
           {sheet !== 'place' && (
             <div className="flex shrink-0 gap-2 border-t border-tm-line bg-tm-ground px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-2.5">
               <button type="button" onClick={primaryCta.onClick} className="h-[52px] flex-1 rounded-[14px] bg-tm-navy text-[16px] font-bold text-white">{primaryCta.label}</button>
@@ -589,6 +625,7 @@ export default function TripDetail({ data, userInfo, tripId, trip = null, mode =
         {menuOpen && <MoreMenu copy={copy} onClose={() => setMenuOpen(false)} items={menuItems} />}
         {panel === 'invite' && <InviteSheet trip={trip} language={language} meta={[plan.tripTitle || headerTitle, dateRange].filter(Boolean).join(' · ')} onClose={() => setPanel(null)} />}
         {panel === 'members' && <MembersSheet trip={trip} language={language} onClose={() => setPanel(null)} onNewInvite={() => setPanel('invite')} />}
+        {panel === 'audio' && <PlayerSheet language={language} onClose={() => setPanel(null)} onNext={playNextPlace} />}
         {panel === 'shares' && <SharesSheet trip={trip} plan={plan} language={language} onClose={() => setPanel(null)} />}
         <Toast message={toast} />
       </div>

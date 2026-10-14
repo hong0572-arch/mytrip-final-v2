@@ -5,6 +5,7 @@ import { addDoc, collection, deleteDoc, doc, serverTimestamp, setDoc } from 'fir
 import { auth, db } from '../firebase';
 import { GRACE_MS, MAX_GUARDIANS, createShareToken, getSafety, liveSessionPath, setSafety } from './store';
 import { startSiren, stopSiren, vibrate } from './siren';
+import { pause as pauseAudioGuide } from '../audio/player';
 
 const sessionRef = (uid) => doc(db, 'safemode_sessions', uid);
 const appGuardians = (s) => s.guardians.filter((g) => g.type === 'app' && g.uid);
@@ -82,6 +83,7 @@ export function enterGrace() {
 export async function raiseAlert(copy, { sos = false } = {}) {
   const s = getSafety();
   const wasIdle = s.phase === 'idle';
+  pauseAudioGuide(); // 오디오 가이드는 바로 멈춘다(사이렌·주변 소리가 들리게)
   setSafety({ phase: 'alert', sos, shareToken: s.shareToken || createShareToken(), endTime: s.endTime || Date.now() });
   setSafety({ siren: startSiren() });
   vibrate(3);

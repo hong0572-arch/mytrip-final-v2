@@ -95,7 +95,8 @@ export function PlanList({ copy, places, legs, travelMode, selectedIdx, onSelect
 }
 
 // 장소를 눌렀을 때: 추천 이유, 안심 포인트, 길찾기·이전/다음, 리뷰·바꾸기·빼기
-export function PlaceDetail({ copy, place, index, total, dayNumber, destination, language, canEdit, busy, onPrev, onNext, onSwap, onRemove }) {
+// children: 제목 아래에 붙는 영역(오디오 가이드 '들려줘')
+export function PlaceDetail({ copy, place, index, total, dayNumber, destination, language, canEdit, busy, onPrev, onNext, onSwap, onRemove, children }) {
   return (
     <div className="flex h-full flex-col px-4 pb-3">
       <span className="text-[12px] font-semibold text-tm-navy">{copy.placeOf(dayNumber, index + 1)}</span>
@@ -103,6 +104,7 @@ export function PlaceDetail({ copy, place, index, total, dayNumber, destination,
         {(place.category || place.budget) && <span className="text-[12px] text-tm-muted">{[place.category, place.budget].filter(Boolean).join(' · ')}</span>}
         <h2 className="text-[20px] font-bold leading-snug text-tm-ink">{place.name}</h2>
       </div>
+      {children}
       {place.description && <p className="mt-2.5 text-[14px] leading-relaxed text-tm-ink/80">{place.description}</p>}
       {place.reason && (
         <p className="mt-2.5 flex items-start gap-2 rounded-xl bg-tm-safe-tint px-3 py-2.5 text-[13px] leading-normal text-tm-safe-ink">

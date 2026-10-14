@@ -7,13 +7,13 @@ import { verifyUser } from '../../../../lib/verifyUser';
 // GET: 지워질 항목 미리 보기(숫자) · POST: 실제 삭제 { deleteFeeds: boolean }
 // - 혼자 쓰는 일정은 지우고, 동행과 함께 쓰는 일정에서는 나만 빠진다(만든 사람이면 다음 멤버에게 넘긴다).
 // - users/{uid}와 하위(포인트 내역·대화·일기·기억) · 안심 세션 · 보호자 초대(보낸·수락한) · 받은/보낸 요청 · 가격 알림 · (선택) 피드 글을 지운다.
-// - 내가 만든 공유 링크(shared_links.ownerUid)와 함께 쓰는 일정에 내가 만든 초대 링크도 지운다.
+// - 오디오 가이드 신고(audio_reports)·사용량(audio_usage), 내가 만든 공유 링크(shared_links.ownerUid)와 함께 쓰는 일정에 내가 만든 초대 링크도 지운다.
 // - 마지막으로 Firebase 인증 계정을 지운다. (ownerUid가 없는 예전·비로그인 공유 링크는 남는다)
 export const maxDuration = 60;
 const db = admin.firestore();
 
 async function collect(uid) {
-  const [trips, sent, received, feeds, trackers, diaries, userSnap, invitesOwned, invitesAccepted, shareLinks] = await Promise.all([
+  const [trips, sent, received, feeds, trackers, diaries, userSnap, invitesOwned, invitesAccepted, shareLinks, audioReports] = await Promise.all([
     db.collection('trips').where('memberIds', 'array-contains', uid).get(),
     db.collection('match_requests').where('senderId', '==', uid).get(),
     db.collection('match_requests').where('targetMateId', '==', uid).get(),
@@ -24,10 +24,11 @@ async function collect(uid) {
     db.collection('guardian_invites').where('ownerUid', '==', uid).get(),
     db.collection('guardian_invites').where('acceptedBy', '==', uid).get(),
     db.collection('shared_links').where('ownerUid', '==', uid).get(),
+    db.collection('audio_reports').where('uid', '==', uid).get(),
   ]);
   const solo = trips.docs.filter((d) => (d.data().memberIds || []).length <= 1);
   const shared = trips.docs.filter((d) => (d.data().memberIds || []).length > 1);
-  return { trips, solo, shared, sent, received, feeds, trackers, invites: [...invitesOwned.docs, ...invitesAccepted.docs], shareLinks: shareLinks.docs, diaryCount: diaries.data().count, points: userSnap.exists ? userSnap.data().points || 0 : 0 };
+  return { trips, solo, shared, sent, received, feeds, trackers, invites: [...invitesOwned.docs, ...invitesAccepted.docs], shareLinks: shareLinks.docs, audioReports: audioReports.docs, diaryCount: diaries.data().count, points: userSnap.exists ? userSnap.data().points || 0 : 0 };
 }
 
 export async function GET(req) {
@@ -82,7 +83,8 @@ export async function POST(req) {
         await batch.commit();
       }
     };
-    await batchDelete([...c.sent.docs, ...c.received.docs, ...c.trackers.docs, ...c.invites, ...c.shareLinks]);
+    await batchDelete([...c.sent.docs, ...c.received.docs, ...c.trackers.docs, ...c.invites, ...c.shareLinks, ...c.audioReports]);
+    await db.collection('audio_usage').doc(uid).delete().catch(() => {});
     if (deleteFeeds) for (const d of c.feeds.docs) await db.recursiveDelete(d.ref);
 
     await db.collection('safemode_sessions').doc(uid).delete().catch(() => {});
