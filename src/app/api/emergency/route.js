@@ -19,6 +19,8 @@ async function mofa(path, iso) {
   const text = await res.text();
   if (!res.ok || text.trimStart().startsWith('<')) throw new Error(`${path} ${res.status} ${text.slice(0, 100)}`);
   const json = JSON.parse(text);
+  const portalErr = json?.OpenAPI_ServiceResponse?.cmmMsgHeader;
+  if (portalErr) throw new Error(`${path.split('/')[0]} ${portalErr.errMsg || ''} ${portalErr.returnReasonCode || ''}`);
   if (json?.resultCode && !['0', '00'].includes(String(json.resultCode))) throw new Error(`${path} ${json.resultCode} ${json.resultMsg}`);
   const items = json?.data || json?.response?.body?.items?.item || json?.items || [];
   const list = Array.isArray(items) ? items : [items];
