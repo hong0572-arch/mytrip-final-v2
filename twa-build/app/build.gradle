@@ -59,7 +59,7 @@ android {
     namespace "pro.mytrip2.twa"
     defaultConfig {
         applicationId "pro.mytrip2.twa"
-        minSdkVersion 21
+        minSdkVersion 24
         targetSdkVersion 36
         versionCode 29
         versionName "4.5"
