@@ -80,7 +80,7 @@
 
 ## 항공권 찾기·현지 긴급번호 (2026-10)
 - 항공권: `/flights/`(components/flights/FlightSearch.js) — 구글 항공권 페이지로 넘기지 않고 앱 안에서 결과를 보여 준다. `/api/flights/search`(Travelpayouts v3 prices_for_dates: 정확한 날짜 + 같은 달 다른 날짜 + 날짜별 최저가 달력), `/api/flights/places`(도시 자동완성, 한국어). 가격은 최근 검색된 가격(실시간 좌석 아님) — 화면에 안내. 예약은 파트너(Aviasales 일정 링크·Trip.com). 키 `TRAVELPAYOUTS_TOKEN`/`TRAVELPAYOUTS_MARKER`(없으면 코드의 예전 값). 예전 /plan 검색 폼·홈 타일은 /flights로 연결.
-- 긴급번호: `lib/emergency.js` 나라별 경찰·구급·소방(+관광경찰) 표, 목적지 글로 나라 판별(`findCountry`). 안심·팁 탭은 `components/trip/EmergencyPanel.js`. 한국어 화면은 `/api/emergency?iso=&lat=&lng=`(외교부_국가·지역별 재외공관 정보 EmbassyService2, DATA_GO_KR_KEY에 활용신청 필요)로 가장 가까운 대한민국 공관의 긴급전화·대표전화를 보여 주고, 서울 영사콜센터는 항상 함께.
+- 긴급번호: `lib/emergency.js` 나라별 경찰·구급·소방(+관광경찰) 표, 목적지 글로 나라 판별(`findCountry`). 안심·팁 탭은 `components/trip/EmergencyPanel.js`. `/api/emergency?iso=한국어 화면은 `/api/emergency?iso=&lat=&lng=`(외교부_국가·지역별 재외공관 정보 EmbassyService2, DATA_GO_KR_KEY에 활용신청 필요)로 가장 가까운 대한민국 공관의 긴급전화·대표전화를 보여 주고, 서울 영사콜센터는 항상 함께.lat=한국어 화면은 `/api/emergency?iso=&lat=&lng=`(외교부_국가·지역별 재외공관 정보 EmbassyService2, DATA_GO_KR_KEY에 활용신청 필요)로 가장 가까운 대한민국 공관의 긴급전화·대표전화를 보여 주고, 서울 영사콜센터는 항상 함께.lng=`가 외교부 현지연락처(LocalContactService2, contact_remark HTML → 줄 글 + 경찰·소방·구급 번호 추출)와 재외공관 정보(EmbassyService2, 가까운 공관 긴급전화)를 합쳐 준다(DATA_GO_KR_KEY에 각각 활용신청). 외교부 번호를 못 뽑으면 앱 표를 쓴다. 한국어 화면은 외교부 안내 원문(펼치기)과 서울 영사콜센터도 함께.
 
 ## 도시 사진 (2026-10)
 - 홈 추천 도시 카드·오늘의 한마디 사진은 `public/home/<id>.webp`(640×480, 30~90KB), 출처는 `homeCities.js`의 `credit`(카드 왼쪽 아래 작게 표시).
