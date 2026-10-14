@@ -34,7 +34,11 @@ function CityCard({ city, copy, language, weather, index, showFlight = true }) {
               {w.icon} {w.temp}°
             </span>
           )}
-          {city.credit && <span className="absolute bottom-1.5 left-2 max-w-[60%] truncate text-[9px] text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,.6)]">© {city.credit.name}</span>}
+          {city.credit && (
+            <span className="absolute bottom-1.5 left-2 max-w-[62%] truncate text-[9px] text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,.6)]" title={city.credit.license || 'Unsplash'}>
+              © {(language === 'en' && city.credit.nameEn) || city.credit.name}{city.credit.by ? ` · ${city.credit.by}` : ''}
+            </span>
+          )}
         </span>
         <span className="flex flex-col gap-0.5 px-3 pb-3 pt-2.5">
           <span className="text-[16px] font-bold">{c.name}</span>

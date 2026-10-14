@@ -49,7 +49,7 @@
 ## 도시 사진 (2026-10)
 - 홈 추천 도시 카드·오늘의 한마디 사진은 `public/home/<id>.webp`(640×480, 30~90KB), 출처는 `homeCities.js`의 `credit`(카드 왼쪽 아래 작게 표시).
 - 출처 원칙: 한국 도시는 한국관광공사(포토코리아·공공누리 제1유형, 출처 표시) 우선, 해외는 Unsplash(무료·상업 가능). 없으면 일러스트풍 AI 생성(사실적 랜드마크 금지). 검색해서 아무 사진이나 쓰지 않는다.
-- 현재 한국 도시(서울·부산·경주·강릉·전주)는 포토코리아 원본 다운로드에 회원 로그인이 필요해 Unsplash 사진을 임시로 썼다 → 관광공사 사진으로 바꾸면 credit을 { name: '한국관광공사', license: '공공누리 제1유형' }로.
+- 한국 도시(제주·서울·부산·경주·강릉·전주)는 한국관광공사 관광사진 API(공공데이터포털 PhotoGalleryService1) 사진이다. 새 도시: `TOUR_API_KEY=<인코딩 키> node scripts/fetch-kto-photo.mjs <id> "<검색어>"`로 후보를 보고 번호를 주면 WebP와 credit 문구를 만든다. 카드는 영어 화면에서 'Korea Tourism Organization'으로 표시.
 - 해외 카드 순서는 `NoTripSection.GLOBAL_CARD_IDS`.
 
 ## 한국 여행 모드 (2026-10)

@@ -1,9 +1,9 @@
 // 홈 '혼자 가기 좋은 도시' 카드와 '티미의 오늘 한마디'에 쓰는 도시 목록. 한/영을 항상 함께 고친다.
 // image가 있는 도시만 카드로 보여 준다. credit: 사진 출처(Unsplash 라이선스 — 무료·상업 이용 가능, 출처 표시 권장).
-// 한국관광공사 사진으로 바꿀 때는 credit에 { name: '한국관광공사', license: '공공누리 제1유형' }처럼 적는다. 좌표는 실시간 날씨 조회용(country 'KR'은 기상청, 나머지는 Google Weather API).
+// 한국 도시는 한국관광공사 관광사진(공공누리 제1유형: 출처 표시) — credit.name·by를 카드에 표시한다. 좌표는 실시간 날씨 조회용(country 'KR'은 기상청, 나머지는 Google Weather API).
 export const HOME_CITIES = [
   {
-    id: 'jeju', country: 'KR', lat: 33.4996, lng: 126.5312, image: '/home/jeju.webp',
+    id: 'jeju', country: 'KR', lat: 33.4996, lng: 126.5312, image: '/home/jeju.webp', credit: { name: '한국관광공사', nameEn: 'Korea Tourism Organization', by: '황성훈', license: '공공누리 제1유형', source: 'https://api.visitkorea.or.kr (관광사진 3052925)' },
     ko: { name: '제주', note: '버스로 충분 · 밤 이동 적음', flight: '1h10m', tip: '바다 쪽 숙소에서 버스로 다니기 좋아요.', prompt: '혼자 제주 2박 3일, 버스로 다니는 일정 짜줘.' },
     en: { name: 'Jeju', note: 'Easy by bus · little night travel', flight: '1h10m', tip: 'Stay by the sea and get around by bus.', prompt: 'Plan a 3-day solo trip to Jeju by bus.' },
   },
@@ -28,7 +28,7 @@ export const HOME_CITIES = [
     en: { name: 'Osaka', note: 'Stay in Namba, walk back at night · food heaven', flight: '1h50m', tip: 'Stay near Namba to walk back easily at night.', prompt: 'Plan 3 days solo in Osaka, focused on food.' },
   },
   {
-    id: 'busan', country: 'KR', image: '/home/busan.webp', credit: { name: 'Seungyun Oh', url: 'https://unsplash.com/photos/5H4t17Kn_zA' }, lat: 35.1796, lng: 129.0756,
+    id: 'busan', country: 'KR', image: '/home/busan.webp', credit: { name: '한국관광공사', nameEn: 'Korea Tourism Organization', by: '이병현', license: '공공누리 제1유형', source: 'https://api.visitkorea.or.kr (관광사진 3344544)' }, lat: 35.1796, lng: 129.0756,
     ko: { name: '부산', note: 'KTX 2시간 반 · 바다 옆 도시', tip: 'KTX로 2시간 반, 해운대·광안리는 밤에도 사람이 많아 걷기 편해요.', prompt: '혼자 부산 1박 2일, KTX로 가서 걸어서 다니는 일정 짜줘.' },
     en: { name: 'Busan', note: '2.5h by KTX · city by the sea', tip: '2.5 hours by KTX; Haeundae and Gwangalli stay lively at night.', prompt: 'Plan 2 days solo in Busan by KTX, getting around on foot.' },
   },
@@ -49,22 +49,22 @@ export const HOME_CITIES = [
   },
   // ── 한국 여행 모드(영어 사용자가 한국에 있을 때) 전용 도시: 사진 없이 날씨 카드로 보여 준다 ──
   {
-    id: 'seoul', country: 'KR', korea: true, image: '/home/seoul.webp', credit: { name: 'pan zhen', url: 'https://unsplash.com/photos/Hvjx3cywvM4' }, lat: 37.5665, lng: 126.978,
+    id: 'seoul', country: 'KR', korea: true, image: '/home/seoul.webp', credit: { name: '한국관광공사', nameEn: 'Korea Tourism Organization', by: '서문교', license: '공공누리 제1유형', source: 'https://api.visitkorea.or.kr (관광사진 3551002)' }, lat: 37.5665, lng: 126.978,
     ko: { name: '서울', note: '지하철로 어디든 · 밤에도 밝은 거리', tip: '명동·홍대는 밤늦게까지 사람이 많아 걷기 편해요.', prompt: '혼자 서울 3박 4일, 지하철로 다니는 일정 짜줘.' },
     en: { name: 'Seoul', note: 'Subway everywhere · lively at night', tip: 'Myeongdong and Hongdae stay busy late, so walking back feels easy.', prompt: 'Plan 4 days solo in Seoul getting around by subway.' },
   },
   {
-    id: 'gyeongju', country: 'KR', korea: true, image: '/home/gyeongju.webp', credit: { name: 'insung yoon', url: 'https://unsplash.com/photos/GJWh9RrwF-o' }, lat: 35.8562, lng: 129.2247,
+    id: 'gyeongju', country: 'KR', korea: true, image: '/home/gyeongju.webp', credit: { name: '한국관광공사', nameEn: 'Korea Tourism Organization', by: '비디비디 스튜디오', license: '공공누리 제1유형', source: 'https://api.visitkorea.or.kr (관광사진 4106593)' }, lat: 35.8562, lng: 129.2247,
     ko: { name: '경주', note: '걸어서 보는 옛 도읍 · KTX 2시간', tip: '황리단길 근처에 묵으면 밤 산책하기 좋아요.', prompt: '혼자 경주 1박 2일, 걸어서 다니는 일정 짜줘.' },
     en: { name: 'Gyeongju', note: 'Walkable ancient capital · 2h by KTX', tip: 'Stay near Hwangnidan-gil for easy evening walks.', prompt: 'Plan 2 days solo in Gyeongju on foot.' },
   },
   {
-    id: 'gangneung', country: 'KR', korea: true, image: '/home/gangneung.webp', credit: { name: 'Seongil Park', url: 'https://unsplash.com/photos/Pa-DHzsGRDU' }, lat: 37.7519, lng: 128.8761,
+    id: 'gangneung', country: 'KR', korea: true, image: '/home/gangneung.webp', credit: { name: '한국관광공사', nameEn: 'Korea Tourism Organization', by: '김지호', license: '공공누리 제1유형', source: 'https://api.visitkorea.or.kr (관광사진 2828253)' }, lat: 37.7519, lng: 128.8761,
     ko: { name: '강릉', note: '바다와 카페 거리 · KTX 2시간', tip: '안목해변 카페 거리는 해 질 무렵이 가장 예뻐요.', prompt: '혼자 강릉 1박 2일, 바다랑 카페 위주로 일정 짜줘.' },
     en: { name: 'Gangneung', note: 'Sea and café street · 2h by KTX', tip: 'Anmok Beach café street is loveliest at sunset.', prompt: 'Plan 2 days solo in Gangneung focused on the sea and cafés.' },
   },
   {
-    id: 'jeonju', country: 'KR', korea: true, image: '/home/jeonju.webp', credit: { name: 'Minku Kang', url: 'https://unsplash.com/photos/B9LU6tfetRQ' }, lat: 35.8242, lng: 127.148,
+    id: 'jeonju', country: 'KR', korea: true, image: '/home/jeonju.webp', credit: { name: '한국관광공사', nameEn: 'Korea Tourism Organization', by: '디엔에이스튜디오', license: '공공누리 제1유형', source: 'https://api.visitkorea.or.kr (관광사진 2826403)' }, lat: 35.8242, lng: 127.148,
     ko: { name: '전주', note: '한옥마을과 음식 · 버스·KTX', tip: '한옥마을 안 숙소면 밤에도 조용하고 안전해요.', prompt: '혼자 전주 1박 2일, 한옥마을과 먹거리 위주로 짜줘.' },
     en: { name: 'Jeonju', note: 'Hanok village and food', tip: 'A guesthouse inside the Hanok Village is quiet and safe at night.', prompt: 'Plan 2 days solo in Jeonju around the Hanok Village and food.' },
   },
