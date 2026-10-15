@@ -214,7 +214,7 @@ export default function MyTrips() {
                   {hero && firstPhase === 'during' && <OnTripHero copy={copy} trip={hero} dayNumber={getTripDayNumber(hero)} />}
                   {hero && firstPhase === 'prep' && (
                     <>
-                      <NextTripHero copy={copy} homeCopy={homeCopy} language={language} trip={hero} onMenu={() => setMenuTrip(hero)} onInvite={() => inviteLink(hero)} />
+                      <NextTripHero copy={copy} language={language} trip={hero} onMenu={() => setMenuTrip(hero)} onInvite={() => inviteLink(hero)} />
                       <TripAlertNudge copy={copy} />
                     </>
                   )}

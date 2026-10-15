@@ -17,7 +17,7 @@
 ## AI 홈 구조 (2026-10 개편, 브랜치 `feat/ai-home`)
 - 컨셉: "혼자 떠나도 든든하게" — 자유여행자, 특히 혼자 떠나는 여성 여행자. 안전은 겁주는 경고가 아니라 티미가 챙겨 주는 기능으로 보여준다.
 - 색(확정안 "로고 블루"): 남색 `tm-navy` #1B3D6B(글자·버튼), 하늘색 `tm-sky` #1AA7E0(장식·경로 전용, 글자 금지), 햇살 `tm-sun` #F2B53A, 바탕 `tm-ground` #F8F7F4. 빨강 `tm-sos`는 SOS 전용, 청록 `tm-safe`는 안심 상태 전용. 토큰·모션 클래스(`.tm-rise` 등)는 `globals.css` 하단. 시안: https://claude.ai/artifact/XSX859JHQmRWQht6Z2Dk1P
-- `/` = `components/home/AIHome.js`: 여행 단계에 따라 카드가 바뀐다(일정 없음 `NoTripSection` · 출발 전 `PreTripSection` · 여행 중 `OnTripSection`). 날짜 계산은 `utils/tripPhase.js`(YYYY-MM-DD를 현지 날짜로 해석).
+- `/` = `components/home/AIHome.js`: 여행 단계에 따라 카드가 바뀐다(일정 없음 `NoTripSection` · 출발 전 `PreTripSection` · 여행 중 `OnTripSection`). 날짜 계산은 `utils/tripPhase.js`(YYYY-MM-DD를 현지 날짜로 해석). 여행이 있으면 맨 위에 '내 여행 · 둘러보기' 탭(둘러보기 = 원래 홈 `HomeHero`+`NoTripSection`): 여행 중엔 열 때마다 내 여행, 출발 전엔 마지막 탭 기억(`tm_home_tab`). 출발 전 `ReadinessCard` = 떠나기 전 준비(`lib/readiness.js`가 여행지 나라·남은 날짜로 항목 생성 — 입국 준비 공식 링크·전압/플러그·긴급번호, 문구 `content/readinessCopy.js`): 홈은 지금 할 일 3개, '전체 N개 보기'는 묶음별 전체 시트. 체크는 기기 `tm_readiness_<tripId>`.
 - 일정 없을 때 홈(2026-10 개편 B+A안): `HomeHero`(남색 하늘 — 시간대 인사·낮/밤 장식, '티미의 오늘 한마디' = 날짜로 고른 오늘의 도시 + 실시간 날씨) → `NoTripSection`(혼자 가기 좋은 도시 사진 카드 → 요즘 묻는 것 → 안심·항공권). 도시 목록 `content/homeCities.js`(사진 `public/home/*.webp`), 날씨 `hooks/useCityWeather.js` → `/api/weather`(Google Maps Platform Weather API, 서버가 조회·30분 캐시, 키 `GOOGLE_WEATHER_API_KEY` 또는 지도 키. Open-Meteo 무료판은 비상업 전용이라 쓰지 않는다). Google은 한국·일본을 지원하지 않으므로 `country: 'KR'` 도시는 기상청 초단기실황·예보(`lib/kmaWeather.js`, 격자 변환 포함, 키 `KMA_SERVICE_KEY` — 기상청 API허브 authKey 또는 공공데이터포털 serviceKey, API허브는 단기예보 활용신청 필요), 일본은 날씨 없이 보여 준다. 시간·날짜는 마운트 후에만 계산(하이드레이션). 티미 얼굴 원본은 `public/timmy-face.png`, 화면은 `timmy-face-192.webp`.
 - `/chat` = `components/home/ChatScreen.js`(`useTimmy` 사용). 홈 입력은 sessionStorage(`tm_pending_message`)로 넘긴다 — 대화 내용을 URL에 싣지 않는다.
 - 예전 홈은 `/plan`(`app/plan/page.js`)으로 옮겼다: 항공권(`?tab=flights_search`), 내 주변(`?tab=around_me`), 일정 만들기 폼(`?tab=create`), 로그인 창(`?login=1`), 카카오 로그인 콜백. `/?tab=`·`/?mode=` 주소는 `/plan`으로 넘긴다.
@@ -38,7 +38,7 @@
 
 ## 내 일정 목록 (2026-10)
 - `/trips` = `components/trips/MyTrips.js`. 아래 메뉴 '내 일정'은 여기로 간다(예전 `/mypage?tab=schedule`은 남아 있지만 진입점 없음).
-- 맨 위 카드가 여행 단계에 따라 바뀐다: 여행 중 `OnTripHero`(며칠째·다음 장소·안전모드) → 가장 가까운 출발 `NextTripHero`(D-day·안심 준비 진행률, 홈과 같은 `tm_readiness_<id>`). 분류는 `trips/tripsUtils.groupTrips`.
+- 맨 위 카드가 여행 단계에 따라 바뀐다: 여행 중 `OnTripHero`(며칠째·다음 장소·안전모드) → 가장 가까운 출발 `NextTripHero`(D-day·떠나기 전 준비 진행률, 홈과 같은 `useReadiness`). 분류는 `trips/tripsUtils.groupTrips`.
 - 지난 여행: 끝난 지 14일 안이면 '어떠셨어요?' 카드(일기·피드 공유). **피드 공유는 끝난 여행에만 권한다**(여행 중 위치 노출 방지). '다시 가기'는 출발일을 고르면 `duplicateTrip`이 일수만큼 날짜를 다시 매긴 새 여행을 만든다(동행·기록 미복사).
 - ⋯ 메뉴(`TripSheets.TripMenuSheet`): 열기·이름 바꾸기·동행 초대(초대 시트)·공유 링크(공유 링크 관리 시트)·복사·삭제. 삭제는 빨강을 쓰지 않고 한 번 더 확인한다. 만든 사람(또는 혼자인 일정)은 삭제, 동행은 '나가기'(`removeTrip`).
 - 받은 초대: `match_requests`(`type: 'workspace_invite'`, `targetMateId`, `status: 'pending'`) → 배너 '보기' → `/j/?r=<요청 id>`(받은 사람만, 서버가 보낸 사람이 아직 편집 동행인지 확인).

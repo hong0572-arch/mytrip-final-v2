@@ -6,6 +6,7 @@ import { Bell, MoreVertical, Navigation, Plus, Shield, Sparkles, UserPlus } from
 import { useStoredString } from '../../hooks/useLocalStore';
 import { daysUntil, directionsUrl, formatDDay, formatTripRange, getTodayPlaces, parseJsonObject } from '../../utils/tripPhase';
 import { openTimmyPanel } from '../home/homeActions';
+import { useReadiness } from '../home/ReadinessCard';
 import { useTripAlerts } from '../../lib/push';
 import { companionLabel, placeCount, tripDestination, tripLength, tripTitle } from './tripsUtils';
 
@@ -65,11 +66,8 @@ export function InviteBanner({ copy, invite }) {
 }
 
 // 출발 전 가장 가까운 여행
-export function NextTripHero({ copy, homeCopy, language, trip, onMenu, onInvite }) {
-  const [raw] = useStoredString(`tm_readiness_${trip.id}`, '{}');
-  const checked = parseJsonObject(raw);
-  const total = homeCopy.readiness.length;
-  const done = homeCopy.readiness.filter((item) => checked[item.id]).length;
+export function NextTripHero({ copy, language, trip, onMenu, onInvite }) {
+  const { done, total } = useReadiness(trip, language);
 
   return (
     <article className="tm-rise flex flex-col gap-4 rounded-[20px] bg-tm-ink p-5 text-white">

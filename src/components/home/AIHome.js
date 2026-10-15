@@ -1,5 +1,5 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Shield } from 'lucide-react';
@@ -21,7 +21,33 @@ import OnTripSection from './OnTripSection';
 // 예전 홈 주소(/?tab=…, /?mode=…)로 들어오면 예전 홈(/plan)으로 넘긴다(푸시 알림·북마크 호환).
 const LEGACY_PARAMS = ['tab', 'mode'];
 
+// 여행이 있을 때 홈 맨 위의 '내 여행 · 둘러보기' 전환. dark: 하늘색 머리(둘러보기) 위
+function HomeTabs({ copy, tab, onChange, dark = false }) {
+  const tabs = [['mine', copy.tabMine], ['explore', copy.tabExplore]];
+  return (
+    <div role="tablist" aria-label={copy.homeTabs} className={`grid grid-cols-2 gap-1 rounded-[14px] p-1 ${dark ? 'bg-white/10' : 'bg-tm-sky-tint'}`}>
+      {tabs.map(([id, label]) => {
+        const selected = tab === id;
+        return (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            onClick={() => onChange(id)}
+            className={`h-11 rounded-[10px] text-[14px] font-bold transition-colors ${selected ? (dark ? 'bg-white text-tm-ink' : 'bg-white text-tm-ink shadow-sm') : (dark ? 'text-[#CFDBEA]' : 'text-tm-muted')}`}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // AI 홈: 여행 단계(일정 없음 · 출발 전 · 여행 중)에 따라 입력창 위 카드가 바뀐다.
+// 여행이 있으면 '내 여행 · 둘러보기'로 원래 홈(둘러보기)도 볼 수 있다.
+// 여행 중에는 열 때마다 '내 여행', 출발 전에는 마지막에 본 탭(tm_home_tab)을 기억한다.
 export default function AIHome() {
   const router = useRouter();
   const [language, setLanguage] = useAppLanguage();
@@ -54,6 +80,17 @@ export default function AIHome() {
   const phase = activeTrip ? getTripPhase(activeTrip) : 'none';
   const dayNumber = phase === 'during' ? getTripDayNumber(activeTrip) : null;
   const destination = activeTrip?.destination || activeTrip?.tripTitle || '';
+  const hasTrip = phase === 'prep' || phase === 'during';
+  const [storedTab, setStoredTab] = useStoredString('tm_home_tab', 'mine');
+  const [sessionTab, setSessionTab] = useState('mine');
+  const tab = !hasTrip ? 'explore' : phase === 'during' ? sessionTab : storedTab === 'explore' ? 'explore' : 'mine';
+  const changeTab = (next) => {
+    if (phase === 'during') setSessionTab(next);
+    else setStoredTab(next);
+    window.scrollTo({ top: 0 });
+  };
+  const explore = tab === 'explore';
+  const tabs = hasTrip ? <HomeTabs copy={copy} tab={tab} onChange={changeTab} dark={explore} /> : null;
 
   useEffect(() => {
     if (phase === 'during' && activeTrip?.id) {
@@ -65,16 +102,18 @@ export default function AIHome() {
   }, [phase, activeTrip?.id]);
 
   const placeholder =
-    phase === 'during' ? copy.composerPlaceholderOnTrip
+    explore ? copy.composerPlaceholder
+    : phase === 'during' ? copy.composerPlaceholderOnTrip
       : phase === 'prep' && destination ? copy.composerPlaceholderTrip(destination)
         : copy.composerPlaceholder;
 
   return (
     <div className="flex min-h-dvh flex-col bg-tm-ground font-sans text-tm-ink">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
-        {phase === 'none' ? (
-          <HomeHero copy={copy} language={language} user={user} weather={weather} korea={korea} onToggleLanguage={() => setLanguage(language === 'en' ? 'ko' : 'en')} />
+        {explore ? (
+          <HomeHero copy={copy} language={language} user={user} weather={weather} korea={korea} tabs={tabs} onToggleLanguage={() => setLanguage(language === 'en' ? 'ko' : 'en')} />
         ) : (
+        <>
         <header className="flex items-center justify-between py-2 pl-5 pr-3">
           {phase === 'during' ? (
             <div className="flex flex-col gap-0.5 py-1">
@@ -83,7 +122,7 @@ export default function AIHome() {
             </div>
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src="/logotm.png" alt="Trip Maker" width={120} height={30} className="h-[30px] w-auto object-contain" />
+            <img src="/logotm.png" alt="Trip Maker" width={144} height={36} className="h-9 w-auto object-contain" />
           )}
           <div className="flex items-center gap-1">
             {phase === 'during' ? (
@@ -114,6 +153,8 @@ export default function AIHome() {
             )}
           </div>
         </header>
+        <div className="px-5 pb-3">{tabs}</div>
+        </>
         )}
 
         {safeModeActive && (
@@ -128,10 +169,10 @@ export default function AIHome() {
           </div>
         )}
 
-        <main className={`flex flex-1 flex-col gap-[18px] px-5 pb-4 ${phase === 'none' ? 'pt-5' : 'pt-1'}`}>
-          {phase === 'during' && <OnTripSection copy={copy} trip={activeTrip} dayNumber={dayNumber} />}
-          {phase === 'prep' && <PreTripSection copy={copy} language={language} trip={activeTrip} />}
-          {phase !== 'during' && phase !== 'prep' && <NoTripSection copy={copy} language={language} user={user} weather={weather} korea={korea} />}
+        <main className={`flex flex-1 flex-col gap-[18px] px-5 pb-4 ${explore ? 'pt-5' : 'pt-1'}`}>
+          {!explore && phase === 'during' && <OnTripSection copy={copy} trip={activeTrip} dayNumber={dayNumber} />}
+          {!explore && phase === 'prep' && <PreTripSection copy={copy} language={language} trip={activeTrip} />}
+          {explore && <NoTripSection copy={copy} language={language} user={user} weather={weather} korea={korea} />}
 
           <footer className="mt-auto flex justify-center gap-1 pt-4 text-[12px] text-tm-muted">
             <Link href="/guide" className="px-2 py-2">{copy.footerGuide}</Link>

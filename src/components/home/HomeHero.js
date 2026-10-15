@@ -11,8 +11,9 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 // 일정이 없을 때의 홈 머리: 시간대에 맞춘 인사 + 티미의 오늘 한마디(오늘의 도시 · 실시간 날씨)
 // 시간·날짜는 브라우저에서만 계산한다(서버 렌더와 첫 화면은 중립 인사·밤하늘).
+// tabs: 여행이 있을 때 맨 위에 두는 '내 여행 · 둘러보기' 전환
 // korea: 영어 사용자가 한국에 있을 때 — 한국 도시와 'Exploring Korea?' 인사
-export default function HomeHero({ copy, language, user, weather, onToggleLanguage, korea = false }) {
+export default function HomeHero({ copy, language, user, weather, onToggleLanguage, korea = false, tabs = null }) {
   const router = useRouter();
   const mounted = useIsClient();
   const now = mounted ? new Date() : null;
@@ -62,6 +63,8 @@ export default function HomeHero({ copy, language, user, weather, onToggleLangua
           )}
         </div>
       </div>
+
+      {tabs && <div className="relative mt-1">{tabs}</div>}
 
       <div className="relative mt-2 flex items-end gap-3">
         <TimmyAvatar size={64} ring className="tm-float" />

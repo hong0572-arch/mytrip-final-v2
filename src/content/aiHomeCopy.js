@@ -51,13 +51,7 @@ export const aiHomeCopy = {
 
     upcoming: '다가오는 여행',
     viewItinerary: '일정표 보기',
-    readinessTitle: '안심 준비',
-    readiness: [
-      { id: 'passport', label: '여권 유효기간 확인' },
-      { id: 'address', label: '숙소 주소 현지어로 저장' },
-      { id: 'guardian', label: '비상 연락처 등록하기', action: 'safe' },
-      { id: 'emergency', label: '현지 긴급번호·영사콜센터 저장' },
-    ],
+    homeTabs: '홈 보기', tabMine: '내 여행', tabExplore: '둘러보기',
     flightsRow: '항공권 최저가 비교',
     askAboutTrip: (dest) => [
       { label: '숙소 주변, 밤에 걸어도 돼?', prompt: `${dest} 여행 중인데 숙소 주변을 밤에 혼자 걸어도 괜찮은지, 조심할 점 알려줘.` },
@@ -209,13 +203,7 @@ export const aiHomeCopy = {
 
     upcoming: 'Upcoming trip',
     viewItinerary: 'View itinerary',
-    readinessTitle: 'Safety checklist',
-    readiness: [
-      { id: 'passport', label: 'Check passport expiry' },
-      { id: 'address', label: 'Save hotel address in the local language' },
-      { id: 'guardian', label: 'Add an emergency contact', action: 'safe' },
-      { id: 'emergency', label: 'Save local emergency numbers' },
-    ],
+    homeTabs: 'Home view', tabMine: 'My trip', tabExplore: 'Explore',
     flightsRow: 'Compare flight prices',
     askAboutTrip: (dest) => [
       { label: 'Is my area safe at night?', prompt: `I'm traveling in ${dest}. Is it OK to walk around my hotel area alone at night? What should I watch out for?` },
