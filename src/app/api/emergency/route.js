@@ -13,20 +13,42 @@ const memo = new Map();
 const num = (v) => (Number.isFinite(Number(v)) && v !== '' && v != null ? Number(v) : null);
 const clean = (v) => String(v || '').replace(/\s+/g, ' ').trim();
 
-async function mofa(path, iso) {
-  const url = `${BASE}/${path}?serviceKey=${encodedServiceKey()}&pageNo=1&numOfRows=50&returnType=JSON&${encodeURIComponent("cond[country_iso_alp2::EQ]")}=${iso}`;
+// 국가 조건을 넣는 방식이 서비스마다 달라 차례로 시도한다(성공한 방식은 기억). 마지막은 조건 없이 전체를 받아 걸러 낸다.
+const VARIANTS = [
+  (iso) => `&${encodeURIComponent('cond[country_iso_alp2::EQ]')}=${iso}`,
+  (iso) => `&cond[country_iso_alp2::EQ]=${iso}`,
+  () => '',
+];
+const working = {};
+
+async function mofaOnce(path, query) {
+  const url = `${BASE}/${path}?serviceKey=${encodedServiceKey()}&pageNo=1&numOfRows=${query ? 50 : 300}&returnType=JSON${query}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(8000), cache: 'no-store' });
   const text = await res.text();
-  if (!res.ok || text.trimStart().startsWith('<')) throw new Error(`${path} ${res.status} ${text.slice(0, 100)}`);
+  if (!res.ok || text.trimStart().startsWith('<')) throw new Error(`${res.status} ${text.replace(/\s+/g, ' ').slice(0, 80)}`);
   const json = JSON.parse(text);
   const portalErr = json?.OpenAPI_ServiceResponse?.cmmMsgHeader;
-  if (portalErr) throw new Error(`${path.split('/')[0]} ${portalErr.errMsg || ''} ${portalErr.returnReasonCode || ''}`);
-  if (json?.resultCode && !['0', '00'].includes(String(json.resultCode))) throw new Error(`${path} ${json.resultCode} ${json.resultMsg}`);
+  if (portalErr) throw new Error(`${portalErr.errMsg || ''} ${portalErr.returnReasonCode || ''}`.trim());
+  if (json?.resultCode && !['0', '00'].includes(String(json.resultCode))) throw new Error(`${json.resultCode} ${json.resultMsg}`);
   const items = json?.data || json?.response?.body?.items?.item || json?.items || [];
-  const list = Array.isArray(items) ? items : [items];
-  // 응답 겉모양(진단용, 값은 넣지 않는다)
-  shapes[path.split('/')[0]] = `keys=${Object.keys(json || {}).join(',')} total=${json?.totalCount ?? json?.response?.body?.totalCount ?? '?'} n=${list.length} first=${Object.keys(list[0] || {}).slice(0, 8).join(',')}`;
-  return list;
+  return Array.isArray(items) ? items : [items];
+}
+
+async function mofa(path, iso) {
+  const name = path.split('/')[0];
+  const order = working[name] != null ? [working[name], ...VARIANTS.keys()] : [...VARIANTS.keys()];
+  const errors = [];
+  for (const v of [...new Set(order)]) {
+    try {
+      const list = await mofaOnce(path, VARIANTS[v](iso));
+      working[name] = v;
+      shapes[name] = `v${v} n=${list.length} first=${Object.keys(list[0] || {}).slice(0, 8).join(',')}`;
+      return VARIANTS[v](iso) ? list : list.filter((x) => String(x.country_iso_alp2 || '').toUpperCase() === iso);
+    } catch (e) {
+      errors.push(`v${v}:${String(e.message).slice(0, 60)}`);
+    }
+  }
+  throw new Error(`${name} ${errors.join(' / ')}`);
 }
 const shapes = {};
 
