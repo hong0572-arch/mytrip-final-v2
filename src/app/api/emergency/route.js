@@ -14,18 +14,29 @@ const num = (v) => (Number.isFinite(Number(v)) && v !== '' && v != null ? Number
 const clean = (v) => String(v || '').replace(/\s+/g, ' ').trim();
 
 // 국가 조건을 넣는 방식이 서비스마다 달라 차례로 시도한다(성공한 방식은 기억). 마지막은 조건 없이 전체를 받아 걸러 낸다.
+const cond = (iso) => `&${encodeURIComponent('cond[country_iso_alp2::EQ]')}=${iso}`;
 const VARIANTS = [
-  (iso) => `&${encodeURIComponent('cond[country_iso_alp2::EQ]')}=${iso}`,
-  (iso) => `&cond[country_iso_alp2::EQ]=${iso}`,
-  () => '',
+  { base: BASE, fmt: '&returnType=JSON', q: cond },
+  { base: BASE, fmt: '&returnType=JSON', q: (iso) => `&cond[country_iso_alp2::EQ]=${iso}` },
+  { base: BASE.replace('https://', 'http://'), fmt: '&returnType=JSON', q: cond },
+  { base: BASE, fmt: '&_type=json', q: cond },
+  { base: BASE, fmt: '', q: cond },
+  { base: BASE, fmt: '&returnType=JSON', q: () => '' },
 ];
 const working = {};
 
-async function mofaOnce(path, query) {
-  const url = `${BASE}/${path}?serviceKey=${encodedServiceKey()}&pageNo=1&numOfRows=${query ? 50 : 300}&returnType=JSON${query}`;
+async function mofaOnce(path, variant, iso) {
+  const query = variant.q(iso);
+  const url = `${variant.base}/${path}?serviceKey=${encodedServiceKey()}&pageNo=1&numOfRows=${query ? 50 : 300}${variant.fmt}${query}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(8000), cache: 'no-store' });
   const text = await res.text();
-  if (!res.ok || text.trimStart().startsWith('<')) throw new Error(`${res.status} ${text.replace(/\s+/g, ' ').slice(0, 80)}`);
+  if (text.trimStart().startsWith('<')) {
+    // XML 응답: 오류 코드·성공 여부만 진단에 남긴다
+    const code = text.match(/<(?:returnReasonCode|resultCode)>([^<]*)</)?.[1];
+    const msg = text.match(/<(?:returnAuthMsg|errMsg|resultMsg)>([^<]*)</)?.[1];
+    throw new Error(`xml ${res.status} ${code || ''} ${msg || ''}`.trim());
+  }
+  if (!res.ok) throw new Error(`${res.status} ${text.replace(/\s+/g, ' ').slice(0, 80)}`);
   const json = JSON.parse(text);
   const portalErr = json?.OpenAPI_ServiceResponse?.cmmMsgHeader;
   if (portalErr) throw new Error(`${portalErr.errMsg || ''} ${portalErr.returnReasonCode || ''}`.trim());
@@ -40,12 +51,12 @@ async function mofa(path, iso) {
   const errors = [];
   for (const v of [...new Set(order)]) {
     try {
-      const list = await mofaOnce(path, VARIANTS[v](iso));
+      const list = await mofaOnce(path, VARIANTS[v], iso);
       working[name] = v;
       shapes[name] = `v${v} n=${list.length} first=${Object.keys(list[0] || {}).slice(0, 8).join(',')}`;
-      return VARIANTS[v](iso) ? list : list.filter((x) => String(x.country_iso_alp2 || '').toUpperCase() === iso);
+      return VARIANTS[v].q(iso) ? list : list.filter((x) => String(x.country_iso_alp2 || '').toUpperCase() === iso);
     } catch (e) {
-      errors.push(`v${v}:${String(e.message).slice(0, 60)}`);
+      errors.push(`v${v}:${String(e.message).slice(0, 40)}`);
     }
   }
   throw new Error(`${name} ${errors.join(' / ')}`);
@@ -144,7 +155,7 @@ export async function GET(req) {
     // 실패 이유(키 제외)를 헤더로 남겨 원인을 바로 볼 수 있게(x-emergency-error)
     const headers = ok ? { ...CACHE } : { 'Cache-Control': 'public, s-maxage=600' };
     headers['x-emergency-shape'] = JSON.stringify(shapes).replace(/[^ -~]/g, '').slice(0, 600);
-    if (data.errors?.length) headers['x-emergency-error'] = data.errors.join(' | ').replace(/[^ -~]/g, '');
+    if (data.errors?.length) headers['x-emergency-error'] = data.errors.join(' | ').replace(/[^ -~]/g, '').slice(0, 900);
     return NextResponse.json({ local: data.local, embassies }, { headers });
   } catch (error) {
     console.warn('[emergency] failed:', String(error?.message || error).slice(0, 160));
