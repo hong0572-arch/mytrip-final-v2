@@ -4,6 +4,11 @@ export function dataGoKrKey() {
   return (process.env.DATA_GO_KR_KEY || process.env.KMA_SERVICE_KEY || '').trim();
 }
 
+// 외교부 API(현지연락처·재외공관)는 따로 받은 키(MOFA_SERVICE_KEY)를 쓴다. 없으면 공용 키.
+export function mofaKey() {
+  return (process.env.MOFA_SERVICE_KEY || '').trim() || dataGoKrKey();
+}
+
 // 포털에서 받은 Decoding 키는 인코딩하고, 이미 인코딩된(Encoding) 키는 그대로 쓴다.
 export function encodedServiceKey(key = dataGoKrKey()) {
   return key.includes('%') ? key : encodeURIComponent(key);

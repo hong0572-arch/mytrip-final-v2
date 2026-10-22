@@ -59,7 +59,7 @@
 - 서버 `POST /api/audio-guide`(로그인): 한국 장소는 관광공사 오디(`lib/odii.js`: 좌표 주변 관광지 → 이름 일치 → 스토리 오디오)를 먼저, 없으면 AI 해설(`lib/audioGuide.js`: `GEMINI_GUIDE_MODEL` 원고 → `GEMINI_TTS_MODEL`(기본 gemini-3.8-flash-tts, 목소리 `GEMINI_TTS_VOICE`=Sulafat) 문단별 병렬 낭독 → MP3 48kbps → Storage `audio-guides/{id}.mp3`(다운로드 토큰 주소)). 캐시 `audio_guides/{장소·도시·언어 해시}`(서버 전용), 새 AI 해설은 1인 하루 20개(`audio_usage`), 신고 `audio_reports`. AI로 저장된 한국 장소는 일주일마다 오디를 다시 확인.
 - 오늘 투어(③): 일정 탭의 "이 날 순서대로 듣기"(TourButton) → `startTour`(player.js `state.tour`) → TourSheet. 한 곳이 끝나면 다음 장소 안내(`tour.waiting`, MiniPlayer도 바뀜), 다음 장소 해설은 미리 받아 둔다. "도착하면 이어 듣기"(`useTourArrival`)는 앱이 열려 있을 때 다음 장소 120m 안이면 이어 재생. 해가 진 뒤(19~6시)는 NightNote(주변 소리 안내).
 - TTS에 말투 지시문("Say warmly:" 등)을 붙이지 않는다 — 지시문까지 소리 내어 읽는다(2026-10 확인). 이 모델은 systemInstruction도 받지 않는다.
-- 공공데이터 키는 `DATA_GO_KR_KEY` 하나(`lib/dataGoKr.js`, 없으면 예전 `KMA_SERVICE_KEY`): 기상청 날씨·TourAPI(일정 생성, KorService2/EngService2)·오디. 로컬 `.env.local`의 `TOUR_API_KEY`는 무효인 예전 키.
+- 공공데이터 키는 `DATA_GO_KR_KEY`(외교부 API만 `MOFA_SERVICE_KEY` 별도)(`lib/dataGoKr.js`, 없으면 예전 `KMA_SERVICE_KEY`): 기상청 날씨·TourAPI(일정 생성, KorService2/EngService2)·오디. 로컬 `.env.local`의 `TOUR_API_KEY`는 무효인 예전 키.
 
 ## 음성 대화 (2026-10)
 - 대화(/chat): 마이크로 물은 질문(HomeComposer `onSubmit(text, { voice: true })`)에만 티미가 말로 대답한다. 대답이 길면 앞부분 2~3문장만 읽고(`spokenText`) 말풍선에 '앞부분만 읽었어요' 표시. 일정 후보·일정표는 짧은 안내 문장만 읽는다.
@@ -80,7 +80,7 @@
 
 ## 항공권 찾기·현지 긴급번호 (2026-10)
 - 항공권: `/flights/`(components/flights/FlightSearch.js) — 구글 항공권 페이지로 넘기지 않고 앱 안에서 결과를 보여 준다. `/api/flights/search`(Travelpayouts v3 prices_for_dates: 정확한 날짜 + 같은 달 다른 날짜 + 날짜별 최저가 달력), `/api/flights/places`(도시 자동완성, 한국어). 가격은 최근 검색된 가격(실시간 좌석 아님) — 화면에 안내. 예약은 파트너(Aviasales 일정 링크·Trip.com). 키 `TRAVELPAYOUTS_TOKEN`/`TRAVELPAYOUTS_MARKER`(없으면 코드의 예전 값). 예전 /plan 검색 폼·홈 타일은 /flights로 연결.
-- 긴급번호: `lib/emergency.js` 나라별 경찰·구급·소방(+관광경찰) 표, 목적지 글로 나라 판별(`findCountry`). 안심·팁 탭은 `components/trip/EmergencyPanel.js`. `/api/emergency?iso=한국어 화면은 `/api/emergency?iso=&lat=&lng=`(외교부_국가·지역별 재외공관 정보 EmbassyService2, DATA_GO_KR_KEY에 활용신청 필요)로 가장 가까운 대한민국 공관의 긴급전화·대표전화를 보여 주고, 서울 영사콜센터는 항상 함께.lat=한국어 화면은 `/api/emergency?iso=&lat=&lng=`(외교부_국가·지역별 재외공관 정보 EmbassyService2, DATA_GO_KR_KEY에 활용신청 필요)로 가장 가까운 대한민국 공관의 긴급전화·대표전화를 보여 주고, 서울 영사콜센터는 항상 함께.lng=`가 외교부 현지연락처(LocalContactService2, contact_remark HTML → 줄 글 + 경찰·소방·구급 번호 추출)와 재외공관 정보(EmbassyService2, 가까운 공관 긴급전화)를 합쳐 준다(DATA_GO_KR_KEY에 각각 활용신청). 외교부 번호를 못 뽑으면 앱 표를 쓴다. 한국어 화면은 외교부 안내 원문(펼치기)과 서울 영사콜센터도 함께.
+- 긴급번호: `lib/emergency.js` 나라별 경찰·구급·소방(+관광경찰) 표, 목적지 글로 나라 판별(`findCountry`). 안심·팁 탭은 `components/trip/EmergencyPanel.js`. `/api/emergency?iso=&lat=&lng=`가 외교부 현지연락처(LocalContactService2, contact_remark는 한 번 더 이스케이프된 HTML → 풀어서 줄 글 + 경찰·소방·구급 짧은 번호(2~5자리)만 추출, 원문에 섞인 확장 프로그램 글 제거)와 재외공관 정보(EmbassyService2, 가까운 공관 3곳의 긴급·대표전화)를 합쳐 준다. 키는 외교부 전용 `MOFA_SERVICE_KEY`(공용 `DATA_GO_KR_KEY`로는 HTTP_ERROR 04, 2026-10), 없으면 공용 키. 외교부 번호가 없는 항목은 앱 표를 쓴다. 한국어 화면은 외교부 안내 원문(펼치기)과 서울 영사콜센터도 함께.
 
 ## 도시 사진 (2026-10)
 - 홈 추천 도시 카드·오늘의 한마디 사진은 `public/home/<id>.webp`(640×480, 30~90KB), 출처는 `homeCities.js`의 `credit`(카드 왼쪽 아래 작게 표시).

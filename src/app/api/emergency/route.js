@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { dataGoKrKey, encodedServiceKey } from '../../../lib/dataGoKr';
+import { encodedServiceKey, mofaKey } from '../../../lib/dataGoKr';
 
 // 여행지 나라의 긴급 연락처 — 외교부 공공데이터(공공데이터 일반 인증키 DATA_GO_KR_KEY, 각 API 활용신청 필요).
 //  1) 외교부_국가∙지역별 현지연락처(LocalContactService2): contact_remark(HTML 안내문) → 줄 단위 글 + 경찰·소방·구급 번호 추출
@@ -27,7 +27,7 @@ const working = {};
 
 async function mofaOnce(path, variant, iso) {
   const query = variant.q(iso);
-  const url = `${variant.base}/${path}?serviceKey=${encodedServiceKey()}&pageNo=1&numOfRows=${query ? 50 : 300}${variant.fmt}${query}`;
+  const url = `${variant.base}/${path}?serviceKey=${encodedServiceKey(mofaKey())}&pageNo=1&numOfRows=${query ? 50 : 300}${variant.fmt}${query}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(8000), cache: 'no-store' });
   const text = await res.text();
   if (text.trimStart().startsWith('<')) {
@@ -53,7 +53,6 @@ async function mofa(path, iso) {
     try {
       const list = await mofaOnce(path, VARIANTS[v], iso);
       working[name] = v;
-      shapes[name] = `v${v} n=${list.length} first=${Object.keys(list[0] || {}).slice(0, 8).join(',')}`;
       return VARIANTS[v].q(iso) ? list : list.filter((x) => String(x.country_iso_alp2 || '').toUpperCase() === iso);
     } catch (e) {
       errors.push(`v${v}:${String(e.message).slice(0, 40)}`);
@@ -61,18 +60,24 @@ async function mofa(path, iso) {
   }
   throw new Error(`${name} ${errors.join(' / ')}`);
 }
-const shapes = {};
+
+const decode = (v) => v.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+
+const NAMED = { eacute: 'é', egrave: 'è', agrave: 'à', aacute: 'á', ocirc: 'ô', ouml: 'ö', uuml: 'ü', auml: 'ä', ccedil: 'ç', ntilde: 'ñ', middot: '·', rsquo: '’', lsquo: '‘', ldquo: '“', rdquo: '”', ndash: '–', mdash: '—', bull: '•' };
+// 원문에 섞여 들어온 브라우저 확장 프로그램 글(Ginger 등)
+const JUNK = /ginger|rephrase|reload the browser|check your internet connection|free characters|go premium/i;
 
 // HTML 안내문 → 줄 단위 글
 function htmlToLines(html) {
-  const text = String(html || '')
+  // 안내문이 &lt;div&gt; 처럼 한 번 더 이스케이프돼 오므로 먼저 풀고 태그를 지운다
+  const text = decode(decode(String(html || '')))
     .replace(/<\s*(br|\/p|\/div|\/li|\/h[1-6]|\/tr)\s*\/?>/gi, '\n')
     .replace(/<\s*(li)[^>]*>/gi, '\n• ')
     .replace(/<\s*\/?(td|th)[^>]*>/gi, ' ')
     .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ').replace(/&([a-z]+);/gi, (m, n) => NAMED[n] ?? m)
     .replace(/&#(\d+);/g, (_, d) => String.fromCharCode(Number(d)));
-  return text.split('\n').map((l) => l.replace(/[ \t]+/g, ' ').trim()).filter((l) => l && l !== '•').slice(0, 40);
+  return text.split('\n').map((l) => l.replace(/[ \t]+/g, ' ').trim()).filter((l) => l && l !== '•' && !JUNK.test(l));
 }
 
 // 줄에서 '경찰 158', '화재: 150', '구급(앰뷸런스) 155' 같은 번호 찾기
@@ -84,7 +89,9 @@ function pick(lines, label) {
     const m = line.slice(i).match(PHONE);
     if (m) {
       const n = m[1].replace(/[\s.]/g, '').replace(/[()]/g, '');
-      if (n.replace(/\D/g, '').length >= 2) return n;
+      // 경찰·소방·구급은 짧은 번호(110·1669·10111)만. 긴 번호는 안내 전화라 건너뛴다
+      const digits = n.replace(/\D/g, '').length;
+      if (digits >= 2 && digits <= 5) return n;
     }
   }
   return null;
@@ -93,7 +100,7 @@ function pick(lines, label) {
 function parseLocal(item) {
   const lines = htmlToLines(item.contact_remark);
   return {
-    lines,
+    lines: lines.slice(0, 80),
     numbers: {
       police: pick(lines, /경찰|police/i),
       fire: pick(lines, /화재|소방|fire/i),
@@ -142,7 +149,7 @@ export async function GET(req) {
   const sp = new URL(req.url).searchParams;
   const iso = String(sp.get('iso') || '').toUpperCase();
   if (!/^[A-Z]{2}$/.test(iso)) return NextResponse.json({ error: 'iso required' }, { status: 400 });
-  if (iso === 'KR' || !dataGoKrKey()) return NextResponse.json({ local: null, embassies: [] }, { headers: CACHE });
+  if (iso === 'KR' || !mofaKey()) return NextResponse.json({ local: null, embassies: [] }, { headers: CACHE });
   const lat = num(sp.get('lat'));
   const lng = num(sp.get('lng'));
   try {
@@ -152,10 +159,7 @@ export async function GET(req) {
       .sort((a, b) => Number(a.concurrent) - Number(b.concurrent) || (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9))
       .slice(0, 3);
     const ok = data.local || embassies.length;
-    // 실패 이유(키 제외)를 헤더로 남겨 원인을 바로 볼 수 있게(x-emergency-error)
     const headers = ok ? { ...CACHE } : { 'Cache-Control': 'public, s-maxage=600' };
-    headers['x-emergency-shape'] = JSON.stringify(shapes).replace(/[^ -~]/g, '').slice(0, 600);
-    if (data.errors?.length) headers['x-emergency-error'] = data.errors.join(' | ').replace(/[^ -~]/g, '').slice(0, 900);
     return NextResponse.json({ local: data.local, embassies }, { headers });
   } catch (error) {
     console.warn('[emergency] failed:', String(error?.message || error).slice(0, 160));
